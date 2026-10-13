@@ -1,0 +1,7 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Recall · shader lab</title>
+<style>html,body{margin:0;height:100%;background:#0c0e13;color:#E8E6E1;font:12px "JetBrains Mono",monospace}canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+#hud{position:fixed;left:12px;top:12px;background:rgba(12,14,19,.85);border:1px solid rgba(0,242,254,.25);border-radius:10px;padding:10px 12px;line-height:1.8}button{font:inherit;background:#1b1e24;color:#E8E6E1;border:1px solid #3a494b;border-radius:6px;padding:3px 8px;margin-right:4px;cursor:pointer}</style></head>
+<body><canvas id="c"></canvas><div id="hud">SHADER LAB · synaptic lattice<br><button id="th">theme</button><button id="rm">reduced</button><button id="rs">resize</button><br><span id="st"></span></div>
+<script type="module">import{mountLattice}from'./shader.js';const q=new URLSearchParams(location.search);let t=q.get('theme')||'dark';
+const L=mountLattice(c,{theme:t});window.__lab=L;th.onclick=()=>{t=t=='dark'?'light':'dark';L.setTheme(t)};rm.onclick=()=>L.reduced=true;
+rs.onclick=()=>{c.style.width=c.style.width?'':'70%'};setInterval(()=>{const s=L.stats();st.textContent=`frames ${s.frames} · avg ${s.avg.toFixed(1)}ms · max ${s.max.toFixed(0)}ms · dpr ${s.dpr} · ${s.size.join('×')} · running ${s.running}`},400);</script></body></html>

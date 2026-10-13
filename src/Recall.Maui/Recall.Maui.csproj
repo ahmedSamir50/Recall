@@ -20,6 +20,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <EnableMsixTooling>false</EnableMsixTooling>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
@@ -56,4 +57,10 @@
     <MauiFont Include="Resources\Fonts\OpenSans-Regular.ttf" />
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
+  <Target Name="RecallClearMismatchedRuntimeIdentifier" BeforeTargets="ProcessFrameworkReferences">
+    <PropertyGroup>
+      <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == 'win-x64' and '$(TargetFramework)' != '' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'windows'" />
+      <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == 'android-arm64' and '$(TargetFramework)' != '' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'android'" />
+    </PropertyGroup>
+  </Target>
 </Project>

@@ -9,6 +9,6 @@ public partial class App : Application
 
 	protected override Window CreateWindow(IActivationState? activationState)
 	{
-		return new Window(new MainPage()) { Title = "Recall.Maui" };
+		return new Window(new MainPage()) { Title = "Recall" };
 	}
 }
