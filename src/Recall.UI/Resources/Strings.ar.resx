@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Brand" xml:space="preserve"><value>ريكول</value></data>
+  <data name="Nav_Search" xml:space="preserve"><value>البحث</value></data>
+  <data name="Nav_Lattice" xml:space="preserve"><value>الشبكة</value></data>
+  <data name="Nav_Folders" xml:space="preserve"><value>المجلدات</value></data>
+  <data name="Nav_Models" xml:space="preserve"><value>النماذج</value></data>
+  <data name="Nav_Preferences" xml:space="preserve"><value>التفضيلات</value></data>
+  <data name="Privacy_Local" xml:space="preserve"><value>على هذا الجهاز</value></data>
+  <data name="Privacy_Egress" xml:space="preserve"><value>٠ ك.ب مُرسَلة</value></data>
+  <data name="Onboard_Kicker" xml:space="preserve"><value>محرّك ذاكرة خاص · الإصدار ١</value></data>
+  <data name="Onboard_Headline" xml:space="preserve"><value>كل ما رأيته وقلته وكتبته — تجده بجملة واحدة.</value></data>
+  <data name="Onboard_Lead" xml:space="preserve"><value>يفهرس ريكول المجلدات التي تختارها. الصور والملاحظات الصوتية والمستندات والكود تبقى على هذا الجهاز. لا يُرفع أي شيء.</value></data>
+  <data name="Onboard_ChooseFolders" xml:space="preserve"><value>اختر المجلدات</value></data>
+  <data name="Onboard_PrivacyLink" xml:space="preserve"><value>كيف تبقى بياناتك خاصة</value></data>
+  <data name="Onboard_Fact1" xml:space="preserve"><value>بلا حساب</value></data>
+  <data name="Onboard_Fact2" xml:space="preserve"><value>بلا نسخة سحابية</value></data>
+  <data name="Onboard_Fact3" xml:space="preserve"><value>يعمل دون إنترنت</value></data>
+  <data name="Onboard_Fact4" xml:space="preserve"><value>احذف متى شئت</value></data>
+  <data name="Step_Label" xml:space="preserve"><value>الخطوة</value></data>
+  <data name="Step_Of" xml:space="preserve"><value>من</value></data>
+  <data name="Btn_Back" xml:space="preserve"><value>رجوع</value></data>
+  <data name="Btn_Continue" xml:space="preserve"><value>متابعة</value></data>
+  <data name="Folders_Title" xml:space="preserve"><value>اختر ما يُسمح لريكول بقراءته</value></data>
+  <data name="Folders_Lead" xml:space="preserve"><value>تُفهرس هذه المجلدات فقط. يمكنك الإضافة أو الإزالة لاحقًا من التفضيلات.</value></data>
+  <data name="Folders_Add" xml:space="preserve"><value>إضافة مجلد</value></data>
+  <data name="Folders_SkipNote" xml:space="preserve"><value>مُستثنى: مجلدات النظام والتطبيقات الأخرى وكل ما لا تختاره.</value></data>
+  <data name="Folders_PickOne" xml:space="preserve"><value>اختر مجلدًا واحدًا على الأقل</value></data>
+  <data name="Folders_PermissionDenied" xml:space="preserve"><value>لا يستطيع ريكول قراءة هذا المجلد</value></data>
+  <data name="Folders_IosNote" xml:space="preserve"><value>تُلتقط الملفات الجديدة عند فتح ريكول.</value></data>
+  <data name="Folders_OverlapWarning" xml:space="preserve"><value>هذا المجلد مُغطى بمنح أبٍ موجود.</value></data>
+  <data name="Models_Title" xml:space="preserve"><value>نزّل النماذج على جهازك</value></data>
+  <data name="Models_Lead" xml:space="preserve"><value>تنزيل لمرة واحدة. بعدها يعمل البحث دون إنترنت.</value></data>
+  <data name="Models_ShaNote" xml:space="preserve"><value>نتحقق من كل ملف ببصمة SHA-256 قبل استخدامه.</value></data>
+  <data name="Models_Entry_Text" xml:space="preserve"><value>تضمينات النص</value></data>
+  <data name="Models_Entry_Vision" xml:space="preserve"><value>تضمينات الصور</value></data>
+  <data name="Models_Entry_Audio" xml:space="preserve"><value>تضمينات الصوت</value></data>
+  <data name="Models_NotReady" xml:space="preserve"><value>لم يُنزَّل بعد</value></data>
+  <data name="Ready_Title" xml:space="preserve"><value>ذاكرتك جاهزة</value></data>
+  <data name="Ready_Lead" xml:space="preserve"><value>البحث متاح. تبدأ الفهرسة بعد تنزيل النماذج في خطوة لاحقة.</value></data>
+  <data name="Ready_Start" xml:space="preserve"><value>ابدأ البحث</value></data>
+  <data name="Search_EmptyTitle" xml:space="preserve"><value>اسأل عن أي شيء تتذكره</value></data>
+  <data name="Search_EmptyLead" xml:space="preserve"><value>اكتب جملة للبحث في المجلدات المسموحة بعد تفعيل الفهرسة.</value></data>
+  <data name="Search_Placeholder" xml:space="preserve"><value>ابحث في ذاكرتك بجملة</value></data>
+  <data name="Mode_Find" xml:space="preserve"><value>ابحث</value></data>
+  <data name="Mode_Group" xml:space="preserve"><value>جمّع</value></data>
+  <data name="Mode_Tag" xml:space="preserve"><value>وسِّم</value></data>
+  <data name="Lattice_Kicker" xml:space="preserve"><value>الشبكة</value></data>
+  <data name="Lattice_Title" xml:space="preserve"><value>كيف تترابط ذكرياتك</value></data>
+  <data name="Lattice_SyncStub" xml:space="preserve"><value>المزامنة بين الأجهزة ليست في هذا الإصدار.</value></data>
+  <data name="Preferences_Title" xml:space="preserve"><value>التفضيلات</value></data>
+  <data name="Preferences_Theme" xml:space="preserve"><value>المظهر</value></data>
+  <data name="Preferences_Language" xml:space="preserve"><value>اللغة</value></data>
+  <data name="Preferences_FoldersLink" xml:space="preserve"><value>المجلدات</value></data>
+  <data name="Preferences_ModelsLink" xml:space="preserve"><value>النماذج</value></data>
+  <data name="Preferences_DeleteIndex" xml:space="preserve"><value>احذف كل ما خزّنه ريكول</value></data>
+  <data name="Theme_Label" xml:space="preserve"><value>المظهر</value></data>
+  <data name="Theme_System" xml:space="preserve"><value>النظام</value></data>
+  <data name="Theme_Dark" xml:space="preserve"><value>داكن</value></data>
+  <data name="Theme_Light" xml:space="preserve"><value>فاتح</value></data>
+  <data name="Language_TargetArabic" xml:space="preserve"><value>العربية</value></data>
+  <data name="Language_TargetEnglish" xml:space="preserve"><value>English</value></data>
+  <data name="Status_Ready" xml:space="preserve"><value>جاهز</value></data>
+  <data name="Vault_Label" xml:space="preserve"><value>الخزنة الشخصية</value></data>
+  <data name="OnDevice_Label" xml:space="preserve"><value>على الجهاز</value></data>
+  <data name="OnDevice_ModelsStub" xml:space="preserve"><value>EmbeddingGemma · SigLIP · صوت</value></data>
+  <data name="Status_ItemsDemo" xml:space="preserve"><value>١٢٬٤٨٠</value></data>
+  <data name="Status_ItemsSuffix" xml:space="preserve"><value>عنصر</value></data>
+  <data name="Status_IndexingPaused" xml:space="preserve"><value>الفهرسة متوقفة أثناء العمل على البطارية</value></data>
+  <data name="Home_QueryDemo" xml:space="preserve"><value>السكوتر الأحمر الذي رأيته قرب الكولوسيوم الصيف الماضي</value></data>
+  <data name="Home_LatencyDemo" xml:space="preserve"><value>٣٨ م.ث</value></data>
+  <data name="Home_ContextLabel" xml:space="preserve"><value>فُهم على أنه</value></data>
+  <data name="Home_Ctx1" xml:space="preserve"><value>روما، إيطاليا</value></data>
+  <data name="Home_Ctx2" xml:space="preserve"><value>ملاحظة صوتية</value></data>
+  <data name="Home_Ctx3" xml:space="preserve"><value>فيسبا</value></data>
+  <data name="Home_Ctx4" xml:space="preserve"><value>صيف ٢٠٢٤</value></data>
+  <data name="Home_Results" xml:space="preserve"><value>النتائج</value></data>
+  <data name="Home_ResultsSub" xml:space="preserve"><value>٦ نتائج من ٤ أنواع</value></data>
+  <data name="Home_Sort" xml:space="preserve"><value>الأقرب</value></data>
+  <data name="Home_Match" xml:space="preserve"><value>تطابق</value></data>
+  <data name="Kind_Photo" xml:space="preserve"><value>صورة</value></data>
+  <data name="Kind_Voice" xml:space="preserve"><value>ملاحظة صوتية</value></data>
+  <data name="Kind_Document" xml:space="preserve"><value>مستند</value></data>
+  <data name="Kind_Video" xml:space="preserve"><value>فيديو</value></data>
+  <data name="Home_Card1Title" xml:space="preserve"><value>فيسبا حمراء، ساحة الكولوسيوم</value></data>
+  <data name="Home_Card1Meta" xml:space="preserve"><value>روما · ١٤ يوليو ٢٠٢٤، ١٦:٤٢</value></data>
+  <data name="Home_Card1Note" xml:space="preserve"><value>«تذكّر أن تتحقق من طراز المحرك لاحقًا.»</value></data>
+  <data name="Home_Card2Title" xml:space="preserve"><value>ملاحظة صوتية · ٣٠ ثانية</value></data>
+  <data name="Home_Card2Quote" xml:space="preserve"><value>“Vespa rossa vicino al Colosseo, modello anni ’70 ben restaurato…”</value></data>
+  <data name="Home_Card2Translated" xml:space="preserve"><value>مترجم: «فيسبا حمراء قرب الكولوسيوم، طراز السبعينيات مُرمَّم.»</value></data>
+  <data name="Home_Card3Title" xml:space="preserve"><value>قائمة قطع السكوتر.pdf</value></data>
+  <data name="Home_Card3Meta" xml:space="preserve"><value>صفحة ٣ · «كاربراتير، ٥٠ سي سي»</value></data>
+  <data name="Home_Card4Title" xml:space="preserve"><value>لقطات فيديو · ٣ لحظات</value></data>
+  <data name="Home_UnavailTitle" xml:space="preserve"><value>الملف غير متاح</value></data>
+  <data name="Home_UnavailLead" xml:space="preserve"><value>نُقل أو على قرص غير متصل. يبقى كعنصر نائب.</value></data>
+  <data name="Home_UnavailBtn" xml:space="preserve"><value>حدّد موقعه</value></data>
+  <data name="Home_AudioTitle" xml:space="preserve"><value>البحث الصوتي على الكمبيوتر</value></data>
+  <data name="Home_AudioLead" xml:space="preserve"><value>لم يُبحث في ملاحظتين صوتيتين على هذا الهاتف.</value></data>
+  <data name="Home_Inspector" xml:space="preserve"><value>التفاصيل</value></data>
+  <data name="Home_Why" xml:space="preserve"><value>لماذا ظهرت هذه النتيجة</value></data>
+  <data name="Home_Why1" xml:space="preserve"><value>الصورة: سكوتر، أحمر، قوس</value></data>
+  <data name="Home_Why2" xml:space="preserve"><value>المكان: ضمن ٢٠٠ م</value></data>
+  <data name="Home_Why3" xml:space="preserve"><value>ملاحظة صوتية في اليوم نفسه</value></data>
+  <data name="Home_OpenFile" xml:space="preserve"><value>افتح الملف</value></data>
+  <data name="Home_ShowFolder" xml:space="preserve"><value>اعرض في المجلد</value></data>
+  <data name="Home_StoredLocally" xml:space="preserve"><value>مخزّن محليًا · لا يُرفع أبدًا</value></data>
+  <data name="Home_FileLabel" xml:space="preserve"><value>الملف</value></data>
+  <data name="Home_SizeLabel" xml:space="preserve"><value>الحجم</value></data>
+  <data name="Home_FileDemo" xml:space="preserve"><value>IMG_2041.jpg</value></data>
+  <data name="Home_SizeDemo" xml:space="preserve"><value>4.2 MB</value></data>
+  <data name="Home_MatchDemo" xml:space="preserve"><value>٩٨٪</value></data>
+  <data name="Landing_Platforms" xml:space="preserve"><value>ويندوز · أندرويد · آيفون</value></data>
+  <data name="Landing_Headline" xml:space="preserve"><value>ذاكرتك.</value></data>
+  <data name="Landing_HeadlineAccent" xml:space="preserve"><value>قابلة للبحث. خاصة.</value></data>
+  <data name="Landing_Lead" xml:space="preserve"><value>اسأل بجملة، ويجد ريكول الصورة أو الملاحظة الصوتية أو الصفحة أو سطر الكود — بنماذج تعمل على جهازك. لا يغادره شيء.</value></data>
+  <data name="Landing_DownloadWin" xml:space="preserve"><value>نزّل لويندوز</value></data>
+  <data name="Landing_PrivacyLink" xml:space="preserve"><value>كيف تبقى بياناتك خاصة</value></data>
+  <data name="Landing_GetRecall" xml:space="preserve"><value>احصل على ريكول</value></data>
+  <data name="Landing_NavHow" xml:space="preserve"><value>كيف يعمل</value></data>
+  <data name="Landing_NavPrivacy" xml:space="preserve"><value>الخصوصية</value></data>
+  <data name="Landing_NavReq" xml:space="preserve"><value>المتطلبات</value></data>
+  <data name="Landing_Fact1Val" xml:space="preserve"><value>٠ ك.ب</value></data>
+  <data name="Landing_Fact1Lbl" xml:space="preserve"><value>تُرسل لأي خادم</value></data>
+  <data name="Landing_Fact2Val" xml:space="preserve"><value>٣٨ م.ث</value></data>
+  <data name="Landing_Fact2Lbl" xml:space="preserve"><value>بحث نموذجي على الحاسوب</value></data>
+  <data name="Landing_Fact3Val" xml:space="preserve"><value>٤</value></data>
+  <data name="Landing_Fact3Lbl" xml:space="preserve"><value>أنواع: صور · صوت · مستندات · كود</value></data>
+  <data name="Landing_PrivacyHead" xml:space="preserve"><value>الخصوصية أولًا</value></data>
+  <data name="Landing_PrivacyLead" xml:space="preserve"><value>بلا حساب. بلا فهرس سحابي. بلا تتبّع. كل خطوة أدناه تحدث على جهازك.</value></data>
+  <data name="Landing_Card1Title" xml:space="preserve"><value>محلي فقط</value></data>
+  <data name="Landing_Card1Body" xml:space="preserve"><value>تُقرأ ملفاتك في مكانها من المجلدات التي تختارها. يعيش الفهرس في قاعدة بيانات محلية مشفّرة.</value></data>
+  <data name="Landing_Card2Title" xml:space="preserve"><value>بحث واحد لكل الأنواع</value></data>
+  <data name="Landing_Card2Body" xml:space="preserve"><value>الصور والملاحظات الصوتية والمستندات والكود في فضاء معنى واحد — فتجد «سكوتر أحمر» كلها.</value></data>
+  <data name="Landing_Card3Title" xml:space="preserve"><value>نماذج موثّقة</value></data>
+  <data name="Landing_Card3Body" xml:space="preserve"><value>تُنزّل النماذج مرة واحدة ويُتحقق منها ببصمة SHA-256. أي فشل يُحذف ويُعاد.</value></data>
+  <data name="Landing_Card4Title" xml:space="preserve"><value>حدود واضحة</value></data>
+  <data name="Landing_Card4Body" xml:space="preserve"><value>البحث في الملاحظات الصوتية على الكمبيوتر في الإصدار ١. المزامنة بين الأجهزة ليست في هذا الإصدار.</value></data>
+  <data name="Landing_StepsHead" xml:space="preserve"><value>ثلاث خطوات، ثم يعمل بهدوء</value></data>
+  <data name="Landing_Step1Title" xml:space="preserve"><value>اختر المجلدات</value></data>
+  <data name="Landing_Step1Body" xml:space="preserve"><value>يُفهرس ما تختاره فقط.</value></data>
+  <data name="Landing_Step2Title" xml:space="preserve"><value>نزّل النماذج</value></data>
+  <data name="Landing_Step2Body" xml:space="preserve"><value>مرة واحدة، نحو ٢٫٢ غ.ب، موثّقة.</value></data>
+  <data name="Landing_Step3Title" xml:space="preserve"><value>اسأل</value></data>
+  <data name="Landing_Step3Body" xml:space="preserve"><value>ابحث أو جمّع أو وسِّم بلغة عادية.</value></data>
+  <data name="Landing_CloseHead" xml:space="preserve"><value>استعد ذاكرتك.</value></data>
+  <data name="Landing_CloseLead" xml:space="preserve"><value>مجاني خلال المعاينة. بالعربية والإنجليزية.</value></data>
+  <data name="Landing_Footer" xml:space="preserve"><value>ريكول · صُنع لشخص واحد: أنت.</value></data>
+  <data name="Landing_DemoQuery" xml:space="preserve"><value>السكوتر الأحمر قرب الكولوسيوم</value></data>
+</root>

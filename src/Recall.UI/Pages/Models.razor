@@ -1,0 +1,20 @@
+@page "/models"
+@inherits RecallComponentBase
+@inject NavigationManager Nav
+
+<div class="p-4 md:p-6 flex justify-center">
+    <section class="g2 rounded-2xl w-full max-w-640 p-5 rise">
+        <h2 class="f-head font-semibold text-24 mb-2">@T("Models_Title")</h2>
+        <p class="ink2 mb-6">@T("Models_Lead")</p>
+        <ul class="flex flex-col gap-3 mb-5">
+            @foreach (var entry in ModelCatalog.All)
+            {
+                <li class="p-4 rounded-xl border bd" style="background:var(--c1)">
+                    <span class="block font-medium">@entry.DisplayName</span>
+                    <span class="f-mono text-12 ink3">@T("Models_NotReady")</span>
+                </li>
+            }
+        </ul>
+        <p class="text-13 ink3">@T("Models_ShaNote")</p>
+    </section>
+</div>

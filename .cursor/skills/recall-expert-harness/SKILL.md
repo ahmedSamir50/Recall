@@ -17,7 +17,7 @@ Recall is a local-only .NET 10 MAUI Blazor Hybrid app: EmbeddingGemma 2 (ONNX) +
 
 A message that contains `@recall:` or `@reacall:`, or that asks for a project, milestone, phase, or feature plan, runs the full panel. Follow [planning-chain.md](planning-chain.md). Do not draft the plan yourself and then ask the experts to nod.
 
-Each expert returns the block in [sign-off.md](sign-off.md): verdict, confidence, notes, recommendations, options, alternatives, risks, and an evidenced push-back or an evidenced agreement. Rubber-stamping fails the chain.
+Each expert returns the block in [sign-off.md](sign-off.md). The parent publishes that YAML in the reply and in the plan on every gate, including a later message that changes the plan. Rubber-stamping fails the chain. The user does not ask for the sign-off.
 
 ## Other work
 

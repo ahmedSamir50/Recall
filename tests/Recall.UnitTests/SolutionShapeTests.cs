@@ -17,7 +17,7 @@ public sealed class SolutionShapeTests
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
         while (directory is not null)
         {
-            if (File.Exists(Path.Combine(directory.FullName, "Recall.sln")))
+            if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
             {
                 return directory.FullName;
             }
@@ -25,7 +25,7 @@ public sealed class SolutionShapeTests
             directory = directory.Parent;
         }
 
-        throw new InvalidOperationException("Recall.sln was not found above the test output directory.");
+        throw new InvalidOperationException("Recall.slnx was not found above the test output directory.");
     }
 
     [Fact]
@@ -90,6 +90,12 @@ public sealed class SolutionShapeTests
             typeof(IModelDownloadService),
             typeof(IIndexPolicy),
             typeof(ISyncAdapter),
+            typeof(IThemePreferenceStore),
+            typeof(IUiLocaleStore),
+            typeof(ISystemThemeProvider),
+            typeof(IScopeGrantStore),
+            typeof(IFolderPickerService),
+            typeof(IDeviceRecordService),
         };
 
         // Act
@@ -304,6 +310,83 @@ public sealed class SolutionShapeTests
     }
 
     [Fact]
+    public void RecallSlnx_WhenRead_ContainsRequiredProjects()
+    {
+        // Arrange
+        var slnx = Path.Combine(RepoRoot, "Recall.slnx");
+        var text = File.ReadAllText(slnx);
+
+        // Assert
+        text.Should().Contain("Recall.Core.csproj");
+        text.Should().Contain("Recall.UI.csproj");
+        text.Should().Contain("Recall.Maui.csproj");
+        text.Should().Contain("Recall.Benchmarks.csproj");
+        text.Should().Contain("Recall.UnitTests.csproj");
+        text.Should().Contain("Recall.CorpusTests.csproj");
+        text.Should().Contain("Recall.IntegrationTests.csproj");
+        text.Should().Contain("mrl-eval.csproj");
+    }
+
+    [Fact]
+    public void RepoRoot_UsesSlnxOnly_NotLegacySln()
+    {
+        // Arrange
+        var slnx = Path.Combine(RepoRoot, "Recall.slnx");
+        var sln = Path.Combine(RepoRoot, "Recall.sln");
+
+        // Assert
+        File.Exists(slnx).Should().BeTrue();
+        File.Exists(sln).Should().BeFalse();
+    }
+
+    [Fact]
+    public void RecallUi_WhenScanned_DoesNotInjectThemeLocaleOrScopeServices()
+    {
+        // Arrange
+        var uiRoot = Path.Combine(RepoRoot, "src", "Recall.UI");
+        var forbidden = new[]
+        {
+            "ThemeService",
+            "LocaleService",
+            "IScopeManagerService",
+        };
+
+        // Act
+        var hits = Directory
+            .EnumerateFiles(uiRoot, "*.*", SearchOption.AllDirectories)
+            .Where(path => path.EndsWith(".razor", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith(".razor.cs", StringComparison.OrdinalIgnoreCase))
+            .Where(path => !path.Contains("\\obj\\", StringComparison.Ordinal))
+            .Where(path => !path.Contains("\\State\\", StringComparison.Ordinal))
+            .Select(path => (path, text: File.ReadAllText(path)))
+            .Where(pair => forbidden.Any(token => pair.text.Contains(token, StringComparison.Ordinal)))
+            .Select(pair => pair.path)
+            .ToList();
+
+        // Assert
+        hits.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void RazorMarkup_WhenScanned_HasNoCodeBlocks()
+    {
+        // Arrange
+        var uiRoot = Path.Combine(RepoRoot, "src", "Recall.UI");
+        var razorFiles = Directory
+            .EnumerateFiles(uiRoot, "*.razor", SearchOption.AllDirectories)
+            .Where(path => !path.Contains("\\obj\\", StringComparison.Ordinal))
+            .ToList();
+
+        // Act
+        var withCode = razorFiles
+            .Where(path => File.ReadAllText(path).Contains("@code", StringComparison.Ordinal))
+            .ToList();
+
+        // Assert
+        withCode.Should().BeEmpty();
+    }
+
+    [Fact]
     public void AddRecallCore_CanBeCalledWithoutMaui()
     {
         // Arrange
@@ -314,7 +397,9 @@ public sealed class SolutionShapeTests
 
         // Assert
         returned.Should().BeSameAs(services);
-        services.Count.Should().Be(0);
+        services.Should().Contain(descriptor => descriptor.ServiceType == typeof(Recall.Core.Theme.ThemeService));
+        services.Should().Contain(descriptor => descriptor.ServiceType == typeof(Recall.Core.Locale.LocaleService));
+        services.Should().Contain(descriptor => descriptor.ServiceType == typeof(IScopeManagerService));
     }
 
     [Fact]

@@ -21,7 +21,7 @@ The moat is three constraints at once:
 | Piece | Choice |
 |---|---|
 | TFM | `net10.0` (.NET 10 LTS). Not .NET 9. .NET 11 RC1 (8 Sep 2026, go-live) is not the target until ONNX embedding and ZVec search are measured faster on `net11.0`. |
-| UI host | MAUI Blazor Hybrid. Razor UI shared. MudBlazor plus Tailwind. No Blazor WebAssembly. No second Native AOT desktop codebase in v1. No web client. |
+| UI host | MAUI Blazor Hybrid. Razor UI shared. Tailwind owns layout and screen chrome; MudBlazor only where it does not fight Tailwind (palette mapped via CSS variables in `tokens.css`). One `ShellUiStore` snapshot in `Recall.UI` is the only UI state source for theme, locale, route, and grants. No Blazor WebAssembly. No second Native AOT desktop codebase in v1. No web client. |
 | RIDs | `android-arm64`, `ios-arm64`, `win-x64`, `maccatalyst-arm64` |
 | Vector DB | NuGet id ZVec.NET, version 1.0.0-beta.6. Source tree D:\A_S\AdamSystems.ZVec.NET has Version 1.0.0-beta.6+zvec.0.7.0. Do not restore a package named AdamSystems.ZVec.NET. |
 | Embedder | EmbeddingGemma 2 via `Microsoft.ML.OnnxRuntime`. Asset: `onnx-community/embeddinggemma-2-ONNX`. No fine-tune in v1. No cloud embedding API. `Microsoft.ML.OnnxRuntimeGenAI` is not used. It is the text-generation loop, and iOS is not a supported OS. |
@@ -56,7 +56,7 @@ EmbeddingGemma 2 facts the panel must not invent past:
 ## Solution shape
 
 ```
-Recall.sln
+Recall.slnx
   src/Recall.Core/          # no MAUI, no UI
   src/Recall.UI/            # Razor class library, depends on Core abstractions
   src/Recall.Maui/          # composition root and platform heads

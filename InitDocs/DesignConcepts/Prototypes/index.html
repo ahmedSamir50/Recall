@@ -1,8 +1,18 @@
-<!doctype html><html lang="en" dir="ltr" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Recall</title><link rel="icon" href="data:,">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script><script src="tw.js"></script><link rel="stylesheet" href="tokens.css">
-</head><body class="min-h-screen overflow-hidden">
-<canvas id="bg" aria-hidden="true"></canvas><div class="scrim"></div>
-<div id="app" class="relative z-10 h-screen flex flex-col"></div>
-<script type="module" src="app.js"></script></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Recall prototype — App pages</title>
+<style>body{margin:0;background:#0B0D12;color:#E8E5DF;font:15px/1.5 Inter,system-ui,sans-serif}main{max-width:1100px;margin:0 auto;padding:40px 20px}
+h1{font:600 28px 'Space Grotesk',system-ui;margin:0 0 6px}p{color:#AEB9C4;margin:0 0 20px}h2{font:600 13px ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:#AEB9C4;margin:32px 0 12px}
+.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}a.c{display:block;text-decoration:none;color:inherit;background:#15181E;border:1px solid rgba(174,185,196,.18);border-radius:14px;overflow:hidden}
+a.c:hover,a.c:focus-visible{border-color:#00F2FE;outline:none}a.c img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top;background:#000}
+.b{padding:12px 14px}.b b{display:block;font-size:16px}.b span{color:#AEB9C4;font-size:13px}.t{display:inline-block;font:500 11px ui-monospace,monospace;padding:2px 8px;border-radius:99px;margin-bottom:6px}
+.app{background:rgba(0,242,254,.14);color:#00F2FE}.mk{background:rgba(255,196,107,.14);color:#FFC46B}.dv{background:rgba(201,162,255,.16);color:#C9A2FF}</style></head><body><main>
+<h1>Recall prototype — pages</h1><p>Double-click works: every page runs straight from disk (file://). Pick a page below. Inside the app, use the side rail (or bottom tabs on phone) to switch between Search, Graph and Onboarding.</p>
+<h2>The app</h2><div class="g">
+<a class="c" href="home.html"><img src="shots/file-home-1600.png" alt=""><div class="b"><span class="t app">APP</span><b>Home / Search</b><span>App shell: header, rail, search bar with Find / Group / Tag, results, details panel.</span></div></a>
+<a class="c" href="onboarding.html"><img src="shots/file-onboarding-1280.png" alt=""><div class="b"><span class="t app">APP</span><b>Onboarding</b><span>Welcome → choose folders → download models → ready.</span></div></a>
+<a class="c" href="graph.html"><img src="shots/file-graph-1280.png" alt=""><div class="b"><span class="t app">APP</span><b>Graph (Lattice)</b><span>How memories connect. Secondary view.</span></div></a>
+<a class="c" href="model-fail.html"><img src="shots/file-model-fail-1280.png" alt=""><div class="b"><span class="t app">APP · STATE</span><b>Model download failed</b><span>Checksum mismatch with Retry.</span></div></a>
+</div>
+<h2>Not the app</h2><div class="g">
+<a class="c" href="landing.html"><img src="shots/file-landing-1280.png" alt=""><div class="b"><span class="t mk">MARKETING WEBSITE</span><b>Landing page</b><span>Public website for Recall. Not part of the app.</span></div></a>
+<a class="c" href="lab.html"><img src="shots/file-lab-1280.png" alt=""><div class="b"><span class="t dv">DEV TOOL</span><b>Shader lab</b><span>Background animation test bench.</span></div></a>
+</div><p style="margin-top:28px">Theme and language toggles are in each app page's header. Design rules: ..\Bible\RECALL_DESIGN_BIBLE.md</p></main></body></html>

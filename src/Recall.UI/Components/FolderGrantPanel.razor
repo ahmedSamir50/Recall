@@ -1,0 +1,52 @@
+@inherits RecallComponentBase
+
+<section class="g2 rounded-2xl w-full max-w-640 p-5 rise">
+    @if (ShowStepper)
+    {
+        <ol class="flex gap-2 mb-6" aria-label="progress">
+            @for (var i = 1; i <= 3; i++)
+            {
+                <li class="h-1 flex-1 rounded-full" style="background:@(i <= Step ? "var(--cyan-ink)" : "var(--c3)")"></li>
+            }
+        </ol>
+    }
+    <h2 class="f-head font-semibold text-24 md:text-28 mb-2">@T("Folders_Title")</h2>
+    <p class="ink2 mb-6">@T("Folders_Lead")</p>
+    @if (ShowIosNote)
+    {
+        <p class="text-13 ink3 mb-4">@T("Folders_IosNote")</p>
+    }
+    <ul class="flex flex-col gap-2 mb-4">
+        @foreach (var grant in Ui.Current.Grants)
+        {
+            <li class="flex items-center gap-3 p-3 rounded-xl border bd" style="background:var(--c1)">
+                <span class="flex-1 min-w-0">
+                    <span class="block font-medium">@grant.DisplayName</span>
+                    <bdi class="ltr block f-mono text-12 ink3 truncate text-start">@grant.Path</bdi>
+                </span>
+                <button type="button" class="btn btn-g !py-1 text-13" @onclick="() => Remove(grant.Path)">×</button>
+            </li>
+        }
+    </ul>
+    @if (!string.IsNullOrEmpty(overlapWarning))
+    {
+        <p class="text-13 er mb-3">@overlapWarning</p>
+    }
+    @if (!string.IsNullOrEmpty(permissionError))
+    {
+        <p class="text-13 er mb-3">@permissionError</p>
+    }
+    <button type="button" class="btn btn-g w-full justify-center mb-4 border-dashed" @onclick="AddFolderAsync">@T("Folders_Add")</button>
+    <p class="text-13 ink3 flex gap-2 mb-6">@T("Folders_SkipNote")</p>
+    @if (!Ui.Current.CanContinueFolders)
+    {
+        <p class="text-13 ink3 mb-4">@T("Folders_PickOne")</p>
+    }
+    @if (ShowNavButtons)
+    {
+        <div class="flex justify-between gap-3">
+            <button type="button" class="btn btn-g" @onclick="OnBack">@T("Btn_Back")</button>
+            <button type="button" class="btn btn-p" disabled="@(!Ui.Current.CanContinueFolders)" @onclick="OnContinue">@T("Btn_Continue")</button>
+        </div>
+    }
+</section>

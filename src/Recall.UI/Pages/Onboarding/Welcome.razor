@@ -1,0 +1,25 @@
+@page "/onboarding/welcome"
+@layout OnboardingLayout
+@inherits RecallComponentBase
+
+<OnboardingHeader Step="0" />
+<main class="flex-1 overflow-auto grid place-items-center px-4 py-6">
+    <section class="max-w-760 w-full text-center rise">
+        <div class="inline-flex mb-6"><PrivacyPill /></div>
+        <p class="lbl mb-4">@T("Onboard_Kicker")</p>
+        <h1 class="f-head font-bold text-34 md:text-48 md:text-60 leading-tight mb-5">
+            <span class="cy">@T("Onboard_Headline")</span>
+        </h1>
+        <p class="ink2 text-16 md:text-17 max-w-[560px] mx-auto mb-8">@T("Onboard_Lead")</p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center mb-10">
+            <button type="button" class="btn btn-p justify-center" @onclick="GoToFolders">@T("Onboard_ChooseFolders")</button>
+            <button type="button" class="btn btn-g justify-center" disabled>@T("Onboard_PrivacyLink")</button>
+        </div>
+        <ul class="g2 rounded-2xl grid grid-cols-2 md:grid-cols-4 text-13">
+            <li class="py-3 px-3">@T("Onboard_Fact1")</li>
+            <li class="py-3 px-3">@T("Onboard_Fact2")</li>
+            <li class="py-3 px-3">@T("Onboard_Fact3")</li>
+            <li class="py-3 px-3">@T("Onboard_Fact4")</li>
+        </ul>
+    </section>
+</main>

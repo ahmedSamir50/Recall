@@ -1,0 +1,134 @@
+@page "/"
+@inherits RecallComponentBase
+
+<div class="px-3 md:px-6 pt-4 md:pt-6 max-w-1500 mx-auto">
+    <div class="g3 rounded-2xl p-2 flex flex-wrap sm:flex-nowrap items-center gap-2 mb-3">
+        <div class="flex p-1 rounded-xl" style="background:var(--c1)" role="tablist">
+            <span class="h-10 px-3 rounded-lg text-13 font-medium btn-p flex items-center gap-2" role="tab" aria-selected="true">
+                <RecallIcon Name="search" Css="w-4 h-4 hidden md:block" />@T("Mode_Find")
+            </span>
+            <span class="h-10 px-3 rounded-lg text-13 font-medium ink2 flex items-center gap-2" role="tab" aria-selected="false">
+                <RecallIcon Name="lat" Css="w-4 h-4 hidden md:block" />@T("Mode_Group")
+            </span>
+            <span class="h-10 px-3 rounded-lg text-13 font-medium ink2 flex items-center gap-2" role="tab" aria-selected="false">
+                <RecallIcon Name="doc" Css="w-4 h-4 hidden md:block" />@T("Mode_Tag")
+            </span>
+        </div>
+        <div class="order-first sm:order-none basis-full sm:basis-auto flex-1 min-w-0 text-15 md:text-17 font-medium sm:truncate px-2 py-2 ink3">@T("Home_QueryDemo")</div>
+        <span class="hidden sm:inline-flex pill f-mono text-11 cy" style="border-color:transparent;background:color-mix(in srgb,var(--cyan) 10%,transparent)"><bdi class="ltr">@D(T("Home_LatencyDemo"))</bdi></span>
+        <kbd class="hidden lg:inline-flex pill f-mono text-11 ink2"><bdi class="ltr">Ctrl K</bdi></kbd>
+    </div>
+    <div class="flex items-center gap-2 mb-6 overflow-auto pb-1">
+        <span class="lbl shrink-0">@T("Home_ContextLabel")</span>
+        @foreach (var chip in ContextChips)
+        {
+            <span class="pill shrink-0 text-12 ink" style="background:var(--c1)">@chip</span>
+        }
+    </div>
+    <div class="flex items-baseline justify-between mb-4">
+        <h1 class="f-head font-semibold text-20">@T("Home_Results") <span class="ink2 text-14 font-normal ms-2">@D(T("Home_ResultsSub"))</span></h1>
+        <span class="pill text-12 ink2">@T("Home_Sort")</span>
+    </div>
+    <div class="flex gap-5">
+        <div class="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-6 xl:grid-cols-12 gap-4 pb-8">
+            <article class="card g2 md:col-span-6 xl:col-span-7 overflow-hidden rise">
+                <div class="relative aspect-16-10 md:aspect-video xl:aspect-16-9 photo-placeholder">
+                    <div class="absolute inset-0" style="background:linear-gradient(180deg,transparent 35%,rgba(8,10,14,.92))"></div>
+                    <div class="absolute top-3 inset-x-3 flex gap-2">
+                        <span class="pill f-mono text-11 tag-img" style="border-color:transparent"><RecallIcon Name="img" Css="w-3.5 h-3.5" />@T("Kind_Photo")</span>
+                        <span class="pill f-mono text-11 text-white" style="background:rgba(0,0,0,.55);border-color:transparent"><bdi class="ltr">@D(T("Home_MatchDemo"))</bdi> @T("Home_Match")</span>
+                    </div>
+                    <div class="absolute bottom-0 inset-x-0 p-4 md:p-5 text-white">
+                        <p class="f-mono text-12 mb-1" style="color:#C7D2DC">@D(T("Home_Card1Meta"))</p>
+                        <h3 class="f-head font-semibold text-20 md:text-24">@T("Home_Card1Title")</h3>
+                    </div>
+                </div>
+                <div class="p-4 md:p-5 flex flex-wrap gap-3 items-center justify-between">
+                    <p class="ink2 italic border-s-2 ps-3" style="border-color:var(--cyan-ink)">@T("Home_Card1Note")</p>
+                    <span class="text-12 ink3 flex items-center gap-2"><RecallIcon Name="lock" Css="w-3.5 h-3.5" />@T("Home_StoredLocally")</span>
+                </div>
+            </article>
+            <article class="card g2 md:col-span-6 xl:col-span-5 p-4 md:p-5 flex flex-col gap-4 rise">
+                <div class="flex justify-between">
+                    <span class="pill f-mono text-11 tag-aud" style="border-color:transparent"><RecallIcon Name="mic" Css="w-3.5 h-3.5" />@T("Kind_Voice")</span>
+                    <bdi class="ltr f-mono text-12 ink2">00:14 / 00:30</bdi>
+                </div>
+                <h3 class="f-head font-semibold text-18">@D(T("Home_Card2Title"))</h3>
+                <div class="flex items-center gap-3 p-3 rounded-xl" style="background:var(--c1)">
+                    <span class="w-10 h-10 rounded-full grid place-items-center shrink-0" style="background:var(--violet-bg);color:var(--violet)" aria-hidden="true"><RecallIcon Name="play" Css="w-4 h-4 flip" /></span>
+                    <div class="flex items-center gap-1 h-10 overflow-hidden" dir="ltr">
+                        @foreach (var h in WaveHeights)
+                        {
+                            <span class="rounded-full" style="width:3px;height:@(h)px;background:var(--violet)"></span>
+                        }
+                    </div>
+                </div>
+                <p class="text-15" dir="ltr" lang="it">@T("Home_Card2Quote")</p>
+                <p class="text-13 ink2 border-t bd pt-3">@T("Home_Card2Translated")</p>
+            </article>
+            <article class="card g2 md:col-span-3 xl:col-span-4 p-4 flex flex-col gap-3 rise">
+                <span class="pill f-mono text-11 tag-doc self-start" style="border-color:transparent"><RecallIcon Name="doc" Css="w-3.5 h-3.5" />@T("Kind_Document")</span>
+                <h3 class="font-semibold"><bdi>@T("Home_Card3Title")</bdi></h3>
+                <p class="text-13 ink2">@D(T("Home_Card3Meta"))</p>
+                <div class="mt-auto h-16 rounded-lg p-2 flex flex-col gap-2" style="background:var(--c1)">
+                    <span class="h-1.5 rounded" style="width:90%;background:var(--c3)"></span>
+                    <span class="h-1.5 rounded" style="width:70%;background:var(--c3)"></span>
+                    <span class="h-1.5 rounded" style="width:80%;background:var(--c3)"></span>
+                    <span class="h-1.5 rounded" style="width:40%;background:var(--c3)"></span>
+                </div>
+            </article>
+            <article class="card g2 md:col-span-3 xl:col-span-5 p-4 flex flex-col gap-3 rise">
+                <div class="flex justify-between">
+                    <span class="pill f-mono text-11 tag-vid" style="border-color:transparent"><RecallIcon Name="film" Css="w-3.5 h-3.5" />@T("Kind_Video")</span>
+                    <span class="f-mono text-11 ink3">MP4</span>
+                </div>
+                <h3 class="font-semibold">@T("Home_Card4Title")</h3>
+                <div class="grid grid-cols-3 gap-2">
+                    @for (var i = 0; i < 3; i++)
+                    {
+                        <div class="relative rounded-lg overflow-hidden aspect-video frame-placeholder @(i == 1 ? "ring-cyan" : "")">
+                            <bdi class="ltr absolute bottom-1 start-1 f-mono text-10 text-white px-1 rounded" style="background:rgba(0,0,0,.6)">02:@(14 + i * 7)</bdi>
+                        </div>
+                    }
+                </div>
+            </article>
+            <article class="card g2 md:col-span-3 xl:col-span-3 p-4 flex flex-col gap-2 border-dashed rise">
+                <span class="am"><RecallIcon Name="alert" /></span>
+                <h3 class="font-semibold">@T("Home_UnavailTitle")</h3>
+                <bdi class="ltr f-mono text-11 ink3 truncate block">E:\Trips\rome_014.heic</bdi>
+                <p class="text-13 ink2">@T("Home_UnavailLead")</p>
+                <button type="button" class="btn btn-g text-13 self-start mt-1" disabled>@T("Home_UnavailBtn")</button>
+            </article>
+            <article class="card g2 md:col-span-3 xl:col-span-12 p-4 flex items-center gap-3 md:hidden xl:flex rise">
+                <span class="vi"><RecallIcon Name="mic" /></span>
+                <div>
+                    <h3 class="font-semibold text-14">@T("Home_AudioTitle")</h3>
+                    <p class="text-13 ink2">@D(T("Home_AudioLead"))</p>
+                </div>
+            </article>
+        </div>
+        <aside class="hidden 2xl:flex flex-col gap-4 w-insp shrink-0 g2 rounded-2xl p-5 self-start sticky top-0">
+            <p class="lbl">@T("Home_Inspector")</p>
+            <div class="rounded-xl aspect-video photo-placeholder" aria-hidden="true"></div>
+            <h3 class="f-head font-semibold text-17">@T("Home_Card1Title")</h3>
+            <div>
+                <p class="lbl mb-2">@T("Home_Why")</p>
+                <ul class="flex flex-col gap-2 text-13">
+                    <li class="flex gap-2"><span class="cy"><RecallIcon Name="check" Css="w-4 h-4" /></span>@T("Home_Why1")</li>
+                    <li class="flex gap-2"><span class="em"><RecallIcon Name="check" Css="w-4 h-4" /></span>@T("Home_Why2")</li>
+                    <li class="flex gap-2"><span class="vi"><RecallIcon Name="check" Css="w-4 h-4" /></span>@T("Home_Why3")</li>
+                </ul>
+            </div>
+            <dl class="grid grid-cols-2 gap-y-2 text-12 f-mono border-t bd pt-3">
+                <dt class="ink3">@T("Home_FileLabel")</dt>
+                <dd class="text-end"><bdi class="ltr">@T("Home_FileDemo")</bdi></dd>
+                <dt class="ink3">@T("Home_SizeLabel")</dt>
+                <dd class="text-end"><bdi class="ltr">@T("Home_SizeDemo")</bdi></dd>
+            </dl>
+            <div class="flex gap-2">
+                <button type="button" class="btn btn-p flex-1 justify-center text-13" disabled>@T("Home_OpenFile")</button>
+                <button type="button" class="btn btn-g flex-1 justify-center text-13" disabled>@T("Home_ShowFolder")</button>
+            </div>
+        </aside>
+    </div>
+</div>

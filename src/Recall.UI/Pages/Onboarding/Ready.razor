@@ -1,0 +1,18 @@
+@page "/onboarding/ready"
+@layout OnboardingLayout
+@inherits RecallComponentBase
+
+<OnboardingHeader Step="3" />
+<main class="flex-1 overflow-auto grid place-items-center px-4 py-6">
+    <section class="text-center max-w-[560px] rise">
+        <ol class="flex gap-2 mb-6 justify-center" aria-label="progress">
+            <li class="h-1 w-16 rounded-full" style="background:var(--cyan-ink)"></li>
+            <li class="h-1 w-16 rounded-full" style="background:var(--cyan-ink)"></li>
+            <li class="h-1 w-16 rounded-full" style="background:var(--cyan-ink)"></li>
+        </ol>
+        <div class="w-16 h-16 rounded-2xl mx-auto grid place-items-center mb-6 em g3">✓</div>
+        <h2 class="f-head font-bold text-32 mb-3">@T("Ready_Title")</h2>
+        <p class="ink2 text-16 mb-8">@T("Ready_Lead")</p>
+        <button type="button" class="btn btn-p" @onclick="GoHome">@T("Ready_Start")</button>
+    </section>
+</main>

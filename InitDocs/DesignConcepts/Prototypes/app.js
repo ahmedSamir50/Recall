@@ -1,6 +1,6 @@
 import {mountLattice} from './shader.js';
 const Q=new URLSearchParams(location.search);
-const st={s:Q.get('s')||localStorage.rs||'welcome',theme:Q.get('theme')||localStorage.rt||'dark',lang:Q.get('lang')||localStorage.rl||'en',mode:'find',dl:Q.has('fail')?'fail':(Q.get('dl')||'run'),pct:+(Q.get('pct')||62)};
+const st={s:window.RECALL_SCREEN||Q.get('s')||'welcome',theme:Q.get('theme')||localStorage.rt||'dark',lang:Q.get('lang')||localStorage.rl||'en',mode:'find',dl:(window.RECALL_FAIL||Q.has('fail'))?'fail':(Q.get('dl')||'run'),pct:+(Q.get('pct')||62)};
 const T={en:{
 brand:'Recall',local:'On this device',egress:'0 KB sent',
 w_k:'Private memory engine · v1',w_h:'Everything you saw, said and wrote —<br>found in a sentence.',w_p:'Recall indexes the folders you choose and answers in plain language. Photos, voice notes, documents and code stay on this computer. Nothing is uploaded, ever.',
@@ -8,7 +8,7 @@ w_b1:'Choose folders',w_b2:'How it stays private',w_f:['No account','No cloud co
 step:'Step',of:'of',f_h:'Pick what Recall may read',f_p:'Only these folders are indexed. You can add or remove them later in Preferences.',f_add:'Add folder',f_items:'items',f_skip:'Skipped: system folders, other apps, anything you don’t pick.',next:'Continue',back:'Back',
 m_h:'Download the on-device models',m_p:'One-time download. After this, search works without internet.',m_vis:'Vision + text embeddings',m_txt:'Language model',m_aud:'Speech-to-text',m_desk:'Desktop only',m_ok:'Verified',m_run:'Downloading',m_wait:'Queued',m_fail:'Checksum didn’t match — file discarded',m_retry:'Retry download',m_why:'We check every file against a SHA-256 hash before using it.',
 r_h:'Your memory is ready',r_p:'12,480 items indexed from 3 folders. Indexing continues quietly in the background.',r_b:'Start searching',
-nav:['Search','Lattice','Folders','Models','Preferences'],vault:'Personal vault',
+nav:['Search','Graph','Onboarding','Folders','Preferences'],pages:'All pages',openapp:'Open app',vault:'Personal vault',
 q:'The red scooter I saw near the Colosseum last summer',modes:['Find','Group','Tag'],ctx:'Understood as',ctxs:['Rome, Italy','Voice memo','Vespa','Summer 2024'],
 res:'Results',resn:'6 matches across 4 kinds',sort:'Best match',
 img:'Photo',aud:'Voice memo',doc:'Document',code:'Code',vid:'Video',
@@ -31,7 +31,7 @@ w_b1:'اختر المجلدات',w_b2:'كيف تبقى بياناتك خاصة',
 step:'الخطوة',of:'من',f_h:'اختر ما يُسمح لريكول بقراءته',f_p:'تُفهرس هذه المجلدات فقط. يمكنك الإضافة أو الإزالة لاحقًا من التفضيلات.',f_add:'إضافة مجلد',f_items:'عنصر',f_skip:'مُستثنى: مجلدات النظام والتطبيقات الأخرى وكل ما لا تختاره.',next:'متابعة',back:'رجوع',
 m_h:'نزّل النماذج على جهازك',m_p:'تنزيل لمرة واحدة. بعدها يعمل البحث دون إنترنت.',m_vis:'تضمينات الصور والنصوص',m_txt:'نموذج اللغة',m_aud:'تحويل الكلام إلى نص',m_desk:'للكمبيوتر فقط',m_ok:'تم التحقق',m_run:'جارٍ التنزيل',m_wait:'في الانتظار',m_fail:'البصمة غير مطابقة — حُذف الملف',m_retry:'أعد التنزيل',m_why:'نتحقق من كل ملف ببصمة SHA-256 قبل استخدامه.',
 r_h:'ذاكرتك جاهزة',r_p:'فُهرس ١٢٬٤٨٠ عنصرًا من ٣ مجلدات. تستمر الفهرسة بهدوء في الخلفية.',r_b:'ابدأ البحث',
-nav:['البحث','الشبكة','المجلدات','النماذج','التفضيلات'],vault:'الخزنة الشخصية',
+nav:['البحث','الشبكة','الإعداد','المجلدات','التفضيلات'],pages:'كل الصفحات',openapp:'افتح التطبيق',vault:'الخزنة الشخصية',
 q:'السكوتر الأحمر الذي رأيته قرب الكولوسيوم الصيف الماضي',modes:['ابحث','جمّع','وسِّم'],ctx:'فُهم على أنه',ctxs:['روما، إيطاليا','ملاحظة صوتية','فيسبا','صيف ٢٠٢٤'],
 res:'النتائج',resn:'٦ نتائج من ٤ أنواع',sort:'الأقرب',
 img:'صورة',aud:'ملاحظة صوتية',doc:'مستند',code:'كود',vid:'فيديو',
@@ -69,7 +69,7 @@ const privacy=`<span class="pill f-mono text-[11px] em" style="background:var(--
 /* ---------- onboarding ---------- */
 function frame(stepN,body){return `<header class="h-header shrink-0 flex items-center justify-between px-5 md:px-8">
 <div class="flex items-center gap-2.5">${logo}<span class="f-head font-semibold text-[16px]">${t('brand')}</span></div>
-<div class="flex items-center gap-2">${stepN?`<span class="lbl hidden sm:inline">${t('step')} ${N(stepN)} ${t('of')} ${N(3)}</span>`:''}${toggles()}</div></header>
+<div class="flex items-center gap-2"><button data-go="home" class="h-9 px-3 rounded-lg btn-g ink2 text-[13px] hidden sm:inline-flex items-center">${t('openapp')}</button>${stepN?`<span class="lbl hidden sm:inline">${t('step')} ${N(stepN)} ${t('of')} ${N(3)}</span>`:''}${toggles()}</div></header>
 <main class="flex-1 overflow-auto grid place-items-center px-4 py-6">${body}</main>`}
 function welcome(){return frame(0,`<section class="max-w-[760px] w-full text-center rise">
 <div class="inline-flex mb-6">${privacy}</div>
@@ -107,7 +107,7 @@ function ready(){return frame(3,`<section class="text-center max-w-[560px] rise"
 <button data-go="home" class="btn btn-p">${ic('search','w-4 h-4')}${t('r_b')}</button></section>`)}
 
 /* ---------- shell ---------- */
-function shell(main,active){const navI=['search','lat','folder','chip','gear'],go=['home','lattice','folders','model','home'];
+function shell(main,active){const navI=['search','lat','arrow','folder','gear'],go=['home','lattice','welcome','folders','home'];
 return `<header class="g1 h-header shrink-0 flex items-center gap-3 px-3 md:px-4 border-b bd">
 <div class="flex items-center gap-2.5 md:w-[200px]">${logo}<span class="f-head font-semibold text-[15px]">${t('brand')}</span></div>
 <div class="flex-1"></div><span class="hidden md:inline-flex">${privacy}</span>${toggles()}
@@ -116,6 +116,7 @@ return `<header class="g1 h-header shrink-0 flex items-center gap-3 px-3 md:px-4
 <nav class="g1 hidden md:flex flex-col w-rail lg:w-railx shrink-0 border-e bd p-2 gap-1" aria-label="Main">
 <div class="hidden lg:flex items-center gap-2 px-3 py-2.5 mb-2 rounded-xl border bd text-[13px] font-medium"><span class="w-2 h-2 rounded-full" style="background:var(--emerald)"></span>${t('vault')}</div>
 ${t('nav').map((n,i)=>`<button data-go="${go[i]}" class="flex items-center gap-3 h-10 px-3 rounded-xl text-[14px] ${i===active?'cy font-medium':'ink2 hover:bg-[var(--c2)]'}" style="${i===active?'background:color-mix(in srgb,var(--cyan) 11%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cyan) 28%,transparent)':''}" aria-current="${i===active}">${ic(navI[i])}<span class="hidden lg:inline">${n}</span></button>`).join('')}
+<a href="index.html" class="flex items-center gap-3 h-10 px-3 rounded-xl text-[14px] ink2 hover:bg-[var(--c2)]">${ic('menu')}<span class="hidden lg:inline">${t('pages')}</span></a>
 <div class="flex-1"></div>
 <div class="hidden lg:block p-3 rounded-xl border bd text-[12px]"><div class="flex justify-between mb-2"><span class="lbl !text-[10px]">${t('ondev')}</span><span class="f-mono em text-[11px]">${t('s_ready')}</span></div>
 <div class="h-1 rounded-full mb-2" style="background:linear-gradient(90deg,var(--cyan-ink),var(--violet))"></div><bdi class="ltr f-mono ink3 text-[11px]">SigLIP-2 + Gemma-2</bdi></div></nav>
@@ -165,7 +166,7 @@ const V={welcome,folders,model,ready,home,lattice};
 let L;function render(){const h=document.documentElement;h.lang=st.lang;h.dir=st.lang==='ar'?'rtl':'ltr';h.dataset.theme=st.theme;
 document.getElementById('app').innerHTML=(V[st.s]||welcome)();L&&L.setTheme(st.theme);}
 document.addEventListener('click',e=>{const g=e.target.closest('[data-go],[data-a],[data-mode]');if(!g)return;
-if(g.dataset.go){st.s=g.dataset.go;localStorage.rs=st.s}
+if(g.dataset.go){st.s=g.dataset.go;scrollTo(0,0)}
 if(g.dataset.a==='theme'){st.theme=st.theme==='dark'?'light':'dark';localStorage.rt=st.theme}
 if(g.dataset.a==='lang'){st.lang=st.lang==='en'?'ar':'en';localStorage.rl=st.lang}
 if(g.dataset.a==='retry'){st.dl='run';st.pct=4;tick()}

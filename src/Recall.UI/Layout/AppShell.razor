@@ -1,0 +1,55 @@
+@inherits ShellLayoutBase
+
+<LatticeBackground />
+<div class="shell-root">
+    <header class="g1 h-header shrink-0 flex items-center gap-3 px-3 md:px-4 border-b bd">
+        <div class="flex items-center gap-2 md:w-[200px]">
+            <span class="w-7 h-7 rounded-lg grid place-items-center cy logo-mark" aria-hidden="true">
+                <RecallIcon Name="lat" Css="w-4 h-4" />
+            </span>
+            <span class="f-head font-semibold text-15">@RecallText.Get("Brand", Snapshot.Culture)</span>
+        </div>
+        <div class="flex-1"></div>
+        <span class="hidden md:inline-flex"><PrivacyPill /></span>
+        <ThemeLanguageToggles />
+        <span class="w-8 h-8 rounded-full grid place-items-center text-12 font-semibold" style="background:var(--violet-bg);color:var(--violet)" aria-hidden="true">@Device.GetInitials()</span>
+    </header>
+    <div class="flex flex-1 min-h-0">
+        <nav class="g1 hidden md:flex flex-col w-rail lg:w-railx shrink-0 border-e bd p-2 gap-1" aria-label="Main">
+            <div class="hidden lg:flex items-center gap-2 px-3 py-2 mb-2 rounded-xl border bd text-13 font-medium">
+                <span class="w-2 h-2 rounded-full" style="background:var(--emerald)"></span>@RecallText.Get("Vault_Label", Snapshot.Culture)
+            </div>
+            <ShellNavLink Href="/" LabelKey="Nav_Search" Icon="search" />
+            <ShellNavLink Href="/lattice" LabelKey="Nav_Lattice" Icon="lat" />
+            <ShellNavLink Href="/folders" LabelKey="Nav_Folders" Icon="folder" />
+            <ShellNavLink Href="/models" LabelKey="Nav_Models" Icon="chip" />
+            <ShellNavLink Href="/preferences" LabelKey="Nav_Preferences" Icon="gear" />
+            <div class="flex-1"></div>
+            <div class="hidden lg:block p-3 rounded-xl border bd text-12">
+                <div class="flex justify-between mb-2">
+                    <span class="lbl">@RecallText.Get("OnDevice_Label", Snapshot.Culture)</span>
+                    <span class="f-mono em text-11">@RecallText.Get("Status_Ready", Snapshot.Culture)</span>
+                </div>
+                <div class="h-1 rounded-full mb-2" style="background:linear-gradient(90deg,var(--cyan-ink),var(--violet))"></div>
+                <bdi class="ltr f-mono ink3 text-11">@RecallText.Get("OnDevice_ModelsStub", Snapshot.Culture)</bdi>
+            </div>
+        </nav>
+        <main class="flex-1 min-w-0 overflow-auto pb-20 md:pb-0">@Body</main>
+    </div>
+    <footer class="g1 h-status shrink-0 hidden md:flex items-center gap-5 px-4 border-t bd f-mono text-11 ink2">
+        <span class="flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full" style="background:var(--emerald)"></span>
+            @RecallText.Get("Status_ItemsDemo", Snapshot.Culture) @RecallText.Get("Status_ItemsSuffix", Snapshot.Culture)
+        </span>
+        <span class="am">@RecallText.Get("Status_IndexingPaused", Snapshot.Culture)</span>
+        <span class="flex-1"></span>
+        <bdi class="ltr">@RecallText.Get("OnDevice_ModelsStub", Snapshot.Culture)</bdi>
+        <span class="em">@RecallText.Get("Status_Ready", Snapshot.Culture)</span>
+    </footer>
+    <nav class="g1 md:hidden fixed bottom-0 inset-x-0 z-20 border-t bd grid grid-cols-4 pb-safe">
+        <ShellTabLink Href="/" LabelKey="Nav_Search" Icon="search" />
+        <ShellTabLink Href="/lattice" LabelKey="Nav_Lattice" Icon="lat" />
+        <ShellTabLink Href="/folders" LabelKey="Nav_Folders" Icon="folder" />
+        <ShellTabLink Href="/preferences" LabelKey="Nav_Preferences" Icon="gear" />
+    </nav>
+</div>

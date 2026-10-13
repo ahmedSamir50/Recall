@@ -1,0 +1,38 @@
+@page "/onboarding/models"
+@layout OnboardingLayout
+@inherits RecallComponentBase
+
+<OnboardingHeader Step="2" />
+<main class="flex-1 overflow-auto grid place-items-center px-4 py-6">
+    <section class="g2 rounded-2xl w-full max-w-640 p-5 rise">
+        <ol class="flex gap-2 mb-6" aria-label="progress">
+            <li class="h-1 flex-1 rounded-full" style="background:var(--cyan-ink)"></li>
+            <li class="h-1 flex-1 rounded-full" style="background:var(--cyan-ink)"></li>
+            <li class="h-1 flex-1 rounded-full" style="background:var(--c3)"></li>
+        </ol>
+        <h2 class="f-head font-semibold text-24 md:text-28 mb-2">@T("Models_Title")</h2>
+        <p class="ink2 mb-6">@T("Models_Lead")</p>
+        <ul class="flex flex-col gap-3 mb-5">
+            @foreach (var entry in ModelCatalog.All)
+            {
+                <li class="p-4 rounded-xl border bd" style="background:var(--c1)">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="flex-1 min-w-0">
+                            <span class="block font-medium">@ModelLabel(entry.Modality)</span>
+                            <bdi class="ltr f-mono text-12 ink3">@entry.DisplayName</bdi>
+                        </span>
+                        <span class="f-mono text-12 ink3">@T("Models_NotReady")</span>
+                    </div>
+                    <div class="h-1.5 rounded-full overflow-hidden" style="background:var(--c3)">
+                        <div class="h-full rounded-full" style="width:0%;background:var(--c3)"></div>
+                    </div>
+                </li>
+            }
+        </ul>
+        <p class="text-13 ink3 flex gap-2 mb-6">@T("Models_ShaNote")</p>
+        <div class="flex justify-between gap-3">
+            <button type="button" class="btn btn-g" @onclick="GoBack">@T("Btn_Back")</button>
+            <button type="button" class="btn btn-p" disabled>@T("Btn_Continue")</button>
+        </div>
+    </section>
+</main>

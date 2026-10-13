@@ -12,6 +12,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
     <ProjectReference Include="..\Recall.Core\Recall.Core.csproj" />
     <PackageReference Include="MudBlazor" />
+    <PackageReference Include="System.Reactive" />
     <AdditionalFiles Include="BannedSymbols.txt" />
   </ItemGroup>
 </Project>

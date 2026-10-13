@@ -16,8 +16,15 @@ A one-file bugfix does not use this chain. It still follows `development-rules.m
 2. Launch all ten experts in one parallel batch. `subagent_type` is the expert id. Environment is local. Do not pick a model unless the user named one.
 3. Each prompt contains the plan verbatim plus the instructions below. Subagents do not see the user message unless you paste it.
 4. If a sign-off is missing a field, has an empty checked list, or agrees or rejects with no evidence, resume that expert once and ask for the missing evidence. Do not rewrite their verdict yourself.
-5. Publish the YAML list. Do not rewrite a short field into a paragraph. Then write the synthesis below.
-6. Stop. The user decides which recommendations enter the plan. Do not code from an unsigned plan.
+5. Publish the YAML list in the user-visible reply, first. Do not rewrite a short field into a paragraph. Then write the synthesis below. A plan card, a count, or a summary is not a sign-off.
+6. Write that same YAML into the open plan under `## Expert sign-offs` before the turn ends. Create the plan only after the blocks exist. If a plan tool creates the file first, edit the file in that same turn.
+7. Stop. The user decides which recommendations enter the plan. Do not code from an unsigned plan.
+
+## Same plan, later message
+
+A later message that closes a decision, changes scope, or corrects what a source means is the same gate. Launch all ten experts again with the revised plan. Replace the YAML in the reply and in the plan. Do not keep the previous verdicts. Do not answer, and do not edit the plan's behavior, before the new blocks are in both places.
+
+The user does not ask for this. Do not ask the user why a sign-off is missing or unchanged. A question about the harness display is not a new plan. A request to execute the plan is not a new plan.
 
 ## Expert ids
 

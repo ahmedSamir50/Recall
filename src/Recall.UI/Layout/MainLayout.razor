@@ -1,19 +1,5 @@
-@inherits LayoutComponentBase
-@inject IJSRuntime Js
+@inherits ShellLayoutBase
 
-<div lang="@UiCulture.Lang(CultureInfo.CurrentUICulture)" dir="@UiCulture.Dir(CultureInfo.CurrentUICulture)">
+<div lang="@Lang" dir="@Dir">
     @Body
 </div>
-
-@code {
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender)
-        {
-            return;
-        }
-
-        var culture = CultureInfo.CurrentUICulture;
-        await Js.InvokeVoidAsync("recallSetDocumentCulture", UiCulture.Lang(culture), UiCulture.Dir(culture));
-    }
-}
