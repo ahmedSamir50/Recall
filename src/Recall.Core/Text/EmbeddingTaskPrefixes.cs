@@ -10,6 +10,12 @@ public static class EmbeddingTaskPrefixes
 
     public const string ClassifyTask = "task: classification | query: ";
 
+    public const string TitleMarker = "title: ";
+
+    public const string TextJoiner = " | text: ";
+
+    public const string TextOnlyMarker = "text: ";
+
     public static string WrapSearchQuery(string query)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(query);
@@ -24,7 +30,7 @@ public static class EmbeddingTaskPrefixes
     public static string WrapTitledDocument(string title, string content)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(content);
-        if (content.StartsWith("title: ", StringComparison.Ordinal) && content.Contains(" | text: ", StringComparison.Ordinal))
+        if (content.StartsWith(TitleMarker, StringComparison.Ordinal) && content.Contains(TextJoiner, StringComparison.Ordinal))
         {
             throw new RecallFaultException(RecallFault.DocumentPrefixAppliedTwice);
         }
@@ -32,9 +38,9 @@ public static class EmbeddingTaskPrefixes
         var safeTitle = string.IsNullOrWhiteSpace(title) ? string.Empty : title.Trim();
         if (safeTitle.Length == 0)
         {
-            return "text: " + content;
+            return TextOnlyMarker + content;
         }
 
-        return "title: " + safeTitle + " | text: " + content;
+        return TitleMarker + safeTitle + TextJoiner + content;
     }
 }

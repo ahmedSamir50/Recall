@@ -1,0 +1,23 @@
+@namespace Recall.UI.Pages
+@page "/"
+@inherits RecallComponentBase
+
+<div class="px-3 md:px-6 pt-4 md:pt-6 max-w-1500 mx-auto">
+    <div class="g3 rounded-2xl p-2 flex flex-wrap sm:flex-nowrap items-center gap-2 mb-6">
+        <div class="flex p-1 rounded-xl" style="background:var(--c1)" role="tablist">
+            <span class="h-10 px-3 rounded-lg text-13 font-medium btn-p flex items-center gap-2" role="tab" aria-selected="true">
+                <RecallIcon Name="search" Css="w-4 h-4 hidden md:block" />@T("Mode_Find")
+            </span>
+        </div>
+        <div class="order-first sm:order-none basis-full sm:basis-auto flex-1 min-w-0 px-2 py-2">
+            <label class="sr-only" for="search-query">@T("Search_Placeholder")</label>
+            <input id="search-query" type="search" class="w-full text-15 md:text-17 font-medium bg-transparent outline-none ink3" placeholder="@T("Search_Placeholder")" disabled />
+        </div>
+        <kbd class="hidden lg:inline-flex pill f-mono text-11 ink2"><bdi class="ltr">Ctrl K</bdi></kbd>
+    </div>
+    <section class="g2 rounded-2xl p-8 md:p-12 text-center rise max-w-640 mx-auto">
+        <RecallIcon Name="search" Css="w-10 h-10 mx-auto mb-4 cy" />
+        <h1 class="f-head font-semibold text-22 mb-2">@T("Search_EmptyTitle")</h1>
+        <p class="ink2 text-15">@T("Search_EmptyLead")</p>
+    </section>
+</div>

@@ -72,8 +72,6 @@ public sealed class ShellUiStore : IDisposable
         locale.ApplyCulture(Current.Locale);
     }
 
-    public string ShapeDigits(string? text) => locale.ShapeDigits(text);
-
     public ScopeGrantAddResult TryAddGrant(ScopeFolderGrant grant)
     {
         var result = scope.TryAddGrant(grant);

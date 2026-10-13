@@ -2,14 +2,17 @@ namespace Recall.Core.Text;
 
 public static class GrantTextFiles
 {
-    private static readonly string[] Extensions =
-    [
-        ".txt", ".md", ".markdown", ".csv", ".json", ".xml", ".html", ".htm", ".log",
-    ];
+    private static string[] extensions = TextIngestOptions.DefaultExtensions;
+
+    public static void Use(TextIngestOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        extensions = options.ExtensionList();
+    }
 
     public static bool IsTextFile(string path)
     {
         var extension = Path.GetExtension(path);
-        return Extensions.Any(candidate => string.Equals(extension, candidate, StringComparison.OrdinalIgnoreCase));
+        return extensions.Any(candidate => string.Equals(extension, candidate, StringComparison.OrdinalIgnoreCase));
     }
 }

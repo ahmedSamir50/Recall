@@ -9,5 +9,6 @@
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" />
     <ProjectReference Include="..\Recall.Core\Recall.Core.csproj" />
+    <ProjectReference Include="..\Recall.Adapters\Recall.Adapters.csproj" />
   </ItemGroup>
 </Project>

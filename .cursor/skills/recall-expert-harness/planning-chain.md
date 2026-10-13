@@ -43,8 +43,21 @@ and .cursor/skills/recall-expert-harness/sign-off.md.
 Plan, verbatim:
 <paste>
 
-Research the repo and InitDocs before you answer. Push back when the plan, the user, or the docs are inconsistent, incomplete, or logically wrong. Agree only if the checked list supports it. Return only the YAML sign-off from sign-off.md. Two sentences maximum in each field. Do not edit files.
+Research the repo and InitDocs before you answer. Push back when the plan, the user, or the docs are inconsistent, incomplete, or logically wrong. Push back when the plan does not name the files, folders, and literals a later agent would otherwise invent. Agree only if the checked list supports it. Return only the YAML sign-off from sign-off.md. Two sentences maximum in each field. Do not edit files.
 ```
+
+## How detailed the plan must be
+
+The Phase 1 and Phase 2 plan was accepted as a short task list. The following code review then changed more than 58 files the plan had not named. A less capable model invented folder layout, literals, async shapes, and user-facing sentences. That fails this chain.
+
+Before the plan is something a later agent may execute, the synthesis must include a file manifest:
+
+- Every file to add, edit, or move, with its folder. Group by use (device identity, download, text encoder), not a flat pile of types.
+- Every new literal classified as a canon constant, an `appsettings` key, or both resx files. The resx cells are the actual Arabic and English sentences, written for a person, not for a log.
+- The public method and the branch a test will lock. "Add search" is not a task.
+- What the agent must not invent: extra projects, extra files, a second copy of a rule, a placeholder benchmark, Arabic-Indic digits, or a file extension the plan did not name.
+
+An expert pushes back when the pasted plan would leave those choices open. `unit-tests` pushes back when the only benchmark returns a constant.
 
 ## Synthesis
 

@@ -6,21 +6,21 @@ public static class UiCulture
 {
     public static string Lang(CultureInfo culture)
     {
-        if (culture.TwoLetterISOLanguageName == "ar")
+        if (culture.TwoLetterISOLanguageName == Recall.Core.Locale.UiLanguage.Arabic)
         {
-            return "ar";
+            return Recall.Core.Locale.UiLanguage.Arabic;
         }
 
-        return "en";
+        return Recall.Core.Locale.UiLanguage.English;
     }
 
     public static string Dir(CultureInfo culture)
     {
-        if (Lang(culture) == "ar")
+        if (Lang(culture) == Recall.Core.Locale.UiLanguage.Arabic)
         {
-            return "rtl";
+            return Recall.Core.Locale.UiLanguage.RightToLeft;
         }
 
-        return "ltr";
+        return Recall.Core.Locale.UiLanguage.LeftToRight;
     }
 }

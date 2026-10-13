@@ -73,7 +73,7 @@ public sealed class TextSearchIntegrationTests : IDisposable
         await provider.GetRequiredService<IGrantedTextIngestService>()
             .IngestGrantedTextAsync(TestContext.Current.CancellationToken);
 
-        var hits = search.Find("red planet", grants, TestContext.Current.CancellationToken);
+        var hits = await search.FindAsync("red planet", grants, TestContext.Current.CancellationToken);
         hits.Should().NotBeEmpty();
         hits[0].SourcePath.Should().Contain("mars.txt");
         hits.Should().OnlyContain(h => h.SourcePath.StartsWith(grants[0].Path, StringComparison.OrdinalIgnoreCase));

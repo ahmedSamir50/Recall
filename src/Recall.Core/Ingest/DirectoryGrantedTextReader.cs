@@ -18,7 +18,7 @@ public sealed class DirectoryGrantedTextReader : IGrantedTextReader
         foreach (var file in Directory.EnumerateFiles(grant.Path, "*.*", SearchOption.AllDirectories))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (!GrantTextFiles.IsTextFile(file))
+            if (!GrantTextFiles.IsTextFile(file) || !await TextFileSignature.FileIsSafeTextAsync(file, cancellationToken).ConfigureAwait(false))
             {
                 continue;
             }

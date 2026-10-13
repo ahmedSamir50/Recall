@@ -1,4 +1,5 @@
 using System.Globalization;
+using Recall.Core.Locale;
 using Recall.Core.Preferences;
 using Recall.Core.Scope;
 
@@ -15,8 +16,8 @@ public sealed record ShellUiSnapshot(
     bool CanContinueFolders)
 {
     public CultureInfo Culture => Locale == UiLocale.Ar
-        ? CultureInfo.GetCultureInfo("ar")
-        : CultureInfo.GetCultureInfo("en");
+        ? CultureInfo.GetCultureInfo(UiLanguage.Arabic)
+        : CultureInfo.GetCultureInfo(UiLanguage.English);
 
     public static ShellUiSnapshot CreateInitial(
         ThemePreference themePreference,
@@ -26,8 +27,8 @@ public sealed record ShellUiSnapshot(
         IReadOnlyList<ScopeFolderGrant> grants,
         bool canContinueFolders)
     {
-        var lang = locale == UiLocale.Ar ? "ar" : "en";
-        var dir = locale == UiLocale.Ar ? "rtl" : "ltr";
+        var lang = locale == UiLocale.Ar ? UiLanguage.Arabic : UiLanguage.English;
+        var dir = locale == UiLocale.Ar ? UiLanguage.RightToLeft : UiLanguage.LeftToRight;
         return new ShellUiSnapshot(
             themePreference,
             effectiveTheme,

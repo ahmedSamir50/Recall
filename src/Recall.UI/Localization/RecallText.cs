@@ -5,9 +5,9 @@ namespace Recall.UI.Localization;
 
 public static class RecallText
 {
-    private static readonly ResourceManager Manager = new(
-        "Recall.UI.Resources.Strings",
-        typeof(RecallText).Assembly);
+    public const string ResourceBaseName = "Recall.UI.Resources.Strings";
+
+    private static readonly ResourceManager Manager = new(ResourceBaseName, typeof(RecallText).Assembly);
 
     public static string Get(string key, CultureInfo? culture = null)
     {

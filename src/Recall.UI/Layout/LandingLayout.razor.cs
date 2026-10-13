@@ -17,7 +17,7 @@ public partial class LandingLayout
 
         Ui.ApplyCulture();
         var snap = Ui.Current;
-        await Js.InvokeVoidAsync("recallApplyChrome", snap.EffectiveTheme, snap.Lang, snap.Dir);
+        await Js.InvokeVoidAsync(RecallScripts.ApplyChrome, snap.EffectiveTheme, snap.Lang, snap.Dir);
     }
 
     protected override void OnStoreChanged()
@@ -25,7 +25,7 @@ public partial class LandingLayout
         _ = InvokeAsync(async () =>
         {
             var snap = Ui.Current;
-            await Js.InvokeVoidAsync("recallApplyChrome", snap.EffectiveTheme, snap.Lang, snap.Dir);
+            await Js.InvokeVoidAsync(RecallScripts.ApplyChrome, snap.EffectiveTheme, snap.Lang, snap.Dir);
             StateHasChanged();
         });
     }

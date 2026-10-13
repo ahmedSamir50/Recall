@@ -19,5 +19,5 @@ public sealed record TextSearchHit(
     string SourcePath,
     string FileName,
     DateTimeOffset ModifiedAt,
-    string MatchReason,
+    TextMatchReason MatchReason,
     double Score);

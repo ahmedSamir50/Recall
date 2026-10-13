@@ -3,6 +3,8 @@ using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
 using Recall.Core.DependencyInjection;
 using Recall.Maui.DependencyInjection;
+using Recall.Core.Catalog;
+using Recall.Core.Text;
 using Recall.Maui.Platform;
 using Recall.UI.DependencyInjection;
 
@@ -35,6 +37,8 @@ public static class MauiProgram
         }
 
         var textModel = TextModelConfiguration.Read(builder.Configuration);
+        ModelCatalog.Use(TextModelConfiguration.ReadCatalog(builder.Configuration));
+        GrantTextFiles.Use(TextModelConfiguration.ReadIngest(builder.Configuration));
         builder.Services.AddRecallCore();
         builder.Services.AddRecallUi();
         builder.Services.AddRecallMauiPlatform(textModel);

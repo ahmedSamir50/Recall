@@ -168,19 +168,19 @@
   <data name="Landing_CloseLead" xml:space="preserve"><value>Free while in preview. English and Arabic.</value></data>
   <data name="Landing_Footer" xml:space="preserve"><value>Recall · made for one person: you.</value></data>
   <data name="Landing_DemoQuery" xml:space="preserve"><value>red scooter near the Colosseum</value></data>
-  <data name="Fault_EmbeddingWidthUnexpected" xml:space="preserve"><value>The text vector size was not the one this search expects.</value></data>
-  <data name="Fault_TextModelNotReady" xml:space="preserve"><value>The text model is not ready yet.</value></data>
-  <data name="Fault_SearchPrefixAppliedTwice" xml:space="preserve"><value>That search was prepared twice.</value></data>
+  <data name="Fault_EmbeddingWidthUnexpected" xml:space="preserve"><value>Search couldn't read this note.</value></data>
+  <data name="Fault_TextModelNotReady" xml:space="preserve"><value>The text model isn't on this device yet.</value></data>
+  <data name="Fault_SearchPrefixAppliedTwice" xml:space="preserve"><value>That search was sent twice. Try it once more.</value></data>
   <data name="Fault_DocumentPrefixAppliedTwice" xml:space="preserve"><value>That note was prepared twice.</value></data>
-  <data name="Fault_StoredWidthBlocked" xml:space="preserve"><value>That vector size is blocked.</value></data>
-  <data name="Fault_TextWidthNot512" xml:space="preserve"><value>Text search uses the 512-wide standard.</value></data>
-  <data name="Fault_AgeCutoffNotAllowed" xml:space="preserve"><value>Age cutoff is 2, 5, or 7 years.</value></data>
-  <data name="Fault_GrantFileKindsEmpty" xml:space="preserve"><value>At least one file type must stay on.</value></data>
-  <data name="Fault_DeviceIdNotReady" xml:space="preserve"><value>This device id is not ready yet.</value></data>
-  <data name="Fault_DownloadHashMismatch" xml:space="preserve"><value>The download checksum did not match. It was discarded.</value></data>
-  <data name="Fault_DownloadIncomplete" xml:space="preserve"><value>The download stopped. You can continue it.</value></data>
-  <data name="Fault_DownloadTransport" xml:space="preserve"><value>The download could not finish. You can continue it.</value></data>
-  <data name="Fault_TokenizerNativeUnsupported" xml:space="preserve"><value>Text search is not available on this phone yet.</value></data>
-  <data name="Fault_RrfRankConstant" xml:space="preserve"><value>Search ranking used the wrong fusion constant.</value></data>
-  <data name="Models_DownloadInterrupted" xml:space="preserve"><value>Download paused. Continue keeps the part already saved.</value></data>
+  <data name="Fault_StoredWidthBlocked" xml:space="preserve"><value>This search size isn't supported.</value></data>
+  <data name="Fault_TextWidthNot512" xml:space="preserve"><value>Text search is using the wrong size.</value></data>
+  <data name="Fault_AgeCutoffNotAllowed" xml:space="preserve"><value>Choose 2, 5, or 7 years.</value></data>
+  <data name="Fault_GrantFileKindsEmpty" xml:space="preserve"><value>Leave at least one file type on.</value></data>
+  <data name="Fault_DeviceIdNotReady" xml:space="preserve"><value>This device isn't ready yet. Try again in a moment.</value></data>
+  <data name="Fault_DownloadHashMismatch" xml:space="preserve"><value>The download didn't match and was removed.</value></data>
+  <data name="Fault_DownloadIncomplete" xml:space="preserve"><value>The download paused. You can continue it.</value></data>
+  <data name="Fault_DownloadTransport" xml:space="preserve"><value>The download stopped. You can continue it.</value></data>
+  <data name="Fault_TokenizerNativeUnsupported" xml:space="preserve"><value>Text search isn't available on this phone yet.</value></data>
+  <data name="Fault_RrfRankConstant" xml:space="preserve"><value>Search couldn't rank these results.</value></data>
+  <data name="Models_DownloadInterrupted" xml:space="preserve"><value>Download paused. What was saved is still here.</value></data>
 </root>

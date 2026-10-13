@@ -4,7 +4,8 @@ These apply to every plan and every code change. A plan that violates one is a p
 
 | Rule | Meaning | Enforced by |
 |---|---|---|
-| Single source of truth | No magic strings. Protocols, tiers, modalities, prefixes, paths keys, and error codes live in an enum or one static class. User-facing sentences do **not** live in those consts. | `dotnet-architect` |
+| Single source of truth | No magic strings. Protocols, tiers, modalities, prefixes, paths keys, and error codes live in an enum or one static class. User-facing sentences do **not** live in those consts. A literal is one of three things: a canon constant, an `appsettings` key, or a resx key. ONNX graph input and output names are canon constants, because a settings change cannot retarget a compiled graph. | `dotnet-architect` |
+| Plan grain | A plan names every file to add, edit, or move, and the folder that file belongs in. It names each literal's home. It includes the Arabic and English sentence a person will read. A later agent that needs a file, folder, or sentence the plan did not name stops and amends the plan. A benchmark that returns a constant is not a measurement. | `dotnet-architect`, `unit-tests` |
 | User-facing copy | Initially Arabic and English only (`ar`, `en`). Every string a person can see is in both `.resx` files, including empty states and errors. Arabic layout is RTL. | `ux-ui` |
 | Abstractions first | Port in `Recall.Core` before the MAUI, ONNX, ZVec, or SQLite adapter. UI depends on the port, not the adapter. | `dotnet-architect` |
 | Clean architecture | Dependencies point inward. Core has no MAUI, no Razor, no HTTP. UI has no native interop. Adapters sit in the MAUI head. Do not add empty layer projects for their own sake. | `dotnet-architect` |

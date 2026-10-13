@@ -34,36 +34,28 @@ public sealed class LocaleService
     public CultureInfo GetCulture()
     {
         return GetLocale() == UiLocale.Ar
-            ? CultureInfo.GetCultureInfo("ar")
-            : CultureInfo.GetCultureInfo("en");
+            ? CultureInfo.GetCultureInfo(UiLanguage.Arabic)
+            : CultureInfo.GetCultureInfo(UiLanguage.English);
     }
 
     public string LangCode()
     {
-        return GetLocale() == UiLocale.Ar ? "ar" : "en";
+        return GetLocale() == UiLocale.Ar ? UiLanguage.Arabic : UiLanguage.English;
     }
 
     public string Dir()
     {
-        return GetLocale() == UiLocale.Ar ? "rtl" : "ltr";
+        return GetLocale() == UiLocale.Ar ? UiLanguage.RightToLeft : UiLanguage.LeftToRight;
     }
 
-    public string ShapeDigits(string? text)
-    {
-        if (GetLocale() != UiLocale.Ar)
-        {
-            return text ?? string.Empty;
-        }
-
-        return ArabicDigitShaping.ShapeForArabicUi(text);
-    }
+    public static string ShapeDigits(string? text) => text ?? string.Empty;
 
     public void ApplyCulture(UiLocale? locale = null)
     {
         var culture = locale ?? GetLocale();
         var cultureInfo = culture == UiLocale.Ar
-            ? CultureInfo.GetCultureInfo("ar")
-            : CultureInfo.GetCultureInfo("en");
+            ? CultureInfo.GetCultureInfo(UiLanguage.Arabic)
+            : CultureInfo.GetCultureInfo(UiLanguage.English);
         CultureInfo.CurrentUICulture = cultureInfo;
         CultureInfo.CurrentCulture = cultureInfo;
     }

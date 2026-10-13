@@ -18,7 +18,7 @@ public sealed class TextSearchService : ITextSearchService
         this.indexPolicy = indexPolicy;
     }
 
-    public IReadOnlyList<TextSearchHit> Find(
+    public async Task<IReadOnlyList<TextSearchHit>> FindAsync(
         string query,
         IReadOnlyList<ScopeFolderGrant> grants,
         CancellationToken cancellationToken = default)
@@ -31,11 +31,9 @@ public sealed class TextSearchService : ITextSearchService
         }
 
         var prefixed = EmbeddingTaskPrefixes.WrapSearchQuery(query);
-        var full768 = encoder.EmbedPrefixedText(prefixed, cancellationToken).ToArray();
-        MatryoshkaVectorMath.L2Normalize(full768);
+        var full768 = await encoder.EmbedPrefixedTextAsync(prefixed, cancellationToken).ConfigureAwait(false);
         var storedWidth = (int)indexPolicy.TextStoredWidth;
-        var query512 = MatryoshkaVectorMath.CutAndNormalize(full768, storedWidth);
-
+        var query512 = MatryoshkaVectorMath.CutAndNormalize(full768.Span, storedWidth);
         var request = new TextSearchRequest(query, query512, grantedPaths, TopK: 20);
         return index.Search(request, cancellationToken);
     }

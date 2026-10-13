@@ -1,0 +1,90 @@
+@namespace Recall.UI.Pages
+@page "/landing"
+@layout LandingLayout
+@inherits RecallComponentBase
+
+<header class="g1 sticky top-0 z-20 border-b bd">
+    <div class="max-w-1200 mx-auto h-header px-5 flex items-center gap-6">
+        <div class="flex items-center gap-2 f-head font-semibold">
+            <span class="w-7 h-7 rounded-lg grid place-items-center cy logo-mark" aria-hidden="true"><RecallIcon Name="lat" Css="w-4 h-4" /></span>
+            @T("Brand")
+        </div>
+        <nav class="hidden md:flex gap-5 text-14 ink2" aria-label="Landing">
+            <span>@T("Landing_NavHow")</span>
+            <span id="p">@T("Landing_NavPrivacy")</span>
+            <span>@T("Landing_NavReq")</span>
+        </nav>
+        <span class="flex-1"></span>
+        <ThemeLanguageToggles />
+        <a href="/onboarding/welcome" class="btn btn-p text-13">@T("Landing_GetRecall")</a>
+    </div>
+</header>
+<section class="max-w-1200 mx-auto px-5 pt-16 pb-16 grid lg:grid-cols-2 gap-12 items-center">
+    <div class="rise">
+        <p class="lbl mb-5">@T("Landing_Platforms")</p>
+        <h1 class="f-head font-bold text-32 md:text-48 leading-tight mb-6">
+            @T("Landing_Headline")<br /><span class="cy">@T("Landing_HeadlineAccent")</span>
+        </h1>
+        <p class="ink2 text-16 md:text-17 max-w-640 mb-8">@T("Landing_Lead")</p>
+        <div class="flex flex-wrap gap-3">
+            <a href="/onboarding/welcome" class="btn btn-p">@T("Landing_DownloadWin")</a>
+            <a href="#p" class="btn btn-g">@T("Landing_PrivacyLink")</a>
+        </div>
+    </div>
+    <div class="g2 rounded-2xl p-3 rise">
+        <div class="g3 rounded-xl px-4 py-3 mb-3 text-15 font-medium">@T("Landing_DemoQuery")</div>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-xl aspect-video photo-placeholder col-span-2" aria-hidden="true"></div>
+            <div class="rounded-xl p-3 border bd" style="background:var(--c1)">
+                <span class="pill tag-aud text-11 f-mono" style="border-color:transparent"><RecallIcon Name="mic" Css="w-3.5 h-3.5" />@T("Kind_Voice")</span>
+                <p class="text-13 mt-2 ink2" dir="ltr">“Vespa rossa vicino al Colosseo…”</p>
+            </div>
+            <div class="rounded-xl p-3 border bd" style="background:var(--c1)">
+                <span class="pill tag-doc text-11 f-mono" style="border-color:transparent">PDF</span>
+                <p class="text-13 mt-2 ink2">@T("Home_Card3Meta")</p>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="max-w-1200 mx-auto px-5 pb-20">
+    <dl class="g2 rounded-2xl grid sm:grid-cols-3">
+        <div class="p-6">
+            <dt class="f-head font-bold text-34 cy"><bdi>@T("Landing_Fact1Val")</bdi></dt>
+            <dd class="ink2">@T("Landing_Fact1Lbl")</dd>
+        </div>
+        <div class="p-6 border-t sm:border-t-0 sm:border-s bd">
+            <dt class="f-head font-bold text-34 cy"><bdi>@T("Landing_Fact2Val")</bdi></dt>
+            <dd class="ink2">@T("Landing_Fact2Lbl")</dd>
+        </div>
+        <div class="p-6 border-t sm:border-t-0 sm:border-s bd">
+            <dt class="f-head font-bold text-34 cy"><bdi>@T("Landing_Fact3Val")</bdi></dt>
+            <dd class="ink2">@T("Landing_Fact3Lbl")</dd>
+        </div>
+    </dl>
+</section>
+<section class="max-w-1200 mx-auto px-5 pb-24">
+    <h2 class="f-head font-bold text-32 md:text-48 mb-3">@T("Landing_PrivacyHead")</h2>
+    <p class="ink2 text-17 max-w-640 mb-10">@T("Landing_PrivacyLead")</p>
+    <div class="grid md:grid-cols-2 gap-4">
+        <article class="card g2 p-6"><span class="em block mb-4"><RecallIcon Name="shield" Css="w-6 h-6" /></span><h3 class="f-head font-semibold text-20 mb-2">@T("Landing_Card1Title")</h3><p class="ink2">@T("Landing_Card1Body")</p></article>
+        <article class="card g2 p-6"><span class="cy block mb-4"><RecallIcon Name="img" Css="w-6 h-6" /></span><h3 class="f-head font-semibold text-20 mb-2">@T("Landing_Card2Title")</h3><p class="ink2">@T("Landing_Card2Body")</p></article>
+        <article class="card g2 p-6"><span class="vi block mb-4"><RecallIcon Name="lock" Css="w-6 h-6" /></span><h3 class="f-head font-semibold text-20 mb-2">@T("Landing_Card3Title")</h3><p class="ink2">@T("Landing_Card3Body")</p></article>
+        <article class="card g2 p-6"><span class="am block mb-4"><RecallIcon Name="mic" Css="w-6 h-6" /></span><h3 class="f-head font-semibold text-20 mb-2">@T("Landing_Card4Title")</h3><p class="ink2">@T("Landing_Card4Body")</p></article>
+    </div>
+</section>
+<section class="max-w-1200 mx-auto px-5 pb-24">
+    <h2 class="f-head font-bold text-32 md:text-48 mb-10">@T("Landing_StepsHead")</h2>
+    <ol class="grid md:grid-cols-3 gap-4">
+        <li class="border-t-2 pt-5 step-cyan"><span class="f-mono cy text-13">01</span><h3 class="f-head font-semibold text-20 mt-2 mb-1">@T("Landing_Step1Title")</h3><p class="ink2">@T("Landing_Step1Body")</p></li>
+        <li class="border-t-2 pt-5 step-muted"><span class="f-mono cy text-13">02</span><h3 class="f-head font-semibold text-20 mt-2 mb-1">@T("Landing_Step2Title")</h3><p class="ink2">@T("Landing_Step2Body")</p></li>
+        <li class="border-t-2 pt-5 step-muted"><span class="f-mono cy text-13">03</span><h3 class="f-head font-semibold text-20 mt-2 mb-1">@T("Landing_Step3Title")</h3><p class="ink2">@T("Landing_Step3Body")</p></li>
+    </ol>
+</section>
+<section class="max-w-1200 mx-auto px-5 pb-20">
+    <div class="g3 rounded-3xl p-10 md:p-16 text-center">
+        <h2 class="f-head font-bold text-32 md:text-48 mb-3">@T("Landing_CloseHead")</h2>
+        <p class="ink2 mb-8">@T("Landing_CloseLead")</p>
+        <a href="/onboarding/welcome" class="btn btn-p">@T("Landing_DownloadWin")</a>
+    </div>
+</section>
+<footer class="border-t bd py-8 text-center text-13 ink3">@T("Landing_Footer")</footer>

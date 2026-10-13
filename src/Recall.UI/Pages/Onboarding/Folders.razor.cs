@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Recall.UI;
 
 namespace Recall.UI.Pages.Onboarding;
 
@@ -7,7 +8,7 @@ public partial class Folders
     [Inject]
     private NavigationManager Nav { get; set; } = null!;
 
-    private void HandleBack() => Nav.NavigateTo("/onboarding/welcome");
+    private void HandleBack() => Nav.NavigateTo(AppRoutes.OnboardingWelcome);
 
-    private void HandleContinue() => Nav.NavigateTo("/onboarding/models");
+    private void HandleContinue() => Nav.NavigateTo(AppRoutes.OnboardingModels);
 }

@@ -2,6 +2,8 @@ namespace Recall.Core.Download;
 
 public sealed class TextModelDownloadOptions
 {
+    public const string SectionName = "TextModel";
+
     public string OnnxBaseUrl { get; set; } = "https://huggingface.co/onnx-community/embeddinggemma-2-ONNX/resolve/main/onnx/";
 
     public string RepositoryBaseUrl { get; set; } = "https://huggingface.co/onnx-community/embeddinggemma-2-ONNX/resolve/main/";

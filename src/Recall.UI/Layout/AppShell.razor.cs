@@ -38,6 +38,6 @@ public partial class AppShell
     private async Task ApplyChromeAsync()
     {
         var snap = Ui.Current;
-        await Js.InvokeVoidAsync("recallApplyChrome", snap.EffectiveTheme, snap.Lang, snap.Dir);
+        await Js.InvokeVoidAsync(RecallScripts.ApplyChrome, snap.EffectiveTheme, snap.Lang, snap.Dir);
     }
 }

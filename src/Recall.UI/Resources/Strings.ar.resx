@@ -168,19 +168,19 @@
   <data name="Landing_CloseLead" xml:space="preserve"><value>مجاني خلال المعاينة. بالعربية والإنجليزية.</value></data>
   <data name="Landing_Footer" xml:space="preserve"><value>ريكول · صُنع لشخص واحد: أنت.</value></data>
   <data name="Landing_DemoQuery" xml:space="preserve"><value>السكوتر الأحمر قرب الكولوسيوم</value></data>
-  <data name="Fault_EmbeddingWidthUnexpected" xml:space="preserve"><value>حجم متجه النص ليس الحجم الذي يتوقعه هذا البحث.</value></data>
-  <data name="Fault_TextModelNotReady" xml:space="preserve"><value>نموذج النص غير جاهز بعد.</value></data>
-  <data name="Fault_SearchPrefixAppliedTwice" xml:space="preserve"><value>أُعدّ هذا البحث مرتين.</value></data>
-  <data name="Fault_DocumentPrefixAppliedTwice" xml:space="preserve"><value>أُعدت هذه الملاحظة مرتين.</value></data>
-  <data name="Fault_StoredWidthBlocked" xml:space="preserve"><value>حجم المتجه هذا ممنوع.</value></data>
-  <data name="Fault_TextWidthNot512" xml:space="preserve"><value>بحث النص يستخدم المعيار بعرض ٥١٢.</value></data>
-  <data name="Fault_AgeCutoffNotAllowed" xml:space="preserve"><value>حد العمر سنتان أو ٥ أو ٧ سنوات.</value></data>
-  <data name="Fault_GrantFileKindsEmpty" xml:space="preserve"><value>يجب أن يبقى نوع ملف واحد على الأقل مفعّلًا.</value></data>
-  <data name="Fault_DeviceIdNotReady" xml:space="preserve"><value>معرّف هذا الجهاز غير جاهز بعد.</value></data>
-  <data name="Fault_DownloadHashMismatch" xml:space="preserve"><value>بصمة التحميل غير مطابقة. تم تجاهل الملف.</value></data>
+  <data name="Fault_EmbeddingWidthUnexpected" xml:space="preserve"><value>ما قدر البحث يقرأ هذه الملاحظة.</value></data>
+  <data name="Fault_TextModelNotReady" xml:space="preserve"><value>نموذج النص غير موجود على هذا الجهاز بعد.</value></data>
+  <data name="Fault_SearchPrefixAppliedTwice" xml:space="preserve"><value>أُرسل هذا البحث مرتين. أعد المحاولة مرة واحدة.</value></data>
+  <data name="Fault_DocumentPrefixAppliedTwice" xml:space="preserve"><value>جُهّزت هذه الملاحظة مرتين.</value></data>
+  <data name="Fault_StoredWidthBlocked" xml:space="preserve"><value>حجم البحث هذا غير مدعوم.</value></data>
+  <data name="Fault_TextWidthNot512" xml:space="preserve"><value>بحث النص يستخدم حجمًا غير صحيح.</value></data>
+  <data name="Fault_AgeCutoffNotAllowed" xml:space="preserve"><value>اختر سنتين أو 5 أو 7 سنوات.</value></data>
+  <data name="Fault_GrantFileKindsEmpty" xml:space="preserve"><value>اترك نوع ملف واحدًا على الأقل مفعّلًا.</value></data>
+  <data name="Fault_DeviceIdNotReady" xml:space="preserve"><value>هذا الجهاز غير جاهز بعد. أعد المحاولة بعد لحظة.</value></data>
+  <data name="Fault_DownloadHashMismatch" xml:space="preserve"><value>التحميل غير مطابق وتم حذفه.</value></data>
   <data name="Fault_DownloadIncomplete" xml:space="preserve"><value>توقف التحميل. يمكنك متابعته.</value></data>
-  <data name="Fault_DownloadTransport" xml:space="preserve"><value>تعذر إكمال التحميل. يمكنك متابعته.</value></data>
+  <data name="Fault_DownloadTransport" xml:space="preserve"><value>انقطع التحميل. يمكنك متابعته.</value></data>
   <data name="Fault_TokenizerNativeUnsupported" xml:space="preserve"><value>بحث النص غير متاح على هذا الهاتف بعد.</value></data>
-  <data name="Fault_RrfRankConstant" xml:space="preserve"><value>ترتيب البحث استخدم ثابت دمج خاطئًا.</value></data>
-  <data name="Models_DownloadInterrupted" xml:space="preserve"><value>التحميل متوقف. المتابعة تُبقي الجزء المحفوظ.</value></data>
+  <data name="Fault_RrfRankConstant" xml:space="preserve"><value>ما قدر البحث يرتّب هذه النتائج.</value></data>
+  <data name="Models_DownloadInterrupted" xml:space="preserve"><value>التحميل متوقف. الجزء المحفوظ ما زال هنا.</value></data>
 </root>

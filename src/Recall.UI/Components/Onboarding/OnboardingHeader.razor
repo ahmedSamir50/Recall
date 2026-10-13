@@ -1,0 +1,15 @@
+@namespace Recall.UI.Components
+@inherits RecallComponentBase
+
+<header class="h-header shrink-0 flex items-center justify-between px-5 md:px-8 g1 border-b bd">
+    <div class="flex items-center gap-2">
+        <span class="f-head font-semibold text-16">@T("Brand")</span>
+    </div>
+    <div class="flex items-center gap-2">
+        @if (Step is > 0)
+        {
+            <span class="lbl hidden md:inline">@T("Step_Label") @Step @T("Step_Of") 3</span>
+        }
+        <ThemeLanguageToggles />
+    </div>
+</header>

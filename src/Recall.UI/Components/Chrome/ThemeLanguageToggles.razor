@@ -1,0 +1,9 @@
+@namespace Recall.UI.Components
+@inherits RecallComponentBase
+
+<button type="button" class="w-9 h-9 grid place-items-center rounded-lg btn-g ink2" aria-label="@T("Theme_Label")" @onclick="ToggleThemeAsync">
+    @(Ui.Current.EffectiveTheme == "dark" ? "☀" : "🌙")
+</button>
+<button type="button" class="h-9 px-3 rounded-lg btn-g ink2 text-13 flex items-center gap-2" @onclick="ToggleLanguageAsync">
+    <span>@LanguageLabel</span>
+</button>

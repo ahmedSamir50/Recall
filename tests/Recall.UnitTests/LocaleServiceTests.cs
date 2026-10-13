@@ -41,14 +41,7 @@ public sealed class LocaleServiceTests
     [Fact]
     public void ShapeDigits_English_LeavesLatinDigits()
     {
-        // Arrange
-        var service = new LocaleService(new FakeUiLocaleStore { Value = UiLocale.En });
-
-        // Act
-        var shaped = service.ShapeDigits("42");
-
-        // Assert
-        shaped.Should().Be("42");
+        LocaleService.ShapeDigits("42").Should().Be("42");
     }
 
     [Fact]
