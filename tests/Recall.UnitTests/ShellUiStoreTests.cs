@@ -1,7 +1,6 @@
 using FluentAssertions;
 using Recall.Core.Locale;
 using Recall.UnitTests.Fakes;
-using Recall.Core.Ports;
 using Recall.Core.Preferences;
 using Recall.Core.Scope;
 using Recall.Core.Theme;

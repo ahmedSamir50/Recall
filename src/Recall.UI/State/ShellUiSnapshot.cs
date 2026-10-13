@@ -1,8 +1,6 @@
 using System.Globalization;
-using Recall.Core.Locale;
 using Recall.Core.Preferences;
 using Recall.Core.Scope;
-using Recall.Core.Theme;
 
 namespace Recall.UI.State;
 

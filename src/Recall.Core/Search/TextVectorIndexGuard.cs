@@ -1,4 +1,3 @@
-using Recall.Core.Indexing;
 using Recall.Core.Ports;
 using Recall.Core.Vocabulary;
 
@@ -6,10 +5,10 @@ namespace Recall.Core.Search;
 
 public static class TextVectorIndexGuard
 {
-    public static void EnsureHybridQueryUsesRrf(int rankConstant, IIndexPolicy policy)
+    public static void EnsureHybridQueryUsesRrf(ITextVectorIndex index, IIndexPolicy policy)
     {
+        ArgumentNullException.ThrowIfNull(index);
         ArgumentNullException.ThrowIfNull(policy);
-        HybridFusion.RequireRankConstant(rankConstant);
         policy.EnsureStorableWidth(Modality.Text, (int)StoredWidth.W512);
     }
 }

@@ -1,8 +1,6 @@
-using System.Net.Http;
 using System.Net.Http.Headers;
 using Recall.Core.Download;
 using Recall.Core.Faults;
-using Recall.Core.Ingest;
 using Recall.Core.Ports;
 
 namespace Recall.Maui.Platform;

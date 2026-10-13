@@ -1,5 +1,3 @@
-using Recall.Core.Vocabulary;
-
 namespace Recall.Core.Search;
 
 public sealed record TextIndexInsert(
@@ -21,5 +19,5 @@ public sealed record TextSearchHit(
     string SourcePath,
     string FileName,
     DateTimeOffset ModifiedAt,
-    TextMatchReason MatchReason,
+    string MatchReason,
     double Score);

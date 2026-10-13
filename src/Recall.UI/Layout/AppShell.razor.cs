@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Recall.Core.Ports;
-using Recall.UI.Localization;
 using Recall.UI.State;
 
 namespace Recall.UI.Layout;

@@ -1,8 +1,6 @@
 using Recall.Core.Device;
 using Recall.Core.Download;
-using Recall.Core.Indexing;
 using Recall.Core.Search;
-using Recall.Core.Text;
 using Recall.Core.Preferences;
 using Recall.Core.Scope;
 using Recall.Core.Vocabulary;
@@ -75,7 +73,7 @@ public interface IModelDownloadService
 
     void CancelTextDownload();
 
-    Task RetryTextDownloadAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default);
+    void RetryTextDownload();
 }
 
 /// <summary>Stored width, age cutoff, and enabled modalities. Rules stay in Core.</summary>
@@ -89,7 +87,7 @@ public interface IIndexPolicy
 /// <summary>Mean-pooled 768-d text embedding from ONNX. Implemented in the MAUI head.</summary>
 public interface ITextEmbeddingEncoder
 {
-    ValueTask<ReadOnlyMemory<float>> EmbedPrefixedTextAsync(string prefixedText, CancellationToken cancellationToken = default);
+    ReadOnlyMemory<float> EmbedPrefixedText(string prefixedText, CancellationToken cancellationToken = default);
 }
 
 /// <summary>512-d text index backed by ZVec. Implemented outside Core.</summary>
@@ -109,7 +107,7 @@ public interface IGrantedTextIngestService
 /// <summary>Hybrid text search orchestration.</summary>
 public interface ITextSearchService
 {
-    Task<IReadOnlyList<TextSearchHit>> FindAsync(string query, IReadOnlyList<ScopeFolderGrant> grants, CancellationToken cancellationToken = default);
+    IReadOnlyList<TextSearchHit> Find(string query, IReadOnlyList<ScopeFolderGrant> grants, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Persists theme preference.</summary>

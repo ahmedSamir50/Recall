@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Components;
 using Recall.Core.Preferences;
-using Recall.Core.Theme;
 using Recall.Core.Vocabulary;
 
 namespace Recall.UI.Pages;

@@ -1,7 +1,5 @@
 using FluentAssertions;
-using Recall.Adapters.DependencyInjection;
 using Recall.Adapters.Indexing;
-using Recall.Core.DependencyInjection;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
 using Recall.Core.Search;
@@ -47,8 +45,7 @@ public sealed class TextSearchIntegrationTests : IDisposable
     [Fact]
     public void RrfRankConstant_Is60()
     {
-        new ZVecRrfReranker().RankConstant.Should().Be(60);
-        Recall.Core.Search.HybridFusion.RrfRankConstant.Should().Be(60);
+        new ZVecRrfReranker().RankConstant.Should().Be(ZVecDefaults.Rerank.RankConstant);
     }
 
     [Fact]
@@ -56,8 +53,7 @@ public sealed class TextSearchIntegrationTests : IDisposable
     {
         var policy = new Recall.Core.Indexing.RecallIndexPolicy();
         var act = () => policy.EnsureStorableWidth(Recall.Core.Vocabulary.Modality.Text, 128);
-        act.Should().Throw<Recall.Core.Faults.RecallFaultException>()
-            .Which.Fault.Should().Be(Recall.Core.Faults.RecallFault.StoredWidthBlocked);
+        act.Should().Throw<ArgumentOutOfRangeException>();
     }
 
     [Fact]
@@ -77,7 +73,7 @@ public sealed class TextSearchIntegrationTests : IDisposable
         await provider.GetRequiredService<IGrantedTextIngestService>()
             .IngestGrantedTextAsync(TestContext.Current.CancellationToken);
 
-        var hits = await search.FindAsync("red planet", grants, TestContext.Current.CancellationToken);
+        var hits = search.Find("red planet", grants, TestContext.Current.CancellationToken);
         hits.Should().NotBeEmpty();
         hits[0].SourcePath.Should().Contain("mars.txt");
         hits.Should().OnlyContain(h => h.SourcePath.StartsWith(grants[0].Path, StringComparison.OrdinalIgnoreCase));

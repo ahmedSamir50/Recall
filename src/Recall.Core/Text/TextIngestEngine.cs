@@ -1,4 +1,3 @@
-using Recall.Core.Indexing;
 using Recall.Core.Ports;
 using Recall.Core.Search;
 using Recall.Core.Sync;
@@ -29,22 +28,29 @@ public sealed class TextIngestEngine
         this.opLog = opLog;
     }
 
-    public async Task IngestFileAsync(string filePath, string rawText, DateTimeOffset modifiedAt, CancellationToken cancellationToken)
+    public void IngestFile(string filePath, string rawText, CancellationToken cancellationToken)
     {
         var storedWidth = (int)indexPolicy.TextStoredWidth;
         indexPolicy.EnsureStorableWidth(Modality.Text, storedWidth);
 
         var title = Path.GetFileName(filePath);
         var sourceHash = ContentIdBuilder.HashSourceContent(rawText);
-        var chunks = TextChunkPlanner.PlanChunks(title, rawText, tokenCounter.CountTokens);
+        var chunks = TextChunkPlanner.PlanChunks(
+            EmbeddingTaskPrefixes.WrapTitledDocument(title, rawText),
+            tokenCounter.CountTokens);
+
+        var mtime = File.Exists(filePath)
+            ? new DateTimeOffset(File.GetLastWriteTimeUtc(filePath), TimeSpan.Zero)
+            : DateTimeOffset.UtcNow;
 
         foreach (var chunk in chunks)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var full768 = await encoder.EmbedPrefixedTextAsync(chunk.PrefixedText, cancellationToken).ConfigureAwait(false);
-            var vector512 = MatryoshkaVectorMath.CutAndNormalize(full768.Span, storedWidth);
+            var full768 = encoder.EmbedPrefixedText(chunk.PrefixedText, cancellationToken).ToArray();
+            MatryoshkaVectorMath.L2Normalize(full768);
+            var vector512 = MatryoshkaVectorMath.CutAndNormalize(full768, storedWidth);
             var contentId = ContentIdBuilder.Build(Modality.Text, sourceHash, StoredWidth.W512, chunk.Ordinal);
-            var insert = new TextIndexInsert(contentId, filePath, title, chunk.RawText, vector512, modifiedAt);
+            var insert = new TextIndexInsert(contentId, filePath, title, rawText, vector512, mtime);
             if (index.TryInsert(insert))
             {
                 opLog.AppendInsert(contentId);
