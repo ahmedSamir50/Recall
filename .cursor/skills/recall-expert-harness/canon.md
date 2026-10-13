@@ -20,7 +20,7 @@ The moat is three constraints at once:
 
 | Piece | Choice |
 |---|---|
-| TFM | `net10.0` (.NET 10 LTS). Not .NET 9. |
+| TFM | `net10.0` (.NET 10 LTS). Not .NET 9. .NET 11 RC1 (8 Sep 2026, go-live) is not the target until ONNX embedding and ZVec search are measured faster on `net11.0`. |
 | UI host | MAUI Blazor Hybrid. Razor UI shared. No Blazor WebAssembly. No second Native AOT desktop codebase in v1. |
 | RIDs | `android-arm64`, `ios-arm64`, `win-x64`, `maccatalyst-arm64` |
 | Vector DB | `AdamSystems.ZVec.NET` pinned at `1.0.0-beta.6+zvec.0.7.0` until a GA migration is decided in M3 |
@@ -30,20 +30,20 @@ The moat is three constraints at once:
 
 EmbeddingGemma 2 facts the panel must not invent past:
 
-- Native width **768**. MRL truncations in play: **768 / 256 / 128**. Floor is **128**. 512 exists on the model and is not a v1 storage tier.
+- Native width **768**. Stored widths in play: **768 / 512 / 256**. **128 is blocked for every stored vector.** The user closed that on 13 Oct 2026. Text is 256 or 512, and that choice is still open. Image, video, and audio may stay at 512 or 768. A phone may store a shorter legal width than a desktop. One question is embedded once; shorter drawers use a cut of that same vector, then re-normalized.
 - Text-only **270M**, text+vision **440M**, full multimodal **740M** (adds the audio encoder).
 - Context **8192** tokens. Mean pooling. L2-normalize before cosine search.
 - Task prefixes used by the product: `search`, `cluster`, `classify`.
 
 ## v1 behavior
 
-- **Scope-only capture.** The user grants paths and per-path file types. Filesystem watchers (or the iOS foreground scan) are the ingest trigger. No clipboard, camera-roll, screen, or microphone capture in v1. Those belong to a post-v1.5 ambient epic behind an explicit opt-in that does not exist yet.
+- **Scope-only capture.** The user grants paths and per-path file types. Search hits only those paths and types. A parent path overrides any child path in one tree check. Filesystem watchers (or the iOS foreground scan) are the ingest trigger. The user can press Index now, and the search page can offer to index an allowed path that is not indexed yet. No clipboard, camera-roll, screen, or microphone capture in v1.
 - **iOS** cannot background-watch the filesystem. v1 scans scoped paths when the app comes to the foreground and diffs them against `checkpoints.db`.
-- **Modalities.** Mobile: text, images, sampled video frames (1 frame / 2 s) through the 270M and 440M encoders. Audio files on mobile are skipped and recorded as `skipped_modality=audio`. Desktop may load the 740M encoder on demand for audio, and must not keep it resident.
-- **Models are downloaded, not bundled.** Base app bundle ≤ 50 MB. First run downloads the 270M text encoder from the Hugging Face CDN and checks SHA-256. The 440M vision encoder downloads the first time an image is indexed or queried. The 740M encoder is desktop-only and on demand. That download is the only network path v1 may have.
-- **Twelve collections:** 4 modalities × 3 tiers (hot / warm / cold). Not one mixed collection.
-- **Tiers.** Hot (default last 30 days) and user-pinned items stay 768-d. Warm (30–180 days) is 256-d. Cold (older) is 128-d. Access can promote an item back up. Do not store archival data at 768-d.
-- **Query.** Hybrid dense ANN + BM25 full-text + scalar filter, fused with the in-database RRF reranker (`k = 60`). Bypassing RRF is a review block. Run the query once per active tier and fuse. Do not re-embed the corpus to change tiers.
+- **Modalities.** Text, images, and sampled video frames. Audio is a separate encoder file, downloaded only if the user enables the audio file type, then unloaded after the job. Do not keep text, vision, and audio loaded together. There is no microphone recorder. Phone audio quality at 4-bit is still unmeasured.
+- **Models are downloaded, not bundled.** The installer size is not a hard fail. Weights never ship inside it. Download each enabled ONNX piece into the platform app-data folder and check SHA-256. We may generate and upload our own quants. The published 4-bit files are not the quality target. ONNX Runtime on phone and PC runs float32, int8, and int4. Int8 is the almost-no-loss file we can generate. Q5 and Q6 are GGUF names this runtime will not run. Do not run float16. That download is the only network path v1 may have. The HTTP client lives in the MAUI download adapter, not in `Recall.Core`.
+- **One collection per file type** the user enabled (text, image, video, audio). Not one mixed collection. Not twelve age tiers. A collection holds one width.
+- **Old image, video, and audio vectors are shortened.** The user chose this on 13 Oct 2026 because a 768→256 float32 cut is about 200 MB at 100,000 items and about 2 GB at 1,000,000. The safe shorter width is **512** until a golden run clears **256**. 128 stays blocked. Delete the long row when the short row is inserted. A pin keeps the long vector. Text stays one width (256 or 512, still open) and does not get this age split. The age cutoff itself is not locked.
+- **Query.** Hybrid dense ANN + BM25 full-text + scalar filter, fused with the in-database RRF reranker (`k = 60`). Bypassing RRF is a review block. Embed the question once, cut and re-normalize to each target collection’s width, and search each enabled collection. Do not re-embed the corpus to change a width.
 - **Indexes.** Plain float32 HNSW on ARM (Android, iOS, Mac Catalyst). HNSW-RaBitQ only on `win-x64` (AVX2). Refuse RaBitQ on ARM. Refuse DiskANN on Windows and macOS. DiskANN is out of v1 entirely.
 - **Zero LLM.** No sidecar, no chat, no generative summary, no model download for a language model, in v1 or v1.5. Cluster labels are deterministic: top TF-IDF term + locale date range + locale modality count. The cluster browser UI is v1.5; the label strings are specified now.
 - **Sync is design-only.** Schema stays sync-ready (content-addressable ids, append-only op-log, `ISyncAdapter` stub, feature flag off). Do not implement pairing, transport, or encryption in v1.
@@ -77,9 +77,9 @@ Recall.sln
 - An LLM of any size for any feature.
 - Ambient OS capture in v1.
 - Bundling ONNX weights in the app binary.
-- Truncation below 128 dimensions.
+- Storing any vector at 128 dimensions or below.
 - RaBitQ on ARM, or DiskANN on Windows/macOS.
-- Loading the 740M encoder on mobile.
+- Keeping text, vision, and audio encoders resident at the same time on a phone.
 - Blazor WebAssembly as a target.
 - A second desktop codebase beside MAUI in v1.
 - Treating IdeaTank ambient-capture / web-dashboard / in-v1 P2P sync as the thing to build.
@@ -95,12 +95,15 @@ Record these as open questions in any doc review. They are real contradictions i
 | U1 | Mobile disk at 100k items: the perf table says ≤ 80 MB; the storage math and goal G6 say ship at about **150 MB** (risk R-7). |
 | U2 | RSS after warmup ≤ 400 MB on a Pixel, while the 270M text encoder is described as ~540 MB in float16 and is always resident. |
 | U3 | Goal G7 is zero telemetry. M3 and the make/buy matrix add an opt-in crash reporter (Sentry or App Center) and usage counters. |
-| U4 | "No scheduled scans" versus a filesystem reconciliation sweep (technical appendix, every 4 hours, tightened to 1 hour if watchers miss events). |
-| U5 | Image full-text payload assumes OCR, but the named OCR engines (Tesseract / Apple Vision) sit on the removed screen-capture row. No v1 OCR engine is chosen. Audio transcription is parked, so audio BM25 payload is empty in v1. |
+| U4 | Closed 13 Oct 2026: missed files are caught by Index now, and the search page offers to index an allowed path that is not indexed yet. A background timer is not required. |
+| U5 | Closed 13 Oct 2026: no OCR in v1. Image full-text is empty. Audio transcripts are empty. |
 | U6 | CI is written as GitHub Actions. The project remote is Bitbucket. Do not scaffold a CI host until the user picks one. |
 | U7 | Week-by-week M1 still says clipboard and camera-roll capture. M2 still puts the 740M audio encoder and a voice-memo recorder on Android and iOS. Those weeks lose to the v1.2 scope cuts. |
 | U8 | Several diagrams and the solution tree still say .NET 9 and still list clipboard platform files and ONNX files bundled under `assets/onnx/`. |
-| U9 | Perf rows for on-device 740M audio latency are written for phones that v1 will not load that encoder on. |
+| U9 | Phone 740M latency rows in InitDocs are stale. Audio on a phone, if enabled, uses the separate audio encoder file. Quality at int8 versus q4 is unmeasured. |
+| U10 | Text stored at 256 or at 512. Open until a golden recall run. |
+| U11 | Age policy is chosen: old image, video, and audio move from the long width to 512. 256 waits on a golden pass. The cutoff age is not chosen. |
+| U12 | Browser history is not a v1 feature. Phones cannot read it. A desktop switch is a later explicit connector. |
 
 ## Source files
 

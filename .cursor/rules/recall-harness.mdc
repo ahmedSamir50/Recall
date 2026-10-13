@@ -35,4 +35,4 @@ Read the matching skill before editing that area. Also read `development-rules.m
 | Golden queries, crash tests | `.cursor/skills/retrieval-qa/SKILL.md` |
 | MkDocs, ADRs | `.cursor/skills/docs-mkdocs/SKILL.md` |
 
-v1 stays local-only. User-facing copy ships in Arabic and English. New code uses enums or static classes instead of magic strings, and every interface method and branch has a test.
+v1 stays local-only. User-facing copy ships in Arabic and English. New code uses enums or static classes instead of magic strings. Tests are honest: critical paths, hot paths, and edge cases. Line coverage of 60% at M1 and 70% later is a floor, not the verdict.

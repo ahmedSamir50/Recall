@@ -14,15 +14,15 @@ You own representation, storage, and retrieval math. Read `.cursor/skills/recall
 ## Encoder
 
 - EmbeddingGemma 2, ONNX, not a cloud API and not a fine-tune.
-- Modes: text 270M (resident for text ingestion), text+vision 440M (lazy, images and video frames), full 740M (desktop, on demand, audio only, never resident). Mobile must not load 740M.
-- Output is 768-d, mean-pooled, L2-normalized before cosine. Truncate with a mask; do not re-run the model to change tier.
-- Floor is 128. v1 tiers are 768 (hot, pinned), 256 (warm), 128 (cold). 512 is a model capability, not a storage tier.
+- Modes are separate ONNX files: text, vision, audio. Download a file only when that type is enabled. Do not keep all three loaded. Do not run float16. We may generate and upload our own quants. ONNX Runtime runs float32, int8, and int4. Int8 is the almost-no-loss target. Published q4 is not the default. GGUF Q5 and Q6 do not run here.
+- The stored embedding is the mean-pooled 768. The text trunk is 512 and the audio projection is 1536; those are not stored widths. Matryoshka keeps the leading 512 or 256 of that 768, then L2-normalizes the slice. A second forward pass is only for growing a vector whose tail was discarded.
+- Stored widths are 768, 512, and 256. 128 is blocked. Text is 256 or 512 (open) in one collection. Old image, video, and audio move to a second collection at 512. 256 for those old rows waits on a golden pass. A pin stays at the long width.
 - One `InferenceSession` per loaded mode. Serialize `Run` per session with a `SemaphoreSlim(1,1)` on mobile. Pass `ReadOnlyMemory<float>` into ZVec; do not copy into extra `float[]` on the hot path.
 - Execution providers: NNAPI on Android, CoreML on iOS and Mac Catalyst, DirectML on Windows. Fall back only when the EP is actually missing, and record it.
 
 ## Index
 
-- Twelve collections: modality (`text`, `image`, `audio`, `video`) × tier (`hot`, `warm`, `cold`). Example: `items_image_hot`.
+- One width per collection. Text is one collection. Image, video, and audio may have a long collection and an old collection. Example: `items_image` and `items_image_old`. Do not leave both copies of the same item on disk.
 - ARM: float32 HNSW. `win-x64`: HNSW-RaBitQ. Refuse RaBitQ on ARM and DiskANN outside a future Linux-only decision. v1 does not use DiskANN or Vamana.
 - Starting HNSW knobs from the plan, not eternal law: mobile `M=16`, `efConstruction=200`, `efSearch=64`; Windows RaBitQ `M=32`, `efConstruction=400`, `efSearch=96`. Changing `efSearch` requires a golden-query recall check from `retrieval-qa`.
 - Hybrid query is dense + BM25 FTS + scalar filter + in-DB RRF with `k=60`. Outer fusion across tiers stays RRF. Do not add a learned ranker or an external reranker in v1. Weighted RRF is a later switch, not the default.
@@ -31,13 +31,13 @@ You own representation, storage, and retrieval math. Read `.cursor/skills/recall
 
 ## Policy
 
-- Hot window defaults to 30 days, warm through 180, then cold. Pin forces 768. Promote-on-access re-embeds from source when the file is still there; otherwise mark needs-upgrade.
+- The age cutoff is not locked. When an image, video, or audio item crosses it, cut the stored 768 to 512, re-normalize, delete the long row, and insert the short row. Pin stays long. Growing it back re-embeds from the file.
 - Do not mix dimensions inside one HNSW graph.
-- Query path: prefix (see `nlp`) → 768-d → one search per active tier at that tier's width → RRF → top 20 with score components and provenance.
+- Query path: prefix on text only (see `nlp`) → one pooled 768 → cut and re-normalize per target collection → search each live collection → RRF → top 20 with score components and provenance.
 
 ## Review stance
 
-Block sub-128 truncation, a single mixed-dimension collection, mobile 740M, cloud embedders, and any path that skips RRF. Amend the 80 MB disk line (canon U1) and the 740M-on-phone latency rows (U9) instead of treating them as targets. Hand text payload quality to `nlp` and RSS arithmetic to `performance`.
+Block a stored width of 128 or below, a single mixed-type collection, loading text plus vision plus audio at once, cloud embedders, and any path that skips RRF. Amend the 80 MB disk line (canon U1) and the 740M-on-phone latency rows (U9) instead of treating them as targets. Hand text payload quality to `nlp` and RSS arithmetic to `performance`.
 
 ## Panel duty
 

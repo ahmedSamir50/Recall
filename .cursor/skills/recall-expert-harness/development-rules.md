@@ -15,9 +15,9 @@ These apply to every plan and every code change. A plan that violates one is a p
 | Reusability first | Shared policy lives in Core. Platform heads implement ports; they do not re-decide tier widths or prefix strings. | `dotnet-architect` |
 | No memory leaks | Dispose ONNX sessions, ZVec handles, watchers, and SQLite connections. Unsubscribe event handlers. Bound the ingest channel. One `HttpClient` via `IHttpClientFactory` for model download. | `performance`, `maui-platform` |
 | Runtime cost | Stay inside the budgets in the performance skill. No LINQ or allocation on the query hot path that the budget cannot afford. | `performance` |
-| Memory cost | Do not pin the 740M encoder. Truncate archival vectors. Do not cache unbounded query results. | `performance`, `vectors-embeddings` |
+| Memory cost | Do not keep text, vision, and audio encoders loaded together. Do not store a vector at 128 dimensions or below. Whether old items shrink later is undecided. Do not cache unbounded query results. | `performance`, `vectors-embeddings` |
 | SQL cost | `checkpoints.db` uses parameterized SQL, a transaction around cursor updates, and indexes that match the lookup (path, file id). No string-concatenated SQL. ZVec is not SQL; do not "optimize" HNSW with SQL hints. | `performance` |
-| Test honesty | See [test-honesty.md](test-honesty.md). A feature without the branch matrix is not done. | `unit-tests`, `retrieval-qa` |
+| Test honesty | See [test-honesty.md](test-honesty.md). The verdict is honest tests of critical paths, hot paths, and edge cases. 60% at M1 and 70% later stay as a floor. The floor is not the verdict and not the homework. | `unit-tests`, `retrieval-qa` |
 
 ## Copy versus retrieval languages
 

@@ -19,12 +19,12 @@ You own `tests/Recall.UnitTests`. Real ONNX sessions and real ZVec files belong 
 - `async Task` only. Never `async void`.
 - Assert with `Should()`.
 - Fake `IOnnxEncoderSession` and `IZVecCollection`. If a test needs the real native library, it is an integration test; move it.
-- Cover `Recall.Core` honestly. Follow [test-honesty.md](../recall-expert-harness/test-honesty.md). An interface with three methods needs tests that exercise all three. Each `if`, `else`, `else if`, `switch` arm, `try`, and `catch` needs a test that forces that path. A line-coverage floor (60% at M1, 70% later) does not replace that matrix. Do not chase the floor with tests of generated code or the MAUI host.
+- Cover `Recall.Core` honestly. Follow [test-honesty.md](../recall-expert-harness/test-honesty.md). An interface with three methods needs tests that exercise all three. Each `if`, `else`, `else if`, `switch` arm, `try`, and `catch` that decides behavior needs a test that forces that path and fails if that path is deleted. Also cover the hot path and the edge cases. The floor is 60% at M1 and 70% later. Clearing the floor is not the verdict. Do not add tests only to move the percentage.
 
 ## What must have unit tests
 
-- MRL policy: age, pin, and last access. FsCheck invariants: dimension is only 768, 256, or 128; pinned implies 768; promote-on-access never lowers a tier; anything under 128 throws.
-- Modality router: extension and mime to encoder mode. Audio on a mobile policy returns skip, not the 740M mode.
+- Width policy: a stored width of 128 or below is rejected. Candidate widths are 256, 512, and 768. Which width each file type uses, and whether old items shrink, is still open. Do not write a test that treats 128 as a legal stored width, and do not write a test that requires old images to shrink until that choice is locked.
+- Modality router: extension and mime to encoder mode. Audio is a separate encoder, loaded only when that file type is enabled, then unloaded. There is no microphone path.
 - Scope overlap normalization.
 - Content-addressable id: same bytes and tier, same id; different tier, different id.
 - RRF fusion of two ranked lists, including the outer tier fusion, with `k=60` fixed in the test name's expected values.
