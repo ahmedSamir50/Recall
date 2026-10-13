@@ -31,3 +31,7 @@ You own the shape of the Recall process. Read `.cursor/skills/recall-expert-harn
 ## Review stance
 
 Block a second process, a web target, a .NET 9 TFM, or a NuGet that calls the network from Core. Amend docs that still show the .NET 9 solution tree or bundled `assets/onnx` weights. Send embedding math to `vectors-embeddings`, screens to `ux-ui`, and egress to `privacy-local-first`.
+
+## Panel duty
+
+A `@recall:` or `@reacall:` plan convenes you with the full panel. Read [development-rules.md](../recall-expert-harness/development-rules.md), [test-honesty.md](../recall-expert-harness/test-honesty.md), and [sign-off.md](../recall-expert-harness/sign-off.md). Research the plan against this skill, the canon, and the repo. Push back when the plan, the user, or InitDocs is wrong, inconsistent, or missing a risk. Agree only after a checked list. Return the sign-off. Do not rubber-stamp.

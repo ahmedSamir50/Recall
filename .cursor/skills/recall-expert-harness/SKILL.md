@@ -1,10 +1,11 @@
 ---
 name: recall-expert-harness
 description: >-
-  Convenes the Recall expert panel to review or harden app docs and to route
-  implementation work to the right expert. Use when the user mentions experts,
-  the panel, harness, hardening docs, Latest App Docs, InitDocs review, or
-  asks which specialist should own a Recall decision.
+  Convenes the full Recall expert panel for project plans triggered by
+  @recall: or @reacall:, and routes doc reviews and implementation to the
+  owning expert. Use when the user writes @recall:, @reacall:, asks for a
+  project, milestone, or feature plan, or mentions the harness, experts, or
+  hardening docs.
 disable-model-invocation: true
 ---
 
@@ -12,26 +13,30 @@ disable-model-invocation: true
 
 Recall is a local-only .NET 10 MAUI Blazor Hybrid app: EmbeddingGemma 2 (ONNX) + ZVec.NET. `InitDocs/` is the initial idea, not the final spec.
 
-## When to use this
+## Planning trigger
 
-- The user wants the experts to discuss or harden documentation.
-- A change crosses more than one specialty (indexing and UX, capture and privacy, tests and embeddings).
-- You are about to invent a stack choice, a CI host, an OCR engine, telemetry, or a sync implementation.
+A message that contains `@recall:` or `@reacall:`, or that asks for a project, milestone, phase, or feature plan, runs the full panel. Follow [planning-chain.md](planning-chain.md). Do not draft the plan yourself and then ask the experts to nod.
 
-For a narrow change, read the one matching skill under `.cursor/skills/<id>/SKILL.md` and follow it. Do not load the whole panel.
+Each expert returns the block in [sign-off.md](sign-off.md): verdict, confidence, notes, recommendations, options, alternatives, risks, and an evidenced push-back or an evidenced agreement. Rubber-stamping fails the chain.
+
+## Other work
+
+- Doc hardening uses [review-protocol.md](review-protocol.md). That is not a substitute for a `@recall:` plan.
+- A narrow code change reads one skill under `.cursor/skills/<id>/SKILL.md`. It still obeys [development-rules.md](development-rules.md) and [test-honesty.md](test-honesty.md).
 
 ## Required reads
 
-1. [canon.md](canon.md) — current intent and known InitDocs drift
-2. [panel.md](panel.md) — who owns what
-3. [review-protocol.md](review-protocol.md) — only when the task is a doc review
+1. [canon.md](canon.md)
+2. [panel.md](panel.md)
+3. [development-rules.md](development-rules.md) before any plan or product code
+4. [planning-chain.md](planning-chain.md) when the trigger fires
 
 ## Rules
 
-- Canon wins over a stale InitDocs sentence. Flag the sentence; do not implement it.
-- Do not close an unresolved item in `canon.md` by picking a side. Ask, or leave it open.
-- Doc reviews produce finding blocks and stop for acceptance before edits.
-- Adding an expert means: a skill, an agent file with the same id, and a row in `panel.md`. Then run `tools/expert-harness/Test-ExpertPanel.ps1`.
+- Canon wins over a stale InitDocs sentence. Flag the sentence.
+- Development rules win over a plan that breaks them. The expert pushes back with a fix, not a slogan.
+- Do not close an unresolved canon row by picking a side.
+- Adding an expert means a skill, an agent file with the same id, a panel row, and a line in the planning chain. Then run `tools/expert-harness/Test-ExpertPanel.ps1`.
 
 ## Expert ids
 

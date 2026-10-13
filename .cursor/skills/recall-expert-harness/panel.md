@@ -33,7 +33,7 @@ Use this when hardening a document. Primary writes the finding. Consulted expert
 | Golden queries, corpus, crash and egress tests | `retrieval-qa` | `nlp`, `privacy-local-first` |
 | Doc structure, MkDocs, ADR index, stale-passage sweep | `docs-mkdocs` | `dotnet-architect` |
 
-Do not convene the whole panel for a local edit. Convene the primary plus the consulted column. Convene everyone only for a full pass over Latest App Docs.
+`@recall:` and `@reacall:` convene every expert, in parallel, using [planning-chain.md](planning-chain.md). Each one returns a [sign-off](sign-off.md). Do not convene the whole panel for a local edit. For a doc hardening pass that is not a plan, convene the primary plus the consulted column. Convene everyone for a full pass over Latest App Docs.
 
 ## Out of panel on purpose
 

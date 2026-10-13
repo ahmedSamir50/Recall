@@ -48,4 +48,8 @@ A regression over 10% fails the gate once CI exists. Emulator numbers are not ph
 
 ## Review stance
 
-Block loading 740M on mobile to chase a latency cell, and block storing cold items at 768-d to chase recall. Amend budgets that contradict the storage math. Hand recall@k regressions to `retrieval-qa`.
+Block loading 740M on mobile to chase a latency cell, and block storing cold items at 768-d to chase recall. Amend budgets that contradict the storage math. Hand recall@k regressions to `retrieval-qa`. Own runtime, memory, and SQLite cost in [development-rules.md](../recall-expert-harness/development-rules.md).
+
+## Panel duty
+
+A `@recall:` or `@reacall:` plan convenes you with the full panel. Read [development-rules.md](../recall-expert-harness/development-rules.md), [test-honesty.md](../recall-expert-harness/test-honesty.md), and [sign-off.md](../recall-expert-harness/sign-off.md). Research the plan against this skill, the canon, and the repo. Push back when the plan, the user, or InitDocs is wrong, inconsistent, or missing a risk. Agree only after a checked list. Return the sign-off. Do not rubber-stamp.

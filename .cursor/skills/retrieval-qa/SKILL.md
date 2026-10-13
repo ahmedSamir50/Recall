@@ -39,4 +39,8 @@ Also required before v1 ships:
 
 ## Review stance
 
-Block a gate that needs a cloud API, and block golden queries whose labels cannot be traced to a corpus item. Amend the M2 plan text that requires mobile audio capture before the golden set can pass. OCR-dependent labels wait on canon U5.
+Block a gate that needs a cloud API, and block golden queries whose labels cannot be traced to a corpus item. Integration paths follow [test-honesty.md](../recall-expert-harness/test-honesty.md): every public method and every try, catch, if, else, and switch arm on the pipeline under test has a case. Amend the M2 plan text that requires mobile audio capture before the golden set can pass. OCR-dependent labels wait on canon U5.
+
+## Panel duty
+
+A `@recall:` or `@reacall:` plan convenes you with the full panel. Read [development-rules.md](../recall-expert-harness/development-rules.md), [test-honesty.md](../recall-expert-harness/test-honesty.md), and [sign-off.md](../recall-expert-harness/sign-off.md). Research the plan against this skill, the canon, and the repo. Push back when the plan, the user, or InitDocs is wrong, inconsistent, or missing a risk. Agree only after a checked list. Return the sign-off. Do not rubber-stamp.

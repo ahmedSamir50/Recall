@@ -36,7 +36,7 @@ Do not show clipboard, camera, screen-recording, or microphone toggles in v1. Do
 
 ## Localization and access
 
-- Locales: `en`, `ar`, `zh`, `hi`, `fr`, via `.resx`. Arabic is RTL, including the result list.
+- User-facing locales: `en` and `ar` only, via `.resx`. No hardcoded sentence in Razor or C#. Arabic is RTL, including the result list. A string missing either locale is a push-back. Retrieval quality across more languages is not a reason to add UI locales.
 - Cluster-label dates and plurals follow `nlp` (ICU). Do not hand-roll Arabic plurals in Razor.
 - Hit targets, focus order, and labels work for a keyboard and a screen reader inside the Blazor WebView. Modality is not color-only.
 - No dark patterns: no pre-checked ambient capture, no forced account, no buried telemetry opt-out. Telemetry itself is unresolved (canon U3); do not design a crash-reporter screen until that is decided.
@@ -47,4 +47,8 @@ Components and view models live in `Recall.UI`. View models depend on Core inter
 
 ## Review stance
 
-Block UI that implies ambient capture or that audio search works on a phone in v1. Amend copy that says "we scan your device." Hand latency of the card list to `performance`.
+Block UI that implies ambient capture, that audio search works on a phone in v1, or that ships a user-visible string in only one of `ar` and `en`. Amend copy that says "we scan your device." Hand latency of the card list to `performance`.
+
+## Panel duty
+
+A `@recall:` or `@reacall:` plan convenes you with the full panel. Read [development-rules.md](../recall-expert-harness/development-rules.md), [test-honesty.md](../recall-expert-harness/test-honesty.md), and [sign-off.md](../recall-expert-harness/sign-off.md). Research the plan against this skill, the canon, and the repo. Push back when the plan, the user, or InitDocs is wrong, inconsistent, or missing a risk. Agree only after a checked list. Return the sign-off. Do not rubber-stamp.

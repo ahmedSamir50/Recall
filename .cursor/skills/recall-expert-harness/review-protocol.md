@@ -2,6 +2,8 @@
 
 Use this when the user asks to harden, review, or discuss app docs with the experts. Do not start that review just because this harness exists.
 
+A `@recall:` or `@reacall:` project plan does not use this protocol. It uses [planning-chain.md](planning-chain.md) and the sign-off block. Doc findings here are not a substitute for that sign-off.
+
 ## Roles of the documents
 
 | Set | Role |

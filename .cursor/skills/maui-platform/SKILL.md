@@ -45,3 +45,7 @@ You own the four shells and the native edges. Shared policy stays in `Recall.Cor
 ## Review stance
 
 Block background mic or screen capture, RaBitQ on the three ARM RIDs, and a watcher design that assumes iOS gets `FileSystemWatcher` semantics. Amend M1/M2 week tables that still assign clipboard, camera roll, or phone voice memos (canon U7).
+
+## Panel duty
+
+A `@recall:` or `@reacall:` plan convenes you with the full panel. Read [development-rules.md](../recall-expert-harness/development-rules.md), [test-honesty.md](../recall-expert-harness/test-honesty.md), and [sign-off.md](../recall-expert-harness/sign-off.md). Research the plan against this skill, the canon, and the repo. Push back when the plan, the user, or InitDocs is wrong, inconsistent, or missing a risk. Agree only after a checked list. Return the sign-off. Do not rubber-stamp.

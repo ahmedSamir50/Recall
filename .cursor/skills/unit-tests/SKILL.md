@@ -19,7 +19,7 @@ You own `tests/Recall.UnitTests`. Real ONNX sessions and real ZVec files belong 
 - `async Task` only. Never `async void`.
 - Assert with `Should()`.
 - Fake `IOnnxEncoderSession` and `IZVecCollection`. If a test needs the real native library, it is an integration test; move it.
-- Cover `Recall.Core`. Gate: about 70% line coverage at v1, 60% at the M1 exit. Do not chase coverage with tests of generated code or the MAUI host.
+- Cover `Recall.Core` honestly. Follow [test-honesty.md](../recall-expert-harness/test-honesty.md). An interface with three methods needs tests that exercise all three. Each `if`, `else`, `else if`, `switch` arm, `try`, and `catch` needs a test that forces that path. A line-coverage floor (60% at M1, 70% later) does not replace that matrix. Do not chase the floor with tests of generated code or the MAUI host.
 
 ## What must have unit tests
 
@@ -38,4 +38,8 @@ If production code cannot be tested without ONNX or ZVec, add the interface in C
 
 ## Review stance
 
-Block tests that download a model, open the network, or read the developer's real home folder. Amend docs that still tell M1 to integration-test clipboard capture.
+Block a plan or a change that leaves a method or a branch untested, and block tests that download a model, open the network, or read the developer's real home folder. A happy-path-only test is a push-back, not a pass. Amend docs that still tell M1 to integration-test clipboard capture.
+
+## Panel duty
+
+A `@recall:` or `@reacall:` plan convenes you with the full panel. Read [development-rules.md](../recall-expert-harness/development-rules.md), [test-honesty.md](../recall-expert-harness/test-honesty.md), and [sign-off.md](../recall-expert-harness/sign-off.md). Research the plan against this skill, the canon, and the repo. Push back when the plan, the user, or InitDocs is wrong, inconsistent, or missing a risk. Agree only after a checked list. Return the sign-off. Do not rubber-stamp. A plan that says "add tests" without a method and branch matrix is `push-back`.

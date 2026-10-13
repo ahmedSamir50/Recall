@@ -4,4 +4,6 @@ On-device multimodal second brain. One .NET 10 MAUI Blazor Hybrid app, Embedding
 
 `InitDocs/` is the initial idea, not the final specification. Experts and the review harness live under `.cursor/`. Start at `.cursor/skills/recall-expert-harness/SKILL.md`. The working canon, including known stale passages in InitDocs, is `.cursor/skills/recall-expert-harness/canon.md`.
 
+`@recall: <plan>` or `@reacall: <plan>` runs the full expert panel before a plan is accepted. Each expert signs off with evidence, a verdict, confidence, options, alternatives, and risks. Development rules and test honesty live next to that skill.
+
 Do not implement device sync, a web client, an LLM sidecar, or ambient OS capture unless a later spec the user has accepted says so.

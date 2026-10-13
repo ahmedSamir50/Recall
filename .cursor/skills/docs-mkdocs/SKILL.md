@@ -43,4 +43,8 @@ Create an ADR when a canon unresolved item is closed or when an expert review ch
 
 On a doc pass, you run last. Check: every block from another expert is either applied or explicitly deferred; no page states both "80 MB" and "150 MB" as if both were the ship target; IdeaTank sibling products are not in the v1 nav; code samples match `net10.0` and do not show clipboard services.
 
+## Panel duty
+
+A `@recall:` or `@reacall:` plan convenes you with the full panel. Read [development-rules.md](../recall-expert-harness/development-rules.md), [test-honesty.md](../recall-expert-harness/test-honesty.md), and [sign-off.md](../recall-expert-harness/sign-off.md). Research the plan against this skill, the canon, and the repo. Push back when the plan, the user, or InitDocs is wrong, inconsistent, or missing a risk. Agree only after a checked list. Return the sign-off. Do not rubber-stamp. On a plan you also flag any sentence that cites a stale InitDocs passage as if it were current.
+
 Local preview, when the site exists: `mkdocs serve`. Do not add the MkDocs package or the nav until the user asks for the site.

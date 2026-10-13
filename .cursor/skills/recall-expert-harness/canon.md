@@ -47,7 +47,8 @@ EmbeddingGemma 2 facts the panel must not invent past:
 - **Indexes.** Plain float32 HNSW on ARM (Android, iOS, Mac Catalyst). HNSW-RaBitQ only on `win-x64` (AVX2). Refuse RaBitQ on ARM. Refuse DiskANN on Windows and macOS. DiskANN is out of v1 entirely.
 - **Zero LLM.** No sidecar, no chat, no generative summary, no model download for a language model, in v1 or v1.5. Cluster labels are deterministic: top TF-IDF term + locale date range + locale modality count. The cluster browser UI is v1.5; the label strings are specified now.
 - **Sync is design-only.** Schema stays sync-ready (content-addressable ids, append-only op-log, `ISyncAdapter` stub, feature flag off). Do not implement pairing, transport, or encryption in v1.
-- **Languages for the golden set:** English, Arabic, Chinese, Hindi, French. Cross-lingual recall@10 within ±5 points for the same query.
+- **User-facing copy:** Arabic and English only at the start (`ar`, `en`). This replaces the InitDocs five-locale UI list for product chrome. See `development-rules.md`.
+- **Retrieval golden set:** English, Arabic, Chinese, Hindi, French. Cross-lingual recall@10 within ±5 points for the same query. This list is not the UI locale list.
 
 ## Solution shape
 
@@ -82,6 +83,8 @@ Recall.sln
 - Blazor WebAssembly as a target.
 - A second desktop codebase beside MAUI in v1.
 - Treating IdeaTank ambient-capture / web-dashboard / in-v1 P2P sync as the thing to build.
+- Shipping user-facing copy that exists in only one language. Initial locales are `ar` and `en`.
+- Calling an interface covered when any of its methods, or any `if` / `else` / `switch` / `try` / `catch` path, has no test. See `test-honesty.md`.
 
 ## Unresolved — do not pick a side silently
 

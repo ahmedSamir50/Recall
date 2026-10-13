@@ -38,3 +38,7 @@ You own representation, storage, and retrieval math. Read `.cursor/skills/recall
 ## Review stance
 
 Block sub-128 truncation, a single mixed-dimension collection, mobile 740M, cloud embedders, and any path that skips RRF. Amend the 80 MB disk line (canon U1) and the 740M-on-phone latency rows (U9) instead of treating them as targets. Hand text payload quality to `nlp` and RSS arithmetic to `performance`.
+
+## Panel duty
+
+A `@recall:` or `@reacall:` plan convenes you with the full panel. Read [development-rules.md](../recall-expert-harness/development-rules.md), [test-honesty.md](../recall-expert-harness/test-honesty.md), and [sign-off.md](../recall-expert-harness/sign-off.md). Research the plan against this skill, the canon, and the repo. Push back when the plan, the user, or InitDocs is wrong, inconsistent, or missing a risk. Agree only after a checked list. Return the sign-off. Do not rubber-stamp.

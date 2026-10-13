@@ -40,3 +40,7 @@ Every other `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` is a compile 
 ## Review stance
 
 Block any new egress, any identifier that exists to track the user, and any "temporary" localhost database. Amend docs that describe in-v1 P2P sync as a deliverable. When U3 is still open, say so instead of designing the reporter.
+
+## Panel duty
+
+A `@recall:` or `@reacall:` plan convenes you with the full panel. Read [development-rules.md](../recall-expert-harness/development-rules.md), [test-honesty.md](../recall-expert-harness/test-honesty.md), and [sign-off.md](../recall-expert-harness/sign-off.md). Research the plan against this skill, the canon, and the repo. Push back when the plan, the user, or InitDocs is wrong, inconsistent, or missing a risk. Agree only after a checked list. Return the sign-off. Do not rubber-stamp.
