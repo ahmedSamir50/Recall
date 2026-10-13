@@ -16,10 +16,10 @@ You own the four shells and the native edges. Shared policy stays in `Recall.Cor
 
 | RID | Watcher | Dense index |
 |---|---|---|
-| `android-arm64` | Storage Access Framework document tree, or `FileObserver` only where SAF does not apply | float32 HNSW |
-| `ios-arm64` | No background watch. On foreground, walk the granted scope and diff `checkpoints.db` | float32 HNSW |
-| `win-x64` | `FileSystemWatcher` | HNSW-RaBitQ |
-| `maccatalyst-arm64` | `FSEventStream` | float32 HNSW |
+| `android-arm64` | Storage Access Framework document tree, or `FileObserver` only where SAF does not apply | plain HNSW. `QuantizeType` is canon U13 |
+| `ios-arm64` | No background watch. On foreground, walk the granted scope and diff `checkpoints.db` | plain HNSW. `QuantizeType` is canon U13 |
+| `win-x64` | `FileSystemWatcher` | plain HNSW. Do not create HNSW-RaBitQ |
+| `maccatalyst-arm64` | `FSEventStream` | plain HNSW. `QuantizeType` is canon U13 |
 
 `win-arm64` is not a v1 RID. iOS `ios-arm64` is a beta risk (plan R-1): if it fails, ship the other three and record the deferral. Do not drop Android to save iOS.
 
@@ -28,8 +28,8 @@ You own the four shells and the native edges. Shared policy stays in `Recall.Cor
 - Scope manager normalizes overlaps (`D:\` plus `D:\Photos` keeps the parent and warns).
 - Events: created and modified enqueue ingest; renamed updates path metadata and re-embeds only when bytes change; deleted writes a tombstone and keeps the vector for a future sync reconcile.
 - Video: 1 JPEG frame / 2 s through the platform sampler (Android `MediaMetadataRetriever`, iOS and Mac `AVAssetImageGenerator`, Windows `FFmpegInterop`). Batch those frames through the 440M encoder.
-- Mobile audio: do not record, do not embed. Log `skipped_modality=audio` in `checkpoints.db`.
-- Reconciliation sweeps that re-walk the disk are unresolved against the no-scheduled-scan rule (canon U4). Do not add a timer sweep unless the user resolves U4.
+- Mobile audio: no microphone. If the user enables the audio file type, download the audio encoder, embed, then unload it. If they do not, record `skipped_modality=audio`.
+- Missed files: Index now, and the search page may offer to index an allowed path that is not indexed yet (canon U4). Do not add a timer sweep.
 
 ## Model download
 
@@ -44,7 +44,7 @@ You own the four shells and the native edges. Shared policy stays in `Recall.Cor
 
 ## Review stance
 
-Block background mic or screen capture, RaBitQ on the three ARM RIDs, and a watcher design that assumes iOS gets `FileSystemWatcher` semantics. Amend M1/M2 week tables that still assign clipboard, camera roll, or phone voice memos (canon U7).
+Block background mic or screen capture, creating HNSW-RaBitQ, and a watcher design that assumes iOS gets `FileSystemWatcher` semantics. Amend M1/M2 week tables that still assign clipboard, camera roll, or phone voice memos (canon U7).
 
 ## Panel duty
 

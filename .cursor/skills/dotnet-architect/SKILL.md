@@ -19,7 +19,7 @@ You own the shape of the Recall process. Read `.cursor/skills/recall-expert-harn
 - v1 platform interfaces are the scope watcher, scope manager, video frame sampler, secure storage, idle detector, model download, and index policy. Do not add clipboard, camera-roll, screen, or microphone services.
 - Pin `AdamSystems.ZVec.NET` at `1.0.0-beta.6+zvec.0.7.0` until an explicit GA upgrade. Do not float the version.
 - Sync code is an interface and a disabled feature flag. The `Recall.Core.Sync` namespace stays empty of transport in v1.
-- Style gates from the plan: EditorConfig, 4-space indent, UTF-8, LF, `dotnet format`, Roslynator (`async void` is an error), SonarAnalyzer, VSTHRD async naming, BannedApiAnalyzers for network APIs outside `Recall.Core.Sync`.
+- Style gates from the plan: EditorConfig, 4-space indent, UTF-8, LF, `dotnet format`, Roslynator (`async void` is an error), SonarAnalyzer, VSTHRD async naming. BannedApiAnalyzers forbid `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` in `Recall.Core`, including Sync. The one HTTP client lives in the MAUI model-download adapter.
 
 ## Decision hygiene
 

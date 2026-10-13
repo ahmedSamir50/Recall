@@ -14,7 +14,7 @@ You own language behavior around the embedder. You do not own the vector index (
 ## Hard limits
 
 - No LLM, no generative title, no query rewriting by a decoder, in v1 or v1.5.
-- Task prefixes the UI may select: `search` (Find), `cluster` (Group), `classify` (Tag). Same stored vectors; the prefix is applied to the query. Do not invent extra product modes.
+- Find, Group, and Tag select the model-card text prefixes: `task: search result | query: {query}`, `task: clustering | query: {content}`, and `task: classification | query: {content}`. A titled document is `title: {title} | text: {content}`. Pictures, video, and audio get no prefix. Apply the prefix once. Do not invent a `semantic` prefix.
 - Tokenizer is Hugging Face `tokenizers.json` via `Microsoft.ML.Tokenizers`. Wrap it; do not vendor a second tokenizer.
 - Context budget is 8192 tokens. Prefer one embedding for a whole note, memo, or article when it fits. Chunk only past that budget. Do not chunk-and-average vectors.
 - Retrieval golden languages: English, Arabic, Chinese, Hindi, French. Recall@10 for the same query stays within ±5 points across those five. Topic words in labels stay in the cluster's language; dates and counts follow the user locale (ICU / `CultureInfo`).
@@ -22,9 +22,9 @@ You own language behavior around the embedder. You do not own the vector index (
 
 ## Text that is actually searchable
 
-- Full-text payload is raw text for text files, and OCR text for images if an OCR engine exists. Audio transcription is parked, so v1 audio items have an empty BM25 payload. Say that in the UI via `ux-ui` rather than pretending transcripts exist.
-- OCR engine is unresolved (canon U5). Do not pick Tesseract or Apple Vision just because the make/buy matrix still lists them on the removed screen-capture row.
-- PDF v1 uses the text layer only. Scanned PDFs are not a silent OCR feature.
+- Full-text payload is raw text for text files and for a PDF that already has a text layer. A scanned page is OCR. An image is OCR only for words printed in it. v1 OCR readers are English and Arabic, one shared finder, Arabic as its own ONNX file. Other languages download only when the person turns them on.
+- No speech-to-text model, ever. When `talk.mp4` or `talk.m4a` has a sibling `talk.srt`, `talk.vtt`, `talk.sbv`, `talk.ass`, `talk.ssa`, `talk.ttml`, or the same name with a language tag such as `talk.en.vtt`, those words are the media item's searchable text. Do not also index that sibling as its own unlinked document.
+- A PDF with a text layer uses that layer. A scanned PDF is OCR. Do not OCR a page that already has text.
 
 ## Cluster labels (deterministic)
 
@@ -34,7 +34,7 @@ The labeler is in-process C#, no download, no nightly LLM job. Clustering itself
 
 ## Review stance
 
-Block an LLM sidecar, chunk-and-average, and any claim that mobile audio is transcribed in v1. Amend cross-lingual tests that forget Arabic shaping or Hindi. Hand the prefix string's effect on the tensor to `vectors-embeddings`.
+Block an LLM sidecar, a speech-to-text model, and chunk-and-average. A sibling subtitle file is attached to its media. It is not generated. Amend cross-lingual tests that forget Arabic shaping or Hindi. Hand the prefix string's effect on the tensor to `vectors-embeddings`.
 
 ## Panel duty
 

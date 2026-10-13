@@ -23,7 +23,7 @@ You own `tests/Recall.UnitTests`. Real ONNX sessions and real ZVec files belong 
 
 ## What must have unit tests
 
-- Width policy: a stored width of 128 or below is rejected. Candidate widths are 256, 512, and 768. Which width each file type uses, and whether old items shrink, is still open. Do not write a test that treats 128 as a legal stored width, and do not write a test that requires old images to shrink until that choice is locked.
+- Width policy: a stored width of 128 or below is rejected. Text is 512 until a golden run clears 256. Old image, video, and audio move to 512. A pin stays at the long width. The cutoff is only 2, 5, or 7 years, starting at 2. Test each of those three and reject any other value.
 - Modality router: extension and mime to encoder mode. Audio is a separate encoder, loaded only when that file type is enabled, then unloaded. There is no microphone path.
 - Scope overlap normalization.
 - Content-addressable id: same bytes and tier, same id; different tier, different id.

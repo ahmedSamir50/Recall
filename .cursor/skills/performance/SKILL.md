@@ -27,13 +27,13 @@ iPhone 13 and M2 columns in the plan are additional targets, not a reason to dro
 
 ## Do not treat these table cells as v1 phone targets
 
-- 740M load and audio-embed rows on Pixel and iPhone (canon U9). Audio encoder is desktop-only.
-- Disk ≤ 80 MB at 100k on mobile (U1). The plan's own math says ship near **150 MB** and track R-7. Desktop RaBitQ ≤ 60 MB can stay.
-- RSS after warmup ≤ 400 MB on a Pixel while a resident float16 270M encoder is ~540 MB (U2). Flag it. Do not "fix" it by unloading the text encoder during ingest, and do not pretend both numbers are true.
+- 740M load and audio-embed rows on Pixel and iPhone (canon U9). Phone audio, if the user enables that file type, uses the separate audio encoder and unloads it after the job.
+- Disk ≤ 80 MB, ship-at-150 MB, and desktop RaBitQ ≤ 60 MB (U1). Those cells assumed float32 vectors and an index the local SDK cannot create. Do not put them on a gate.
+- RSS after warmup ≤ 400 MB, and the 540 MB float16 text file (U2). Float16 inference is forbidden. Do not unload the text encoder during text ingest to make 400 MB look true.
 
 ## Query budget (mobile, text, 100k)
 
-The plan's decomposition sums to ~55 ms: UI 2, prefix 1, ONNX 25, truncate <1, hybrid search 15, RRF 3, marshal 4, render 5. Close the gap with virtualized cards and, only when no hot tier is active, a narrower query vector. Dropping `efSearch` from 64 to 48 is a last lever and needs a recall check.
+The plan's text-query sum is about 55 ms against a 50 ms cell. An image embed is written at ≤ 120 ms, so that cell is not an image-query budget. A second model run is not how a shorter collection is searched: cut the one 768 result and re-normalize. Two HNSW graphs are outside the single 15 ms hybrid line. Dropping `efSearch` from 64 to 48 needs a recall check.
 
 ## Gate
 
@@ -48,7 +48,7 @@ A regression over 10% fails the gate once CI exists. Emulator numbers are not ph
 
 ## Review stance
 
-Block loading 740M on mobile to chase a latency cell, and block storing cold items at 768-d to chase recall. Amend budgets that contradict the storage math. Hand recall@k regressions to `retrieval-qa`. Own runtime, memory, and SQLite cost in [development-rules.md](../recall-expert-harness/development-rules.md).
+Block keeping text, vision, and audio loaded together to chase a latency cell, and block a stored width of 128. Old unpinned image, video, and audio move to 512. A pin stays at the long width. Amend budgets that still cite RaBitQ or float16. Hand recall@k regressions to `retrieval-qa`. Own runtime, memory, and SQLite cost in [development-rules.md](../recall-expert-harness/development-rules.md).
 
 ## Panel duty
 

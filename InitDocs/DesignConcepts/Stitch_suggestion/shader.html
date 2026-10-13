@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+<!-- STITCH_SHADER_START:ANIMATION_12 class="fixed inset-0 w-full h-full" -->
+<div class="fixed inset-0 w-full h-full" style="display:block;">
+<canvas id="shader-canvas-ANIMATION_12" style="display:block;width:100%;height:100%"></canvas>
+<script>
+(function() {
+  const canvas = document.getElementById('shader-canvas-ANIMATION_12');
+
+  // Sync the WebGL drawing-buffer size with the CSS-driven layout size.
+  // This fires on initial layout and whenever the element is resized.
+  function syncSize() {
+    const w = canvas.clientWidth  || 1280;
+    const h = canvas.clientHeight || 720;
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width  = w;
+      canvas.height = h;
+    }
+  }
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(syncSize).observe(canvas);
+  }
+  syncSize();
+
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) return;
+  const vs = `attribute vec2 a_position;
+varying vec2 v_texCoord;
+void main() {
+  v_texCoord = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}`;
+  const fs = `precision highp float;
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+varying vec2 v_texCoord;
+
+// Simplex/Hash helpers
+float hash(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+
+vec2 hash2(vec2 p) {
+    float n = sin(dot(p, vec2(127.1, 311.7)));
+    float m = sin(dot(p, vec2(269.5, 183.3)));
+    return fract(vec2(n, m) * 43758.5453);
+}
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+    vec2 st = gl_FragCoord.xy / u_resolution.xy;
+    
+    // Ambient dark background with subtle cyan / deep violet glow
+    vec3 col = vec3(0.047, 0.055, 0.075); // #0c0e13 base
+    
+    // Synaptic grid / lattice nodes
+    vec2 gridUv = uv * 6.5;
+    vec2 gridId = floor(gridUv);
+    vec2 gridF = fract(gridUv) - 0.5;
+    
+    float minDist = 1.0;
+    float lineEnergy = 0.0;
+    
+    // Check 3x3 neighbor cells for Voronoi / graph connections
+    for(int y = -1; y <= 1; y++) {
+        for(int x = -1; x <= 1; x++) {
+            vec2 neighbor = vec2(float(x), float(y));
+            vec2 p = hash2(gridId + neighbor);
+            
+            // Subtle harmonic orbital oscillation simulating memory clustering
+            p = 0.5 + 0.35 * sin(u_time * 0.8 + 6.2831 * p);
+            vec2 diff = neighbor + p - gridF - 0.5;
+            float d = length(diff);
+            
+            minDist = min(minDist, d);
+        }
+    }
+    
+    // Pulsing neural node cores
+    float nodeCore = smoothstep(0.08, 0.01, minDist);
+    float nodeHalo = smoothstep(0.35, 0.0, minDist) * 0.4;
+    
+    // Dynamic synaptic beam waves traveling across the space
+    float wave1 = sin(uv.x * 4.0 + uv.y * 2.0 - u_time * 1.2) * 0.5 + 0.5;
+    float wave2 = cos(uv.x * -3.0 + uv.y * 5.0 + u_time * 0.9) * 0.5 + 0.5;
+    float synPulse = pow(wave1 * wave2, 2.5);
+    
+    // Glowing connections & synaptic memory aura
+    vec3 cyanGlow = vec3(0.0, 0.949, 0.996); // #00f2fe
+    vec3 violetGlow = vec3(0.54, 0.36, 1.0);  // Soft neural purple
+    vec3 amberGlow = vec3(1.0, 0.72, 0.2);   // Active resonance tag
+    
+    // Subtle vector grid lines (MRL hyperspace projection lines)
+    float gridLine = max(
+        smoothstep(0.48, 0.5, abs(gridF.x)),
+        smoothstep(0.48, 0.5, abs(gridF.y))
+    ) * 0.06;
+    
+    // Cluster focal area (matching where memories resonate)
+    float centerGlow = 1.0 - smoothstep(0.0, 1.2, length(uv - vec2(0.35, 0.1)));
+    
+    vec3 memoryField = mix(cyanGlow, violetGlow, wave2) * (nodeCore * 1.4 + nodeHalo + synPulse * 0.25);
+    memoryField += cyanGlow * gridLine;
+    memoryField += violetGlow * centerGlow * 0.15;
+    
+    col += memoryField * 0.65;
+    
+    // Vignette for seamless dark container integration
+    float vig = smoothstep(1.3, 0.3, length(uv));
+    col *= vig;
+
+    gl_FragColor = vec4(col, 1.0);
+}`;
+  function cs(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const pos = gl.getAttribLocation(prog, 'a_position');
+  gl.enableVertexAttribArray(pos);
+  gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+  const uTime = gl.getUniformLocation(prog, 'u_time');
+  const uRes = gl.getUniformLocation(prog, 'u_resolution');
+  const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+
+  // u_mouse is in pixel coordinates matching u_resolution (ShaderToy convention).
+  // Shaders that need normalized coords should use: u_mouse / u_resolution.
+  let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+  window.addEventListener('mousemove', (event) => {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width && rect.height) {
+      const nx = (event.clientX - rect.left) / rect.width;
+      const ny = 1.0 - (event.clientY - rect.top) / rect.height;
+      mouse.x = nx * canvas.width;
+      mouse.y = ny * canvas.height;
+    }
+  });
+
+  function render(t) {
+    if (typeof ResizeObserver === 'undefined') syncSize();
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    if (uTime) gl.uniform1f(uTime, t * 0.001);
+    if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
+    if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(render);
+  }
+  render(0);
+})();
+</script>
+</div>
+<!-- STITCH_SHADER_END:ANIMATION_12 -->
+</body>
+</html>

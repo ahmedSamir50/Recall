@@ -15,7 +15,7 @@ You protect the thesis: the embedder and the database are in-process, so user da
 
 One path: `IModelDownloadService` downloading EmbeddingGemma ONNX weights from the Hugging Face CDN, SHA-256 checked, resumable. Request and response must not contain file names, document text, vectors, or a user id.
 
-Every other `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` is a compile error outside `Recall.Core.Sync`. That namespace is interface-only in v1. Do not hide a call inside it.
+`HttpClient`, `Socket`, `TcpListener`, and `UdpClient` are a compile error inside `Recall.Core`, including Sync. That namespace is interface-only in v1. The one HTTP client lives in the MAUI model-download adapter.
 
 ## Forbidden in v1
 
@@ -30,6 +30,7 @@ Every other `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` is a compile 
 - Op-log is append-only on local disk (`INSERT`, `DELETE`, `PIN`, `UNPIN`). v1 writes it and never sends it.
 - Deletes are tombstones.
 - Feature flag default: sync off. UI must not collect a pairing code.
+- Day 0 stores a random device id and the OS device name. Those two original values are immutable. A display name is editable. The id is not a hardware id or an advertising id, and it is not sent off the device.
 
 ## Checks you require
 
