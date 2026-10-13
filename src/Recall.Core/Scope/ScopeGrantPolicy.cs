@@ -25,6 +25,23 @@ public static class ScopeGrantPolicy
         return suffix.Length == 0 || suffix[0] is '\\' or '/';
     }
 
+    public static bool IsInsideGrant(string grantPath, string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(grantPath) || string.IsNullOrWhiteSpace(filePath))
+        {
+            return false;
+        }
+
+        var grant = Normalize(grantPath);
+        var file = Normalize(filePath);
+        if (file.Equals(grant, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return IsChildPath(grant, file);
+    }
+
     public static string Normalize(string path)
     {
         return path.Trim().Replace('/', '\\').TrimEnd('\\');

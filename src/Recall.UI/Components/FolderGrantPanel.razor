@@ -16,6 +16,7 @@
     {
         <p class="text-13 ink3 mb-4">@T("Folders_IosNote")</p>
     }
+    <p class="lbl mb-2">@T("Folders_TypesLabel")</p>
     <ul class="flex flex-col gap-2 mb-4">
         @foreach (var grant in Ui.Current.Grants)
         {
@@ -23,6 +24,24 @@
                 <span class="flex-1 min-w-0">
                     <span class="block font-medium">@grant.DisplayName</span>
                     <bdi class="ltr block f-mono text-12 ink3 truncate text-start">@grant.Path</bdi>
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <label class="text-12 ink2 flex items-center gap-1">
+                            <input type="checkbox" checked="@IsKindEnabled(grant.EnabledKinds, GrantFileKinds.Text)" @onchange="e => ToggleKind(grant.Path, GrantFileKinds.Text, (bool)e.Value!)" />
+                            @T("Folders_TypeText")
+                        </label>
+                        <label class="text-12 ink2 flex items-center gap-1">
+                            <input type="checkbox" checked="@IsKindEnabled(grant.EnabledKinds, GrantFileKinds.Image)" @onchange="e => ToggleKind(grant.Path, GrantFileKinds.Image, (bool)e.Value!)" />
+                            @T("Folders_TypeImage")
+                        </label>
+                        <label class="text-12 ink2 flex items-center gap-1">
+                            <input type="checkbox" checked="@IsKindEnabled(grant.EnabledKinds, GrantFileKinds.Video)" @onchange="e => ToggleKind(grant.Path, GrantFileKinds.Video, (bool)e.Value!)" />
+                            @T("Folders_TypeVideo")
+                        </label>
+                        <label class="text-12 ink2 flex items-center gap-1">
+                            <input type="checkbox" checked="@IsKindEnabled(grant.EnabledKinds, GrantFileKinds.Audio)" @onchange="e => ToggleKind(grant.Path, GrantFileKinds.Audio, (bool)e.Value!)" />
+                            @T("Folders_TypeAudio")
+                        </label>
+                    </div>
                 </span>
                 <button type="button" class="btn btn-g !py-1 text-13" @onclick="() => Remove(grant.Path)">×</button>
             </li>

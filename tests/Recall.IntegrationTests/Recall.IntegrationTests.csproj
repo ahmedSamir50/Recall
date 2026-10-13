@@ -13,7 +13,18 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="TestAssets\embeddinggemma-2-text\model_quantized.onnx" CopyToOutputDirectory="PreserveNewest" Link="TestAssets\embeddinggemma-2-text\model_quantized.onnx" />
+    <Content Include="TestAssets\embeddinggemma-2-text\model_quantized.onnx_data" CopyToOutputDirectory="PreserveNewest" Link="TestAssets\embeddinggemma-2-text\model_quantized.onnx_data" />
+    <Content Include="TestAssets\embeddinggemma-2-text\tokenizer.json" CopyToOutputDirectory="PreserveNewest" Link="TestAssets\embeddinggemma-2-text\tokenizer.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+    <PackageReference Include="Tokenizers.DotNet.runtime.win-x64" />
     <PackageReference Include="xunit.v3" />
+    <PackageReference Include="ZVec.NET" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <ProjectReference Include="..\..\src\Recall.Adapters\Recall.Adapters.csproj" />
     <ProjectReference Include="..\..\src\Recall.Core\Recall.Core.csproj" />
   </ItemGroup>
 </Project>

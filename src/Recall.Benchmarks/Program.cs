@@ -1,4 +1,5 @@
-﻿internal static class Program
-{
-    private static int Main() => 0;
-}
+﻿using BenchmarkDotNet.Running;
+using Recall.Benchmarks;
+
+BenchmarkRunner.Run<TextSearchBenchmarks>();
+return 0;

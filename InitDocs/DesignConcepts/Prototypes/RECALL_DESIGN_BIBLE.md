@@ -121,7 +121,7 @@ Each is one Razor component. Copy given EN / AR.
 
 **FolderRow** — kind icon, folder name, LTR path (mono 12, truncate), item count, checkbox (accent cyan-ink). Whole row is the label.
 
-**ModelRow** — name, LTR "Model · size", optional "Desktop only" / "للكمبيوتر فقط" pill, status right, 6 px progress track. States: Queued / في الانتظار (ink-3) · Downloading 62% / جارٍ التنزيل ٦٢٪ (cyan, gradient cyan→violet) · Verified / تم التحقق (emerald, full bar) · Failed (err border 50%, full err bar, "Checksum didn't match — file discarded" / "البصمة غير مطابقة — حُذف الملف", primary "Retry download" / "أعد التنزيل").
+**ModelRow** — name, LTR "Model · size", optional "Desktop only" / "للكمبيوتر فقط" pill, status right, 6 px progress track. States: Queued / في الانتظار (ink-3) · Downloading 62% / جارٍ التحميل ٦٢٪ (cyan, gradient cyan→violet) · Verified / تم التحقق (emerald, full bar) · Failed (err border 50%, full err bar, "Checksum didn't match — file discarded" / "البصمة غير مطابقة — حُذف الملف", primary "Retry download" / "أعد التحميل").
 
 **EmptyState** — icon in L3 tile, title, one sentence, one action.
 
@@ -136,7 +136,7 @@ Each is one Razor component. Copy given EN / AR.
 
 **Folders (1/3)** — "Pick what Recall may read" / "اختر ما يُسمح لريكول بقراءته"; FolderRows; dashed "Add folder" / "إضافة مجلد"; skipped note; Back / Continue (رجوع / متابعة). States: none selected → Continue disabled + helper "Pick at least one folder" / "اختر مجلدًا واحدًا على الأقل"; permission denied → row error "Recall can't read this folder" / "لا يستطيع ريكول قراءة هذا المجلد".
 
-**Models (2/3)** — "Download the on-device models" / "نزّل النماذج على جهازك"; ModelRows (Vision + text embeddings, Language model, Speech-to-text desktop only); SHA-256 note. States: downloading, verified, hash failure + retry, offline ("No connection — download resumes when you're back online" / "لا يوجد اتصال — يُستأنف التنزيل عند عودة الاتصال"), low disk ("Need 2.2 GB free" / "تحتاج ٢٫٢ غ.ب مساحة فارغة"). Continue disabled until all required models are Verified.
+**Models (2/3)** — "Download the on-device models" / "نزّل النماذج على جهازك"; ModelRows (Vision + text embeddings, Language model, Speech-to-text desktop only); SHA-256 note. States: downloading, verified, hash failure + retry, offline ("No connection — download resumes when you're back online" / "لا يوجد اتصال — يُستأنف التحميل عند عودة الاتصال"), low disk ("Need 2.2 GB free" / "تحتاج ٢٫٢ غ.ب مساحة فارغة"). Continue disabled until all required models are Verified.
 
 **Ready (3/3)** — emerald check tile, "Your memory is ready" / "ذاكرتك جاهزة", counts, "Start searching" / "ابدأ البحث".
 

@@ -6,7 +6,13 @@ Build order is phases. Each phase is a set of epics. Each epic is a set of tasks
 
 Will not be built: a web app, clipboard, camera, screen, or microphone capture, any language model, any speech-to-text model, browser history, sync transport, a cloud build, HNSW-RaBitQ, bundled model weights, and stored vectors at 128 numbers.
 
-Stack for every task: `net10.0`, MAUI Blazor Hybrid, MudBlazor, Tailwind, four shells (`android-arm64`, `ios-arm64`, `win-x64`, `maccatalyst-arm64`), `Microsoft.ML.OnnxRuntime`, ZVec.NET pin `1.0.0-beta.6+zvec.0.7.0` from `D:\A_S\AdamSystems.ZVec.NET`. Git remote is Bitbucket. Build and release stay on the developer machine.
+Stack for every task: `net10.0`, MAUI Blazor Hybrid, MudBlazor, Tailwind, four shells (`android-arm64`, `ios-arm64`, `win-x64`, `maccatalyst-arm64`), `Microsoft.ML.OnnxRuntime`, NuGet id `ZVec.NET` at `1.0.0-beta.6` from [Directory.Packages.props](../Directory.Packages.props) (local tree `D:\A_S\AdamSystems.ZVec.NET` reports `1.0.0-beta.6+zvec.0.7.0`; do not restore a package named `AdamSystems.ZVec.NET`). Git remote is Bitbucket. Build and release stay on the developer machine.
+
+**Phase progress (13 Oct 2026, gate):** Phase 1 is **partial** — solution, ports, localization, folder grants, Find-only empty search, pin/age/preferences, per-grant file types, and reopenable grants on Windows/Android/iOS/Mac Catalyst exist; platform device id, native vs display name, and localized model rows landed in this gate; phone/Windows open builds remain unchecked. Phase 2 is **in progress (not done)** — Core text ports, ONNX/ZVec adapters, download client, prefixes, content id, and hybrid Find top 20 exist in tree; models UI states, one-shot ingest wiring, and benchmark exit still open. Neither phase is marked done below.
+
+**Content id (Phase 2+):** SHA-256 of modality, source-content hash, stored width, and chunk ordinal (`0` when the note is one vector). A repeated insert of the same id is a no-op. The first insert also appends a local unsent `INSERT`. Sync stays off.
+
+**Stale references (do not treat as this gate):** InitDocs 128-wide cold tiers, HNSW-RaBitQ, `[semantic]` / `[search]` prefixes, AdamSystems.ZVec.NET as the NuGet id, and the InitDocs ~50 ms cell as the Phase 2 benchmark pass line.
 
 Open measurements, not tasks: disk size, memory after warmup, and whether crash reports ever leave the device. Crash reports stay on the device until that choice is made.
 
@@ -18,44 +24,47 @@ The app opens, speaks Arabic and English, and remembers this device. It does not
 
 ### Epic 1.1 — Solution
 
-- **1.1.1** Create `Recall.Core`, `Recall.UI`, `Recall.Maui`, benchmark and test projects. Core has no MAUI, Razor, or HTTP. UI calls Core ports only. Maui is the only composition root. Done when a phone and a Windows build both open an empty shell.
-- **1.1.2** Add the ports: scope watcher, scope manager, video frame sampler, secure storage, idle detector, model download, index policy. Done when each port has a fake and no clipboard, camera, screen, or mic type exists.
-- **1.1.3** Ban `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` inside Core, including the sync stub. Done when a socket in Core fails the build.
+- **1.1.1** Create `Recall.Core`, `Recall.UI`, `Recall.Maui`, benchmark and test projects. Core has no MAUI, Razor, or HTTP. UI calls Core ports only. Maui is the only composition root. Done when a phone and a Windows build both open an empty shell. **Status (partial):** projects and four TFMs exist; Maui calls `AddRecallCore` only; phone and Windows open builds are still unchecked.
+- **1.1.2** Add the ports: scope watcher, scope manager, video frame sampler, secure storage, idle detector, model download, index policy. Done when each port has a fake and no clipboard, camera, screen, or mic type exists. **Status (partial):** seven ports are types with fakes; scope manager has methods; watcher, download, and index policy have no methods yet.
+- **1.1.3** Ban `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` inside Core, including the sync stub. Done when a socket in Core fails the build. **Status (partial):** `BannedSymbols.txt` is in place; Core and UI ban `HttpClient`; Maui allows it for the future download adapter only.
 
 ### Epic 1.2 — Screens that can ship
 
-- **1.2.1** Put every visible string in `ar` and `en` resource files. Arabic layout is right to left. Done when a string in only one language fails a test.
-- **1.2.2** First screen is the folder grant: add and remove folders, pick file types, show the overlap warning. iPhone copy says new files are picked up when Recall is opened. Done when that screen works with no folders granted.
-- **1.2.3** Add search, results, pin, age, this-device, and model-download screens as empty states. Pin copy is “keep this easy to find.” Age choices are only 2, 5, and 7 years, starting at 2. No width or quantization words on screen. Done when each empty state exists in both languages.
+- **1.2.1** Put every visible string in `ar` and `en` resource files. Arabic layout is right to left. Done when a string in only one language fails a test. **Status (partial):** key parity is tested; demo copy and English-only chrome may remain on some surfaces.
+- **1.2.2** First screen is the folder grant: add and remove folders, pick file types, show the overlap warning. iPhone copy says new files are picked up when Recall is opened. Done when that screen works with no folders granted. **Status (partial):** overlap and Windows pick work; per-grant file types and reopenable grants on all four shells are required before done; iPhone line shows only on the iOS shell.
+- **1.2.3** Add search, results, pin, age, this-device, and model-download screens as empty states. Pin copy is “keep this easy to find.” Age choices are only 2, 5, and 7 years, starting at 2. No width or quantization words on screen. Done when each empty state exists in both languages. **Status (partial):** routes exist; Find-only empty search, pin, age, and device-name screens must replace demo search paint before done.
 
 ### Epic 1.3 — This device
 
-- **1.3.1** On first launch, store a random device id and the OS device name. Both stay forever. Done when a second launch does not mint a new id.
-- **1.3.2** Let the person edit the name Recall shows. Done when the original name and the id are unchanged after the edit, and neither is sent on the network.
+- **1.3.1** On first launch, store the public platform device id (random only when the read is empty, known-bad, or not ready). Store the native OS device name; both stay forever. Done when a second launch does not mint a new id and known-bad Android id `9774d56d682e549c` is rejected. **Status (partial):** platform id chooser and Maui RID readers landed in this gate; phone and Windows open builds still unchecked.
+- **1.3.2** Let the person edit the display name Recall shows. The native name stays read-only. Done when the original name and the id are unchanged after the edit, and neither name nor the id is sent on the network. **Status (partial):** this-device screen edits display name; empty native name shows localized device title; blank display name shows inline ar/en error.
 
 ---
 
 ## Phase 2 — Text search
 
+**Status: in progress (not done).** ONNX session, ZVec collection, download client, prefix type, chunker, and hybrid query exist behind Core ports and `Recall.Adapters`; models-screen state machine and full ingest-on-download wiring remain open. Scope: embed and query one text collection from granted text files (one-shot read when download finishes or the person retries on the models screen — not a watcher or Index now).
+
 A granted text file can be found by meaning and by words.
 
 ### Epic 2.1 — Model download
 
-- **2.1.1** Download the text ONNX file into the platform app-data folder. Check SHA-256. Resume after a drop. Done when a bad hash fails, a retry works, and the request carries no file name, document text, vector, or device id.
+- **2.1.1** Download the int8 text ONNX into app data. Check SHA-256. Resume after a drop. The request may name the public weight file. It must not carry a user document name, document text, vector, device id, native device name, or custom display name. Float16 and the published 4-bit file are not this download. Vision and audio files stay unloaded. Done when a bad hash fails, a retry works, and the request builder omits those fields.
 - **2.1.2** Show progress, hash failure, and retry. Copy says the fetch is model weights only. Done when those three states exist in Arabic and English.
 - **2.1.3** Keep weights out of the installer. Done when the app package contains no ONNX weights.
 
 ### Epic 2.2 — Text embed and index
 
 - **2.2.1** Run EmbeddingGemma 2 with ONNX Runtime. Mean-pool. L2-normalize the 768 numbers. Store text at 512 by keeping the leading part and L2-normalizing again. Done when a 128-wide store throws and a unit vector is length 1 after the cut.
-- **2.2.2** Apply the search prefix once: `task: search result | query: {query}`. Documents use `title: {title} | text: {content}`. Done when a second wrap of the prefix fails a test.
-- **2.2.3** Create one text collection, plain HNSW, `M=16`, `efConstruction=200`, `efSearch=64`, `QuantizeType` left off. Done when one float index exists and a quantized second index is not created.
-- **2.2.4** Embed a note whole when it fits in 8192 tokens. Split only past that. Do not average chunks. Done when an over-limit note becomes more than one vector and an under-limit note stays one.
+- **2.2.2** Prefixes live in one Core type. Search uses `task: search result | query: {query}` once. A titled note uses `title: {title} | text: {content}` once. Cluster and classify prefix strings may exist on that type and are not wired to a query in this gate. Do not copy InitDocs `[semantic]` or `[search]` prefixes. Done when a second wrap of the prefix fails a test.
+- **2.2.3** Create one text collection. Index params: plain HNSW, `M=16`, `efConstruction=200`, `QuantizeType` left `Undefined`. `EfSearch` 64 is set on `ZVecHnswQueryParams`, because the index param has no such field and a null query value uses 300. Done when one float index exists and a quantized second index is not created.
+- **2.2.4** Tokenize with `Microsoft.ML.Tokenizers` and the model's `tokenizers.json`. The 8192 budget includes the prefix. One vector when the note fits. Split only past that. Do not average chunks. Done when an over-limit note becomes more than one vector and an under-limit note stays one.
+- **2.2.5** BenchmarkDotNet text-only exit: one text session, one 512-d float HNSW graph, `EfSearch` 64, `QuantizeType` off, insert ≤5 ms, hybrid top-20 ≤60 ms mobile / ≤25 ms desktop. Encoder load is its own number (≤600 ms mobile / ≤200 ms desktop) and is not added into query time. Label emulator and desktop runs so they are not reported as a phone.
 
 ### Epic 2.3 — Query text
 
-- **2.3.1** Embed the question once. Search the text collection with dense match, keyword match, and the folder filter. Fuse inside ZVec with RRF at `k=60`. Done when skipping RRF fails a test and a file outside the grant cannot be returned.
-- **2.3.2** Show the top 20. Each card shows kind, name, local time, and why it matched. Opening a card opens the file. A missing file stays on the card as unavailable. Done when the first five cards can show before the rest are drawn.
+- **2.3.1** Embed the question once. Dense HNSW plus BM25 on the raw note text, plus the folder filter, fused with `ZVecRrfReranker` at `RankConstant` 60. A file outside the grant is not returned. Done when skipping RRF fails a test and an out-of-grant path is dropped.
+- **2.3.2** The search page is Find only. Group and Tag do not run a query. Show the top 20. Each card shows kind, name, local time, and why it matched. Opening a card opens the file. A missing file stays on the card as unavailable. Done when demo cards, the translation line, and the fake item count are off the page and the first five cards can show before the rest are drawn.
 
 ---
 

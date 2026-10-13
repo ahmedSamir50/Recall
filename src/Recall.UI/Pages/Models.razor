@@ -10,7 +10,8 @@
             @foreach (var entry in ModelCatalog.All)
             {
                 <li class="p-4 rounded-xl border bd" style="background:var(--c1)">
-                    <span class="block font-medium">@entry.DisplayName</span>
+                    <span class="block font-medium">@ModelLabel(entry.Modality)</span>
+                    <bdi class="ltr f-mono text-12 ink3 block">@entry.ModelId</bdi>
                     <span class="f-mono text-12 ink3">@T("Models_NotReady")</span>
                 </li>
             }

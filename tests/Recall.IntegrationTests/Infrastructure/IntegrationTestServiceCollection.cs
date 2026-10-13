@@ -1,0 +1,17 @@
+using Microsoft.Extensions.DependencyInjection;
+using Recall.Core.DependencyInjection;
+using Recall.Adapters.DependencyInjection;
+
+namespace Recall.IntegrationTests.Infrastructure;
+
+public static class IntegrationTestServiceCollection
+{
+    public static ServiceProvider Build(string modelDirectory, string vectorRoot)
+    {
+        var services = new ServiceCollection();
+        services.AddRecallCore();
+        services.AddSingleton<Recall.Core.Ports.IScopeGrantStore, InMemoryScopeGrantStore>();
+        services.AddRecallAdapters(modelDirectory, vectorRoot);
+        return services.BuildServiceProvider();
+    }
+}

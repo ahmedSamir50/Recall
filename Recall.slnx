@@ -6,6 +6,7 @@
   </Configurations>
   <Folder Name="/src/">
     <Project Path="src/Recall.Benchmarks/Recall.Benchmarks.csproj" />
+    <Project Path="src/Recall.Adapters/Recall.Adapters.csproj" />
     <Project Path="src/Recall.Core/Recall.Core.csproj" />
     <Project Path="src/Recall.Maui/Recall.Maui.csproj" />
     <Project Path="src/Recall.UI/Recall.UI.csproj" />

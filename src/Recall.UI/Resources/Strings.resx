@@ -33,6 +33,11 @@
   <data name="Folders_PermissionDenied" xml:space="preserve"><value>Recall can't read this folder</value></data>
   <data name="Folders_IosNote" xml:space="preserve"><value>New files are picked up when Recall is opened.</value></data>
   <data name="Folders_OverlapWarning" xml:space="preserve"><value>This folder is already covered by a parent grant.</value></data>
+  <data name="Folders_TypesLabel" xml:space="preserve"><value>File types in this folder</value></data>
+  <data name="Folders_TypeText" xml:space="preserve"><value>Text</value></data>
+  <data name="Folders_TypeImage" xml:space="preserve"><value>Images</value></data>
+  <data name="Folders_TypeVideo" xml:space="preserve"><value>Video</value></data>
+  <data name="Folders_TypeAudio" xml:space="preserve"><value>Audio</value></data>
   <data name="Models_Title" xml:space="preserve"><value>Download the on-device models</value></data>
   <data name="Models_Lead" xml:space="preserve"><value>One-time download. After this, search works without internet.</value></data>
   <data name="Models_ShaNote" xml:space="preserve"><value>We check every file against a SHA-256 hash before using it.</value></data>
@@ -58,6 +63,19 @@
   <data name="Preferences_FoldersLink" xml:space="preserve"><value>Folders</value></data>
   <data name="Preferences_ModelsLink" xml:space="preserve"><value>Models</value></data>
   <data name="Preferences_DeleteIndex" xml:space="preserve"><value>Delete everything Recall stored</value></data>
+  <data name="Preferences_Age" xml:space="preserve"><value>Keep media at full detail for</value></data>
+  <data name="Preferences_AgeLead" xml:space="preserve"><value>Years before older photos, video, and audio may shrink in a later release. Text is not affected.</value></data>
+  <data name="Preferences_DeviceLink" xml:space="preserve"><value>This device name</value></data>
+  <data name="Preferences_PinLink" xml:space="preserve"><value>Pinned items</value></data>
+  <data name="Pin_EmptyTitle" xml:space="preserve"><value>Nothing pinned yet</value></data>
+  <data name="Pin_EmptyLead" xml:space="preserve"><value>Keep this easy to find.</value></data>
+  <data name="Device_Title" xml:space="preserve"><value>This device</value></data>
+  <data name="Device_Lead" xml:space="preserve"><value>Recall shows this name in the shell. Your device id stays on this device and is never sent.</value></data>
+  <data name="Device_DisplayNameRequired" xml:space="preserve"><value>Enter a display name.</value></data>
+  <data name="Device_DisplayNameLabel" xml:space="preserve"><value>Name Recall shows</value></data>
+  <data name="Device_OriginalNameLabel" xml:space="preserve"><value>Original device name</value></data>
+  <data name="Device_IdLabel" xml:space="preserve"><value>Device id</value></data>
+  <data name="Device_Save" xml:space="preserve"><value>Save</value></data>
   <data name="Theme_Label" xml:space="preserve"><value>Theme</value></data>
   <data name="Theme_System" xml:space="preserve"><value>System</value></data>
   <data name="Theme_Dark" xml:space="preserve"><value>Dark</value></data>
@@ -67,8 +85,8 @@
   <data name="Status_Ready" xml:space="preserve"><value>Ready</value></data>
   <data name="Vault_Label" xml:space="preserve"><value>Personal vault</value></data>
   <data name="OnDevice_Label" xml:space="preserve"><value>On-device</value></data>
-  <data name="OnDevice_ModelsStub" xml:space="preserve"><value>EmbeddingGemma · SigLIP · audio</value></data>
-  <data name="Status_ItemsDemo" xml:space="preserve"><value>12,480</value></data>
+  <data name="OnDevice_ModelsLine" xml:space="preserve"><value>EmbeddingGemma · text · vision · audio</value></data>
+  <data name="Status_ItemsNone" xml:space="preserve"><value>No items indexed yet</value></data>
   <data name="Status_ItemsSuffix" xml:space="preserve"><value>items</value></data>
   <data name="Status_IndexingPaused" xml:space="preserve"><value>Indexing paused while on battery</value></data>
   <data name="Home_QueryDemo" xml:space="preserve"><value>The red scooter I saw near the Colosseum last summer</value></data>
@@ -150,4 +168,19 @@
   <data name="Landing_CloseLead" xml:space="preserve"><value>Free while in preview. English and Arabic.</value></data>
   <data name="Landing_Footer" xml:space="preserve"><value>Recall · made for one person: you.</value></data>
   <data name="Landing_DemoQuery" xml:space="preserve"><value>red scooter near the Colosseum</value></data>
+  <data name="Fault_EmbeddingWidthUnexpected" xml:space="preserve"><value>The text vector size was not the one this search expects.</value></data>
+  <data name="Fault_TextModelNotReady" xml:space="preserve"><value>The text model is not ready yet.</value></data>
+  <data name="Fault_SearchPrefixAppliedTwice" xml:space="preserve"><value>That search was prepared twice.</value></data>
+  <data name="Fault_DocumentPrefixAppliedTwice" xml:space="preserve"><value>That note was prepared twice.</value></data>
+  <data name="Fault_StoredWidthBlocked" xml:space="preserve"><value>That vector size is blocked.</value></data>
+  <data name="Fault_TextWidthNot512" xml:space="preserve"><value>Text search uses the 512-wide standard.</value></data>
+  <data name="Fault_AgeCutoffNotAllowed" xml:space="preserve"><value>Age cutoff is 2, 5, or 7 years.</value></data>
+  <data name="Fault_GrantFileKindsEmpty" xml:space="preserve"><value>At least one file type must stay on.</value></data>
+  <data name="Fault_DeviceIdNotReady" xml:space="preserve"><value>This device id is not ready yet.</value></data>
+  <data name="Fault_DownloadHashMismatch" xml:space="preserve"><value>The download checksum did not match. It was discarded.</value></data>
+  <data name="Fault_DownloadIncomplete" xml:space="preserve"><value>The download stopped. You can continue it.</value></data>
+  <data name="Fault_DownloadTransport" xml:space="preserve"><value>The download could not finish. You can continue it.</value></data>
+  <data name="Fault_TokenizerNativeUnsupported" xml:space="preserve"><value>Text search is not available on this phone yet.</value></data>
+  <data name="Fault_RrfRankConstant" xml:space="preserve"><value>Search ranking used the wrong fusion constant.</value></data>
+  <data name="Models_DownloadInterrupted" xml:space="preserve"><value>Download paused. Continue keeps the part already saved.</value></data>
 </root>

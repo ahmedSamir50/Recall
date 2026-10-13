@@ -31,7 +31,7 @@
                     <span class="f-mono em text-11">@RecallText.Get("Status_Ready", Snapshot.Culture)</span>
                 </div>
                 <div class="h-1 rounded-full mb-2" style="background:linear-gradient(90deg,var(--cyan-ink),var(--violet))"></div>
-                <bdi class="ltr f-mono ink3 text-11">@RecallText.Get("OnDevice_ModelsStub", Snapshot.Culture)</bdi>
+                <bdi class="ltr f-mono ink3 text-11">@RecallText.Get("OnDevice_ModelsLine", Snapshot.Culture)</bdi>
             </div>
         </nav>
         <main class="flex-1 min-w-0 overflow-auto pb-20 md:pb-0">@Body</main>
@@ -39,11 +39,11 @@
     <footer class="g1 h-status shrink-0 hidden md:flex items-center gap-5 px-4 border-t bd f-mono text-11 ink2">
         <span class="flex items-center gap-1.5">
             <span class="w-1.5 h-1.5 rounded-full" style="background:var(--emerald)"></span>
-            @RecallText.Get("Status_ItemsDemo", Snapshot.Culture) @RecallText.Get("Status_ItemsSuffix", Snapshot.Culture)
+            @RecallText.Get("Status_ItemsNone", Snapshot.Culture)
         </span>
         <span class="am">@RecallText.Get("Status_IndexingPaused", Snapshot.Culture)</span>
         <span class="flex-1"></span>
-        <bdi class="ltr">@RecallText.Get("OnDevice_ModelsStub", Snapshot.Culture)</bdi>
+        <bdi class="ltr">@RecallText.Get("OnDevice_ModelsLine", Snapshot.Culture)</bdi>
         <span class="em">@RecallText.Get("Status_Ready", Snapshot.Culture)</span>
     </footer>
     <nav class="g1 md:hidden fixed bottom-0 inset-x-0 z-20 border-t bd grid grid-cols-4 pb-safe">

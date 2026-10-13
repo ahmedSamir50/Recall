@@ -1,7 +1,14 @@
 using Microsoft.Extensions.DependencyInjection;
+using Recall.Core.Device;
+using Recall.Core.Ingest;
+using Recall.Core.Text;
+using Recall.Core.Indexing;
 using Recall.Core.Locale;
 using Recall.Core.Ports;
+using Recall.Core.Preferences;
 using Recall.Core.Scope;
+using Recall.Core.Search;
+using Recall.Core.Sync;
 using Recall.Core.Theme;
 
 namespace Recall.Core.DependencyInjection;
@@ -12,7 +19,16 @@ public static class RecallCoreServiceCollectionExtensions
     {
         services.AddSingleton<ThemeService>();
         services.AddSingleton<LocaleService>();
+        services.AddSingleton<AgeCutoffPreferenceService>();
         services.AddSingleton<IScopeManagerService, ScopeGrantService>();
+        services.AddSingleton<IIndexPolicy, RecallIndexPolicy>();
+        services.AddSingleton<LocalOpLogWriter>();
+        services.AddSingleton<IRandomDeviceIdSource, GuidRandomDeviceIdSource>();
+        services.AddSingleton<IDeviceRecordService, DeviceRecordService>();
+        services.AddSingleton<IGrantedTextReader, DirectoryGrantedTextReader>();
+        services.AddSingleton<ITextSearchService, TextSearchService>();
+        services.AddSingleton<TextIngestEngine>();
+        services.AddSingleton<IGrantedTextIngestService, GrantedTextIngestService>();
         return services;
     }
 }

@@ -9,6 +9,9 @@ public partial class FolderGrantPanel
     [Inject]
     private IFolderPickerService Picker { get; set; } = null!;
 
+    [Inject]
+    private IRecallShellKind Shell { get; set; } = null!;
+
     [Parameter]
     public int Step { get; set; } = 1;
 
@@ -17,9 +20,6 @@ public partial class FolderGrantPanel
 
     [Parameter]
     public bool ShowNavButtons { get; set; }
-
-    [Parameter]
-    public bool ShowIosNote { get; set; }
 
     [Parameter]
     public EventCallback OnBack { get; set; }
@@ -52,7 +52,7 @@ public partial class FolderGrantPanel
             name = result.Path;
         }
 
-        var add = Ui.TryAddGrant(new ScopeFolderGrant(result.Path, name));
+        var add = Ui.TryAddGrant(new ScopeFolderGrant(result.Path, name, GrantFileKinds.All, result.ReopenToken));
         if (add.Status == ScopeGrantAddStatus.OverlapChildOfExistingParent)
         {
             overlapWarning = T("Folders_OverlapWarning");
@@ -65,4 +65,25 @@ public partial class FolderGrantPanel
         overlapWarning = null;
         permissionError = null;
     }
+
+    private bool ShowIosNote => Shell.Kind == RecallShellKind.Ios;
+
+    private void ToggleKind(string path, GrantFileKinds kind, bool enabled)
+    {
+        var grant = Ui.Current.Grants.FirstOrDefault(g => string.Equals(g.Path, path, StringComparison.OrdinalIgnoreCase));
+        if (grant is null)
+        {
+            return;
+        }
+
+        var next = enabled ? grant.EnabledKinds | kind : grant.EnabledKinds & ~kind;
+        if (next == GrantFileKinds.None)
+        {
+            return;
+        }
+
+        Ui.SetGrantFileKinds(path, next);
+    }
+
+    private static bool IsKindEnabled(GrantFileKinds kinds, GrantFileKinds kind) => kinds.HasFlag(kind);
 }

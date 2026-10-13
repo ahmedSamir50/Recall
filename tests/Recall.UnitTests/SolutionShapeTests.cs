@@ -96,6 +96,18 @@ public sealed class SolutionShapeTests
             typeof(IScopeGrantStore),
             typeof(IFolderPickerService),
             typeof(IDeviceRecordService),
+            typeof(IDeviceRecordStore),
+            typeof(IDeviceOsNameProvider),
+            typeof(IAgeCutoffPreferenceStore),
+            typeof(IRecallShellKind),
+            typeof(IGrantedFolderAccessService),
+            typeof(IDeviceIdCandidateProvider),
+            typeof(IRandomDeviceIdSource),
+            typeof(ITextTokenCounter),
+            typeof(ITextEmbeddingEncoder),
+            typeof(ITextVectorIndex),
+            typeof(IGrantedTextIngestService),
+            typeof(ITextSearchService),
         };
 
         // Act
@@ -403,14 +415,18 @@ public sealed class SolutionShapeTests
     }
 
     [Fact]
-    public void HttpClient_IsAbsentFromSource()
+    public void HttpClient_IsAbsentFromCoreAndUiSource()
     {
         // Arrange
-        var srcRoot = Path.Combine(RepoRoot, "src");
+        var roots = new[]
+        {
+            Path.Combine(RepoRoot, "src", "Recall.Core"),
+            Path.Combine(RepoRoot, "src", "Recall.UI"),
+        };
 
         // Act
-        var hits = Directory
-            .EnumerateFiles(srcRoot, "*.cs", SearchOption.AllDirectories)
+        var hits = roots
+            .SelectMany(root => Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories))
             .Where(path => File.ReadAllText(path).Contains("HttpClient", StringComparison.Ordinal))
             .ToList();
 

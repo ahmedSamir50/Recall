@@ -40,6 +40,7 @@ corpus/**/*.m4a
 *.snk
 *.keystore
 appsettings.*.local.json
+appsettings.secrets.json
 
 # OS
 Thumbs.db

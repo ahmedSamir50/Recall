@@ -1,3 +1,4 @@
+using Recall.Core.Faults;
 using Recall.Core.Ports;
 
 namespace Recall.Core.Scope;
@@ -47,6 +48,26 @@ public sealed class ScopeGrantService : IScopeManagerService
         var grants = store.List()
             .Where(g => !ScopeGrantPolicy.Normalize(g.Path).Equals(normalized, StringComparison.OrdinalIgnoreCase))
             .ToList();
+        store.Save(grants);
+    }
+
+    public void SetGrantFileKinds(string path, GrantFileKinds kinds)
+    {
+        if (kinds == GrantFileKinds.None)
+        {
+            throw new RecallFaultException(RecallFault.GrantFileKindsEmpty);
+        }
+
+        var normalized = ScopeGrantPolicy.Normalize(path);
+        var grants = store.List().ToList();
+        var index = grants.FindIndex(g =>
+            ScopeGrantPolicy.Normalize(g.Path).Equals(normalized, StringComparison.OrdinalIgnoreCase));
+        if (index < 0)
+        {
+            return;
+        }
+
+        grants[index] = grants[index] with { EnabledKinds = kinds };
         store.Save(grants);
     }
 

@@ -16,7 +16,10 @@ public sealed class MauiScopeGrantStore : IScopeGrantStore
             return [];
         }
 
-        return JsonSerializer.Deserialize<List<ScopeFolderGrant>>(json) ?? [];
+        var grants = JsonSerializer.Deserialize<List<ScopeFolderGrant>>(json) ?? [];
+        return grants
+            .Select(g => g.EnabledKinds == GrantFileKinds.None ? g with { EnabledKinds = GrantFileKinds.All } : g)
+            .ToList();
     }
 
     public void Save(IReadOnlyList<ScopeFolderGrant> grants)

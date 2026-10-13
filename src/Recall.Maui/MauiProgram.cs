@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
 using Recall.Core.DependencyInjection;
 using Recall.Maui.DependencyInjection;
+using Recall.Maui.Platform;
 using Recall.UI.DependencyInjection;
 
 namespace Recall.Maui;
@@ -20,9 +22,22 @@ public static class MauiProgram
 
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddMudServices();
+        var settings = typeof(MauiProgram).Assembly.GetManifestResourceStream("Recall.Maui.appsettings.json");
+        if (settings is not null)
+        {
+            builder.Configuration.AddJsonStream(settings);
+        }
+
+        var secretsPath = Path.Combine(FileSystem.AppDataDirectory, "appsettings.secrets.json");
+        if (File.Exists(secretsPath))
+        {
+            builder.Configuration.AddJsonFile(secretsPath, optional: true, reloadOnChange: false);
+        }
+
+        var textModel = TextModelConfiguration.Read(builder.Configuration);
         builder.Services.AddRecallCore();
         builder.Services.AddRecallUi();
-        builder.Services.AddRecallMauiPlatform();
+        builder.Services.AddRecallMauiPlatform(textModel);
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();

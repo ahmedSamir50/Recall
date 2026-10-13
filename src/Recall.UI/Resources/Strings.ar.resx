@@ -33,6 +33,11 @@
   <data name="Folders_PermissionDenied" xml:space="preserve"><value>لا يستطيع ريكول قراءة هذا المجلد</value></data>
   <data name="Folders_IosNote" xml:space="preserve"><value>تُلتقط الملفات الجديدة عند فتح ريكول.</value></data>
   <data name="Folders_OverlapWarning" xml:space="preserve"><value>هذا المجلد مُغطى بمنح أبٍ موجود.</value></data>
+  <data name="Folders_TypesLabel" xml:space="preserve"><value>أنواع الملفات في كل مجلد</value></data>
+  <data name="Folders_TypeText" xml:space="preserve"><value>نص</value></data>
+  <data name="Folders_TypeImage" xml:space="preserve"><value>صور</value></data>
+  <data name="Folders_TypeVideo" xml:space="preserve"><value>فيديو</value></data>
+  <data name="Folders_TypeAudio" xml:space="preserve"><value>صوت</value></data>
   <data name="Models_Title" xml:space="preserve"><value>نزّل النماذج على جهازك</value></data>
   <data name="Models_Lead" xml:space="preserve"><value>تنزيل لمرة واحدة. بعدها يعمل البحث دون إنترنت.</value></data>
   <data name="Models_ShaNote" xml:space="preserve"><value>نتحقق من كل ملف ببصمة SHA-256 قبل استخدامه.</value></data>
@@ -58,6 +63,19 @@
   <data name="Preferences_FoldersLink" xml:space="preserve"><value>المجلدات</value></data>
   <data name="Preferences_ModelsLink" xml:space="preserve"><value>النماذج</value></data>
   <data name="Preferences_DeleteIndex" xml:space="preserve"><value>احذف كل ما خزّنه ريكول</value></data>
+  <data name="Preferences_Age" xml:space="preserve"><value>احتفظ بالوسائط بالتفصيل الكامل لمدة</value></data>
+  <data name="Preferences_AgeLead" xml:space="preserve"><value>سنوات قبل أن تُصغَّر الصور والفيديو والصوت لاحقًا. النص لا يتأثر.</value></data>
+  <data name="Preferences_DeviceLink" xml:space="preserve"><value>اسم هذا الجهاز</value></data>
+  <data name="Preferences_PinLink" xml:space="preserve"><value>العناصر المثبّتة</value></data>
+  <data name="Pin_EmptyTitle" xml:space="preserve"><value>لا عناصر مثبّتة بعد</value></data>
+  <data name="Pin_EmptyLead" xml:space="preserve"><value>اجعلها سهلة للعثور.</value></data>
+  <data name="Device_Title" xml:space="preserve"><value>هذا الجهاز</value></data>
+  <data name="Device_Lead" xml:space="preserve"><value>يعرض ريكول هذا الاسم في الواجهة. يبقى مُعرّف الجهاز على هذا الجهاز ولا يُرسل أبدًا.</value></data>
+  <data name="Device_DisplayNameRequired" xml:space="preserve"><value>أدخل اسمًا للعرض.</value></data>
+  <data name="Device_DisplayNameLabel" xml:space="preserve"><value>الاسم الذي يعرضه ريكول</value></data>
+  <data name="Device_OriginalNameLabel" xml:space="preserve"><value>اسم الجهاز الأصلي</value></data>
+  <data name="Device_IdLabel" xml:space="preserve"><value>مُعرّف الجهاز</value></data>
+  <data name="Device_Save" xml:space="preserve"><value>حفظ</value></data>
   <data name="Theme_Label" xml:space="preserve"><value>المظهر</value></data>
   <data name="Theme_System" xml:space="preserve"><value>النظام</value></data>
   <data name="Theme_Dark" xml:space="preserve"><value>داكن</value></data>
@@ -67,8 +85,8 @@
   <data name="Status_Ready" xml:space="preserve"><value>جاهز</value></data>
   <data name="Vault_Label" xml:space="preserve"><value>الخزنة الشخصية</value></data>
   <data name="OnDevice_Label" xml:space="preserve"><value>على الجهاز</value></data>
-  <data name="OnDevice_ModelsStub" xml:space="preserve"><value>EmbeddingGemma · SigLIP · صوت</value></data>
-  <data name="Status_ItemsDemo" xml:space="preserve"><value>١٢٬٤٨٠</value></data>
+  <data name="OnDevice_ModelsLine" xml:space="preserve"><value>EmbeddingGemma · نص · صور · صوت</value></data>
+  <data name="Status_ItemsNone" xml:space="preserve"><value>لا عناصر مُفهرسة بعد</value></data>
   <data name="Status_ItemsSuffix" xml:space="preserve"><value>عنصر</value></data>
   <data name="Status_IndexingPaused" xml:space="preserve"><value>الفهرسة متوقفة أثناء العمل على البطارية</value></data>
   <data name="Home_QueryDemo" xml:space="preserve"><value>السكوتر الأحمر الذي رأيته قرب الكولوسيوم الصيف الماضي</value></data>
@@ -150,4 +168,19 @@
   <data name="Landing_CloseLead" xml:space="preserve"><value>مجاني خلال المعاينة. بالعربية والإنجليزية.</value></data>
   <data name="Landing_Footer" xml:space="preserve"><value>ريكول · صُنع لشخص واحد: أنت.</value></data>
   <data name="Landing_DemoQuery" xml:space="preserve"><value>السكوتر الأحمر قرب الكولوسيوم</value></data>
+  <data name="Fault_EmbeddingWidthUnexpected" xml:space="preserve"><value>حجم متجه النص ليس الحجم الذي يتوقعه هذا البحث.</value></data>
+  <data name="Fault_TextModelNotReady" xml:space="preserve"><value>نموذج النص غير جاهز بعد.</value></data>
+  <data name="Fault_SearchPrefixAppliedTwice" xml:space="preserve"><value>أُعدّ هذا البحث مرتين.</value></data>
+  <data name="Fault_DocumentPrefixAppliedTwice" xml:space="preserve"><value>أُعدت هذه الملاحظة مرتين.</value></data>
+  <data name="Fault_StoredWidthBlocked" xml:space="preserve"><value>حجم المتجه هذا ممنوع.</value></data>
+  <data name="Fault_TextWidthNot512" xml:space="preserve"><value>بحث النص يستخدم المعيار بعرض ٥١٢.</value></data>
+  <data name="Fault_AgeCutoffNotAllowed" xml:space="preserve"><value>حد العمر سنتان أو ٥ أو ٧ سنوات.</value></data>
+  <data name="Fault_GrantFileKindsEmpty" xml:space="preserve"><value>يجب أن يبقى نوع ملف واحد على الأقل مفعّلًا.</value></data>
+  <data name="Fault_DeviceIdNotReady" xml:space="preserve"><value>معرّف هذا الجهاز غير جاهز بعد.</value></data>
+  <data name="Fault_DownloadHashMismatch" xml:space="preserve"><value>بصمة التحميل غير مطابقة. تم تجاهل الملف.</value></data>
+  <data name="Fault_DownloadIncomplete" xml:space="preserve"><value>توقف التحميل. يمكنك متابعته.</value></data>
+  <data name="Fault_DownloadTransport" xml:space="preserve"><value>تعذر إكمال التحميل. يمكنك متابعته.</value></data>
+  <data name="Fault_TokenizerNativeUnsupported" xml:space="preserve"><value>بحث النص غير متاح على هذا الهاتف بعد.</value></data>
+  <data name="Fault_RrfRankConstant" xml:space="preserve"><value>ترتيب البحث استخدم ثابت دمج خاطئًا.</value></data>
+  <data name="Models_DownloadInterrupted" xml:space="preserve"><value>التحميل متوقف. المتابعة تُبقي الجزء المحفوظ.</value></data>
 </root>

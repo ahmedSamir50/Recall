@@ -6,10 +6,10 @@ public static class ModelCatalog
 {
     public static IReadOnlyList<ModelCatalogEntry> All { get; } =
     [
-        new ModelCatalogEntry(Modality.Text, "embeddinggemma-2-text", "EmbeddingGemma 2 · text"),
-        new ModelCatalogEntry(Modality.Image, "embeddinggemma-2-vision", "EmbeddingGemma 2 · vision"),
-        new ModelCatalogEntry(Modality.Audio, "embeddinggemma-2-audio", "EmbeddingGemma 2 · audio"),
+        new ModelCatalogEntry(Modality.Text, "embeddinggemma-2-text"),
+        new ModelCatalogEntry(Modality.Image, "embeddinggemma-2-vision"),
+        new ModelCatalogEntry(Modality.Audio, "embeddinggemma-2-audio"),
     ];
 }
 
-public sealed record ModelCatalogEntry(Modality Modality, string ModelId, string DisplayName);
+public sealed record ModelCatalogEntry(Modality Modality, string ModelId);

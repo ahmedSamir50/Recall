@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Recall.Adapters</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+    <PackageReference Include="Tokenizers.DotNet" />
+    <PackageReference Include="ZVec.NET" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Recall.Core\Recall.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,3 +1,6 @@
+using Recall.Adapters.DependencyInjection;
+using Recall.Core.Download;
+using Recall.Core.Ingest;
 using Recall.Core.Ports;
 using Recall.Maui.Platform;
 
@@ -5,14 +8,27 @@ namespace Recall.Maui.DependencyInjection;
 
 public static class MauiServiceCollectionExtensions
 {
-    public static IServiceCollection AddRecallMauiPlatform(this IServiceCollection services)
+    public static IServiceCollection AddRecallMauiPlatform(this IServiceCollection services, TextModelDownloadOptions textModel)
     {
+        services.AddSingleton(textModel);
+        services.AddHttpClient();
         services.AddSingleton<IThemePreferenceStore, MauiThemePreferenceStore>();
         services.AddSingleton<IUiLocaleStore, MauiUiLocaleStore>();
         services.AddSingleton<IScopeGrantStore, MauiScopeGrantStore>();
         services.AddSingleton<ISystemThemeProvider, MauiSystemThemeProvider>();
         services.AddSingleton<IFolderPickerService, MauiFolderPickerService>();
-        services.AddSingleton<IDeviceRecordService, MauiDeviceRecordService>();
+        services.AddSingleton<IDeviceRecordStore, MauiDeviceRecordStore>();
+        services.AddSingleton<IDeviceOsNameProvider, MauiDeviceOsNameProvider>();
+        services.AddSingleton<IDeviceIdCandidateProvider, MauiDeviceIdCandidateProvider>();
+        services.AddSingleton<IAgeCutoffPreferenceStore, MauiAgeCutoffPreferenceStore>();
+        services.AddSingleton<IRecallShellKind, MauiRecallShellKind>();
+        services.AddSingleton<IGrantedFolderAccessService, MauiGrantedFolderAccessService>();
+        services.AddSingleton<IGrantedTextReader, MauiGrantedTextReader>();
+        services.AddSingleton<IModelDownloadService, MauiModelDownloadService>();
+
+        var modelDir = Path.Combine(FileSystem.AppDataDirectory, textModel.RelativeModelDirectory);
+        var vectorRoot = Path.Combine(FileSystem.AppDataDirectory, textModel.RelativeVectorDirectory);
+        services.AddRecallAdapters(modelDir, vectorRoot);
         return services;
     }
 }

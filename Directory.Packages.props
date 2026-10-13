@@ -1,18 +1,28 @@
 <Project>
   <ItemGroup>
-    <!-- Source tree D:\A_S\AdamSystems.ZVec.NET Version is 1.0.0-beta.6+zvec.0.7.0. NuGet id is ZVec.NET. No project references it in this slice. -->
+    <!-- ZVec.NET 1.0.0-beta.6 is the NuGet id. It is not on nuget.org. This machine restores it from the local feed in the user NuGet config. -->
+    <PackageVersion Include="Microsoft.ML.OnnxRuntime" Version="1.31.0" />
+    <PackageVersion Include="Tokenizers.DotNet" Version="1.4.1" />
+    <PackageVersion Include="Tokenizers.DotNet.runtime.win-x64" Version="1.4.1" />
+    <PackageVersion Include="Tokenizers.DotNet.runtime.win-arm64" Version="1.4.1" />
+    <PackageVersion Include="Tokenizers.DotNet.runtime.linux-x64" Version="1.4.1" />
+    <PackageVersion Include="Tokenizers.DotNet.runtime.linux-arm64" Version="1.4.1" />
+    <PackageVersion Include="Tokenizers.DotNet.runtime.osx-x64" Version="1.4.1" />
+    <PackageVersion Include="Tokenizers.DotNet.runtime.osx-arm64" Version="1.4.1" />
     <PackageVersion Include="ZVec.NET" Version="1.0.0-beta.6" />
-    <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.100" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.100" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="10.0.11" />
-    <PackageVersion Include="MudBlazor" Version="9.9.0" />
-    <PackageVersion Include="System.Reactive" Version="6.1.0" />
+    <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.110" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.110" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="10.0.12" />
+    <PackageVersion Include="MudBlazor" Version="9.11.0" />
+    <PackageVersion Include="System.Reactive" Version="7.0.0" />
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageVersion Include="xunit.v3" Version="4.0.0" />
-    <PackageVersion Include="FluentAssertions" Version="8.10.0" />
+    <PackageVersion Include="xunit.v3" Version="4.0.2" />
+    <PackageVersion Include="FluentAssertions" Version="8.11.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0" />
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.1" />
     <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.35.0.4138" />

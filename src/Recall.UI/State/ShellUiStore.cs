@@ -87,6 +87,12 @@ public sealed class ShellUiStore : IDisposable
         Publish(BuildSnapshot(Current.RoutePath));
     }
 
+    public void SetGrantFileKinds(string path, GrantFileKinds kinds)
+    {
+        scope.SetGrantFileKinds(path, kinds);
+        Publish(BuildSnapshot(Current.RoutePath));
+    }
+
     private ShellUiSnapshot BuildSnapshot(string routePath)
     {
         var grants = scope.ListGrants();

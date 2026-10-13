@@ -32,15 +32,30 @@
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
     <RuntimeIdentifiers>maccatalyst-arm64</RuntimeIdentifiers>
   </PropertyGroup>
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+    <PackageReference Include="Tokenizers.DotNet.runtime.win-x64" />
+  </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
+    <PackageReference Include="Tokenizers.DotNet.runtime.osx-arm64" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Maui.Controls" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
+    <PackageReference Include="ZVec.NET" />
     <PackageReference Include="MudBlazor" />
     <AdditionalFiles Include="BannedSymbols.txt" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Recall.Core\Recall.Core.csproj">
+      <SetTargetFramework>TargetFramework=net10.0</SetTargetFramework>
+      <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
+      <UndefineProperties>RuntimeIdentifier;RuntimeIdentifiers</UndefineProperties>
+    </ProjectReference>
+    <ProjectReference Include="..\Recall.Adapters\Recall.Adapters.csproj">
       <SetTargetFramework>TargetFramework=net10.0</SetTargetFramework>
       <SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
       <UndefineProperties>RuntimeIdentifier;RuntimeIdentifiers</UndefineProperties>
@@ -56,6 +71,7 @@
     <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0c141c" BaseSize="128,128" />
     <MauiFont Include="Resources\Fonts\OpenSans-Regular.ttf" />
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="appsettings.json" />
   </ItemGroup>
   <Target Name="RecallClearMismatchedRuntimeIdentifier" BeforeTargets="ProcessFrameworkReferences">
     <PropertyGroup>
