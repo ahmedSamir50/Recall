@@ -113,7 +113,7 @@ public sealed partial class MauiGrantedTextReader
                 }
 
                 using var buffered = new MemoryStream(sampleCount + 1024);
-                buffered.Write(sample, 0, sampleCount);
+                await buffered.WriteAsync(sample.AsMemory(0, sampleCount), cancellationToken).ConfigureAwait(false);
                 await stream.CopyToAsync(buffered, cancellationToken).ConfigureAwait(false);
                 buffered.Position = 0;
                 using var reader = new StreamReader(buffered, detectEncodingFromByteOrderMarks: true);
