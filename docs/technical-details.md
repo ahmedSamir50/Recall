@@ -19,7 +19,7 @@ Solution shape:
 - `src/Recall.Maui/` — the only composition root and the only place with an HTTP client.
 - `src/Recall.Benchmarks/`, `tests/Recall.UnitTests/`, `tests/Recall.IntegrationTests/`, `tests/Recall.BenchTests/`, `tests/Recall.CorpusTests/`, `tools/corpus-builder/`, `tools/mrl-eval/`.
 
-`Recall.Maui` registers `AddZVec`, `AddOnnxRuntime`, and `AddRecallCore`, and it hosts the ingestion worker. The HTTP client is `IHttpClientFactory`, used only by the model-download adapter. `BannedApiAnalyzers` makes `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` a compile error inside `Recall.Core`, including `Recall.Core.Sync`.
+`Recall.Maui` registers `AddZVec`, `AddOnnxRuntime`, and `AddRecallCore`, and it hosts the ingestion worker. Epic 1.1 does not call those methods and does not start the ingestion worker. The HTTP client is `IHttpClientFactory`, used only by the model-download adapter. `BannedApiAnalyzers` makes `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` a compile error inside `Recall.Core`, including `Recall.Core.Sync`.
 
 Ports live in Core. Implementations live in the MAUI head:
 

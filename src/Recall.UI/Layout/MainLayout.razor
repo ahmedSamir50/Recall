@@ -1,0 +1,19 @@
+@inherits LayoutComponentBase
+@inject IJSRuntime Js
+
+<div lang="@UiCulture.Lang(CultureInfo.CurrentUICulture)" dir="@UiCulture.Dir(CultureInfo.CurrentUICulture)">
+    @Body
+</div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        var culture = CultureInfo.CurrentUICulture;
+        await Js.InvokeVoidAsync("recallSetDocumentCulture", UiCulture.Lang(culture), UiCulture.Dir(culture));
+    }
+}

@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="desktop_app" name="shell-type"/>
+<title>Recall // Synaptic Memory OS (RTL Light)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        overscroll-behavior: none;
+        user-select: none;
+      }
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(241, 245, 249, 0.7);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(2, 132, 199, 0.6);
+    }
+    @keyframes cursorBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 6px rgba(2, 132, 199, 0.6)); }
+    }
+    @keyframes lineFlow {
+      0% { stroke-dashoffset: 40; }
+      100% { stroke-dashoffset: 0; }
+    }
+    .animate-cursor {
+      animation: cursorBlink 1.05s infinite cubic-bezier(0.4, 0, 0.6, 1);
+    }
+    .animate-pulse-node {
+      animation: pulseGlow 2.8s infinite ease-in-out;
+    }
+    .animate-synapse {
+      stroke-dasharray: 4 3;
+      animation: lineFlow 3s linear infinite;
+    }
+    .light-glass-surface {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    }
+    .light-glass-bright {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(186, 230, 253, 0.8);
+      box-shadow: 0 10px 30px -4px rgba(2, 132, 199, 0.08), 0 2px 8px -1px rgba(15, 23, 42, 0.04);
+    }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-dim": "#f1f5f9",
+            "surface": "#ffffff",
+            "surface-bright": "#f8fafc",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-low": "#f8fafc",
+            "surface-container": "#f1f5f9",
+            "surface-container-high": "#e2e8f0",
+            "surface-container-highest": "#cbd5e1",
+            "background": "#f8fafc",
+            "on-background": "#0f172a",
+            "on-surface": "#0f172a",
+            "on-surface-variant": "#475569",
+            "outline": "#64748b",
+            "outline-variant": "#cbd5e1",
+            "primary": "#0284c7",
+            "primary-container": "#e0f2fe",
+            "on-primary-container": "#0369a1",
+            "primary-fixed": "#0284c7",
+            "primary-fixed-dim": "#0369a1",
+            "secondary": "#7c3aed",
+            "secondary-container": "#ede9fe",
+            "on-secondary-container": "#6d28d9",
+            "tertiary": "#059669",
+            "tertiary-container": "#d1fae5",
+            "on-tertiary-container": "#047857"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.875rem",
+            "2xl": "1.25rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            sans: ["IBM Plex Sans Arabic", "Inter", "sans-serif"],
+            display: ["Space Grotesk", "IBM Plex Sans Arabic", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-[#f8fafc] font-sans text-slate-800 antialiased flex flex-col h-screen overflow-hidden selection:bg-sky-100 selection:text-sky-900 relative">
+<!-- ================= LUXURY APP TITLEBAR & WINDOW CONTROLS (RTL MIRRORED) ================= -->
+<header class="h-12 border-b border-slate-200/90 bg-white/90 backdrop-blur-2xl flex items-center justify-between px-4 z-50 select-none shrink-0 shadow-sm">
+<!-- Right (Start in RTL): Traffic Lights + App Brand -->
+<div class="flex items-center gap-2 sm:gap-4">
+<!-- Mobile Drawer Trigger Button -->
+<button aria-label="Toggle Navigation Menu" class="md:hidden w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 hover:text-sky-600 transition shrink-0" id="mobile-nav-toggle" onclick="document.getElementById('mobile-drawer').classList.toggle('hidden')">
+<span class="material-symbols-outlined text-[20px]">menu</span>
+</button>
+<!-- macOS Traffic Lights (Clean RTL Alignment) -->
+<div class="hidden sm:flex items-center gap-2 group cursor-pointer pl-2">
+<span class="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e] inline-block shadow-xs hover:brightness-105 transition"></span>
+<span class="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123] inline-block shadow-xs hover:brightness-105 transition"></span>
+<span class="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29] inline-block shadow-xs hover:brightness-105 transition"></span>
+</div>
+<div class="h-4 w-px bg-slate-200 hidden sm:block"></div>
+<!-- Neural Recall Logo & Orb -->
+<div class="flex items-center gap-2 sm:gap-2.5">
+<div class="relative flex items-center justify-center">
+<div class="w-6 h-6 rounded-full bg-gradient-to-tr from-sky-500 via-sky-400 to-indigo-500 flex items-center justify-center shadow-md shadow-sky-500/20">
+<span class="material-symbols-outlined text-[14px] text-white font-black">all_inclusive</span>
+</div>
+<span class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse"></span>
+</div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-display font-bold tracking-tight text-[15px] text-slate-900">Recall</span>
+<span class="font-mono text-[10px] font-semibold text-sky-700 px-1.5 py-0.5 rounded bg-sky-50 border border-sky-200/80 hidden xs:inline">v2.4 Pro</span>
+</div>
+</div>
+</div>
+<!-- Center: Segmented Quick Views -->
+<div class="hidden md:flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200 shadow-inner overflow-x-auto max-w-[440px] lg:max-w-none">
+<button class="px-3 py-1 rounded-lg text-[12px] font-semibold transition-all bg-white text-sky-700 shadow-xs border border-slate-200/60 flex items-center gap-1.5 shrink-0">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+<span>جميع الذكريات</span>
+<span class="text-[10px] text-slate-400 font-mono">(All)</span>
+</button>
+<button class="px-3 py-1 rounded-lg text-[12px] font-medium text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 shrink-0">
+<span class="material-symbols-outlined text-[14px]">photo_camera</span>
+<span>المرئيات والإطارات</span>
+</button>
+<button class="px-3 py-1 rounded-lg text-[12px] font-medium text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 shrink-0">
+<span class="material-symbols-outlined text-[14px]">mic</span>
+<span>الصوتيات والتسجيل</span>
+</button>
+<button class="px-3 py-1 rounded-lg text-[12px] font-medium text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 shrink-0">
+<span class="material-symbols-outlined text-[14px]">code</span>
+<span>الكود والمستندات</span>
+</button>
+</div>
+<!-- Left (End in RTL): Hardware Security Telemetry + Profile -->
+<div class="flex items-center gap-2 sm:gap-3">
+<!-- Air-Gap Hardware Security Badge -->
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200/90 text-[11px] font-mono text-slate-600 shadow-xs">
+<span class="flex items-center gap-1 text-emerald-700 font-semibold">
+<span class="material-symbols-outlined text-[13px] text-emerald-600">verified_user</span>
+<span class="hidden xs:inline">Air-Gapped معزول</span>
+</span>
+<span class="text-slate-300 hidden md:inline">|</span>
+<span class="text-slate-700 hidden lg:inline">MacBook Pro M3 Max</span>
+<span class="text-slate-300 hidden sm:inline">|</span>
+<span class="text-sky-700 font-medium hidden sm:inline">0 KB Egress</span>
+</div>
+<!-- Action Pill -->
+<button class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-slate-700 hover:text-sky-700 transition shrink-0 shadow-xs" title="التقاط فوري / Quick Capture">
+<span class="material-symbols-outlined text-[17px]">add</span>
+</button>
+<!-- Minimal Avatar with Local Key Indicator -->
+<div class="relative cursor-pointer shrink-0">
+<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-100 to-indigo-100 border border-sky-300/60 flex items-center justify-center text-sky-900 text-[12px] font-bold shadow-xs">
+        JD
+      </div>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white"></span>
+</div>
+</div>
+</header>
+<!-- ================= HERO COMMAND BAR (PORCELAIN GLASS DOCK) ================= -->
+<section class="w-full bg-gradient-to-b from-white via-slate-50/70 to-transparent pt-4 pb-4 px-6 shrink-0 border-b border-slate-200/70 relative z-20">
+<div class="max-w-6xl mx-auto flex flex-col gap-3">
+<div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4">
+<!-- Spotlight Search Input (Mirrored for RTL) -->
+<div class="flex-1 light-glass-bright rounded-2xl p-2 px-3 sm:px-3.5 flex items-center gap-2 sm:gap-3 relative transition-all focus-within:ring-2 focus-within:ring-sky-500/30 focus-within:border-sky-500 min-w-0">
+<!-- Task Mode Segment Selector -->
+<div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 shrink-0">
+<button class="px-2.5 sm:px-3 py-1 rounded-lg text-[11px] font-bold bg-sky-600 text-white shadow-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">search</span>
+<span>بحث</span>
+</button>
+<button class="px-2 sm:px-2.5 py-1 rounded-lg text-[11px] font-medium text-slate-600 hover:text-slate-900 transition flex items-center gap-1">
+<span>تجميع</span>
+</button>
+<button class="px-2 sm:px-2.5 py-1 rounded-lg text-[11px] font-medium text-slate-600 hover:text-slate-900 transition flex items-center gap-1 hidden xs:flex">
+<span>توليف</span>
+</button>
+</div>
+<div class="h-5 w-px bg-slate-200 hidden sm:block"></div>
+<!-- Query Input with Blinking Cursor -->
+<div class="flex-1 flex items-center min-w-0">
+<span class="font-display font-medium text-[13.5px] sm:text-[15px] md:text-[16px] text-slate-900 tracking-wide truncate">
+            The red scooter I saw near the Colosseum last summer
+          </span>
+<span class="inline-block w-0.5 h-4 sm:h-5 bg-sky-600 mr-1.5 animate-cursor shrink-0"></span>
+</div>
+<!-- Latency & Shortcuts -->
+<div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+<span class="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            0.38ms
+          </span>
+<kbd class="px-2 py-1 rounded-lg bg-slate-100 border border-slate-200 font-mono text-[11px] text-slate-600 flex items-center gap-0.5 shadow-xs">
+<span>K</span><span>⌘</span>
+</kbd>
+</div>
+</div>
+<!-- LIVE SYNAPTIC LATTICE WIDGET (LIGHT PRISTINE HUD) -->
+<div class="md:w-72 lg:w-80 shrink-0 light-glass-surface rounded-2xl px-3 sm:px-3.5 py-2 border border-slate-200/90 hover:border-sky-300 flex items-center justify-between gap-2 sm:gap-3 transition-all">
+<div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+<!-- Animated Synaptic SVG Mini-Constellation -->
+<div class="relative w-8 h-8 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center shrink-0 overflow-hidden">
+<svg class="w-full h-full" viewbox="0 0 32 32">
+<line class="animate-synapse stroke-sky-500" stroke-width="1.4" x1="6" x2="16" y1="20" y2="8"></line>
+<line class="animate-synapse stroke-violet-500" stroke-width="1.4" x1="16" x2="26" y1="8" y2="18"></line>
+<line class="stroke-slate-300" stroke-width="0.8" x1="6" x2="26" y1="20" y2="18"></line>
+<line class="stroke-emerald-400" stroke-width="0.8" x1="16" x2="16" y1="8" y2="26"></line>
+<circle class="animate-pulse-node fill-sky-500" cx="6" cy="20" r="2.5"></circle>
+<circle class="animate-pulse-node fill-violet-500" cx="16" cy="8" r="3"></circle>
+<circle class="animate-pulse-node fill-sky-600" cx="26" cy="18" r="2.5"></circle>
+<circle class="fill-emerald-500" cx="16" cy="26" r="2"></circle>
+</svg>
+<span class="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 rounded-full bg-sky-500 animate-ping"></span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5 text-[11px] font-mono font-semibold text-slate-800 truncate">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span class="text-sky-800 truncate">768-D Latent Lattice</span>
+</div>
+<div class="text-[10px] font-mono text-slate-500 truncate">
+              54,920 عقدة نشطة
+            </div>
+</div>
+</div>
+<div class="flex flex-col items-start shrink-0 pr-2 border-r border-slate-200 font-mono text-[9.5px]">
+<span class="text-emerald-700 font-semibold">MRL 256d</span>
+<span class="text-slate-500">0.016 Dist</span>
+</div>
+</div>
+</div>
+<!-- Quick Context Tags Filter Bar (RTL Flow) -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+<div class="flex flex-wrap items-center gap-1.5 overflow-x-auto py-0.5">
+<span class="text-[11px] font-mono text-slate-400 uppercase tracking-wider ml-1 shrink-0 font-medium">سياق مستنتج:</span>
+<button class="px-2.5 py-0.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-[11px] font-medium text-slate-700 flex items-center gap-1 transition shadow-xs shrink-0">
+<span>📍</span> روما، إيطاليا
+          <span class="material-symbols-outlined text-[12px] text-slate-400 hover:text-slate-700 mr-0.5">close</span>
+</button>
+<button class="px-2.5 py-0.5 rounded-full bg-violet-50 hover:bg-violet-100/70 border border-violet-200 text-[11px] font-semibold text-violet-800 flex items-center gap-1 transition shadow-xs shrink-0">
+<span>🎙️</span> مذكرات صوتية إيطالية
+          <span class="material-symbols-outlined text-[12px] text-violet-400 hover:text-violet-800 mr-0.5">close</span>
+</button>
+<button class="px-2.5 py-0.5 rounded-full bg-sky-50 hover:bg-sky-100/70 border border-sky-200 text-[11px] font-semibold text-sky-800 flex items-center gap-1 transition shadow-xs shrink-0">
+<span>🛵</span> دراجة فيسبا (Vespa)
+          <span class="material-symbols-outlined text-[12px] text-sky-400 hover:text-sky-800 mr-0.5">close</span>
+</button>
+<button class="px-2.5 py-0.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-[11px] font-medium text-slate-700 flex items-center gap-1 transition shadow-xs shrink-0">
+<span>📅</span> صيف 2024
+          <span class="material-symbols-outlined text-[12px] text-slate-400 hover:text-slate-700 mr-0.5">close</span>
+</button>
+</div>
+<div class="text-[11px] font-mono text-slate-500 flex items-center gap-1 shrink-0">
+<span>مرتب بـ <strong class="text-slate-800 font-semibold">Hybrid Reciprocal Rank</strong></span>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= MAIN CONTENT WORKSPACE ================= -->
+<!-- MOBILE SLIDE-OUT NAVIGATION DRAWER (RTL RIGHT SIDE) -->
+<div class="fixed inset-0 z-50 hidden md:hidden flex" id="mobile-drawer">
+<div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="document.getElementById('mobile-drawer').classList.add('hidden')"></div>
+<div class="relative w-72 max-w-[85vw] bg-white border-l border-slate-200 p-4 flex flex-col justify-between h-full z-10 shadow-2xl overflow-y-auto">
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between pb-3 border-b border-slate-200">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-sky-600 flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[14px]">all_inclusive</span>
+</div>
+<span class="font-display font-bold text-slate-900 text-[15px]">Recall OS</span>
+</div>
+<button class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600" onclick="document.getElementById('mobile-drawer').classList.add('hidden')">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 border border-slate-200">
+<div class="flex items-center gap-2 min-w-0">
+<span class="w-2 h-2 rounded-full bg-sky-600"></span>
+<span class="font-display text-[13px] font-semibold truncate text-slate-900">الخزينة الشخصية</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-slate-400">unfold_more</span>
+</div>
+<nav class="flex flex-col gap-1.5">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-800 font-semibold text-[13px]" href="#">
+<span class="material-symbols-outlined text-[18px]">travel_explore</span>
+<span>لوحة البحث الذكية</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-[13px]" href="#">
+<span class="material-symbols-outlined text-[18px]">scatter_plot</span>
+<span>الشبكة المشبكية (Graph)</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-[13px]" href="#">
+<span class="material-symbols-outlined text-[18px]">sync_saved_locally</span>
+<span>أجهزة P2P المتزامنة</span>
+<span class="mr-auto text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">3 متصلة</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-[13px]" href="#">
+<span class="material-symbols-outlined text-[18px]">memory</span>
+<span>معايير NPU العصبية</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium text-[13px]" href="#">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span>التفضيلات والأمان</span>
+</a>
+</nav>
+</div>
+<div class="flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-200 mt-4">
+<div class="flex items-center justify-between text-[11px] font-mono text-slate-600">
+<span>ON-DEVICE NPU</span>
+<span class="text-emerald-700 font-bold">نشط بالكامل</span>
+</div>
+<div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+<div class="bg-gradient-to-r from-sky-500 to-emerald-500 h-full w-3/4 rounded-full"></div>
+</div>
+<div class="flex items-center justify-between text-[10px] font-mono text-slate-500">
+<span>SIGLIP + GEMMA-2</span>
+<span>42.8 MB</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex-1 flex overflow-hidden relative">
+<!-- ================= RIGHT PRIMARY NAVIGATION SLIM RAIL (RTL MIRRORED) ================= -->
+<aside class="hidden md:flex w-16 lg:w-56 shrink-0 bg-white/95 border-l border-slate-200/90 p-3 flex-col justify-between relative z-10 shadow-sm">
+<div class="flex flex-col gap-4">
+<!-- Quick Vault Selector -->
+<div class="hidden lg:flex items-center justify-between px-2.5 py-2 rounded-xl bg-slate-50 border border-slate-200">
+<div class="flex items-center gap-2 min-w-0">
+<span class="w-2 h-2 rounded-full bg-sky-600"></span>
+<span class="font-display text-[13px] font-semibold truncate text-slate-900">الخزينة الشخصية</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-slate-400">unfold_more</span>
+</div>
+<!-- Nav list (RTL) -->
+<nav class="flex flex-col gap-1">
+<a class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 rounded-xl bg-sky-50 border border-sky-200/80 text-sky-800 font-semibold text-[13px] transition shadow-2xs" href="#" title="لوحة البحث">
+<span class="material-symbols-outlined text-[18px] text-sky-600">travel_explore</span>
+<span class="hidden lg:inline">لوحة البحث</span>
+</a>
+<a class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-slate-900 font-medium text-[13px] transition" href="#" title="الشبكة المشبكية">
+<span class="material-symbols-outlined text-[18px]">scatter_plot</span>
+<span class="hidden lg:inline">الشبكة المشبكية</span>
+</a>
+<a class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-slate-900 font-medium text-[13px] transition" href="#" title="أجهزة P2P">
+<span class="material-symbols-outlined text-[18px]">sync_saved_locally</span>
+<span class="hidden lg:inline">أجهزة P2P</span>
+<span class="hidden lg:inline-flex mr-auto text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">3 متصلة</span>
+</a>
+<a class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-slate-900 font-medium text-[13px] transition" href="#" title="معايير NPU">
+<span class="material-symbols-outlined text-[18px]">memory</span>
+<span class="hidden lg:inline">معايير NPU</span>
+</a>
+<a class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-slate-900 font-medium text-[13px] transition" href="#" title="التفضيلات">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span class="hidden lg:inline">التفضيلات</span>
+</a>
+</nav>
+</div>
+<!-- Local Vault Telemetry Footer in Rail -->
+<div class="hidden lg:flex flex-col gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-200 shadow-2xs">
+<div class="flex items-center justify-between text-[11px] font-mono text-slate-600">
+<span class="font-medium">معالج NPU المحلي</span>
+<span class="text-emerald-700 font-bold">نشط</span>
+</div>
+<div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+<div class="bg-gradient-to-r from-sky-500 to-emerald-500 h-full w-3/4 rounded-full"></div>
+</div>
+<div class="flex items-center justify-between text-[10px] font-mono text-slate-500">
+<span>SIGLIP + GEMMA-2</span>
+<span>42.8 MB</span>
+</div>
+</div>
+</aside>
+<!-- ================= CENTER MEMORY FEED (LIGHT BENTO CONSUMER EXPERIENCE) ================= -->
+<main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 relative z-10 bg-[#f8fafc]">
+<!-- Top Results Header -->
+<div class="flex flex-wrap items-center justify-between gap-2">
+<div class="flex items-center gap-2">
+<span class="font-display font-bold text-[16px] sm:text-[18px] text-slate-900">نتائج التوليف العصبي للذاكرة</span>
+<span class="px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-[11px] font-mono text-sky-800 font-semibold">
+          4 عُقد متعددة الوسائط
+        </span>
+</div>
+<div class="flex items-center gap-1.5 sm:gap-2">
+<button class="px-2.5 sm:px-3 py-1 rounded-lg bg-white hover:bg-slate-50 text-[12px] font-medium text-slate-700 hover:text-slate-900 border border-slate-200 flex items-center gap-1.5 transition shadow-xs">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+<span>يوليو 2024</span>
+</button>
+<button class="px-2.5 sm:px-3 py-1 rounded-lg bg-white hover:bg-slate-50 text-[12px] font-medium text-slate-700 hover:text-slate-900 border border-slate-200 flex items-center gap-1.5 transition shadow-xs">
+<span class="material-symbols-outlined text-[14px]">sort</span>
+<span class="hidden xs:inline">الأعلى مطابقة</span>
+</button>
+</div>
+</div>
+<!-- BENTO MULTIMEDIA FEED -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-5">
+<!-- CARD 1: PRIMARY MATCH HERO BENTO (Vintage Red Vespa Frame + Location) -->
+<article class="xl:col-span-8 light-glass-surface rounded-2xl overflow-hidden border border-slate-200/90 hover:border-sky-300 transition-all duration-300 group shadow-md flex flex-col bg-white">
+<div class="relative w-full h-72 sm:h-80 overflow-hidden bg-slate-100">
+<img alt="A vintage cherry-red Vespa scooter parked on ancient Roman cobblestones near the sunny stone arches of the Colosseum in Rome Italy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2dQnbuAE5MJ35AvzDwcTbTEHEdu_GHV78FhDvsciVx36dXFB23wOWJNl_De4SXULh6FtbRAx7o_Oa-bYI0XXSv_In0ejHHV_qYfgVeBQySz1j7jg7eCPtzj8InhpDee3GdIxRGC6XJtDYi7D7z47ELkLs92tgTc78aqelIf8g_a40KghgX-VDvyL_ozqQav-KP6SroJxoIb-FpghpsCa5HVIaGRHUqdQYInZD4nWtZJYMfYY4Sf5HDQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/30 to-transparent"></div>
+<!-- Top Floating Badges (RTL: right side is start) -->
+<div class="absolute top-3.5 right-3.5 flex items-center gap-2">
+<span class="px-2.5 py-1 rounded-full bg-sky-500 text-white font-mono text-[11px] font-bold shadow-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">bolt</span> 98.4% مطابقة
+            </span>
+<span class="px-2.5 py-1 rounded-full bg-white/80 backdrop-blur-md text-slate-800 text-[11px] font-semibold border border-white/40 flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[12px] text-emerald-600">check_circle</span> Keyframe Ingestion
+            </span>
+</div>
+<!-- Top Action Controls (RTL: left side) -->
+<div class="absolute top-3.5 left-3.5 flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition">
+<button class="w-8 h-8 rounded-full bg-white/80 backdrop-blur-md text-slate-700 hover:text-sky-600 border border-white/60 flex items-center justify-center transition shadow-sm" title="عرض الإطار كاملاً">
+<span class="material-symbols-outlined text-[16px]">fullscreen</span>
+</button>
+<button class="w-8 h-8 rounded-full bg-white/80 backdrop-blur-md text-slate-700 hover:text-sky-600 border border-white/60 flex items-center justify-center transition shadow-sm" title="مشاركة مرجع الذاكرة">
+<span class="material-symbols-outlined text-[16px]">ios_share</span>
+</button>
+</div>
+<!-- Overlaid Metadata Content Bottom -->
+<div class="absolute bottom-3 left-4 right-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3 text-right">
+<div class="space-y-1">
+<div class="flex items-center gap-2 text-[12px] font-mono text-sky-200">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">location_on</span> Piazza del Colosseo, Rome</span>
+<span>•</span>
+<span>July 14, 2024 · 16:42 CEST</span>
+</div>
+<h3 class="font-display font-bold text-[18px] sm:text-[20px] text-white drop-shadow-sm">
+                Vintage Piaggio 50cc Engine · Roman Cobblestones
+              </h3>
+</div>
+<!-- Mini Synced Ambient Audio Player Bubble -->
+<div class="bg-white/95 backdrop-blur-xl border border-slate-200 rounded-xl p-2 px-3 flex items-center gap-3 shrink-0 shadow-lg">
+<button class="w-8 h-8 rounded-full bg-sky-600 text-white flex items-center justify-center hover:bg-sky-700 transition shadow-sm">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+</button>
+<div class="flex flex-col text-right">
+<span class="text-[10px] font-mono text-emerald-700 font-bold">SYNCHRONIZED AUDIO (30.4s)</span>
+<span class="text-[11px] text-slate-700 font-medium">Espresso &amp; Two-Stroke Echo</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom description & quote -->
+<div class="p-4 sm:p-5 flex flex-col gap-3 bg-slate-50/60">
+<blockquote class="text-[14px] text-slate-800 leading-relaxed italic border-r-2 border-sky-500 pr-3 py-0.5">
+            “Remember to check this vintage Piaggio 50cc engine model later — classic Roman cobblestone vibration.”
+          </blockquote>
+<div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200/80 text-[11px] font-mono text-slate-500">
+<span class="flex items-center gap-1 text-slate-700">
+<span class="material-symbols-outlined text-[14px] text-sky-600">lock</span> مخزن محلياً في SQLite SafeHandle مشفر
+            </span>
+<span>مسافة المتجه: <strong class="text-slate-900">0.016 Cosine</strong></span>
+</div>
+</div>
+</article>
+<!-- CARD 2: INTERACTIVE AUDIO NOTE CARD (Voice Memo Player) -->
+<article class="xl:col-span-4 light-glass-surface rounded-2xl p-5 border border-slate-200/90 hover:border-violet-300 transition-all duration-300 flex flex-col justify-between shadow-md bg-white">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-1 rounded-full bg-violet-50 border border-violet-200 text-violet-800 text-[11px] font-mono font-semibold flex items-center gap-1.5">
+<span>🇮🇹</span> مذكرة صوتية إيطالية
+            </span>
+<span class="text-[11px] font-mono text-violet-700 font-semibold">00:30.42</span>
+</div>
+<div>
+<h4 class="font-display font-bold text-[16px] text-slate-900">Audio Note #IT-4901</h4>
+<p class="text-[12px] text-slate-500 mt-0.5">Whisper-Local AOT Transcription</p>
+</div>
+<!-- Waveform Scrubber Visualizer -->
+<div class="bg-slate-50 rounded-xl p-3 border border-slate-200 space-y-2">
+<div class="flex items-center justify-between text-[11px] font-mono text-slate-500">
+<span class="text-emerald-700 font-semibold">تشغيل: 00:14.20</span>
+<span>تطابق طيفي: 94.2%</span>
+</div>
+<!-- Waveform SVG Bars in Light Mode -->
+<div class="h-12 w-full flex items-center gap-[3px] cursor-pointer group/wave">
+<svg class="w-full h-full text-violet-500 hover:text-sky-600 transition-colors" fill="currentColor" viewbox="0 0 320 40">
+<rect class="opacity-40" height="8" rx="1.5" width="3.5" x="0" y="16"></rect>
+<rect class="opacity-50" height="16" rx="1.5" width="3.5" x="6" y="12"></rect>
+<rect class="opacity-70" height="24" rx="1.5" width="3.5" x="12" y="8"></rect>
+<rect height="32" rx="1.5" width="3.5" x="18" y="4"></rect>
+<rect height="20" rx="1.5" width="3.5" x="24" y="10"></rect>
+<rect height="12" rx="1.5" width="3.5" x="30" y="14"></rect>
+<rect height="28" rx="1.5" width="3.5" x="36" y="6"></rect>
+<rect height="36" rx="1.5" width="3.5" x="42" y="2"></rect>
+<rect height="24" rx="1.5" width="3.5" x="48" y="8"></rect>
+<rect height="12" rx="1.5" width="3.5" x="54" y="14"></rect>
+<rect height="32" rx="1.5" width="3.5" x="60" y="4"></rect>
+<rect height="20" rx="1.5" width="3.5" x="66" y="10"></rect>
+<rect height="8" rx="1.5" width="3.5" x="72" y="16"></rect>
+<rect height="24" rx="1.5" width="3.5" x="78" y="8"></rect>
+<rect height="36" rx="1.5" width="3.5" x="84" y="2"></rect>
+<rect height="28" rx="1.5" width="3.5" x="90" y="6"></rect>
+<rect height="16" rx="1.5" width="3.5" x="96" y="12"></rect>
+<rect height="32" rx="1.5" width="3.5" x="102" y="4"></rect>
+<rect height="20" rx="1.5" width="3.5" x="108" y="10"></rect>
+<rect height="12" rx="1.5" width="3.5" x="114" y="14"></rect>
+<rect height="36" rx="1.5" width="3.5" x="120" y="2"></rect>
+<rect height="24" rx="1.5" width="3.5" x="126" y="8"></rect>
+<rect height="28" rx="1.5" width="3.5" x="132" y="6"></rect>
+<rect height="12" rx="1.5" width="3.5" x="138" y="14"></rect>
+<rect height="20" rx="1.5" width="3.5" x="144" y="10"></rect>
+<rect height="32" rx="1.5" width="3.5" x="150" y="4"></rect>
+<rect height="24" rx="1.5" width="3.5" x="156" y="8"></rect>
+<rect height="8" rx="1.5" width="3.5" x="162" y="16"></rect>
+<rect height="16" rx="1.5" width="3.5" x="168" y="12"></rect>
+<rect height="28" rx="1.5" width="3.5" x="174" y="6"></rect>
+<rect height="36" rx="1.5" width="3.5" x="180" y="2"></rect>
+<rect height="20" rx="1.5" width="3.5" x="186" y="10"></rect>
+<rect height="32" rx="1.5" width="3.5" x="192" y="4"></rect>
+<rect height="12" rx="1.5" width="3.5" x="198" y="14"></rect>
+<rect height="24" rx="1.5" width="3.5" x="204" y="8"></rect>
+<rect height="36" rx="1.5" width="3.5" x="210" y="2"></rect>
+<rect height="28" rx="1.5" width="3.5" x="216" y="6"></rect>
+<rect height="16" rx="1.5" width="3.5" x="222" y="12"></rect>
+<rect height="32" rx="1.5" width="3.5" x="228" y="4"></rect>
+<rect height="20" rx="1.5" width="3.5" x="234" y="10"></rect>
+<rect height="8" rx="1.5" width="3.5" x="240" y="16"></rect>
+<rect height="24" rx="1.5" width="3.5" x="246" y="8"></rect>
+<rect height="36" rx="1.5" width="3.5" x="252" y="2"></rect>
+<rect height="28" rx="1.5" width="3.5" x="258" y="6"></rect>
+<rect height="16" rx="1.5" width="3.5" x="264" y="12"></rect>
+<rect height="32" rx="1.5" width="3.5" x="270" y="4"></rect>
+<rect height="20" rx="1.5" width="3.5" x="276" y="10"></rect>
+<rect height="12" rx="1.5" width="3.5" x="282" y="14"></rect>
+<rect height="24" rx="1.5" width="3.5" x="288" y="8"></rect>
+<rect height="36" rx="1.5" width="3.5" x="294" y="2"></rect>
+<rect height="28" rx="1.5" width="3.5" x="300" y="6"></rect>
+<rect class="opacity-50" height="16" rx="1.5" width="3.5" x="306" y="12"></rect>
+<rect class="opacity-40" height="8" rx="1.5" width="3.5" x="312" y="16"></rect>
+</svg>
+</div>
+<!-- Play Controls -->
+<div class="flex items-center justify-between pt-1">
+<button class="w-8 h-8 rounded-full bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 transition shadow-sm">
+<span class="material-symbols-outlined text-[18px]">pause</span>
+</button>
+<div class="flex items-center gap-2">
+<button class="p-1 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition">
+<span class="material-symbols-outlined text-[16px]">forward_10</span>
+</button>
+<button class="p-1 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition">
+<span class="material-symbols-outlined text-[16px]">replay_10</span>
+</button>
+<button class="px-2 py-0.5 rounded bg-white border border-slate-200 text-[10px] font-mono text-slate-700 shadow-2xs">
+                  1.0x
+                </button>
+</div>
+</div>
+</div>
+<!-- Transcription Bubble -->
+<div class="bg-slate-50 rounded-xl p-3 border border-slate-200/90 space-y-2 text-right">
+<p class="text-[13px] text-slate-800 leading-snug">
+              “Vespa rossa vicino al <mark class="bg-sky-100 text-sky-800 px-1 py-0.5 rounded font-semibold border border-sky-200">Colosseo</mark>, modello anni '70 ben restaurato. Ricordarsi di cercare il pezzo di ricambio...”
+            </p>
+<div class="text-[11px] text-slate-600 italic pt-1 border-t border-slate-200">
+<strong class="text-sky-700 not-italic font-semibold">ترجمة فورية:</strong> “دراجة فيسبا حمراء قرب الكولوسيوم، طراز السبعينات تم ترميمه جيداً. مراجعة بديل الكربوراتور...”
+            </div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-3 border-t border-slate-100">
+<span>Match #2 // 0.941</span>
+<span class="text-violet-700 font-semibold">محاذاة متعددة اللغات مكتنزة</span>
+</div>
+</article>
+<!-- CARD 3: CODE & MONOREPO INSIGHT CARD (Light IDE Theme) -->
+<article class="xl:col-span-5 light-glass-surface rounded-2xl p-5 border border-slate-200/90 hover:border-sky-300 transition-all duration-300 flex flex-col justify-between shadow-md bg-white">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sky-600 text-[18px]">terminal</span>
+<span class="font-display font-bold text-[14px] text-slate-900">VespaTelemetryParser.cs</span>
+</div>
+<button class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-[11px] font-mono text-slate-700 flex items-center gap-1 transition shadow-2xs border border-slate-200" title="نسخ الكود">
+<span class="material-symbols-outlined text-[13px]">content_copy</span> نسخ
+            </button>
+</div>
+<!-- Xcode / GitHub Light Styled IDE Terminal -->
+<div class="rounded-xl bg-[#f8fafc] p-3.5 border border-slate-200 font-mono text-[11.5px] leading-relaxed overflow-x-auto text-slate-800 shadow-inner" dir="ltr">
+<div class="flex items-center justify-between text-[10px] text-slate-400 pb-2 mb-2 border-b border-slate-200">
+<span>Recall.Telemetry.Engines / Line 42</span>
+<span class="text-emerald-600 font-semibold">AST Linked</span>
+</div>
+<pre class="space-y-0.5"><span class="text-slate-400 select-none mr-2">42</span><span class="text-violet-700 font-bold">public sealed class</span> <span class="text-emerald-700 font-semibold">VespaVintageDecoder</span> : <span class="text-sky-700">ITwoStrokeTelemetry</span>
+<span class="text-slate-400 select-none mr-2">43</span>{
+<span class="text-slate-400 select-none mr-2">44</span>    <span class="text-slate-500 italic">// Matches Piaggio 50cc GPS near Colosseum</span>
+<span class="text-slate-400 select-none mr-2">45</span>    <span class="text-violet-700 font-bold">public async ValueTask</span>&lt;GeodeticFix&gt; <span class="text-sky-700 font-bold">ParseColosseumZoneTrackAsync</span>(
+<span class="text-slate-400 select-none mr-2">46</span>        ReadOnlyMemory&lt;<span class="text-emerald-600">byte</span>&gt; payload)
+<span class="text-slate-400 select-none mr-2">47</span>    {
+<span class="text-slate-400 select-none mr-2">48</span>        <span class="text-violet-700 font-bold">var</span> rpmProfile = MemoryMarshal.Cast&lt;<span class="text-emerald-600">byte</span>, <span class="text-emerald-600">ushort</span>&gt;(payload.Span);
+<span class="text-slate-400 select-none mr-2">49</span>        <span class="text-violet-700 font-bold">return await</span> _vectorStore.ResonatePoint(<span class="text-sky-600">"scooter_red_rome"</span>);
+<span class="text-slate-400 select-none mr-2">50</span>    }
+<span class="text-slate-400 select-none mr-2">51</span>}</pre>
+</div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-3 border-t border-slate-100">
+<span>Match #3 // 0.892</span>
+<span class="text-sky-700 font-semibold">C# 12 · Symbol Embedding</span>
+</div>
+</article>
+<!-- CARD 4: 4K VIDEO SCRUBBING TIMELINE CARD -->
+<article class="xl:col-span-7 light-glass-surface rounded-2xl p-5 border border-slate-200/90 hover:border-emerald-300 transition-all duration-300 flex flex-col justify-between shadow-md bg-white">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-600 text-[18px]">movie</span>
+<span class="font-display font-bold text-[14px] text-slate-900">فهرس مقاطع فيديو 4K HEVC</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-mono text-[10px] font-bold border border-emerald-200">
+              PRORES 4K · KEYFRAMES
+            </span>
+</div>
+<!-- Keyframes preview scrubber (RTL directionality) -->
+<div class="grid grid-cols-3 gap-2.5 pt-1">
+<div class="group/thumb relative rounded-xl overflow-hidden bg-slate-100 border-2 border-sky-500 shadow-md cursor-pointer">
+<img alt="Close up cowl red scooter" class="w-full h-24 object-cover group-hover/thumb:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGU5C8AOw8GWxnTp3NOfpdiuv9PFgzHFz4Nokbc_5ddN3a_Ka-VAtCQfBPbTWyNeAWWAn304bNqFcONBuRKeYRkabPgWeBuc5oQDgePCgI91uLC0xI1xN7gBKR0vwLJtOBARDvhOFUDKjdniHhUq-nHYIzVdiKUxyxkk2r-CVJDLBYW5eBtPBHpC_jd5eLk00IIFen9OEv4XjF77t0-XOVfXHybiaw5BUMOVNwN1xTCTREwblhK-VrFw"/>
+<span class="absolute bottom-1.5 right-1.5 bg-sky-600 text-white text-[10px] font-mono font-bold px-1.5 py-0.5 rounded shadow">02:28.10 ★ الأفضل تطابقاً</span>
+</div>
+<div class="group/thumb relative rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer">
+<img alt="Roman piazza scooter blurred" class="w-full h-24 object-cover group-hover/thumb:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKf0Z3G2Zy2P7DH_h9lk2xSlNoBzKe7pUSFVr-rRvIMjrDn7meCQV9F1y2zoQZ2bw25tCWTum1KTaZjWusVM6verDJdTarJmBjAz6mSylQSYMgeHXRLsiv-EjIoP1h-4ZHbkrdcTrdhB9ttVpq7EdkmSFJoHZjxHPRhVOafslIJpejmjMvP2Jc_hRt6Grha8NV2pnU-7pxB707bLuWRYImsZPPib__A7u5oWubAfqWOJIMCJN3tSSbyw"/>
+<span class="absolute bottom-1.5 right-1.5 bg-slate-900/80 backdrop-blur text-[10px] font-mono px-1.5 py-0.5 rounded text-white font-medium">02:14.20</span>
+</div>
+<div class="group/thumb relative rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer">
+<img alt="Colosseum street wide" class="w-full h-24 object-cover group-hover/thumb:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbeZM4WkKR4PSUQzvmloAmLtqokkVX1Ke5uHxT1kJmJpFDLZ8oJQ81svDv-3oAjkJ5uodogwwZehhUcLQ7RtHoHAz3b7YkXK8A1NPS09sKxfpRKv6_neZUC2qBLFrrUxh-GEsG1_c7krh1gclFfCVKn25Bh_O88WaN2vRxoKxBUZBfuuZDIHiLqozA0sYjSLIfj_R1BJNpHHA2YJ92iM0zU3AuSBNab64MTBijmPzOCttlfBYCJmRd1Q"/>
+<span class="absolute bottom-1.5 right-1.5 bg-slate-900/80 backdrop-blur text-[10px] font-mono px-1.5 py-0.5 rounded text-white font-medium">02:45.00</span>
+</div>
+</div>
+<!-- Scrub timeline -->
+<div class="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
+<span class="text-[11px] font-mono text-slate-600 font-medium">نافذة المقطع: 02:14 - 02:45</span>
+<button class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-[11px] font-bold text-white flex items-center gap-1.5 transition shadow-xs">
+<span class="material-symbols-outlined text-[14px]">download</span> استخراج مقطع 4K (2.4 MB)
+            </button>
+</div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-3 border-t border-slate-100">
+<span>Match #4 // 0.879</span>
+<span class="text-emerald-700 font-semibold">Indexed Chunk #88</span>
+</div>
+</article>
+</div>
+</main>
+<!-- ================= LEFT INSPECTOR PANEL (RTL DOCKED INTEL) ================= -->
+<aside class="w-80 shrink-0 bg-white/95 border-r border-slate-200/90 p-5 flex flex-col gap-5 overflow-y-auto hidden 2xl:flex relative z-10 shadow-sm">
+<!-- Panel Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sky-600 text-[18px]">insights</span>
+<h4 class="font-display font-bold text-[14px] text-slate-900">رؤى الذاكرة المشبكية</h4>
+</div>
+<span class="text-[10px] font-mono text-emerald-800 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 font-bold">
+        معالج NPU متصل
+      </span>
+</div>
+<!-- Confidence Gauge Ring / Card -->
+<div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-4">
+<div class="relative w-16 h-16 flex items-center justify-center shrink-0">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 36 36">
+<path class="text-slate-200 stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="3.5"></path>
+<path class="text-sky-600 stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-dasharray="98.4, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+<span class="absolute font-mono font-bold text-[13px] text-slate-900">98%</span>
+</div>
+<div class="space-y-0.5 text-right">
+<div class="text-[13px] font-bold text-slate-900">ثقة التطابق العصبية</div>
+<div class="text-[11px] text-slate-600">اندماج متعدد الوسائط عبر 4 مسارات جرى التحقق منها محلياً</div>
+</div>
+</div>
+<!-- 2D Latent Geometry Radar Visualization -->
+<div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+<div class="flex items-center justify-between text-[11px] font-mono">
+<span class="text-slate-700 font-semibold">إسقاط الفضاء الكامن</span>
+<span class="text-sky-700 font-bold">PCA 2D · CLUSTER A-9</span>
+</div>
+<div class="relative w-full h-44 bg-white rounded-xl overflow-hidden flex items-center justify-center border border-slate-200 shadow-inner">
+<svg class="w-full h-full text-slate-200" viewbox="0 0 200 200">
+<circle cx="100" cy="100" fill="none" r="75" stroke="currentColor" stroke-dasharray="2 3" stroke-width="0.8"></circle>
+<circle cx="100" cy="100" fill="none" r="45" stroke="currentColor" stroke-dasharray="2 3" stroke-width="0.8"></circle>
+<circle cx="100" cy="100" fill="none" r="20" stroke="currentColor" stroke-width="0.8"></circle>
+<line stroke="currentColor" stroke-width="0.8" x1="100" x2="100" y1="15" y2="185"></line>
+<line stroke="currentColor" stroke-width="0.8" x1="15" x2="185" y1="100" y2="100"></line>
+<!-- Dynamic Synaptic Poly Connect -->
+<polygon fill="rgba(2, 132, 199, 0.12)" points="125,75 140,90 115,125 80,68" stroke="#0284c7" stroke-width="1.8"></polygon>
+<circle class="fill-sky-500" cx="125" cy="75" r="5"></circle>
+<circle class="fill-violet-500" cx="140" cy="90" r="4"></circle>
+<circle class="fill-emerald-500" cx="115" cy="125" r="4"></circle>
+<circle class="fill-sky-700" cx="80" cy="68" r="3.5"></circle>
+<circle cx="45" cy="140" fill="#94a3b8" r="2.5"></circle>
+<circle cx="55" cy="150" fill="#94a3b8" r="2.5"></circle>
+<circle cx="160" cy="45" fill="#94a3b8" r="2.5"></circle>
+<circle cx="170" cy="55" fill="#94a3b8" r="2.5"></circle>
+</svg>
+<div class="absolute bottom-2 right-2 bg-white/90 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-mono text-sky-800 shadow-2xs font-semibold">
+          EUC DIST: 0.1287
+        </div>
+</div>
+<div class="bg-white p-2 rounded-lg font-mono text-[10px] text-slate-600 border border-slate-200 truncate" dir="ltr">
+        [-0.042, +0.189, +0.892, -0.311, +0.054, +0.710...]
+      </div>
+</div>
+<!-- Local Privacy & Security Trust Badges -->
+<div class="space-y-2">
+<span class="text-[11px] font-mono text-slate-500 uppercase tracking-wider font-semibold">الخصوصية والأمان المحلي</span>
+<div class="space-y-1.5">
+<div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-emerald-600">verified</span>
+<span class="text-[12px] font-medium text-slate-800">معزول بالكامل Air-gapped</span>
+</div>
+<span class="text-[10px] font-mono text-emerald-700 font-bold">100%</span>
+</div>
+<div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-emerald-600">cloud_off</span>
+<span class="text-[12px] font-medium text-slate-800">انعدام نقل البيانات سحابياً</span>
+</div>
+<span class="text-[10px] font-mono text-emerald-700 font-bold">0.00 KB</span>
+</div>
+<div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-sky-600">database</span>
+<span class="text-[12px] font-medium text-slate-800">مخزن في ZVec محلي</span>
+</div>
+<span class="text-[10px] font-mono text-sky-700 font-semibold">AES-256</span>
+</div>
+</div>
+</div>
+<!-- Quick Action Buttons -->
+<div class="mt-auto space-y-2 pt-2">
+<button class="w-full py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-[12px] flex items-center justify-center gap-1.5 shadow-md shadow-sky-600/20 transition">
+<span class="material-symbols-outlined text-[16px]">share</span>
+<span>مشاركة الذاكرة المشفرة عبر AirDrop</span>
+</button>
+</div>
+</aside>
+</div>
+<!-- ================= MINIMAL LUXURY BOTTOM DOCK STATUS BAR (LIGHT MODE RTL) ================= -->
+<footer class="min-h-9 py-1 sm:py-0 border-t border-slate-200 bg-slate-50 px-3 sm:px-4 flex flex-wrap items-center justify-between gap-1 sm:gap-3 text-[10px] sm:text-[11px] font-mono text-slate-600 z-50 shrink-0">
+<div class="flex flex-wrap items-center gap-2 sm:gap-4">
+<span class="flex items-center gap-1.5 text-slate-800">
+<span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+<strong class="text-slate-900 font-bold">54,920</strong> <span class="hidden xs:inline">ذكريات مفهرسة محلياً</span>
+</span>
+<span class="text-slate-300">·</span>
+<span class="text-slate-700">
+      ذاكرة LPDDR5 الموحدة: <strong class="text-sky-700 font-bold">42 MB</strong>
+</span>
+<span class="text-slate-300 hidden md:inline">·</span>
+<span class="hidden md:inline text-slate-700">
+      شبكة P2P: <strong class="text-violet-700 font-bold">3 أجهزة متزامنة (E2EE)</strong>
+</span>
+</div>
+<div class="flex items-center gap-2 sm:gap-3 mr-auto sm:mr-0">
+<span class="hidden xl:inline text-slate-500">Gemma-2-270M + SigLIP-2</span>
+<span class="text-slate-300 hidden xl:inline">·</span>
+<span class="text-emerald-700 font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">bolt</span> جاهز للعمل (Air-Gapped Ready)
+    </span>
+</div>
+</footer>
+<script>
+  // Keyboard shortcut listener for command bar
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      const searchInput = document.querySelector('input');
+      if (searchInput) searchInput.focus();
+    }
+  });
+</script>
+</body></html>

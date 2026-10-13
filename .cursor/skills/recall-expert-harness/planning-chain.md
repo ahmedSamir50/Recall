@@ -16,7 +16,7 @@ A one-file bugfix does not use this chain. It still follows `development-rules.m
 2. Launch all ten experts in one parallel batch. `subagent_type` is the expert id. Environment is local. Do not pick a model unless the user named one.
 3. Each prompt contains the plan verbatim plus the instructions below. Subagents do not see the user message unless you paste it.
 4. If a sign-off is missing a field, has an empty checked list, or agrees or rejects with no evidence, resume that expert once and ask for the missing evidence. Do not rewrite their verdict yourself.
-5. Publish every sign-off in full. Then write the synthesis below.
+5. Publish the YAML list. Do not rewrite a short field into a paragraph. Then write the synthesis below.
 6. Stop. The user decides which recommendations enter the plan. Do not code from an unsigned plan.
 
 ## Expert ids
@@ -36,7 +36,7 @@ and .cursor/skills/recall-expert-harness/sign-off.md.
 Plan, verbatim:
 <paste>
 
-Research the repo and InitDocs before you answer. Push back when the plan, the user, or the docs are inconsistent, incomplete, or logically wrong. Agree only if the checked list supports it. Return only the sign-off block. Do not edit files.
+Research the repo and InitDocs before you answer. Push back when the plan, the user, or the docs are inconsistent, incomplete, or logically wrong. Agree only if the checked list supports it. Return only the YAML sign-off from sign-off.md. Two sentences maximum in each field. Do not edit files.
 ```
 
 ## Synthesis

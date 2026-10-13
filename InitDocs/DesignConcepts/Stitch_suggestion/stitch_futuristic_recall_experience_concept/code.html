@@ -1,0 +1,1031 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<meta content="desktop_app" name="shell-type">
+<title>Recall // Synaptic Memory OS</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        overscroll-behavior: none;
+        user-select: none;
+      }
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(17, 19, 25, 0.4);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(132, 148, 149, 0.25);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 242, 254, 0.4);
+    }
+    @keyframes subtlePulse {
+      0%, 100% { opacity: 0.9; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.97); }
+    }
+    @keyframes cursorBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 6px rgba(0, 242, 254, 0.8)); }
+    }
+    @keyframes lineFlow {
+      0% { stroke-dashoffset: 40; }
+      100% { stroke-dashoffset: 0; }
+    }
+    .animate-cursor {
+      animation: cursorBlink 1.05s infinite cubic-bezier(0.4, 0, 0.6, 1);
+    }
+    .animate-pulse-node {
+      animation: pulseGlow 2.8s infinite ease-in-out;
+    }
+    .animate-synapse {
+      stroke-dasharray: 4 3;
+      animation: lineFlow 3s linear infinite;
+    }
+    .glass-surface {
+      background: rgba(25, 28, 33, 0.72);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .glass-surface-bright {
+      background: rgba(34, 38, 46, 0.82);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      border: 1px solid rgba(0, 242, 254, 0.16);
+    }
+    .glow-cyan {
+      box-shadow: 0 0 25px -4px rgba(0, 242, 254, 0.25), 0 0 8px 0 rgba(0, 242, 254, 0.15);
+    }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "surface-container-high": "#282a30",
+            "on-secondary-fixed": "#2b0052",
+            "on-tertiary-fixed": "#002113",
+            "surface-container-lowest": "#0c0e13",
+            "primary": "#e0fdff",
+            "on-tertiary-fixed-variant": "#005236",
+            "background": "#0e1015",
+            "surface-container-low": "#15181e",
+            "secondary-container": "#6807ba",
+            "surface-variant": "#32353b",
+            "secondary": "#dbb8ff",
+            "on-primary-fixed": "#002022",
+            "on-secondary-fixed-variant": "#6600b7",
+            "outline-variant": "#3a494b",
+            "on-surface-variant": "#9aa8a9",
+            "inverse-on-surface": "#2e3036",
+            "surface": "#111319",
+            "surface-bright": "#37393f",
+            "tertiary": "#e1ffec",
+            "error-container": "#93000a",
+            "surface-tint": "#00dce6",
+            "primary-fixed": "#6ff6ff",
+            "on-tertiary": "#003824",
+            "outline": "#849495",
+            "error": "#ffb4ab",
+            "primary-fixed-dim": "#00dce6",
+            "on-secondary-container": "#d0a6ff",
+            "surface-container-highest": "#32353b",
+            "tertiary-fixed": "#6ffbbe",
+            "secondary-fixed-dim": "#dbb8ff",
+            "on-primary-fixed-variant": "#004f53",
+            "on-primary": "#00373a",
+            "surface-container": "#1b1e24",
+            "on-tertiary-container": "#006e4b",
+            "inverse-surface": "#e1e2ea",
+            "on-surface": "#e1e2ea",
+            "on-error": "#690005",
+            "on-error-container": "#ffdad6",
+            "tertiary-fixed-dim": "#4edea3",
+            "surface-dim": "#111319",
+            "on-primary-container": "#00373a",
+            "tertiary-container": "#67f4b7",
+            "secondary-fixed": "#efdbff",
+            "primary-container": "#00f2fe",
+            "on-background": "#e1e2ea",
+            "inverse-primary": "#00696f",
+            "on-secondary": "#470083"
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.875rem",
+            "2xl": "1.25rem",
+            "full": "9999px"
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"],
+            display: ["Space Grotesk", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-background font-sans text-on-surface antialiased flex flex-col h-screen overflow-hidden selection:bg-primary-container selection:text-on-primary-container relative">
+<!-- ================= LUXURY APP TITLEBAR & WINDOW CONTROLS ================= -->
+<header class="h-12 border-b border-white/[0.06] bg-surface-container-lowest/80 backdrop-blur-2xl flex items-center justify-between px-4 z-50 select-none shrink-0">
+<!-- Left: macOS Traffic Lights + App Brand -->
+<div class="flex items-center gap-2 sm:gap-4">
+<!-- Mobile Drawer Trigger Button -->
+<button id="mobile-nav-toggle" onclick="document.getElementById('mobile-drawer').classList.toggle('hidden')" class="md:hidden w-8 h-8 rounded-lg bg-surface-container-high border border-white/10 flex items-center justify-center text-white hover:text-primary-container transition shrink-0" aria-label="Toggle Navigation Menu">
+<span class="material-symbols-outlined text-[20px]">menu</span>
+</button>
+<!-- macOS Traffic Lights (Hidden on extra small screens) -->
+<div class="hidden sm:flex items-center gap-2 group cursor-pointer pr-2">
+<span class="w-3 h-3 rounded-full bg-[#ff5f56] border border-[#e0443e] inline-block shadow-sm hover:brightness-110 transition"></span>
+<span class="w-3 h-3 rounded-full bg-[#ffbd2e] border border-[#dea123] inline-block shadow-sm hover:brightness-110 transition"></span>
+<span class="w-3 h-3 rounded-full bg-[#27c93f] border border-[#1aab29] inline-block shadow-sm hover:brightness-110 transition"></span>
+</div>
+<div class="h-4 w-px bg-white/10 hidden sm:block"></div>
+<!-- Neural Recall Logo & Orb -->
+<div class="flex items-center gap-2 sm:gap-2.5">
+<div class="relative flex items-center justify-center">
+<div class="w-5 h-5 rounded-full bg-gradient-to-tr from-primary-container via-surface-tint to-secondary flex items-center justify-center shadow-[0_0_12px_rgba(0,242,254,0.6)]">
+<span class="material-symbols-outlined text-[13px] text-background font-black">all_inclusive</span>
+</div>
+<span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-tertiary-container animate-ping"></span>
+</div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-display font-bold tracking-tight text-[14px] text-white">Recall</span>
+<span class="font-mono text-[10px] text-primary-fixed-dim/70 px-1 py-0.2 rounded bg-white/[0.04] hidden xs:inline">v2.4 Pro</span>
+</div>
+</div>
+</div>
+<!-- Center: Segmented Quick Views (Raycast / Arc Tab Switcher) -->
+<div class="hidden md:flex items-center bg-surface-container-low/90 p-1 rounded-xl border border-white/[0.06] shadow-inner overflow-x-auto max-w-[420px] lg:max-w-none">
+<button class="px-3 py-1 rounded-lg text-[12px] font-medium transition-all bg-surface-container-high text-primary shadow-sm flex items-center gap-1.5 shrink-0">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+<span class="">All Memories</span>
+</button>
+<button class="px-3 py-1 rounded-lg text-[12px] font-medium text-on-surface-variant hover:text-white transition-all flex items-center gap-1.5 shrink-0">
+<span class="material-symbols-outlined text-[14px]">photo_camera</span>
+<span class="">Visual &amp; Frames</span>
+</button>
+<button class="px-3 py-1 rounded-lg text-[12px] font-medium text-on-surface-variant hover:text-white transition-all flex items-center gap-1.5 shrink-0">
+<span class="material-symbols-outlined text-[14px]">mic</span>
+<span class="">Voice &amp; Audio</span>
+</button>
+<button class="px-3 py-1 rounded-lg text-[12px] font-medium text-on-surface-variant hover:text-white transition-all flex items-center gap-1.5 shrink-0">
+<span class="material-symbols-outlined text-[14px]">code</span>
+<span class="">Documents &amp; Code</span>
+</button>
+</div>
+<!-- Right: Air-Gap Hardware Security Badge + Profile -->
+<div class="flex items-center gap-2 sm:gap-3">
+<!-- Air-Gap Badge: compact on mobile, full on desktop -->
+<div class="flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-surface-container/70 border border-white/[0.06] text-[10px] sm:text-[11px] font-mono text-on-surface-variant">
+<span class="flex items-center gap-1 text-tertiary-container">
+<span class="material-symbols-outlined text-[12px] sm:text-[13px]">verified_user</span>
+<span class="font-semibold text-tertiary-container hidden xs:inline">Air-Gapped</span>
+</span>
+<span class="text-white/20 hidden md:inline">|</span>
+<span class="text-white/70 hidden lg:inline">MacBook Pro M3 Max</span>
+<span class="text-white/20 hidden sm:inline">|</span>
+<span class="text-primary-fixed-dim hidden sm:inline">0 KB Egress</span>
+</div>
+<!-- Action pill -->
+<button class="w-7 h-7 rounded-lg bg-surface-container-high hover:bg-surface-bright border border-white/[0.08] flex items-center justify-center text-on-surface hover:text-primary transition shrink-0" title="Quick Capture">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+<!-- Minimal Avatar with Local Key Indicator -->
+<div class="relative cursor-pointer shrink-0">
+<div class="w-7 h-7 rounded-full bg-gradient-to-br from-surface-variant to-surface-container-high border border-white/20 flex items-center justify-center text-white text-[12px] font-semibold">
+JD
+</div>
+<span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-tertiary-container border border-background"></span>
+</div>
+</div>
+</header>
+<!-- ================= HERO COMMAND BAR (RAYCAST / SPOTLIGHT DOCK) ================= -->
+<section class="w-full bg-gradient-to-b from-surface-container-lowest via-surface-container-low/70 to-transparent pt-4 pb-4 px-6 shrink-0 border-b border-white/[0.04] relative z-20">
+<div class="max-w-6xl mx-auto flex flex-col gap-3">
+<div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4">
+<!-- Spotlight Search Input -->
+<div class="flex-1 glass-surface-bright rounded-2xl p-2 px-3 sm:px-3.5 shadow-2xl flex items-center gap-2 sm:gap-3 relative transition-all focus-within:ring-2 focus-within:ring-primary-container/40 focus-within:border-primary-container/60 min-w-0">
+<!-- Task Mode Segment Selector: responsive sizing -->
+<div class="flex items-center bg-surface-container-lowest/70 p-0.5 rounded-xl border border-white/[0.06] shrink-0">
+<button class="px-2 sm:px-2.5 py-1 rounded-lg text-[10.5px] sm:text-[11px] font-semibold bg-primary-container text-on-primary-container shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">search</span>
+<span class="hidden xs:inline">Search</span>
+</button>
+<button class="px-2 sm:px-2.5 py-1 rounded-lg text-[10.5px] sm:text-[11px] font-semibold text-on-surface-variant hover:text-white transition flex items-center gap-1">
+<span class="">Cluster</span>
+</button>
+<button class="px-2 sm:px-2.5 py-1 rounded-lg text-[10.5px] sm:text-[11px] font-semibold text-on-surface-variant hover:text-white transition flex items-center gap-1 hidden xs:flex">
+<span class="">Synthesize</span>
+</button>
+</div>
+<div class="h-5 w-px bg-white/10 hidden sm:block"></div>
+<!-- Query Input with Blinking Accent Cursor -->
+<div class="flex-1 flex items-center min-w-0">
+<span class="font-display font-medium text-[13.5px] sm:text-[15px] md:text-[16px] text-white tracking-wide truncate">
+The red scooter I saw near the Colosseum last summer
+</span>
+<span class="inline-block w-0.5 h-4 sm:h-5 bg-primary-container ml-0.5 animate-cursor shrink-0"></span>
+</div>
+<!-- Latency & Shortcuts -->
+<div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+<span class="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono text-tertiary-container bg-tertiary/10 px-2 py-0.5 rounded-full border border-tertiary-container/20">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container animate-pulse"></span>
+0.38ms
+</span>
+<kbd class="px-1.5 sm:px-2 py-1 rounded-lg bg-surface-container-lowest border border-white/10 font-mono text-[10px] sm:text-[11px] text-on-surface-variant flex items-center gap-0.5 shadow-sm">
+<span class="">⌘</span><span class="">K</span>
+</kbd>
+</div>
+</div>
+<!-- LIVE SYNAPTIC LATTICE WIDGET (Fluid sizing on tablet/mobile) -->
+<div class="md:w-72 lg:w-80 shrink-0 glass-surface rounded-2xl px-3 sm:px-3.5 py-2 border border-primary-container/25 hover:border-primary-container/50 bg-surface-container-lowest/80 backdrop-blur-2xl flex items-center justify-between gap-2 sm:gap-3 shadow-lg transition-all">
+<div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+<!-- Animated Synaptic SVG Mini-Constellation -->
+<div class="relative w-8 h-8 rounded-lg bg-surface-container-low border border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+<svg class="w-full h-full" viewBox="0 0 32 32">
+<line class="animate-synapse stroke-primary-container" stroke-width="1.2" x1="6" x2="16" y1="20" y2="8"></line>
+<line class="animate-synapse stroke-secondary" stroke-width="1.2" x1="16" x2="26" y1="8" y2="18"></line>
+<line class="stroke-white/20" stroke-width="0.8" x1="6" x2="26" y1="20" y2="18"></line>
+<line class="stroke-tertiary-container/40" stroke-width="0.8" x1="16" x2="16" y1="8" y2="26"></line>
+<circle class="animate-pulse-node fill-primary-container" cx="6" cy="20" r="2.5"></circle>
+<circle class="animate-pulse-node fill-secondary" cx="16" cy="8" r="3"></circle>
+<circle class="animate-pulse-node fill-primary-fixed" cx="26" cy="18" r="2.5"></circle>
+<circle class="fill-tertiary-container" cx="16" cy="26" r="2"></circle>
+</svg>
+<span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-primary-container animate-ping"></span>
+</div>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5 text-[11px] font-mono font-medium text-white truncate">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+<span class="text-primary-fixed truncate">768-D Latent Lattice</span>
+</div>
+<div class="text-[10px] font-mono text-on-surface-variant truncate">
+54,920 Nodes Active
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end shrink-0 pl-2 border-l border-white/10 font-mono text-[9.5px]">
+<span class="text-tertiary-container font-semibold">MRL 256d</span>
+<span class="text-outline">0.016 Dist</span>
+</div>
+</div>
+</div>
+<!-- Quick Context Tags Filter Bar -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+<div class="flex flex-wrap items-center gap-1.5 overflow-x-auto py-0.5">
+<span class="text-[10px] sm:text-[11px] font-mono text-white/40 uppercase tracking-wider mr-1 shrink-0">Context Inferred:</span>
+<button class="px-2 sm:px-2.5 py-0.5 rounded-full bg-surface-container-high/80 hover:bg-surface-bright border border-white/[0.08] text-[10.5px] sm:text-[11px] font-medium text-white/90 flex items-center gap-1 transition shrink-0">
+<span class="">📍</span> Rome, Italy
+<span class="material-symbols-outlined text-[11px] text-white/40 hover:text-white">close</span>
+</button>
+<button class="px-2 sm:px-2.5 py-0.5 rounded-full bg-surface-container-high/80 hover:bg-surface-bright border border-white/[0.08] text-[10.5px] sm:text-[11px] font-medium text-secondary flex items-center gap-1 transition shrink-0">
+<span class="">🎙️</span> Italian Voice Memo
+<span class="material-symbols-outlined text-[11px] text-white/40 hover:text-white">close</span>
+</button>
+<button class="px-2 sm:px-2.5 py-0.5 rounded-full bg-surface-container-high/80 hover:bg-surface-bright border border-white/[0.08] text-[10.5px] sm:text-[11px] font-medium text-primary-fixed-dim flex items-center gap-1 transition shrink-0">
+<span class="">🛵</span> Vespa
+<span class="material-symbols-outlined text-[11px] text-white/40 hover:text-white">close</span>
+</button>
+<button class="px-2 sm:px-2.5 py-0.5 rounded-full bg-surface-container-high/80 hover:bg-surface-bright border border-white/[0.08] text-[10.5px] sm:text-[11px] font-medium text-white/90 flex items-center gap-1 transition shrink-0">
+<span class="">📅</span> Summer 2024
+<span class="material-symbols-outlined text-[11px] text-white/40 hover:text-white">close</span>
+</button>
+</div>
+<div class="text-[10px] sm:text-[11px] font-mono text-on-surface-variant flex items-center gap-1 shrink-0">
+<span class="">Ranked by <strong class="text-white">Hybrid Reciprocal Rank</strong></span>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= MAIN CONTENT WORKSPACE ================= -->
+<!-- ================= MOBILE SLIDE-OUT NAVIGATION DRAWER ================= -->
+<div id="mobile-drawer" class="fixed inset-0 z-50 hidden md:hidden flex">
+<!-- Dim Backdrop -->
+<div class="fixed inset-0 bg-black/70 backdrop-blur-md transition-opacity" onclick="document.getElementById('mobile-drawer').classList.add('hidden')"></div>
+<!-- Drawer Container -->
+<div class="relative w-72 max-w-[85vw] bg-surface-container-low border-r border-white/10 p-4 flex flex-col justify-between h-full z-10 shadow-2xl overflow-y-auto">
+<div class="flex flex-col gap-4">
+<!-- Header with Close Button -->
+<div class="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-gradient-to-tr from-primary-container to-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px] text-background font-black">all_inclusive</span>
+</div>
+<span class="font-display font-bold text-white text-[15px]">Recall OS</span>
+</div>
+<button onclick="document.getElementById('mobile-drawer').classList.add('hidden')" class="w-8 h-8 rounded-lg bg-surface-container-high hover:bg-surface-bright border border-white/10 flex items-center justify-center text-white/80 hover:text-white">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+<!-- Vault Selector -->
+<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-surface-container-lowest border border-white/[0.08]">
+<div class="flex items-center gap-2 min-w-0">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span class="font-display text-[13px] font-semibold truncate text-white">Personal Vault</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-outline">unfold_more</span>
+</div>
+<!-- Mobile Nav Links -->
+<nav class="flex flex-col gap-1.5">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-primary-container/10 border border-primary-container/20 text-primary-fixed-dim font-medium text-[13px]" href="#">
+<span class="material-symbols-outlined text-[18px]">travel_explore</span>
+<span class="">Search Canvas</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] text-on-surface-variant hover:text-white font-medium text-[13px]" href="#">
+<span class="material-symbols-outlined text-[18px]">scatter_plot</span>
+<span class="">Lattice Graph</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] text-on-surface-variant hover:text-white font-medium text-[13px]" href="#">
+<span class="material-symbols-outlined text-[18px]">sync_saved_locally</span>
+<span class="">P2P Devices</span>
+<span class="ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-surface-container-high text-tertiary-container">3 online</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] text-on-surface-variant hover:text-white font-medium text-[13px]" href="#">
+<span class="material-symbols-outlined text-[18px]">memory</span>
+<span class="">Neural Benchmarks</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] text-on-surface-variant hover:text-white font-medium text-[13px]" href="#">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span class="">Preferences</span>
+</a>
+</nav>
+<!-- Mobile Tabs Switcher in Drawer -->
+<div class="pt-2 border-t border-white/[0.06] flex flex-col gap-1">
+<span class="text-[11px] font-mono text-outline uppercase tracking-wider px-2">Quick Filters</span>
+<button class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] bg-surface-container-high text-primary font-medium">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+<span class="">All Memories</span>
+</button>
+<button class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-on-surface-variant hover:text-white">
+<span class="material-symbols-outlined text-[14px]">photo_camera</span>
+<span class="">Visual &amp; Frames</span>
+</button>
+<button class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-on-surface-variant hover:text-white">
+<span class="material-symbols-outlined text-[14px]">mic</span>
+<span class="">Voice &amp; Audio</span>
+</button>
+<button class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[12px] text-on-surface-variant hover:text-white">
+<span class="material-symbols-outlined text-[14px]">code</span>
+<span class="">Documents &amp; Code</span>
+</button>
+</div>
+</div>
+<!-- Mobile Drawer Telemetry Footer -->
+<div class="flex flex-col gap-2 p-3 rounded-2xl bg-surface-container-lowest/80 border border-white/[0.06] mt-4">
+<div class="flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
+<span class="">ON-DEVICE NPU</span>
+<span class="text-tertiary-container font-semibold">ACTIVE</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-gradient-to-r from-primary-container to-tertiary-container h-full w-3/4 rounded-full"></div>
+</div>
+<div class="flex items-center justify-between text-[10px] font-mono text-outline">
+<span class="">SIGLIP + GEMMA-2</span>
+<span class="">42.8 MB</span>
+</div>
+</div>
+</div>
+</div><div class="flex-1 flex overflow-hidden relative">
+<!-- ANIMATED BACKGROUND GRAPH & SYNAPTIC SHADER -->
+<!-- STITCH_SHADER_START:ANIMATION_12 class="absolute inset-0 w-full h-full pointer-events-none opacity-45 z-0" -->
+<div class="absolute inset-0 w-full h-full pointer-events-none opacity-45 z-0" style="display:block;">
+<canvas id="shader-canvas-ANIMATION_12" style="display:block;width:100%;height:100%" width="1280" height="823"></canvas>
+<script>
+(function() {
+  const canvas = document.getElementById('shader-canvas-ANIMATION_12');
+
+  // Sync the WebGL drawing-buffer size with the CSS-driven layout size.
+  // This fires on initial layout and whenever the element is resized.
+  function syncSize() {
+    const w = canvas.clientWidth  || 1280;
+    const h = canvas.clientHeight || 720;
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width  = w;
+      canvas.height = h;
+    }
+  }
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(syncSize).observe(canvas);
+  }
+  syncSize();
+
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) return;
+  const vs = `attribute vec2 a_position;
+varying vec2 v_texCoord;
+void main() {
+  v_texCoord = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}`;
+  const fs = `precision highp float;
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+varying vec2 v_texCoord;
+
+// Simplex/Hash helpers
+float hash(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+
+vec2 hash2(vec2 p) {
+    float n = sin(dot(p, vec2(127.1, 311.7)));
+    float m = sin(dot(p, vec2(269.5, 183.3)));
+    return fract(vec2(n, m) * 43758.5453);
+}
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+    vec2 st = gl_FragCoord.xy / u_resolution.xy;
+    
+    // Ambient dark background with subtle cyan / deep violet glow
+    vec3 col = vec3(0.047, 0.055, 0.075); // #0c0e13 base
+    
+    // Synaptic grid / lattice nodes
+    vec2 gridUv = uv * 6.5;
+    vec2 gridId = floor(gridUv);
+    vec2 gridF = fract(gridUv) - 0.5;
+    
+    float minDist = 1.0;
+    float lineEnergy = 0.0;
+    
+    // Check 3x3 neighbor cells for Voronoi / graph connections
+    for(int y = -1; y <= 1; y++) {
+        for(int x = -1; x <= 1; x++) {
+            vec2 neighbor = vec2(float(x), float(y));
+            vec2 p = hash2(gridId + neighbor);
+            
+            // Subtle harmonic orbital oscillation simulating memory clustering
+            p = 0.5 + 0.35 * sin(u_time * 0.8 + 6.2831 * p);
+            vec2 diff = neighbor + p - gridF - 0.5;
+            float d = length(diff);
+            
+            minDist = min(minDist, d);
+        }
+    }
+    
+    // Pulsing neural node cores
+    float nodeCore = smoothstep(0.08, 0.01, minDist);
+    float nodeHalo = smoothstep(0.35, 0.0, minDist) * 0.4;
+    
+    // Dynamic synaptic beam waves traveling across the space
+    float wave1 = sin(uv.x * 4.0 + uv.y * 2.0 - u_time * 1.2) * 0.5 + 0.5;
+    float wave2 = cos(uv.x * -3.0 + uv.y * 5.0 + u_time * 0.9) * 0.5 + 0.5;
+    float synPulse = pow(wave1 * wave2, 2.5);
+    
+    // Glowing connections & synaptic memory aura
+    vec3 cyanGlow = vec3(0.0, 0.949, 0.996); // #00f2fe
+    vec3 violetGlow = vec3(0.54, 0.36, 1.0);  // Soft neural purple
+    vec3 amberGlow = vec3(1.0, 0.72, 0.2);   // Active resonance tag
+    
+    // Subtle vector grid lines (MRL hyperspace projection lines)
+    float gridLine = max(
+        smoothstep(0.48, 0.5, abs(gridF.x)),
+        smoothstep(0.48, 0.5, abs(gridF.y))
+    ) * 0.06;
+    
+    // Cluster focal area (matching where memories resonate)
+    float centerGlow = 1.0 - smoothstep(0.0, 1.2, length(uv - vec2(0.35, 0.1)));
+    
+    vec3 memoryField = mix(cyanGlow, violetGlow, wave2) * (nodeCore * 1.4 + nodeHalo + synPulse * 0.25);
+    memoryField += cyanGlow * gridLine;
+    memoryField += violetGlow * centerGlow * 0.15;
+    
+    col += memoryField * 0.65;
+    
+    // Vignette for seamless dark container integration
+    float vig = smoothstep(1.3, 0.3, length(uv));
+    col *= vig;
+
+    gl_FragColor = vec4(col, 1.0);
+}`;
+  function cs(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const pos = gl.getAttribLocation(prog, 'a_position');
+  gl.enableVertexAttribArray(pos);
+  gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+  const uTime = gl.getUniformLocation(prog, 'u_time');
+  const uRes = gl.getUniformLocation(prog, 'u_resolution');
+  const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+
+  // u_mouse is in pixel coordinates matching u_resolution (ShaderToy convention).
+  // Shaders that need normalized coords should use: u_mouse / u_resolution.
+  let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+  window.addEventListener('mousemove', (event) => {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width && rect.height) {
+      const nx = (event.clientX - rect.left) / rect.width;
+      const ny = 1.0 - (event.clientY - rect.top) / rect.height;
+      mouse.x = nx * canvas.width;
+      mouse.y = ny * canvas.height;
+    }
+  });
+
+  function render(t) {
+    if (typeof ResizeObserver === 'undefined') syncSize();
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    if (uTime) gl.uniform1f(uTime, t * 0.001);
+    if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
+    if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(render);
+  }
+  render(0);
+})();
+</script>
+</div>
+<!-- STITCH_SHADER_END:ANIMATION_12 -->
+<!-- LEFT NAVIGATION SLIM RAIL -->
+<aside class="hidden md:flex w-16 lg:w-56 shrink-0 bg-surface-container-lowest/60 border-r border-white/[0.05] p-3 flex-col justify-between relative z-10">
+<div class="flex flex-col gap-4">
+<!-- Quick Vault Selector -->
+<div class="hidden lg:flex items-center justify-between px-2 py-1.5 rounded-xl bg-surface-container-low border border-white/[0.05]">
+<div class="flex items-center gap-2 min-w-0">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span class="font-display text-[13px] font-semibold truncate text-white">Personal Vault</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-outline">unfold_more</span>
+</div>
+<!-- Nav list (Icon centered on tablet md, icon + label on desktop lg) -->
+<nav class="flex flex-col gap-1">
+<a class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 rounded-xl bg-primary-container/10 border border-primary-container/20 text-primary-fixed-dim font-medium text-[13px] transition" href="#" title="Search Canvas">
+<span class="material-symbols-outlined text-[18px]">travel_explore</span>
+<span class="hidden lg:inline">Search Canvas</span>
+</a>
+<a class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 rounded-xl hover:bg-white/[0.04] text-on-surface-variant hover:text-white font-medium text-[13px] transition" href="#" title="Lattice Graph">
+<span class="material-symbols-outlined text-[18px]">scatter_plot</span>
+<span class="hidden lg:inline">Lattice Graph</span>
+</a>
+<a class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 rounded-xl hover:bg-white/[0.04] text-on-surface-variant hover:text-white font-medium text-[13px] transition" href="#" title="P2P Devices">
+<span class="material-symbols-outlined text-[18px]">sync_saved_locally</span>
+<span class="hidden lg:inline">P2P Devices</span>
+<span class="hidden lg:inline-flex ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-surface-container-high text-tertiary-container">3 online</span>
+</a>
+<a class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 rounded-xl hover:bg-white/[0.04] text-on-surface-variant hover:text-white font-medium text-[13px] transition" href="#" title="Neural Benchmarks">
+<span class="material-symbols-outlined text-[18px]">memory</span>
+<span class="hidden lg:inline">Neural Benchmarks</span>
+</a>
+<a class="flex items-center justify-center lg:justify-start gap-3 px-3 py-2 rounded-xl hover:bg-white/[0.04] text-on-surface-variant hover:text-white font-medium text-[13px] transition" href="#" title="Preferences">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span class="hidden lg:inline">Preferences</span>
+</a>
+</nav>
+</div>
+<!-- Local Vault Telemetry Footer in Left Rail -->
+<div class="hidden lg:flex flex-col gap-2 p-3 rounded-2xl bg-surface-container-low/70 border border-white/[0.05]">
+<div class="flex items-center justify-between text-[11px] font-mono text-on-surface-variant">
+<span class="">ON-DEVICE NPU</span>
+<span class="text-tertiary-container font-semibold">ACTIVE</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+<div class="bg-gradient-to-r from-primary-container to-tertiary-container h-full w-3/4 rounded-full"></div>
+</div>
+<div class="flex items-center justify-between text-[10px] font-mono text-outline">
+<span class="">SIGLIP + GEMMA-2</span>
+<span class="">42.8 MB</span>
+</div>
+</div>
+</aside>
+<!-- CENTER MEMORY FEED (BENTO CONSUMER APP EXPERIENCE) -->
+<main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 relative z-10">
+<!-- Top Results Header -->
+<div class="flex flex-wrap items-center justify-between gap-2">
+<div class="flex items-center gap-2">
+<span class="font-display font-semibold text-[15px] sm:text-[17px] text-white">Synthesized Memory Results</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high border border-white/10 text-[10px] sm:text-[11px] font-mono text-primary-fixed-dim">
+4 Cross-Modal Nodes
+</span>
+</div>
+<div class="flex items-center gap-1.5 sm:gap-2">
+<button class="px-2 sm:px-2.5 py-1 rounded-lg bg-surface-container-low hover:bg-surface-container text-[11px] sm:text-[12px] font-medium text-on-surface-variant hover:text-white border border-white/[0.06] flex items-center gap-1 transition">
+<span class="material-symbols-outlined text-[13px] sm:text-[14px]">calendar_today</span>
+<span class="">July 2024</span>
+</button>
+<button class="px-2 sm:px-2.5 py-1 rounded-lg bg-surface-container-low hover:bg-surface-container text-[11px] sm:text-[12px] font-medium text-on-surface-variant hover:text-white border border-white/[0.06] flex items-center gap-1 transition">
+<span class="material-symbols-outlined text-[13px] sm:text-[14px]">sort</span>
+<span class="hidden xs:inline">Relevance</span>
+</button>
+</div>
+</div>
+<!-- BENTO MULTIMEDIA FEED -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-5">
+<!-- CARD 1: PRIMARY MATCH HERO BENTO (Vintage Red Vespa Frame + Location) -->
+<article class="xl:col-span-8 glass-surface rounded-2xl overflow-hidden border border-white/[0.08] hover:border-primary-container/40 transition-all duration-300 group shadow-xl flex flex-col">
+<div class="relative w-full h-72 sm:h-80 overflow-hidden bg-surface-container-lowest">
+<img alt="A vintage cherry-red Vespa scooter parked on ancient Roman cobblestones near the sunny stone arches of the Colosseum in Rome Italy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out brightness-[0.92] contrast-[1.05]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2dQnbuAE5MJ35AvzDwcTbTEHEdu_GHV78FhDvsciVx36dXFB23wOWJNl_De4SXULh6FtbRAx7o_Oa-bYI0XXSv_In0ejHHV_qYfgVeBQySz1j7jg7eCPtzj8InhpDee3GdIxRGC6XJtDYi7D7z47ELkLs92tgTc78aqelIf8g_a40KghgX-VDvyL_ozqQav-KP6SroJxoIb-FpghpsCa5HVIaGRHUqdQYInZD4nWtZJYMfYY4Sf5HDQ">
+<div class="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent"></div>
+<!-- Top Floating Badges -->
+<div class="absolute top-3.5 left-3.5 flex items-center gap-2">
+<span class="px-2.5 py-1 rounded-full bg-primary-container text-on-primary-container font-mono text-[11px] font-bold shadow-lg flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">bolt</span> 98.4% MATCH
+              </span>
+<span class="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white/90 text-[11px] font-medium border border-white/10 flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-tertiary-container">check_circle</span> Keyframe Ingestion
+              </span>
+</div>
+<!-- Top Right Action Controls -->
+<div class="absolute top-3.5 right-3.5 flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition">
+<button class="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white hover:text-primary-container border border-white/10 flex items-center justify-center transition" title="Open Full Frame">
+<span class="material-symbols-outlined text-[16px]">fullscreen</span>
+</button>
+<button class="w-8 h-8 rounded-full bg-black/60 backdrop-blur-md text-white hover:text-primary-container border border-white/10 flex items-center justify-center transition" title="Copy Memory Reference">
+<span class="material-symbols-outlined text-[16px]">ios_share</span>
+</button>
+</div>
+<!-- Overlaid Metadata Content Bottom -->
+<div class="absolute bottom-3 left-4 right-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+<div class="space-y-1">
+<div class="flex items-center gap-2 text-[12px] font-mono text-primary-fixed-dim">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">location_on</span> Piazza del Colosseo, Rome</span>
+<span class="">•</span>
+<span class="">July 14, 2024 · 16:42 CEST</span>
+</div>
+<h3 class="font-display font-bold text-[18px] sm:text-[20px] text-white">
+                  Vintage Piaggio 50cc Engine · Roman Cobblestones
+                </h3>
+</div>
+<!-- Mini Synced Ambient Audio Player Bubble -->
+<div class="bg-surface-container-high/90 backdrop-blur-xl border border-white/10 rounded-xl p-2 px-3 flex items-center gap-3 shrink-0 shadow-xl">
+<button class="w-7 h-7 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center hover:scale-105 transition shadow-sm">
+<span class="material-symbols-outlined text-[16px]">play_arrow</span>
+</button>
+<div class="flex flex-col">
+<span class="text-[10px] font-mono text-tertiary-container font-semibold">SYNCHRONIZED AUDIO (30.4s)</span>
+<span class="text-[11px] text-white/80">Espresso &amp; Two-Stroke Echo</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom description & quote -->
+<div class="p-4 sm:p-5 flex flex-col gap-3 bg-surface-container-low/40">
+<blockquote class="text-[14px] text-on-surface leading-relaxed italic border-l-2 border-primary-container pl-3 py-0.5">
+              “Remember to check this vintage Piaggio 50cc engine model later — classic Roman cobblestone vibration.”
+            </blockquote>
+<div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/[0.04] text-[11px] font-mono text-on-surface-variant">
+<span class="flex items-center gap-1 text-white/70">
+<span class="material-symbols-outlined text-[13px] text-primary-fixed-dim">lock</span> Stored securely in local SQLite SafeHandle
+              </span>
+<span class="">Vector Distance: <strong class="text-white">0.016 Cosine</strong></span>
+</div>
+</div>
+</article>
+<!-- CARD 2: INTERACTIVE AUDIO NOTE CARD (Voice Memo Player) -->
+<article class="xl:col-span-4 glass-surface rounded-2xl p-5 border border-white/[0.08] hover:border-secondary/40 transition-all duration-300 flex flex-col justify-between shadow-xl">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-1 rounded-full bg-secondary-container/60 border border-secondary/30 text-secondary-fixed text-[11px] font-mono font-semibold flex items-center gap-1.5">
+<span class="">🇮🇹</span> Italian Voice Memo
+              </span>
+<span class="text-[11px] font-mono text-secondary-fixed-dim">00:30.42</span>
+</div>
+<div>
+<h4 class="font-display font-semibold text-[16px] text-white">Audio Note #IT-4901</h4>
+<p class="text-[12px] text-on-surface-variant mt-0.5">Whisper-Local AOT Transcription</p>
+</div>
+<!-- Waveform Scrubber Visualizer -->
+<div class="bg-surface-container-low/80 rounded-xl p-3 border border-white/[0.05] space-y-2">
+<div class="flex items-center justify-between text-[11px] font-mono text-outline">
+<span class="text-tertiary-container font-medium">Playing: 00:14.20</span>
+<span class="">Spectral Match: 94.2%</span>
+</div>
+<!-- Clean Modern Waveform SVG Bars -->
+<div class="h-12 w-full flex items-center gap-[3px] cursor-pointer group/wave">
+<svg class="w-full h-full text-secondary hover:text-primary-container transition-colors" fill="currentColor" viewBox="0 0 320 40">
+<rect class="opacity-50" height="8" rx="1.5" width="3.5" x="0" y="16"></rect>
+<rect class="opacity-60" height="16" rx="1.5" width="3.5" x="6" y="12"></rect>
+<rect class="opacity-80" height="24" rx="1.5" width="3.5" x="12" y="8"></rect>
+<rect height="32" rx="1.5" width="3.5" x="18" y="4"></rect>
+<rect height="20" rx="1.5" width="3.5" x="24" y="10"></rect>
+<rect height="12" rx="1.5" width="3.5" x="30" y="14"></rect>
+<rect height="28" rx="1.5" width="3.5" x="36" y="6"></rect>
+<rect height="36" rx="1.5" width="3.5" x="42" y="2"></rect>
+<rect height="24" rx="1.5" width="3.5" x="48" y="8"></rect>
+<rect height="12" rx="1.5" width="3.5" x="54" y="14"></rect>
+<rect height="32" rx="1.5" width="3.5" x="60" y="4"></rect>
+<rect height="20" rx="1.5" width="3.5" x="66" y="10"></rect>
+<rect height="8" rx="1.5" width="3.5" x="72" y="16"></rect>
+<rect height="24" rx="1.5" width="3.5" x="78" y="8"></rect>
+<rect height="36" rx="1.5" width="3.5" x="84" y="2"></rect>
+<rect height="28" rx="1.5" width="3.5" x="90" y="6"></rect>
+<rect height="16" rx="1.5" width="3.5" x="96" y="12"></rect>
+<rect height="32" rx="1.5" width="3.5" x="102" y="4"></rect>
+<rect height="20" rx="1.5" width="3.5" x="108" y="10"></rect>
+<rect height="12" rx="1.5" width="3.5" x="114" y="14"></rect>
+<rect height="36" rx="1.5" width="3.5" x="120" y="2"></rect>
+<rect height="24" rx="1.5" width="3.5" x="126" y="8"></rect>
+<rect height="28" rx="1.5" width="3.5" x="132" y="6"></rect>
+<rect height="12" rx="1.5" width="3.5" x="138" y="14"></rect>
+<rect height="20" rx="1.5" width="3.5" x="144" y="10"></rect>
+<rect height="32" rx="1.5" width="3.5" x="150" y="4"></rect>
+<rect height="24" rx="1.5" width="3.5" x="156" y="8"></rect>
+<rect height="8" rx="1.5" width="3.5" x="162" y="16"></rect>
+<rect height="16" rx="1.5" width="3.5" x="168" y="12"></rect>
+<rect height="28" rx="1.5" width="3.5" x="174" y="6"></rect>
+<rect height="36" rx="1.5" width="3.5" x="180" y="2"></rect>
+<rect height="20" rx="1.5" width="3.5" x="186" y="10"></rect>
+<rect height="32" rx="1.5" width="3.5" x="192" y="4"></rect>
+<rect height="12" rx="1.5" width="3.5" x="198" y="14"></rect>
+<rect height="24" rx="1.5" width="3.5" x="204" y="8"></rect>
+<rect height="36" rx="1.5" width="3.5" x="210" y="2"></rect>
+<rect height="28" rx="1.5" width="3.5" x="216" y="6"></rect>
+<rect height="16" rx="1.5" width="3.5" x="222" y="12"></rect>
+<rect height="32" rx="1.5" width="3.5" x="228" y="4"></rect>
+<rect height="20" rx="1.5" width="3.5" x="234" y="10"></rect>
+<rect height="8" rx="1.5" width="3.5" x="240" y="16"></rect>
+<rect height="24" rx="1.5" width="3.5" x="246" y="8"></rect>
+<rect height="36" rx="1.5" width="3.5" x="252" y="2"></rect>
+<rect height="28" rx="1.5" width="3.5" x="258" y="6"></rect>
+<rect height="16" rx="1.5" width="3.5" x="264" y="12"></rect>
+<rect height="32" rx="1.5" width="3.5" x="270" y="4"></rect>
+<rect height="20" rx="1.5" width="3.5" x="276" y="10"></rect>
+<rect height="12" rx="1.5" width="3.5" x="282" y="14"></rect>
+<rect height="24" rx="1.5" width="3.5" x="288" y="8"></rect>
+<rect height="36" rx="1.5" width="3.5" x="294" y="2"></rect>
+<rect height="28" rx="1.5" width="3.5" x="300" y="6"></rect>
+<rect class="opacity-60" height="16" rx="1.5" width="3.5" x="306" y="12"></rect>
+<rect class="opacity-40" height="8" rx="1.5" width="3.5" x="312" y="16"></rect>
+</svg>
+</div>
+<!-- Interactive Play Controls -->
+<div class="flex items-center justify-between pt-1">
+<button class="w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center hover:scale-105 transition shadow-md">
+<span class="material-symbols-outlined text-[18px]">pause</span>
+</button>
+<div class="flex items-center gap-2">
+<button class="p-1 rounded hover:bg-white/10 text-on-surface-variant hover:text-white transition">
+<span class="material-symbols-outlined text-[16px]">replay_10</span>
+</button>
+<button class="p-1 rounded hover:bg-white/10 text-on-surface-variant hover:text-white transition">
+<span class="material-symbols-outlined text-[16px]">forward_10</span>
+</button>
+<button class="px-2 py-0.5 rounded bg-white/[0.06] text-[10px] font-mono text-white/80">
+                    1.0x
+                  </button>
+</div>
+</div>
+</div>
+<!-- Transcription Bubble -->
+<div class="bg-surface-container-low/50 rounded-xl p-3 border border-white/[0.04] space-y-2">
+<p class="text-[13px] text-white leading-snug">
+                “Vespa rossa vicino al <mark class="bg-primary-container text-on-primary-container px-1 py-0.5 rounded font-medium">Colosseo</mark>, modello anni '70 ben restaurato. Ricordarsi di cercare il pezzo di ricambio...”
+              </p>
+<div class="text-[11px] text-on-surface-variant italic pt-1 border-t border-white/[0.05]">
+<strong class="text-primary-fixed-dim not-italic">Translated:</strong> “Red Vespa near Colosseum, restored 70s model. Check carburetor replacement...”
+              </div>
+</div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-mono text-outline pt-3">
+<span class="">Match #2 // 0.941</span>
+<span class="text-secondary-fixed">Dense Multilingual Alignment</span>
+</div>
+</article>
+<!-- CARD 3: CODE & MONOREPO INSIGHT CARD -->
+<article class="xl:col-span-5 glass-surface rounded-2xl p-5 border border-white/[0.08] hover:border-primary-container/40 transition-all duration-300 flex flex-col justify-between shadow-xl">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed-dim text-[18px]">terminal</span>
+<span class="font-display font-semibold text-[14px] text-white">VespaTelemetryParser.cs</span>
+</div>
+<button class="px-2 py-1 rounded-lg bg-surface-container hover:bg-surface-bright text-[11px] font-mono text-on-surface-variant hover:text-white flex items-center gap-1 transition" title="Copy snippet">
+<span class="material-symbols-outlined text-[12px]">content_copy</span> Copy
+              </button>
+</div>
+<!-- Styled IDE Terminal -->
+<div class="rounded-xl bg-[#090b0e] p-3.5 border border-white/[0.06] font-mono text-[11.5px] leading-relaxed overflow-x-auto text-on-surface">
+<div class="flex items-center justify-between text-[10px] text-outline pb-2 mb-2 border-b border-white/[0.05]">
+<span class="">Recall.Telemetry.Engines / Line 42</span>
+<span class="text-tertiary-container">AST Linked</span>
+</div>
+<pre class="space-y-0.5"><span class="text-outline-variant select-none mr-2">42</span><span class="text-secondary">public sealed class</span> <span class="text-tertiary-container">VespaVintageDecoder</span> : <span class="text-primary-fixed-dim">ITwoStrokeTelemetry</span>
+<span class="text-outline-variant select-none mr-2">43</span>{
+<span class="text-outline-variant select-none mr-2">44</span>    <span class="text-outline">// Matches Piaggio 50cc GPS near Colosseum</span>
+<span class="text-outline-variant select-none mr-2">45</span>    <span class="text-secondary">public async ValueTask</span>&lt;GeodeticFix&gt; <span class="text-primary-container">ParseColosseumZoneTrackAsync</span>(
+<span class="text-outline-variant select-none mr-2">46</span>        ReadOnlyMemory&lt;<span class="text-tertiary-fixed-dim">byte</span>&gt; payload)
+<span class="text-outline-variant select-none mr-2">47</span>    {
+<span class="text-outline-variant select-none mr-2">48</span>        <span class="text-secondary">var</span> rpmProfile = MemoryMarshal.Cast&lt;<span class="text-tertiary-fixed-dim">byte</span>, <span class="text-tertiary-fixed-dim">ushort</span>&gt;(payload.Span);
+<span class="text-outline-variant select-none mr-2">49</span>        <span class="text-secondary">return await</span> _vectorStore.ResonatePoint(<span class="text-primary-fixed">"scooter_red_rome"</span>);
+<span class="text-outline-variant select-none mr-2">50</span>    }
+<span class="text-outline-variant select-none mr-2">51</span>}</pre>
+</div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-mono text-outline pt-3">
+<span class="">Match #3 // 0.892</span>
+<span class="text-primary-fixed">C# 12 · Symbol Embedding</span>
+</div>
+</article>
+<!-- CARD 4: 4K VIDEO SCRUBBING TIMELINE CARD -->
+<article class="xl:col-span-7 glass-surface rounded-2xl p-5 border border-white/[0.08] hover:border-tertiary-container/40 transition-all duration-300 flex flex-col justify-between shadow-xl">
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary-container text-[18px]">movie</span>
+<span class="font-display font-semibold text-[14px] text-white">4K HEVC Video Segment Index</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-tertiary/10 text-tertiary-container font-mono text-[10px] font-semibold border border-tertiary-container/20">
+                PRORES 4K · KEYFRAMES
+              </span>
+</div>
+<!-- Keyframes 3-column preview scrubber -->
+<div class="grid grid-cols-3 gap-2.5 pt-1">
+<div class="group/thumb relative rounded-xl overflow-hidden bg-surface-container-lowest border border-white/[0.06] cursor-pointer">
+<img alt="Roman piazza scooter blurred" class="w-full h-24 object-cover group-hover/thumb:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKf0Z3G2Zy2P7DH_h9lk2xSlNoBzKe7pUSFVr-rRvIMjrDn7meCQV9F1y2zoQZ2bw25tCWTum1KTaZjWusVM6verDJdTarJmBjAz6mSylQSYMgeHXRLsiv-EjIoP1h-4ZHbkrdcTrdhB9ttVpq7EdkmSFJoHZjxHPRhVOafslIJpejmjMvP2Jc_hRt6Grha8NV2pnU-7pxB707bLuWRYImsZPPib__A7u5oWubAfqWOJIMCJN3tSSbyw">
+<span class="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur text-[10px] font-mono px-1.5 py-0.5 rounded text-white/80">02:14.20</span>
+</div>
+<div class="group/thumb relative rounded-xl overflow-hidden bg-surface-container-lowest border-2 border-primary-container shadow-lg cursor-pointer">
+<img alt="Close up cowl red scooter" class="w-full h-24 object-cover group-hover/thumb:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGU5C8AOw8GWxnTp3NOfpdiuv9PFgzHFz4Nokbc_5ddN3a_Ka-VAtCQfBPbTWyNeAWWAn304bNqFcONBuRKeYRkabPgWeBuc5oQDgePCgI91uLC0xI1xN7gBKR0vwLJtOBARDvhOFUDKjdniHhUq-nHYIzVdiKUxyxkk2r-CVJDLBYW5eBtPBHpC_jd5eLk00IIFen9OEv4XjF77t0-XOVfXHybiaw5BUMOVNwN1xTCTREwblhK-VrFw">
+<span class="absolute bottom-1.5 left-1.5 bg-primary-container text-on-primary-container text-[10px] font-mono font-bold px-1.5 py-0.5 rounded shadow">02:28.10 ★ Best Match</span>
+</div>
+<div class="group/thumb relative rounded-xl overflow-hidden bg-surface-container-lowest border border-white/[0.06] cursor-pointer">
+<img alt="Colosseum street wide" class="w-full h-24 object-cover group-hover/thumb:scale-105 transition duration-300" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbeZM4WkKR4PSUQzvmloAmLtqokkVX1Ke5uHxT1kJmJpFDLZ8oJQ81svDv-3oAjkJ5uodogwwZehhUcLQ7RtHoHAz3b7YkXK8A1NPS09sKxfpRKv6_neZUC2qBLFrrUxh-GEsG1_c7krh1gclFfCVKn25Bh_O88WaN2vRxoKxBUZBfuuZDIHiLqozA0sYjSLIfj_R1BJNpHHA2YJ92iM0zU3AuSBNab64MTBijmPzOCttlfBYCJmRd1Q">
+<span class="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur text-[10px] font-mono px-1.5 py-0.5 rounded text-white/80">02:45.00</span>
+</div>
+</div>
+<!-- Scrub timeline -->
+<div class="flex items-center justify-between p-2 rounded-xl bg-surface-container-low/70 border border-white/[0.04]">
+<span class="text-[11px] font-mono text-white/70">Segment Window: 02:14 - 02:45</span>
+<button class="px-3 py-1 rounded-lg bg-surface-container-high hover:bg-surface-bright text-[11px] font-semibold text-tertiary-container flex items-center gap-1 transition">
+<span class="material-symbols-outlined text-[14px]">download</span> Extract 4K Clip (2.4 MB)
+              </button>
+</div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-mono text-outline pt-3">
+<span class="">Match #4 // 0.879</span>
+<span class="text-tertiary-container">Indexed Chunk #88</span>
+</div>
+</article>
+</div>
+</main>
+<!-- RIGHT INSPECTOR PANEL (SLEEK SLIDE-OVER / DOCKED INTEL) -->
+<aside class="w-80 shrink-0 bg-surface-container-lowest/80 border-l border-white/[0.05] p-5 flex flex-col gap-5 overflow-y-auto hidden 2xl:flex relative z-10">
+<!-- Panel Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[18px]">insights</span>
+<h4 class="font-display font-semibold text-[14px] text-white">Memory Insights</h4>
+</div>
+<span class="text-[10px] font-mono text-tertiary-container px-2 py-0.5 rounded-full bg-tertiary/10 border border-tertiary/20">
+          ONLINE NPU
+        </span>
+</div>
+<!-- Confidence Gauge Ring / Card -->
+<div class="p-4 rounded-2xl bg-surface-container-low border border-white/[0.05] flex items-center gap-4">
+<div class="relative w-16 h-16 flex items-center justify-center shrink-0">
+<svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+<path class="text-surface-container-highest stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="3.5"></path>
+<path class="text-primary-container stroke-current" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-dasharray="98.4, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+<span class="absolute font-mono font-bold text-[13px] text-white">98%</span>
+</div>
+<div class="space-y-0.5">
+<div class="text-[13px] font-semibold text-white">Match Confidence</div>
+<div class="text-[11px] text-on-surface-variant">Cross-modal fusion across 4 modalities verified locally</div>
+</div>
+</div>
+<!-- Minimalist 2D Latent Geometry Radar Visualization -->
+<div class="p-4 rounded-2xl bg-surface-container-low border border-white/[0.05] space-y-3">
+<div class="flex items-center justify-between text-[11px] font-mono">
+<span class="text-white/80">LATENT PROJECTION</span>
+<span class="text-primary-fixed-dim">PCA 2D · CLUSTER A-9</span>
+</div>
+<div class="relative w-full h-44 bg-surface-container-lowest rounded-xl overflow-hidden flex items-center justify-center border border-white/[0.04]">
+<svg class="w-full h-full text-white/10" viewBox="0 0 200 200">
+<!-- Concentric rings -->
+<circle cx="100" cy="100" fill="none" r="75" stroke="currentColor" stroke-dasharray="2 3" stroke-width="0.8"></circle>
+<circle cx="100" cy="100" fill="none" r="45" stroke="currentColor" stroke-dasharray="2 3" stroke-width="0.8"></circle>
+<circle cx="100" cy="100" fill="none" r="20" stroke="currentColor" stroke-width="0.8"></circle>
+<line stroke="currentColor" stroke-width="0.8" x1="100" x2="100" y1="15" y2="185"></line>
+<line stroke="currentColor" stroke-width="0.8" x1="15" x2="185" y1="100" y2="100"></line>
+<!-- Dynamic Synaptic Poly Connect -->
+<polygon fill="rgba(0, 242, 254, 0.08)" points="125,75 140,90 115,125 80,68" stroke="#00f2fe" stroke-width="1.5"></polygon>
+<!-- Cyan and Purple nodes -->
+<circle class="fill-primary-container" cx="125" cy="75" r="5"></circle>
+<circle class="fill-secondary" cx="140" cy="90" r="4"></circle>
+<circle class="fill-tertiary-container" cx="115" cy="125" r="4"></circle>
+<circle class="fill-primary-fixed" cx="80" cy="68" r="3.5"></circle>
+<!-- Unrelated background cluster points -->
+<circle cx="45" cy="140" fill="#3a494b" r="2"></circle>
+<circle cx="55" cy="150" fill="#3a494b" r="2.5"></circle>
+<circle cx="160" cy="45" fill="#3a494b" r="2"></circle>
+<circle cx="170" cy="55" fill="#3a494b" r="2"></circle>
+</svg>
+<div class="absolute bottom-2 left-2 bg-black/60 backdrop-blur px-2 py-0.5 rounded text-[10px] font-mono text-primary-fixed">
+            EUC DIST: 0.1287
+          </div>
+</div>
+<!-- Float Embedding vector snippet -->
+<div class="bg-surface-container-lowest p-2 rounded-lg font-mono text-[10px] text-primary-fixed-dim/90 truncate">
+          [-0.042, +0.189, +0.892, -0.311, +0.054, +0.710...]
+        </div>
+</div>
+<!-- Local Privacy & Security Trust Badges -->
+<div class="space-y-2">
+<span class="text-[11px] font-mono text-outline uppercase tracking-wider">Privacy &amp; Security</span>
+<div class="space-y-1.5">
+<div class="p-2.5 rounded-xl bg-surface-container-low border border-white/[0.04] flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-tertiary-container">verified</span>
+<span class="text-[12px] text-white">Air-gapped on NPU</span>
+</div>
+<span class="text-[10px] font-mono text-tertiary-container">100%</span>
+</div>
+<div class="p-2.5 rounded-xl bg-surface-container-low border border-white/[0.04] flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-tertiary-container">cloud_off</span>
+<span class="text-[12px] text-white">Zero Cloud Transit</span>
+</div>
+<span class="text-[10px] font-mono text-tertiary-container">0.00 KB</span>
+</div>
+<div class="p-2.5 rounded-xl bg-surface-container-low border border-white/[0.04] flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary-container">database</span>
+<span class="text-[12px] text-white">Stored in Local ZVec</span>
+</div>
+<span class="text-[10px] font-mono text-primary-fixed-dim">AES-256</span>
+</div>
+</div>
+</div>
+<!-- Quick Action Buttons -->
+<div class="mt-auto space-y-2 pt-2">
+<button class="w-full py-2 px-3 rounded-xl bg-primary-container hover:bg-primary text-on-primary-container font-semibold text-[12px] flex items-center justify-center gap-1.5 shadow-lg transition">
+<span class="material-symbols-outlined text-[16px]">share</span>
+<span class="">AirDrop Encrypted Memory</span>
+</button>
+</div>
+</aside>
+</div>
+<!-- ================= MINIMAL LUXURY BOTTOM DOCK STATUS BAR ================= -->
+<footer class="min-h-9 py-1 sm:py-0 border-t border-white/[0.06] bg-surface-container-lowest px-3 sm:px-4 flex flex-wrap items-center justify-between gap-1 sm:gap-3 text-[10px] sm:text-[11px] font-mono text-on-surface-variant z-50 shrink-0">
+<div class="flex flex-wrap items-center gap-2 sm:gap-4">
+<span class="flex items-center gap-1.5 text-white/80">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container shrink-0"></span>
+<strong class="text-white font-medium">54,920</strong> <span class="hidden xs:inline">memories indexed</span>
+</span>
+<span class="text-white/20">·</span>
+<span class="text-white/70">
+RAM: <strong class="text-primary-fixed">42 MB</strong>
+</span>
+<span class="text-white/20 hidden md:inline">·</span>
+<span class="hidden md:inline text-white/70">
+P2P Mesh: <strong class="text-secondary-fixed">3 devices (E2EE)</strong>
+</span>
+</div>
+<div class="flex items-center gap-2 sm:gap-3 ml-auto sm:ml-0">
+<span class="hidden xl:inline text-outline">Gemma-2-270M + SigLIP-2</span>
+<span class="text-white/20 hidden xl:inline">·</span>
+<span class="text-tertiary-container flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] sm:text-[13px]">bolt</span> Ready
+</span>
+</div>
+</footer>
+<script>
+    // Subtle keyboard shortcut listener for command bar
+    document.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchInput = document.querySelector('input');
+        if (searchInput) searchInput.focus();
+      }
+    });
+  </script>
+
+
+</body></html>

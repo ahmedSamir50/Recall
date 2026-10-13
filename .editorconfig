@@ -1,0 +1,35 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+
+[*.{cs,csproj,json,props,targets,razor,html,css,xml,txt}]
+indent_size = 4
+
+[*.md]
+indent_size = 2
+
+[*.cs]
+dotnet_diagnostic.RS0030.severity = error
+dotnet_diagnostic.VSTHRD100.severity = error
+dotnet_diagnostic.VSTHRD200.severity = error
+dotnet_diagnostic.CS1591.severity = none
+dotnet_diagnostic.S1591.severity = none
+dotnet_diagnostic.S4023.severity = none
+dotnet_diagnostic.S2094.severity = none
+
+[src/Recall.Benchmarks/Program.cs]
+dotnet_diagnostic.S3400.severity = none
+dotnet_diagnostic.S3903.severity = none
+
+[tools/corpus-builder/Program.cs]
+dotnet_diagnostic.S3400.severity = none
+dotnet_diagnostic.S3903.severity = none
+
+[tools/mrl-eval/Program.cs]
+dotnet_diagnostic.S3400.severity = none
+dotnet_diagnostic.S3903.severity = none

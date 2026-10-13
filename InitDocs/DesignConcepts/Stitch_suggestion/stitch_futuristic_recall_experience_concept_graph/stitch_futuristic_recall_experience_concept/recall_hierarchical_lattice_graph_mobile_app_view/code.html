@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><svg aria-hidden="true" class="inline-defs-container" style="position:absolute;width:0;height:0;overflow:hidden"></svg><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="desktop_app" name="shell-type"/>
+<title>Recall // Lattice Graph - Semantic Map Navigator</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        overscroll-behavior: none;
+        user-select: none;
+      }
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(12, 14, 19, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(132, 148, 149, 0.25);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 242, 254, 0.4);
+    }
+    .glass-surface {
+      background: rgba(17, 19, 25, 0.82);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .glass-pill {
+      background: rgba(15, 17, 23, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    @keyframes pulseRing {
+      0% { r: 14; opacity: 0.9; stroke-width: 2.5; }
+      50% { r: 34; opacity: 0.35; stroke-width: 1.5; }
+      100% { r: 52; opacity: 0; stroke-width: 0.5; }
+    }
+    @keyframes pulseBeam {
+      0% { stroke-dashoffset: 60; }
+      100% { stroke-dashoffset: 0; }
+    }
+    .animate-radar {
+      animation: pulseRing 2.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+    .animate-radar-delayed {
+      animation: pulseRing 2.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite 1.4s;
+    }
+    .beam-flow {
+      stroke-dasharray: 6 6;
+      animation: pulseBeam 1.8s linear infinite;
+    }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "traffic-close": "#ff5f56",
+            "traffic-minimize": "#ffbd2e",
+            "traffic-maximize": "#27c93f",
+            "code-terminal-bg": "#090b0e",
+            "on-primary-container": "#00373a",
+            "secondary-fixed-dim": "#dbb8ff",
+            "inverse-surface": "#e2e2e9",
+            "primary-fixed": "#6ff6ff",
+            "inverse-primary": "#00696f",
+            "on-tertiary-fixed": "#002113",
+            "surface-bright": "#37393f",
+            "on-tertiary-container": "#006e4b",
+            "surface-container-highest": "#33353a",
+            "on-background": "#e2e2e9",
+            "on-error-container": "#ffdad6",
+            "primary": "#e0fdff",
+            "on-surface": "#e1e2ea",
+            "error": "#ffb4ab",
+            "tertiary": "#e1ffec",
+            "inverse-on-surface": "#2e3036",
+            "primary-container": "#00f2fe",
+            "secondary": "#dbb8ff",
+            "primary-fixed-dim": "#00dce6",
+            "surface-container-high": "#282a2f",
+            "on-secondary-fixed": "#2b0052",
+            "surface-container": "#1b1e24",
+            "outline-variant": "#3a494b",
+            "outline": "#849495",
+            "surface-container-low": "#15181e",
+            "on-secondary-fixed-variant": "#6600b7",
+            "on-secondary-container": "#d0a6ff",
+            "on-surface-variant": "#b9cacb",
+            "tertiary-fixed": "#6ffbbe",
+            "surface-variant": "#33353a",
+            "surface-container-lowest": "#0c0e13",
+            "on-secondary": "#470083",
+            "surface-tint": "#00dce6",
+            "surface-dim": "#111318",
+            "background": "#0e1015",
+            "on-primary-fixed": "#002022",
+            "on-tertiary": "#003824",
+            "secondary-container": "#6807ba",
+            "tertiary-container": "#67f4b7",
+            "on-tertiary-fixed-variant": "#005236",
+            "on-primary": "#00373a",
+            "on-error": "#690005",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-primary-fixed-variant": "#004f53",
+            "error-container": "#93000a",
+            "secondary-fixed": "#efdbff",
+            "surface": "#111319"
+          },
+          borderRadius: {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          fontFamily: {
+            "headline-md": ["Space Grotesk", "sans-serif"],
+            "title-sm": ["Space Grotesk", "sans-serif"],
+            "title-md": ["Space Grotesk", "sans-serif"],
+            "body-md": ["Inter", "sans-serif"],
+            "label-xs": ["JetBrains Mono", "monospace"],
+            "body-lg": ["Inter", "sans-serif"],
+            "headline-lg": ["Space Grotesk", "sans-serif"],
+            "label-sm": ["JetBrains Mono", "monospace"],
+            "code-body": ["JetBrains Mono", "monospace"],
+            "body-sm": ["Inter", "sans-serif"],
+            "label-md": ["JetBrains Mono", "monospace"],
+            "headline-sm": ["Space Grotesk", "sans-serif"],
+            sans: ["Inter", "sans-serif"],
+            display: ["Space Grotesk", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-background font-sans text-on-surface antialiased flex flex-col h-screen overflow-hidden selection:bg-primary-container selection:text-on-primary-container"><svg aria-hidden="true" class="inline-defs-container" style="position:absolute;width:0;height:0;overflow:hidden"></svg>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="desktop_app" name="shell-type"/>
+<title>Recall // Lattice Graph - Semantic Map Navigator</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        overscroll-behavior: none;
+        user-select: none;
+      }
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(12, 14, 19, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(132, 148, 149, 0.25);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 242, 254, 0.4);
+    }
+    .glass-surface {
+      background: rgba(17, 19, 25, 0.82);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .glass-pill {
+      background: rgba(15, 17, 23, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    @keyframes pulseRing {
+      0% { r: 14; opacity: 0.9; stroke-width: 2.5; }
+      50% { r: 34; opacity: 0.35; stroke-width: 1.5; }
+      100% { r: 52; opacity: 0; stroke-width: 0.5; }
+    }
+    @keyframes pulseBeam {
+      0% { stroke-dashoffset: 60; }
+      100% { stroke-dashoffset: 0; }
+    }
+    .animate-radar {
+      animation: pulseRing 2.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+    .animate-radar-delayed {
+      animation: pulseRing 2.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite 1.4s;
+    }
+    .beam-flow {
+      stroke-dasharray: 6 6;
+      animation: pulseBeam 1.8s linear infinite;
+    }
+  </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "traffic-close": "#ff5f56",
+            "traffic-minimize": "#ffbd2e",
+            "traffic-maximize": "#27c93f",
+            "code-terminal-bg": "#090b0e",
+            "on-primary-container": "#00373a",
+            "secondary-fixed-dim": "#dbb8ff",
+            "inverse-surface": "#e2e2e9",
+            "primary-fixed": "#6ff6ff",
+            "inverse-primary": "#00696f",
+            "on-tertiary-fixed": "#002113",
+            "surface-bright": "#37393f",
+            "on-tertiary-container": "#006e4b",
+            "surface-container-highest": "#33353a",
+            "on-background": "#e2e2e9",
+            "on-error-container": "#ffdad6",
+            "primary": "#e0fdff",
+            "on-surface": "#e1e2ea",
+            "error": "#ffb4ab",
+            "tertiary": "#e1ffec",
+            "inverse-on-surface": "#2e3036",
+            "primary-container": "#00f2fe",
+            "secondary": "#dbb8ff",
+            "primary-fixed-dim": "#00dce6",
+            "surface-container-high": "#282a2f",
+            "on-secondary-fixed": "#2b0052",
+            "surface-container": "#1b1e24",
+            "outline-variant": "#3a494b",
+            "outline": "#849495",
+            "surface-container-low": "#15181e",
+            "on-secondary-fixed-variant": "#6600b7",
+            "on-secondary-container": "#d0a6ff",
+            "on-surface-variant": "#b9cacb",
+            "tertiary-fixed": "#6ffbbe",
+            "surface-variant": "#33353a",
+            "surface-container-lowest": "#0c0e13",
+            "on-secondary": "#470083",
+            "surface-tint": "#00dce6",
+            "surface-dim": "#111318",
+            "background": "#0e1015",
+            "on-primary-fixed": "#002022",
+            "on-tertiary": "#003824",
+            "secondary-container": "#6807ba",
+            "tertiary-container": "#67f4b7",
+            "on-tertiary-fixed-variant": "#005236",
+            "on-primary": "#00373a",
+            "on-error": "#690005",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-primary-fixed-variant": "#004f53",
+            "error-container": "#93000a",
+            "secondary-fixed": "#efdbff",
+            "surface": "#111319"
+          },
+          borderRadius: {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          fontFamily: {
+            "headline-md": ["Space Grotesk", "sans-serif"],
+            "title-sm": ["Space Grotesk", "sans-serif"],
+            "title-md": ["Space Grotesk", "sans-serif"],
+            "body-md": ["Inter", "sans-serif"],
+            "label-xs": ["JetBrains Mono", "monospace"],
+            "body-lg": ["Inter", "sans-serif"],
+            "headline-lg": ["Space Grotesk", "sans-serif"],
+            "label-sm": ["JetBrains Mono", "monospace"],
+            "code-body": ["JetBrains Mono", "monospace"],
+            "body-sm": ["Inter", "sans-serif"],
+            "label-md": ["JetBrains Mono", "monospace"],
+            "headline-sm": ["Space Grotesk", "sans-serif"],
+            sans: ["Inter", "sans-serif"],
+            display: ["Space Grotesk", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+<!-- ================= TOP APP BAR & HIERARCHICAL SEMANTIC MAP BREADCRUMB BAR ================= -->
+<header class="border-b border-white/[0.06] bg-surface-container-lowest/95 backdrop-blur-2xl flex flex-col z-50 select-none shrink-0 px-3 py-2 gap-2">
+<div class="flex items-center justify-between w-full">
+<div class="flex items-center gap-2">
+<div class="relative flex items-center justify-center">
+<div class="w-6 h-6 rounded-full bg-gradient-to-tr from-primary-container via-surface-tint to-secondary flex items-center justify-center shadow-[0_0_12px_rgba(0,242,254,0.6)]">
+<span class="material-symbols-outlined text-[13px] text-background font-black">all_inclusive</span>
+</div>
+<span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-tertiary-container animate-ping"></span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="font-display font-bold tracking-tight text-[15px] text-white">Recall</span>
+<span class="font-mono text-[9.5px] text-primary-fixed-dim/70 px-1 py-0.2 rounded bg-white/[0.04]">v2.4</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container-high border border-white/[0.08] text-[10px] font-mono text-tertiary-container">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container animate-pulse"></span>
+<span>Air-Gapped</span>
+<span class="text-white/30">·</span>
+<span class="text-primary-fixed-dim">0 KB</span>
+</div>
+<div class="w-6 h-6 rounded-full bg-gradient-to-br from-surface-variant to-surface-container-high border border-white/20 flex items-center justify-center text-white text-[10px] font-semibold">
+        JD
+      </div>
+</div>
+</div>
+<nav aria-label="Semantic Map Breadcrumbs" class="flex items-center gap-1 overflow-x-auto min-w-0 py-0.5 scrollbar-none">
+<div class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-primary-container/15 border border-primary-container/40 text-primary-container text-[10px] font-mono shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span class="font-medium text-white">L0 Visual</span>
+</div>
+<span class="material-symbols-outlined text-[11px] text-white/30 shrink-0">chevron_right</span>
+<div class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface-container-high/80 border border-white/10 text-on-surface text-[10px] font-mono shrink-0">
+<span>L1 Places</span>
+</div>
+<span class="material-symbols-outlined text-[11px] text-white/30 shrink-0">chevron_right</span>
+<div class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface-container-high/80 border border-white/10 text-on-surface text-[10px] font-mono shrink-0">
+<span>L2 Colosseo</span>
+</div>
+<span class="material-symbols-outlined text-[11px] text-white/30 shrink-0">chevron_right</span>
+<div class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-primary-container/25 border border-primary-container/60 text-primary-fixed text-[10px] font-mono shrink-0 shadow-[0_0_8px_rgba(0,242,254,0.2)]">
+<span class="material-symbols-outlined text-[10px] text-primary-container">pin_drop</span>
+<span class="font-bold text-white">#4901 Vespa</span>
+</div>
+</nav>
+</header>
+<!-- ================= MAIN WORKSPACE (LEFT NAV + INTERACTIVE 3D MAP CANVAS + RIGHT INSPECTOR) ================= -->
+<div class="flex-1 flex overflow-hidden relative">
+<!-- LEFT NAVIGATION SLIM RAIL -->
+<!-- CENTER MAP CANVAS: HIGH-DENSITY SELF-CONTAINED HIERARCHICAL LATTICE GRAPH -->
+<main class="flex-1 relative overflow-hidden w-full h-full min-h-[580px] bg-[#07090d]">
+<!-- Ultra-rich Pure SVG & Canvas Latent Semantic Navigator Visualization -->
+<div class="absolute inset-0 w-full h-full overflow-hidden">
+<svg class="w-full h-full block cursor-grab active:cursor-grabbing select-none" height="100%" preserveaspectratio="xMidYMid slice" viewbox="0 0 1000 680" width="100%" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<!-- Manifold Background Grid Pattern -->
+<pattern height="40" id="manifold-grid" patternunits="userSpaceOnUse" width="40">
+<path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="0.8"></path>
+<circle cx="40" cy="40" fill="rgba(0, 242, 254, 0.12)" r="1"></circle>
+</pattern>
+<!-- Glow and Bloom Filters -->
+<filter height="200%" id="glow-cyan" width="200%" x="-50%" y="-50%">
+<fegaussianblur in="SourceGraphic" result="blur" stddeviation="6"></fegaussianblur>
+<femerge>
+<femergenode in="blur"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<filter height="240%" id="glow-strong" width="240%" x="-70%" y="-70%">
+<fegaussianblur in="SourceGraphic" result="blur1" stddeviation="12"></fegaussianblur>
+<fegaussianblur in="SourceGraphic" result="blur2" stddeviation="4"></fegaussianblur>
+<femerge>
+<femergenode in="blur1"></femergenode>
+<femergenode in="blur2"></femergenode>
+<femergenode in="SourceGraphic"></femergenode>
+</femerge>
+</filter>
+<!-- Gradients for Modality Continents -->
+<radialgradient cx="50%" cy="50%" id="active-continent-grad" r="50%">
+<stop offset="0%" stop-color="#00f2fe" stop-opacity="0.22"></stop>
+<stop offset="55%" stop-color="#00f2fe" stop-opacity="0.08"></stop>
+<stop offset="85%" stop-color="#00696f" stop-opacity="0.03"></stop>
+<stop offset="100%" stop-color="#07090d" stop-opacity="0"></stop>
+</radialgradient>
+<radialgradient cx="50%" cy="50%" id="voice-continent-grad" r="50%">
+<stop offset="0%" stop-color="#dbb8ff" stop-opacity="0.18"></stop>
+<stop offset="70%" stop-color="#6807ba" stop-opacity="0.05"></stop>
+<stop offset="100%" stop-color="#07090d" stop-opacity="0"></stop>
+</radialgradient>
+<radialgradient cx="50%" cy="50%" id="code-continent-grad" r="50%">
+<stop offset="0%" stop-color="#67f4b7" stop-opacity="0.16"></stop>
+<stop offset="70%" stop-color="#006e4b" stop-opacity="0.04"></stop>
+<stop offset="100%" stop-color="#07090d" stop-opacity="0"></stop>
+</radialgradient>
+<radialgradient cx="50%" cy="50%" id="docs-continent-grad" r="50%">
+<stop offset="0%" stop-color="#ffbd2e" stop-opacity="0.15"></stop>
+<stop offset="75%" stop-color="#93000a" stop-opacity="0.02"></stop>
+<stop offset="100%" stop-color="#07090d" stop-opacity="0"></stop>
+</radialgradient>
+<radialgradient cx="50%" cy="50%" id="exif-continent-grad" r="50%">
+<stop offset="0%" stop-color="#f472b6" stop-opacity="0.15"></stop>
+<stop offset="75%" stop-color="#dbb8ff" stop-opacity="0.03"></stop>
+<stop offset="100%" stop-color="#07090d" stop-opacity="0"></stop>
+</radialgradient>
+<!-- Resonant Synaptic Edge Gradient Beams -->
+<lineargradient id="beam-to-voice" x1="0%" x2="100%" y1="100%" y2="0%">
+<stop offset="0%" stop-color="#00f2fe" stop-opacity="0.9"></stop>
+<stop offset="100%" stop-color="#dbb8ff" stop-opacity="0.8"></stop>
+</lineargradient>
+<lineargradient id="beam-to-code" x1="50%" x2="0%" y1="50%" y2="100%">
+<stop offset="0%" stop-color="#00f2fe" stop-opacity="0.9"></stop>
+<stop offset="100%" stop-color="#67f4b7" stop-opacity="0.8"></stop>
+</lineargradient>
+</defs>
+<!-- Global Manifold Grid -->
+<rect fill="url(#manifold-grid)" height="100%" width="100%"></rect>
+<!-- Curvature Depth Coordinates (Polar Latent Grid Rings) -->
+<g opacity="0.4" stroke="rgba(0, 242, 254, 0.08)" stroke-width="0.7">
+<circle cx="500" cy="340" fill="none" r="140"></circle>
+<circle cx="500" cy="340" fill="none" r="260" stroke-dasharray="4 4"></circle>
+<circle cx="500" cy="340" fill="none" r="380"></circle>
+<line stroke="rgba(255,255,255,0.05)" x1="0" x2="1000" y1="340" y2="340"></line>
+<line stroke="rgba(255,255,255,0.05)" x1="500" x2="500" y1="0" y2="680"></line>
+</g>
+<!-- ================= GLOBAL INTER-CONTINENT LATENT HIGHWAYS ================= -->
+<g stroke-linecap="round">
+<!-- Visual to Voice highway -->
+<path d="M 505 320 C 580 260, 680 180, 805 135" fill="none" opacity="0.45" stroke="#dbb8ff" stroke-dasharray="3 6" stroke-width="1.2"></path>
+<!-- Visual to Code AST highway -->
+<path d="M 505 320 C 420 380, 290 440, 225 515" fill="none" opacity="0.45" stroke="#67f4b7" stroke-dasharray="3 6" stroke-width="1.2"></path>
+<!-- Visual to Docs & Specs highway -->
+<path d="M 505 320 C 370 240, 280 160, 190 120" fill="none" opacity="0.3" stroke="#ffbd2e" stroke-dasharray="2 7" stroke-width="1"></path>
+<!-- Visual to EXIF highway -->
+<path d="M 505 320 C 630 420, 720 480, 820 540" fill="none" opacity="0.3" stroke="#f472b6" stroke-dasharray="2 7" stroke-width="1"></path>
+<!-- Ambient outer ring highways -->
+<path d="M 190 120 C 460 70, 640 85, 805 135" fill="none" opacity="0.18" stroke="rgba(255,255,255,0.2)" stroke-dasharray="4 8" stroke-width="0.8"></path>
+<path d="M 225 515 C 480 610, 680 590, 820 540" fill="none" opacity="0.18" stroke="rgba(255,255,255,0.2)" stroke-dasharray="4 8" stroke-width="0.8"></path>
+</g>
+<!-- ================= INACTIVE PERIPHERAL CONTINENTS ================= -->
+<!-- Continent: Voice Memos & Whispers (#dbb8ff) -->
+<g class="cursor-pointer transition hover:opacity-100" opacity="0.75" transform="translate(805, 135)">
+<circle fill="url(#voice-continent-grad)" r="110"></circle>
+<circle fill="none" opacity="0.5" r="70" stroke="#dbb8ff" stroke-dasharray="4 4" stroke-width="1"></circle>
+<circle fill="#dbb8ff" filter="url(#glow-cyan)" r="9"></circle>
+<circle fill="#6807ba" r="4.5"></circle>
+<!-- Internal micro stars -->
+<circle cx="24" cy="-18" fill="#dbb8ff" opacity="0.7" r="2.5"></circle>
+<circle cx="-32" cy="14" fill="#dbb8ff" opacity="0.6" r="2"></circle>
+<circle cx="16" cy="30" fill="#dbb8ff" opacity="0.8" r="3"></circle>
+<circle cx="-14" cy="-28" fill="#dbb8ff" opacity="0.5" r="2"></circle>
+<text fill="#ffffff" font-family="'Space Grotesk', sans-serif" font-size="12" font-weight="700" letter-spacing="0.5" text-anchor="middle" y="-24">VOICE MEMOS &amp; WHISPERS</text>
+<text fill="#dbb8ff" font-family="'JetBrains Mono', monospace" font-size="9.5" text-anchor="middle" y="-10">L0 Modality · 8,240 Vectors</text>
+</g>
+<!-- Continent: Codebases & AST (#67f4b7) -->
+<g class="cursor-pointer transition hover:opacity-100" opacity="0.75" transform="translate(225, 515)">
+<circle fill="url(#code-continent-grad)" r="95"></circle>
+<circle fill="none" opacity="0.5" r="60" stroke="#67f4b7" stroke-dasharray="3 5" stroke-width="1"></circle>
+<circle fill="#67f4b7" filter="url(#glow-cyan)" r="8.5"></circle>
+<circle fill="#003824" r="4"></circle>
+<!-- Internal micro stars -->
+<circle cx="-25" cy="-14" fill="#67f4b7" opacity="0.7" r="2.5"></circle>
+<circle cx="28" cy="12" fill="#67f4b7" opacity="0.8" r="3"></circle>
+<circle cx="-12" cy="22" fill="#67f4b7" opacity="0.5" r="2"></circle>
+<text fill="#ffffff" font-family="'Space Grotesk', sans-serif" font-size="12" font-weight="700" letter-spacing="0.5" text-anchor="middle" y="28">CODEBASES &amp; AST</text>
+<text fill="#67f4b7" font-family="'JetBrains Mono', monospace" font-size="9.5" text-anchor="middle" y="42">L0 Modality · 3,118 Vectors</text>
+</g>
+<!-- Continent: Documents & Specs (#ffbd2e) -->
+<g class="cursor-pointer transition hover:opacity-90" opacity="0.6" transform="translate(190, 120)">
+<circle fill="url(#docs-continent-grad)" r="80"></circle>
+<circle fill="none" opacity="0.4" r="48" stroke="#ffbd2e" stroke-dasharray="2 4" stroke-width="0.8"></circle>
+<circle fill="#ffbd2e" r="7"></circle>
+<text fill="#ffffff" font-family="'Space Grotesk', sans-serif" font-size="11" font-weight="600" opacity="0.9" text-anchor="middle" y="-18">DOCUMENTS &amp; TEXT</text>
+<text fill="#ffbd2e" font-family="'JetBrains Mono', monospace" font-size="9" opacity="0.8" text-anchor="middle" y="-6">18,410 Vectors</text>
+</g>
+<!-- Continent: Hardware EXIF & Telemetry (#f472b6) -->
+<g class="cursor-pointer transition hover:opacity-90" opacity="0.6" transform="translate(820, 540)">
+<circle fill="url(#exif-continent-grad)" r="75"></circle>
+<circle fill="none" opacity="0.4" r="45" stroke="#f472b6" stroke-dasharray="2 4" stroke-width="0.8"></circle>
+<circle fill="#f472b6" r="6.5"></circle>
+<text fill="#ffffff" font-family="'Space Grotesk', sans-serif" font-size="11" font-weight="600" opacity="0.9" text-anchor="middle" y="24">HARDWARE EXIF</text>
+<text fill="#f472b6" font-family="'JetBrains Mono', monospace" font-size="9" opacity="0.8" text-anchor="middle" y="36">6,012 Vectors</text>
+</g>
+<!-- ================= L0 ACTIVE CONTINENT: VISUAL & 4K FRAMES (CENTER HUB) ================= -->
+<g id="active-continent-group" transform="translate(505, 320)">
+<!-- Radiant Ambient Backdrop -->
+<circle fill="url(#active-continent-grad)" r="230"></circle>
+<!-- Outer Topological Orbit Rings -->
+<circle fill="none" opacity="0.35" r="210" stroke="#00f2fe" stroke-dasharray="6 8" stroke-width="1.2"></circle>
+<circle fill="none" opacity="0.5" r="170" stroke="#00dce6" stroke-dasharray="3 4" stroke-width="1"></circle>
+<circle fill="none" opacity="0.3" r="130" stroke="#6ff6ff" stroke-width="0.8"></circle>
+<!-- Continent Identification Badge Pill -->
+<g transform="translate(0, -188)">
+<rect fill="#090b0e" height="26" opacity="0.9" rx="13" stroke="#00f2fe" stroke-width="1" width="224" x="-112"></rect>
+<circle cx="-96" cy="13" fill="#00f2fe" filter="url(#glow-cyan)" r="3.5"></circle>
+<text fill="#ffffff" font-family="'Space Grotesk', sans-serif" font-size="11" font-weight="700" letter-spacing="0.5" text-anchor="middle" x="6" y="17">VISUAL &amp; 4K FRAMES</text>
+<text fill="#00f2fe" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" text-anchor="middle" x="84" y="17">19.2k</text>
+</g>
+<!-- ================= L1 COUNTRY SUB-CLUSTERS / TAG HUBS ================= -->
+<!-- Hub 1: Vehicles & Transport (4.2k) -->
+<g class="cursor-pointer" transform="translate(110, -60)">
+<circle fill="none" opacity="0.3" r="32" stroke="#00dce6" stroke-dasharray="2 3"></circle>
+<circle fill="#00dce6" opacity="0.2" r="16"></circle>
+<circle fill="#00f2fe" r="5"></circle>
+<text fill="#e0fdff" font-family="'Space Grotesk', sans-serif" font-size="10" font-weight="600" text-anchor="middle" y="-12">Vehicles &amp; Transport</text>
+<text fill="#849495" font-family="'JetBrains Mono', monospace" font-size="8.5" text-anchor="middle" y="22">4.2k nodes</text>
+</g>
+<!-- Hub 2: Identified Persons (3.8k) -->
+<g class="cursor-pointer" transform="translate(85, 95)">
+<circle fill="none" opacity="0.3" r="28" stroke="#00dce6" stroke-dasharray="2 3"></circle>
+<circle fill="#00dce6" opacity="0.2" r="14"></circle>
+<circle fill="#00f2fe" r="4.5"></circle>
+<text fill="#e0fdff" font-family="'Space Grotesk', sans-serif" font-size="10" font-weight="600" text-anchor="middle" y="-10">Identified Persons</text>
+<text fill="#849495" font-family="'JetBrains Mono', monospace" font-size="8.5" text-anchor="middle" y="20">3.8k nodes</text>
+</g>
+<!-- Hub 3 (ACTIVE PRIMARY L1 COUNTRY): Places & Geo-Coordinates -->
+<g class="cursor-pointer" transform="translate(-75, -45)">
+<circle fill="none" opacity="0.6" r="42" stroke="#00f2fe" stroke-dasharray="4 4" stroke-width="1.2"></circle>
+<circle fill="#00f2fe" opacity="0.25" r="20"></circle>
+<circle fill="#6ff6ff" filter="url(#glow-cyan)" r="7"></circle>
+<rect fill="#15181e" height="18" opacity="0.95" rx="5" stroke="#00f2fe" stroke-width="0.8" width="138" x="-69" y="-34"></rect>
+<text fill="#00f2fe" font-family="'JetBrains Mono', monospace" font-size="8.5" font-weight="600" text-anchor="middle" y="-22">L1: Places &amp; Geolocation</text>
+</g>
+<!-- Synaptic Triangulation Lattice Between Hubs -->
+<path d="M -75 -45 L 110 -60 L 85 95 L -20 20 Z" fill="none" opacity="0.2" stroke="#00f2fe" stroke-width="0.9"></path>
+<path d="M -75 -45 L -20 20 L 110 -60" fill="none" opacity="0.3" stroke="#00f2fe" stroke-width="0.9"></path>
+<!-- ================= L2 DISTRICT JURISDICTION (ZOOMED LEVEL) ================= -->
+<!-- Halo Perimeter: Piazza del Colosseo & Fori, Rome (65 Memories) -->
+<g transform="translate(-20, 20)">
+<!-- District Boundary Polygon / Halo -->
+<ellipse cx="0" cy="0" fill="rgba(0, 242, 254, 0.07)" rx="85" ry="65" stroke="#00f2fe" stroke-dasharray="5 4" stroke-width="1.5"></ellipse>
+<ellipse cx="0" cy="0" fill="none" opacity="0.4" rx="92" ry="72" stroke="#67f4b7" stroke-dasharray="2 5" stroke-width="0.8"></ellipse>
+<!-- District Tag Badge -->
+<g transform="translate(0, -68)">
+<rect fill="#0c0e13" height="20" opacity="0.95" rx="6" stroke="#00f2fe" stroke-width="1" width="176" x="-88"></rect>
+<circle cx="-76" cy="10" fill="#27c93f" r="2.5"></circle>
+<text fill="#ffffff" font-family="'Space Grotesk', sans-serif" font-size="9.5" font-weight="600" text-anchor="middle" x="5" y="14">L2: Piazza del Colosseo (65)</text>
+</g>
+<!-- ================= L3 LEAF CONSTELLATION NODES & DELAUNAY MESH ================= -->
+<!-- Delaunay Triangulation Synaptic Edges -->
+<g opacity="0.45" stroke="#00dce6" stroke-width="0.85">
+<line x1="-50" x2="-20" y1="-25" y2="-10"></line>
+<line x1="-20" x2="10" y1="-10" y2="-30"></line>
+<line x1="10" x2="45" y1="-30" y2="-15"></line>
+<line x1="45" x2="55" y1="-15" y2="20"></line>
+<line x1="55" x2="25" y1="20" y2="40"></line>
+<line x1="25" x2="-15" y1="40" y2="35"></line>
+<line x1="-15" x2="-55" y1="35" y2="15"></line>
+<line x1="-55" x2="-50" y1="15" y2="-25"></line>
+<!-- Cross diagonals connected to leaf #4901 (at 0, 5) -->
+<line stroke="#00f2fe" stroke-width="1.2" x1="-20" x2="0" y1="-10" y2="5"></line>
+<line stroke="#00f2fe" stroke-width="1.2" x1="10" x2="0" y1="-30" y2="5"></line>
+<line stroke="#00f2fe" stroke-width="1.2" x1="45" x2="0" y1="-15" y2="5"></line>
+<line stroke="#00f2fe" stroke-width="1.2" x1="25" x2="0" y1="40" y2="5"></line>
+<line stroke="#00f2fe" stroke-width="1.2" x1="-15" x2="0" y1="35" y2="5"></line>
+<line stroke="#00f2fe" stroke-width="1.2" x1="-55" x2="0" y1="15" y2="5"></line>
+</g>
+<!-- Memory Leaf Nodes Dots -->
+<circle cx="-50" cy="-25" fill="#6ff6ff" opacity="0.8" r="2.5"></circle>
+<circle cx="-20" cy="-10" fill="#6ff6ff" opacity="0.9" r="3"></circle>
+<circle cx="10" cy="-30" fill="#6ff6ff" opacity="0.85" r="2.8"></circle>
+<circle cx="45" cy="-15" fill="#6ff6ff" opacity="0.8" r="3.2"></circle>
+<circle cx="55" cy="20" fill="#6ff6ff" opacity="0.75" r="2.6"></circle>
+<circle cx="25" cy="40" fill="#6ff6ff" opacity="0.85" r="3"></circle>
+<circle cx="-15" cy="35" fill="#6ff6ff" opacity="0.9" r="2.8"></circle>
+<circle cx="-55" cy="15" fill="#6ff6ff" opacity="0.75" r="2.4"></circle>
+<circle cx="-35" cy="5" fill="#6ff6ff" opacity="0.6" r="2.2"></circle>
+<circle cx="20" cy="-5" fill="#6ff6ff" opacity="0.7" r="2.5"></circle>
+<circle cx="-5" cy="-20" fill="#6ff6ff" opacity="0.65" r="2.3"></circle>
+<!-- ================= FOCUSED LEAF PINPOINT: #4901 VESPA SPRINT 50CC V9 ================= -->
+<g id="leaf-4901-pin" transform="translate(0, 5)">
+<!-- Pulsing Radar Acoustic Waves -->
+<circle class="animate-radar" fill="none" r="16" stroke="#00f2fe"></circle>
+<circle class="animate-radar-delayed" fill="none" r="16" stroke="#6ff6ff"></circle>
+<circle fill="none" opacity="0.7" r="10" stroke="#00f2fe" stroke-width="1.5"></circle>
+<!-- Vibrant Glowing Core Pin -->
+<circle fill="#00f2fe" filter="url(#glow-strong)" r="6.5"></circle>
+<circle fill="#ffffff" r="3.5"></circle>
+<circle fill="#00373a" r="1.5"></circle>
+<!-- Leaf Label Pin Tag -->
+<g transform="translate(16, -14)">
+<rect fill="#00f2fe" height="18" rx="4" width="88"></rect>
+<text fill="#00373a" font-family="'JetBrains Mono', monospace" font-size="9.5" font-weight="700" x="6" y="13">#4901 LEAF</text>
+</g>
+</g>
+</g>
+</g>
+<!-- ================= RESONANT CROSS-CONTINENT SYNAPTIC BEAMS WITH LIVE METRICS ================= -->
+<!-- Synaptic Beam 1: Leaf #4901 -> Audio Memo #IT-4901 in Voice Continent (0.941 Cosine) -->
+<g>
+<path class="beam-flow" d="M 485 345 C 570 290, 680 200, 805 135" fill="none" filter="url(#glow-cyan)" stroke="url(#beam-to-voice)" stroke-width="2.2"></path>
+<!-- Metric Badge on Midpoint -->
+<g transform="translate(645, 232)">
+<rect fill="#15181e" height="19" opacity="0.95" rx="5" stroke="#dbb8ff" stroke-width="1" width="84" x="-42" y="-10"></rect>
+<text fill="#dbb8ff" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" text-anchor="middle" y="3">0.941 COS</text>
+</g>
+</g>
+<!-- Synaptic Beam 2: Leaf #4901 -> VespaTelemetryParser.cs in Code AST Continent (0.892 Cosine) -->
+<g>
+<path class="beam-flow" d="M 485 345 C 410 405, 310 455, 225 515" fill="none" filter="url(#glow-cyan)" stroke="url(#beam-to-code)" stroke-width="2.2"></path>
+<!-- Metric Badge on Midpoint -->
+<g transform="translate(345, 435)">
+<rect fill="#15181e" height="19" opacity="0.95" rx="5" stroke="#67f4b7" stroke-width="1" width="84" x="-42" y="-10"></rect>
+<text fill="#67f4b7" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" text-anchor="middle" y="3">0.892 COS</text>
+</g>
+</g>
+</svg>
+</div>
+<!-- Ambient Bioluminescent Depth Gradients -->
+<div class="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary-container/10 blur-3xl pointer-events-none"></div>
+<div class="absolute -bottom-24 left-1/3 w-80 h-80 rounded-full bg-secondary-container/15 blur-3xl pointer-events-none"></div>
+<!-- TOP-LEFT: TOPOLOGY METROLOGY & DENSITY BADGE -->
+<div class="absolute top-2.5 left-2.5 z-20 flex flex-col gap-1.5 pointer-events-auto">
+<div class="flex items-center gap-1.5 glass-pill px-2.5 py-1 rounded-lg shadow-md border border-white/[0.08]">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
+<span class="text-[9.5px] font-mono text-white/90">HNSW Graph</span>
+<span class="text-[9px] font-mono text-primary-fixed-dim font-semibold">54.9k</span>
+</div>
+</div>
+<!-- FLOATING CALLOUT TOOLTIP CARD ON CANVAS OVER LEAF #4901 -->
+<div class="flex absolute top-[22%] left-[34%] z-20 pointer-events-auto flex-col animate-pulse">
+<div class="glass-pill px-2.5 py-1.5 rounded-lg border border-primary-container/70 bg-[#0e1015]/95 shadow-[0_4px_16px_rgba(0,0,0,0.8)] backdrop-blur-xl flex items-center gap-2">
+<div class="w-7 h-7 rounded overflow-hidden border border-white/20 shrink-0 shadow">
+<img alt="Vespa" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaqVfob8rIasOmiMYzRaa0z9-3O8KFpLziATgfwqbSInLvuOMV3FZTqGFknIzgq52OvtYStk0VN4ZtZKHh5Wf8SkgYMMZTMOOffFaILerDDsQ0XoSZJEAUGAy21_oMtF1-kZ4B08GwOK1Lo1tVQkNQ2T3ZA2XMNk3e1xFFMaX6c0qgQRSZnVJsUyP17_MKCAsFPpYCjNaLMQiAskhy3nfUdPPv3eb5mWIfNplxosZv55onJevhPSiW5PN_EuDTNg4_XJo"/>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1">
+<span class="text-[10px] font-bold text-white font-display">Vespa 50cc</span>
+<span class="text-[8.5px] font-mono text-primary-container px-1 py-0.2 rounded bg-primary-container/20">0.016</span>
+</div>
+<span class="text-[8.5px] font-mono text-tertiary-container">L3 Active Leaf</span>
+</div>
+</div>
+<div class="w-1.5 h-1.5 bg-primary-container rotate-45 ml-4 -mt-1 shadow"></div>
+</div>
+<!-- TOP-RIGHT: GOOGLE MAPS-STYLE SEMANTIC ZOOM CONTROL STACK -->
+<div class="absolute top-2.5 right-2.5 z-20 flex flex-col gap-1.5 pointer-events-auto">
+<div class="glass-pill rounded-lg shadow-xl flex flex-col overflow-hidden border border-white/10">
+<button class="w-7 h-7 flex items-center justify-center text-white/80 active:bg-white/20 transition border-b border-white/[0.08]" id="map-zoom-in" title="Zoom In">
+<span class="material-symbols-outlined text-[15px]">add</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center text-white/80 active:bg-white/20 transition" id="map-zoom-out" title="Zoom Out">
+<span class="material-symbols-outlined text-[15px]">remove</span>
+</button>
+</div>
+<button class="w-7 h-7 glass-pill rounded-lg shadow-md flex items-center justify-center text-primary-fixed-dim border border-white/10" id="map-reset-compass" title="Reset Orientation">
+<span class="material-symbols-outlined text-[15px]">explore</span>
+</button>
+<div class="glass-pill px-1 py-2 rounded-lg shadow-md border border-white/10 flex flex-col items-center gap-1">
+<span class="text-[8px] font-mono text-white/40 uppercase">L0</span>
+<div class="w-1 h-10 bg-white/10 rounded-full relative flex flex-col justify-end p-0.5">
+<div class="w-full h-3/4 bg-gradient-to-t from-primary-container to-surface-tint rounded-full shadow-[0_0_8px_#00f2fe]"></div>
+</div>
+<span class="text-[8px] font-mono text-primary-fixed-dim font-bold uppercase">L3</span>
+</div>
+</div>
+<!-- BOTTOM FLOATING HUD: CONTINENTS SELECTOR & SEMANTIC SCALE BAR -->
+<div class="absolute bottom-16 left-2 right-2 z-20 flex items-center justify-between gap-1 pointer-events-none">
+<div class="flex items-center gap-1 glass-pill p-1 rounded-xl shadow-xl overflow-x-auto max-w-[70%] pointer-events-auto scrollbar-none">
+<button class="px-2 py-1 rounded-lg bg-primary-container text-on-primary-container font-mono text-[9.5px] font-semibold flex items-center gap-1 shadow shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-on-primary-container"></span>
+<span>Visual</span>
+<span class="text-[8.5px] opacity-75">19.2k</span>
+</button>
+<button class="px-2 py-1 rounded-lg bg-surface-container-high/60 text-[#dbb8ff] font-mono text-[9.5px] flex items-center gap-1 shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-[#dbb8ff]"></span>
+<span>Voice</span>
+</button>
+<button class="px-2 py-1 rounded-lg bg-surface-container-high/60 text-[#67f4b7] font-mono text-[9.5px] flex items-center gap-1 shrink-0">
+<span class="w-1.5 h-1.5 rounded-full bg-[#67f4b7]"></span>
+<span>Code</span>
+</button>
+</div>
+<div class="glass-pill px-2 py-1 rounded-xl shadow-lg flex items-center gap-1.5 shrink-0 pointer-events-auto border border-white/10">
+<div class="flex flex-col items-end">
+<span class="font-mono text-[8px] text-white/50 uppercase">Scale</span>
+<span class="font-mono text-[9.5px] text-primary-fixed-dim font-bold">0.016</span>
+</div>
+<div class="w-8 border-b-2 border-l border-r border-primary-container h-1"></div>
+</div>
+</div>
+</main>
+<!-- RIGHT INSPECTOR PANEL: FOCUSED DISTRICT & LEAF NODE TELEMETRY -->
+<div class="absolute bottom-0 inset-x-0 z-30 flex flex-col max-h-[78vh] bg-surface-container-lowest/95 backdrop-blur-2xl border-t border-white/10 rounded-t-2xl shadow-[0_-8px_32px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-300">
+<!-- Bottom Sheet Pull Handle & Quick Glance Header -->
+<div class="pt-2 px-3 pb-2.5 flex flex-col gap-1.5 bg-surface-container-low/80 cursor-pointer border-b border-white/[0.05] shrink-0">
+<div class="w-10 h-1 bg-white/30 rounded-full mx-auto mb-1"></div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-primary-container text-[16px]">pin_drop</span>
+<div class="min-w-0">
+<div class="flex items-center gap-1.5">
+<h3 class="font-display text-[12.5px] font-bold text-white truncate">Vespa Sprint 50cc</h3>
+<span class="font-mono text-[9px] px-1 py-0.2 rounded bg-primary-container/20 text-primary-fixed font-semibold">#4901</span>
+</div>
+<p class="text-[10px] text-on-surface-variant font-mono truncate">Piazza del Colosseo · 65 Memories</p>
+</div>
+</div>
+<div class="flex items-center gap-1.5 shrink-0">
+<span class="font-mono text-[10px] px-2 py-0.5 rounded-full bg-primary-container/15 text-primary-fixed-dim border border-primary-container/20 font-bold">
+          0.016 Dist
+        </span>
+<button class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/80">
+<span class="material-symbols-outlined text-[16px]">expand_less</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Scrollable Expanded Inspector Content -->
+<div class="overflow-y-auto p-3 space-y-3 max-h-[50vh]">
+<!-- Visual Preview Card -->
+<div class="relative w-full h-32 rounded-xl overflow-hidden shadow border border-white/10">
+<img alt="Vespa Sprint 50cc V9" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaqVfob8rIasOmiMYzRaa0z9-3O8KFpLziATgfwqbSInLvuOMV3FZTqGFknIzgq52OvtYStk0VN4ZtZKHh5Wf8SkgYMMZTMOOffFaILerDDsQ0XoSZJEAUGAy21_oMtF1-kZ4B08GwOK1Lo1tVQkNQ2T3ZA2XMNk3e1xFFMaX6c0qgQRSZnVJsUyP17_MKCAsFPpYCjNaLMQiAskhy3nfUdPPv3eb5mWIfNplxosZv55onJevhPSiW5PN_EuDTNg4_XJo"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent"></div>
+<div class="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-surface-container-lowest/80 backdrop-blur-md text-[9px] font-mono text-tertiary-container flex items-center gap-1 border border-white/10">
+<span class="material-symbols-outlined text-[11px]">verified</span>
+<span>Ground Truth</span>
+</div>
+<div class="absolute bottom-2 left-2.5 right-2.5 flex items-end justify-between">
+<div>
+<p class="font-display text-[12px] text-white font-semibold">Vespa Sprint 50cc V9</p>
+<p class="font-mono text-[9.5px] text-white/60">Rome · Jul 14, 2024</p>
+</div>
+</div>
+</div>
+<!-- Cross-Continent Resonance Bridges -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="text-[9.5px] uppercase tracking-wider text-outline font-mono font-semibold">Cross-Continent Bridges</span>
+<span class="text-[9.5px] text-primary-fixed-dim font-mono">3 Resonances</span>
+</div>
+<div class="grid grid-cols-2 gap-1.5">
+<div class="p-2 rounded-lg bg-surface-container-low border border-white/[0.04] flex flex-col justify-between">
+<div class="flex items-center gap-1.5 mb-1">
+<span class="material-symbols-outlined text-secondary text-[14px]">mic</span>
+<span class="text-[10px] font-medium text-white truncate">Audio #IT-4901</span>
+</div>
+<span class="text-[9px] font-mono text-secondary self-end px-1.5 py-0.2 rounded bg-secondary-container/40">0.941 Cos</span>
+</div>
+<div class="p-2 rounded-lg bg-surface-container-low border border-white/[0.04] flex flex-col justify-between">
+<div class="flex items-center gap-1.5 mb-1">
+<span class="material-symbols-outlined text-tertiary-container text-[14px]">terminal</span>
+<span class="text-[10px] font-medium text-white truncate">Telemetry.cs</span>
+</div>
+<span class="text-[9px] font-mono text-tertiary-container self-end px-1.5 py-0.2 rounded bg-tertiary/15">0.892 Cos</span>
+</div>
+</div>
+</div>
+<!-- Verified Local SQLite Telemetry -->
+<div class="p-2.5 rounded-lg bg-surface-container-low border border-white/[0.04] space-y-1.5">
+<div class="flex items-center justify-between text-[9.5px] font-mono">
+<span class="text-outline uppercase">In-DB Telemetry</span>
+<span class="text-tertiary-container flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container animate-pulse"></span>
+          Verified Local
+        </span>
+</div>
+<div class="flex items-center justify-between text-[10px] font-mono">
+<span class="text-white/60">RRF Rank #1</span>
+<span class="text-primary-fixed font-semibold">98.2% MRL Fidelity</span>
+</div>
+</div>
+<!-- Action Button -->
+<button class="w-full py-2 px-3 rounded-xl bg-primary-container text-on-primary-container font-display text-[12px] font-bold flex items-center justify-center gap-1.5 shadow active:scale-95 transition">
+<span class="material-symbols-outlined text-[15px]">open_in_full</span>
+<span>Drill Down into Street Layer</span>
+</button>
+</div>
+</div>
+</div>
+<!-- ================= BOTTOM STATUS BAR ================= -->
+<nav class="h-14 border-t border-white/[0.08] bg-surface-container-lowest/95 backdrop-blur-2xl px-4 flex items-center justify-around z-50 shrink-0 select-none">
+<a class="flex flex-col items-center gap-0.5 text-white/50 active:text-white transition" href="#">
+<span class="material-symbols-outlined text-[20px]">travel_explore</span>
+<span class="text-[9.5px] font-mono">Search</span>
+</a>
+<a class="flex flex-col items-center gap-0.5 text-primary-container transition relative" href="#">
+<div class="w-7 h-7 rounded-xl bg-primary-container/15 flex items-center justify-center">
+<span class="material-symbols-outlined text-[19px] text-primary-container">scatter_plot</span>
+</div>
+<span class="text-[9.5px] font-mono font-bold text-primary-fixed">Lattice</span>
+</a>
+<a class="flex flex-col items-center gap-0.5 text-white/50 active:text-white transition relative" href="#">
+<div class="relative">
+<span class="material-symbols-outlined text-[20px]">sync_saved_locally</span>
+<span class="absolute -top-0.5 -right-1 w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+</div>
+<span class="text-[9.5px] font-mono">Mesh</span>
+</a>
+<a class="flex flex-col items-center gap-0.5 text-white/50 active:text-white transition" href="#">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+<span class="text-[9.5px] font-mono">Settings</span>
+</a>
+</nav>
+<script>
+  // Interactive Google Maps Zoom Micro-Interactions on SVG Lattice Graph
+  const zoomInBtn = document.getElementById('map-zoom-in');
+  const zoomOutBtn = document.getElementById('map-zoom-out');
+  const compassBtn = document.getElementById('map-reset-compass');
+  const activeContinent = document.getElementById('active-continent-group');
+  const svgMap = document.querySelector('svg');
+
+  let currentScale = 1;
+
+  zoomInBtn?.addEventListener('click', () => {
+    currentScale = Math.min(currentScale + 0.15, 1.6);
+    if (activeContinent) {
+      activeContinent.setAttribute('transform', `translate(505, 320) scale(${currentScale})`);
+      activeContinent.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    }
+  });
+
+  zoomOutBtn?.addEventListener('click', () => {
+    currentScale = Math.max(currentScale - 0.15, 0.7);
+    if (activeContinent) {
+      activeContinent.setAttribute('transform', `translate(505, 320) scale(${currentScale})`);
+      activeContinent.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    }
+  });
+
+  compassBtn?.addEventListener('click', () => {
+    compassBtn.classList.add('rotate-180');
+    currentScale = 1;
+    if (activeContinent) {
+      activeContinent.setAttribute('transform', 'translate(505, 320) scale(1)');
+    }
+    setTimeout(() => compassBtn.classList.remove('rotate-180'), 400);
+  });
+</script>
+</body></html>

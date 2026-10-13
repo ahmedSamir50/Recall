@@ -1,0 +1,3 @@
+T:System.Net.Sockets.Socket;banned in Recall.Maui
+T:System.Net.Sockets.TcpListener;banned in Recall.Maui
+T:System.Net.Sockets.UdpClient;banned in Recall.Maui

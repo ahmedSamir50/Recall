@@ -1,0 +1,4 @@
+T:System.Net.Http.HttpClient;banned in Recall.Core and Recall.UI
+T:System.Net.Sockets.Socket;banned in Recall.Core and Recall.UI
+T:System.Net.Sockets.TcpListener;banned in Recall.Core and Recall.UI
+T:System.Net.Sockets.UdpClient;banned in Recall.Core and Recall.UI

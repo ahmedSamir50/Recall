@@ -23,7 +23,7 @@ The moat is three constraints at once:
 | TFM | `net10.0` (.NET 10 LTS). Not .NET 9. .NET 11 RC1 (8 Sep 2026, go-live) is not the target until ONNX embedding and ZVec search are measured faster on `net11.0`. |
 | UI host | MAUI Blazor Hybrid. Razor UI shared. MudBlazor plus Tailwind. No Blazor WebAssembly. No second Native AOT desktop codebase in v1. No web client. |
 | RIDs | `android-arm64`, `ios-arm64`, `win-x64`, `maccatalyst-arm64` |
-| Vector DB | `AdamSystems.ZVec.NET` pinned at `1.0.0-beta.6+zvec.0.7.0`. Source of truth is `D:\A_S\AdamSystems.ZVec.NET`, not the GitHub copy. |
+| Vector DB | NuGet id ZVec.NET, version 1.0.0-beta.6. Source tree D:\A_S\AdamSystems.ZVec.NET has Version 1.0.0-beta.6+zvec.0.7.0. Do not restore a package named AdamSystems.ZVec.NET. |
 | Embedder | EmbeddingGemma 2 via `Microsoft.ML.OnnxRuntime`. Asset: `onnx-community/embeddinggemma-2-ONNX`. No fine-tune in v1. No cloud embedding API. `Microsoft.ML.OnnxRuntimeGenAI` is not used. It is the text-generation loop, and iOS is not a supported OS. |
 | Checkpoints | SQLite `checkpoints.db` (ingestion cursors, job state, crash-recovery cursor) |
 | Tests | xUnit, FluentAssertions, FsCheck for MRL invariants, BenchmarkDotNet for the perf gate |
@@ -71,7 +71,7 @@ Recall.sln
   InitDocs/                 # historical seed, kept
 ```
 
-`Recall.Core` is headless-testable. Platform services (`IFileScopeWatcherService`, `IScopeManagerService`, `IVideoFrameSamplerService`, `ISecureStorageService`, `IIdleDetectorService`, `IModelDownloadService`, `IIndexPolicy`) are interfaces in Core and implementations in the MAUI head. v1 does **not** include `IClipboardService`, `ICameraRollService`, `IScreenCaptureService`, or `IAudioRecorderService`.
+`Recall.Core` is headless-testable. The six platform ports are interfaces in Core. Adapters are written in Recall.Maui when that epic starts. `IIndexPolicy` stays an interface in Core. Width, age cutoff, and modality rules are Core types. The MAUI head does not choose them. v1 does **not** include `IClipboardService`, `ICameraRollService`, `IScreenCaptureService`, or `IAudioRecorderService`.
 
 ## Non-negotiables (block if proposed)
 
