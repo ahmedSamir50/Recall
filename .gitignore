@@ -13,6 +13,7 @@ TestResults/
 .idea/
 
 # Downloaded models and local indexes (not source)
+tests/Recall.IntegrationTests/TestAssets/embeddinggemma-2-text/
 *.onnx
 *.ort
 *.zvec
