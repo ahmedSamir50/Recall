@@ -1,0 +1,26 @@
+---
+description: Routes Recall work through the expert panel and the v1.2 canon
+alwaysApply: true
+---
+
+# Recall harness
+
+`InitDocs/` is the initial app idea (v1.2), not the final spec. Working canon is `.cursor/skills/recall-expert-harness/canon.md`. If a doc sentence conflicts with that canon, flag it instead of implementing the stale sentence.
+
+Before architecture, capture, embedding, UI, privacy, performance, or test work, read the matching skill:
+
+| Trigger | Skill |
+|---|---|
+| Docs review, experts, panel, harden the spec | `.cursor/skills/recall-expert-harness/SKILL.md` |
+| Solution, DI, TFM, dependencies | `.cursor/skills/dotnet-architect/SKILL.md` |
+| ONNX, MRL, ZVec, HNSW, RRF | `.cursor/skills/vectors-embeddings/SKILL.md` |
+| Prefixes, languages, chunking, labels, BM25 text | `.cursor/skills/nlp/SKILL.md` |
+| RIDs, watchers, iOS scan, model download | `.cursor/skills/maui-platform/SKILL.md` |
+| Razor UI, onboarding, copy, a11y | `.cursor/skills/ux-ui/SKILL.md` |
+| Egress, telemetry, sync design, logging | `.cursor/skills/privacy-local-first/SKILL.md` |
+| Latency, RSS, disk, battery, benchmarks | `.cursor/skills/performance/SKILL.md` |
+| xUnit / FsCheck unit tests | `.cursor/skills/unit-tests/SKILL.md` |
+| Golden queries, corpus, crash tests | `.cursor/skills/retrieval-qa/SKILL.md` |
+| MkDocs, ADRs, doc structure | `.cursor/skills/docs-mkdocs/SKILL.md` |
+
+v1 stays local-only: no LLM, no ambient capture, no cloud vectors, no web client, sync disabled. Unresolved canon rows stay open until the user decides.
