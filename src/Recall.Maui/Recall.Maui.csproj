@@ -24,7 +24,11 @@
     <EnableMsixTooling>false</EnableMsixTooling>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-    <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
+    <AndroidStoreUncompressedFileExtensions>.so</AndroidStoreUncompressedFileExtensions>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Debug'">
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
     <RuntimeIdentifiers>ios-arm64</RuntimeIdentifiers>
@@ -37,6 +41,7 @@
   </ItemGroup>
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
     <PackageReference Include="Tokenizers.DotNet.runtime.linux-arm64" />
+    <PackageReference Include="Tokenizers.DotNet.runtime.linux-x64" />
   </ItemGroup>
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
     <PackageReference Include="Tokenizers.DotNet.runtime.osx-arm64" />
@@ -81,6 +86,7 @@
     <PropertyGroup>
       <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == 'win-x64' and '$(TargetFramework)' != '' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'windows'" />
       <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == 'android-arm64' and '$(TargetFramework)' != '' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'android'" />
+      <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == 'android-x64' and '$(TargetFramework)' != '' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'android'" />
     </PropertyGroup>
   </Target>
 </Project>

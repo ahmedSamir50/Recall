@@ -16,15 +16,15 @@ A one-file bugfix does not use this chain. It still follows `development-rules.m
 
 1. Read [canon.md](canon.md), [development-rules.md](development-rules.md), [test-honesty.md](test-honesty.md), [sign-off.md](sign-off.md), and [panel.md](panel.md) once. If this conversation already holds a file, do not read it again.
 2. Read the plan's named paths once. For a review of current changes, read the diff once. Do not open InitDocs unless the plan cites a passage.
-3. Stay in this context. Apply each expert checklist below and write that expert's YAML sign-off here. Open `.cursor/skills/<id>/SKILL.md` only when the plan touches that expert's row in [panel.md](panel.md). An untouched row still gets a sign-off, with `checked` citing `panel.md` and the scope miss, and that skill file stays unread.
-4. Name one or more direct experts from the whole panel for this plan. Every other id is advisory. If a sign-off is missing a field, has an empty checked list, agrees with no evidence, or scores a direct expert under 96 without a mitigation and a recommendation, rewrite that block from the files already loaded. Do not spawn the expert to go look again. Do not round a score up to 96.
-5. Write the YAML once, under `## Expert sign-offs` in the plan. Do not paste that YAML in the chat. The chat reply is the synthesis below. A plan card, a count, or a summary is not a sign-off.
+3. Stay in this context. Apply each expert checklist once and keep that sign-off for the plan file. Open `.cursor/skills/<id>/SKILL.md` only when the plan touches that expert's row in [panel.md](panel.md). An untouched row still gets one sign-off, with `checked` citing `panel.md` and the scope miss, and that skill file stays unread.
+4. Name one or more direct experts from the ids in [panel.md](panel.md). Every other listed id is advisory. Do not search for an expert who is not in that table. When a check finds a gap the loaded files can close, close it, then score again once. That second score is final. A third pass is a loop. Do not round a score up to 96.
+5. Write the sign-off once in the plan. The first line under `## Expert sign-offs` is `Direct:` and the direct ids. The YAML follows. An id not on that line is advisory. Do not write an advisory list. Do not paste that YAML in the chat. The chat reply is the synthesis below. A plan card, a count, or a summary is not a sign-off.
 6. Create the plan only after the blocks exist. If a plan tool creates the file first, edit the file in that same turn. The chat does not repeat the blocks.
-7. Stop. The user decides which recommendations enter the plan. Do not code from an unsigned plan.
+7. Stop. Do not reopen this chain in the same turn. The user decides which recommendations enter the plan. Do not code from an unsigned plan.
 
 ## Same plan, later message
 
-A later message that closes a decision, changes scope, or corrects what a source means is the same gate. Re-sign in this context from files already loaded. Re-read only a path the new message names that is not already loaded. Replace the YAML in the plan. Do not paste it in the reply. Do not keep the previous verdicts. Do not launch expert subagents. Do not answer, and do not edit the plan's behavior, before the new blocks are in the plan.
+A new user message that closes a decision, changes scope, or corrects what a source means is the same gate. The turn that is writing the plan does not re-sign itself. Re-sign once from files already loaded. Re-read only a path the new message names that is not already loaded. Replace the YAML in the plan. Do not paste it in the reply. Do not keep the previous verdicts. Do not launch expert subagents. Do not answer, and do not edit the plan's behavior, before the new blocks are in the plan.
 
 The user does not ask for this. Do not ask the user why a sign-off is missing or unchanged. A question about the harness display is not a new plan. A request to execute the plan is not a new plan.
 
@@ -69,9 +69,7 @@ Conflicts between experts:
 Test matrix gaps:
 Recommended plan changes:
 Left unresolved on purpose:
-Direct experts: <one or more ids from the whole panel>
-Advisory: <every other panel id>
-Ready for approval: yes only when every direct expert is honestly at 96 or higher and no advisory block is a push-back or a block
+Ready for approval: yes only when every id on the Direct line is honestly at 96 or higher and no advisory block is a push-back or a block
 
 ## Execution manifest
 Files:

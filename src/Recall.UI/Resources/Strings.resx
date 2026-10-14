@@ -69,6 +69,9 @@
   <data name="Preferences_FoldersLink" xml:space="preserve"><value>Folders</value></data>
   <data name="Preferences_ModelsLink" xml:space="preserve"><value>Models</value></data>
   <data name="Preferences_DeleteIndex" xml:space="preserve"><value>Delete everything Recall stored</value></data>
+  <data name="Debug_ResetAll_Label" xml:space="preserve"><value>Debug only</value></data>
+  <data name="Debug_ResetAll_Lead" xml:space="preserve"><value>Clears preferences, folder grants, models, and device record, then returns to onboarding.</value></data>
+  <data name="Debug_ResetAll_Button" xml:space="preserve"><value>Reset all local data</value></data>
   <data name="Preferences_Age" xml:space="preserve"><value>Keep media at full detail for</value></data>
   <data name="Preferences_AgeLead" xml:space="preserve"><value>Years before older photos, video, and audio may shrink in a later release. Text is not affected.</value></data>
   <data name="Preferences_DeviceLink" xml:space="preserve"><value>This device name</value></data>

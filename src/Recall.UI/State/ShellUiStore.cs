@@ -91,6 +91,8 @@ public sealed class ShellUiStore : IDisposable
         Publish(BuildSnapshot(Current.RoutePath));
     }
 
+    public void ReloadFromScope() => Publish(BuildSnapshot(Current.RoutePath));
+
     private ShellUiSnapshot BuildSnapshot(string routePath)
     {
         var grants = scope.ListGrants();

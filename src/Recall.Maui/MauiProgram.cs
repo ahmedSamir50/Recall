@@ -6,6 +6,8 @@ using Recall.Maui.DependencyInjection;
 using Recall.Core.Catalog;
 using Recall.Core.Text;
 using Recall.Maui.Platform;
+using Recall.Core.Ports;
+using Recall.Maui.Platform.Debug;
 using Recall.UI.DependencyInjection;
 
 namespace Recall.Maui;
@@ -42,6 +44,11 @@ public static class MauiProgram
         builder.Services.AddRecallCore();
         builder.Services.AddRecallUi();
         builder.Services.AddRecallMauiPlatform(textModel);
+#if DEBUG
+        builder.Services.AddSingleton<IDebugAppReset, MauiDebugAppReset>();
+#else
+        builder.Services.AddSingleton<IDebugAppReset, DebugAppResetDisabled>();
+#endif
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();

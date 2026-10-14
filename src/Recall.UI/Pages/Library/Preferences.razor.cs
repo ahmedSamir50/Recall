@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Components;
+using Recall.Core.Ports;
 using Recall.Core.Preferences;
 using Recall.Core.Vocabulary;
+using Recall.UI;
 
 namespace Recall.UI.Pages;
 
@@ -11,6 +13,9 @@ public partial class Preferences
 
     [Inject]
     private AgeCutoffPreferenceService AgePreferences { get; set; } = null!;
+
+    [Inject]
+    private IDebugAppReset DebugReset { get; set; } = null!;
 
     private AgeCutoffYears age;
 
@@ -37,4 +42,15 @@ public partial class Preferences
     private void GoDevice() => Nav.NavigateTo("/device");
 
     private void GoPin() => Nav.NavigateTo("/pin");
+
+    private async Task ResetAllDebugAsync()
+    {
+        await DebugReset.ResetAllLocalDataAsync();
+        Ui.SetThemePreference(ThemePreference.System);
+        Ui.SetLocale(UiLocale.En);
+        Ui.ApplyCulture();
+        age = AgeCutoffYears.Two;
+        Ui.ReloadFromScope();
+        Nav.NavigateTo(AppRoutes.OnboardingWelcome, forceLoad: true);
+    }
 }

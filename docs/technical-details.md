@@ -21,6 +21,8 @@ Solution shape:
 
 `Recall.Maui` calls `AddRecallCore` and `AddRecallAdapters`. The text ONNX session and the ZVec collection are created when a text job needs them. The HTTP client is `IHttpClientFactory`, used only by the model-download adapter. `BannedApiAnalyzers` makes `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` a compile error inside `Recall.Core`, including `Recall.Core.Sync`.
 
+Debug builds expose **Reset all local data** on Preferences and bootstrap incomplete onboarding to `/onboarding/welcome`. See [debug-local-reset.md](debug-local-reset.md).
+
 Ports live in Core. Implementations live in the MAUI head:
 
 | Port | Role |

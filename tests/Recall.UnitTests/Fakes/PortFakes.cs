@@ -46,6 +46,24 @@ public sealed class FakeIdleDetectorService : IIdleDetectorService
 {
 }
 
+public sealed class FakeOnboardingCompletionStore : IOnboardingCompletionStore
+{
+    public bool Complete { get; set; }
+
+    public bool IsComplete() => Complete;
+
+    public void MarkComplete() => Complete = true;
+
+    public void ResetToOnboarding() => Complete = false;
+}
+
+public sealed class FakeDebugAppReset : IDebugAppReset
+{
+    public bool IsEnabled { get; set; }
+
+    public Task ResetAllLocalDataAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+}
+
 public sealed class FakeModelDownloadService : IModelDownloadService
 {
     public TextModelDownloadSnapshot Snapshot { get; set; } = new(TextModelDownloadPhase.NotStarted, 0, null);

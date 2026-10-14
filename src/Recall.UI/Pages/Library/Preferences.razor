@@ -37,6 +37,14 @@
             <button type="button" class="btn btn-g text-start" @onclick="GoModels">@T("Preferences_ModelsLink")</button>
         </div>
         <button type="button" class="btn btn-g er text-start" disabled>@T("Preferences_DeleteIndex")</button>
+        @if (DebugReset.IsEnabled)
+        {
+            <div class="border-t bd pt-4 mt-2">
+                <p class="lbl mb-2">@T("Debug_ResetAll_Label")</p>
+                <p class="text-13 ink3 mb-3">@T("Debug_ResetAll_Lead")</p>
+                <button type="button" class="btn btn-g er text-start w-full" @onclick="ResetAllDebugAsync">@T("Debug_ResetAll_Button")</button>
+            </div>
+        }
     </div>
 </div>
 </div>

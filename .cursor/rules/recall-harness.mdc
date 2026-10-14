@@ -32,11 +32,11 @@ When the user says to close a task, epic, or phase, that plan finishes it. The m
 
 Write the YAML once, in the plan. Confidence is an honest account of the check. Do not round it up, and do not use a low number in place of doing the check.
 
-Each plan names one or more direct experts from the whole panel in `panel.md`. The panel is every expert id there, including ids added later. It is not a sample list. Every expert the plan does not name as direct is advisory on that plan.
+The first line under `## Expert sign-offs` is `Direct:` and one or more ids from `panel.md`. An id not on that line is advisory. Do not write an advisory list. Do not search for an expert who is not in that table.
 
-Every expert, direct and advisory, does a best accountable effort on their own row before they score: the plan against canon, the named files, and the decisions those files already make. A gap that check can close is unfinished work. Finish it, then score again honestly.
+Check each row once. When that check finds a gap the loaded files can close, close the gap in the plan, then score again once. That second score is final. A third pass is a loop: do not re-read the harness, do not re-list the experts, and do not think the check through again.
 
-The user will not approve a plan while any direct expert is under 96. Do not present that plan as ready. Under 96, `mitigation` names the gap and `recommendation` names the action. An advisory expert is not held to 96. An advisory `push-back` or `block` still keeps the plan not ready.
+If a direct expert's final score is under 96, `mitigation` names the gap and `recommendation` names the action. Say the plan is not ready and stop. An advisory expert is not held to 96. Record an advisory push-back or block once.
 
 ## Otherwise
 

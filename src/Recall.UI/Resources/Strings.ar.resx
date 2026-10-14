@@ -69,6 +69,9 @@
   <data name="Preferences_FoldersLink" xml:space="preserve"><value>المجلدات</value></data>
   <data name="Preferences_ModelsLink" xml:space="preserve"><value>النماذج</value></data>
   <data name="Preferences_DeleteIndex" xml:space="preserve"><value>احذف كل ما خزّنه ريكول</value></data>
+  <data name="Debug_ResetAll_Label" xml:space="preserve"><value>للتطوير فقط</value></data>
+  <data name="Debug_ResetAll_Lead" xml:space="preserve"><value>يمسح التفضيلات ومنح المجلدات والنماذج وسجل الجهاز، ثم يعيدك إلى الإعداد.</value></data>
+  <data name="Debug_ResetAll_Button" xml:space="preserve"><value>إعادة ضبط كل البيانات المحلية</value></data>
   <data name="Preferences_Age" xml:space="preserve"><value>احتفظ بالوسائط بالتفصيل الكامل لمدة</value></data>
   <data name="Preferences_AgeLead" xml:space="preserve"><value>سنوات قبل أن تُصغَّر الصور والفيديو والصوت لاحقًا. النص لا يتأثر.</value></data>
   <data name="Preferences_DeviceLink" xml:space="preserve"><value>اسم هذا الجهاز</value></data>

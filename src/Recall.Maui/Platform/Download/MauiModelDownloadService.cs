@@ -50,6 +50,26 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         }
     }
 
+    public void ClearLocalDownloadState()
+    {
+        lock (gate)
+        {
+            downloadCts?.Cancel();
+            downloadCts?.Dispose();
+            downloadCts = null;
+            lastPublishedPercent = -1;
+            snapshot = new TextModelDownloadSnapshot(TextModelDownloadPhase.NotStarted, 0, null);
+        }
+
+        if (Directory.Exists(modelDirectory))
+        {
+            foreach (var file in Directory.EnumerateFiles(modelDirectory))
+            {
+                TryDelete(file);
+            }
+        }
+    }
+
     public Task RetryTextDownloadAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
     {
         return RunDownloadAsync(progress, cancellationToken);

@@ -108,6 +108,8 @@ public sealed class SolutionShapeTests
             typeof(ITextVectorIndex),
             typeof(IGrantedTextIngestService),
             typeof(ITextSearchService),
+            typeof(IOnboardingCompletionStore),
+            typeof(IDebugAppReset),
         };
 
         // Act

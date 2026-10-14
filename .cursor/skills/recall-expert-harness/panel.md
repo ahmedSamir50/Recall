@@ -2,7 +2,7 @@
 
 Each expert is a Cursor agent (`.cursor/agents/<id>.md`) plus a skill (`.cursor/skills/<id>/SKILL.md`). The skill is the checklist. The agent is the persona. `canon.md` wins if they disagree.
 
-The panel is every id in the table below, including ids added later. A plan names one or more of them as its direct experts, from the rows that plan changes. Every other id is advisory on that plan. Direct and advisory both do a best accountable effort on their own row.
+The panel is the ids in the table below. Do not search for an expert who is not listed. The first line of `## Expert sign-offs` names one or more of those ids after `Direct:`, from the rows that plan changes. An id not on that line is advisory. Direct and advisory each check their own row once.
 
 | Id | Owns | Call in when the work touches |
 |---|---|---|

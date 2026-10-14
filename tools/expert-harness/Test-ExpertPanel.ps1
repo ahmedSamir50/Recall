@@ -74,15 +74,35 @@ $rulesText = Get-Content -Raw -Path $rulesPath
 $signOffText = Get-Content -Raw -Path $signOffPath
 
 $manifestChecks = @(
-    @{ Name = 'always-applied rule'; Text = $ruleText; Needles = @('execution manifest', 'Do not invent a file', 'stop and amend the plan', 'that plan finishes it', 'Write the YAML once', 'under 96', 'one or more direct experts', 'advisory') },
-    @{ Name = 'planning chain'; Text = $planningText; Needles = @('## Execution manifest', 'not executable', 'Do not invent', 'Do not paste that YAML in the chat', 'that plan finishes it', 'Do not round a score up to 96') },
+    @{ Name = 'always-applied rule'; Text = $ruleText; Needles = @('execution manifest', 'Do not invent a file', 'stop and amend the plan', 'that plan finishes it', 'Write the YAML once', 'under 96', 'Direct:', 'An id not on that line is advisory', 'score again once', 'A third pass is a loop') },
+    @{ Name = 'planning chain'; Text = $planningText; Needles = @('## Execution manifest', 'not executable', 'Do not invent', 'Do not paste that YAML in the chat', 'that plan finishes it', 'Do not round a score up to 96', 'does not re-sign itself', 'score again once', 'A third pass is a loop') },
     @{ Name = 'development rules'; Text = $rulesText; Needles = @('execution manifest', 'stops and names the missing line', 'Close means done') },
-    @{ Name = 'sign-off'; Text = $signOffText; Needles = @('execution manifest', 'mitigation', 'under 96', 'honest', 'advisory') }
+    @{ Name = 'sign-off'; Text = $signOffText; Needles = @('execution manifest', 'mitigation', 'under 96', 'honest', 'Direct:', 'An id not on that line is advisory') }
+    @{ Name = 'planning chain direct line'; Text = $planningText; Needles = @('The first line under `## Expert sign-offs` is `Direct:`') }
 )
 foreach ($check in $manifestChecks) {
     foreach ($needle in $check.Needles) {
         if ($check.Text -notmatch [regex]::Escape($needle)) {
             $failures.Add("$($check.Name) is missing plan-grain clause: $needle")
+        }
+    }
+}
+
+$loopPhrases = @(
+    'Do not score again',
+    'including ids added later'
+)
+foreach ($loopPhrase in $loopPhrases) {
+    foreach ($loopFile in @(
+        (Join-Path $root '.cursor/rules/recall-harness.mdc'),
+        (Join-Path $harnessDir 'sign-off.md'),
+        (Join-Path $harnessDir 'planning-chain.md'),
+        (Join-Path $harnessDir 'SKILL.md'),
+        (Join-Path $harnessDir 'panel.md')
+    )) {
+        $loopText = Get-Content -Raw -Path $loopFile
+        if ($loopText.Contains($loopPhrase)) {
+            $failures.Add("Thinking-loop phrase still present: $loopPhrase ($loopFile)")
         }
     }
 }

@@ -4,6 +4,7 @@ using Recall.Core.Ingest;
 using Recall.Core.Ports;
 using Recall.Core.Sync;
 using Recall.Maui.Platform;
+using Recall.Maui.Platform.Debug;
 
 namespace Recall.Maui.DependencyInjection;
 
@@ -22,6 +23,7 @@ public static class MauiServiceCollectionExtensions
         services.AddSingleton<IDeviceOsNameProvider, MauiDeviceOsNameProvider>();
         services.AddSingleton<IDeviceIdCandidateProvider, MauiDeviceIdCandidateProvider>();
         services.AddSingleton<IAgeCutoffPreferenceStore, MauiAgeCutoffPreferenceStore>();
+        services.AddSingleton<IOnboardingCompletionStore, MauiOnboardingCompletionStore>();
         services.AddSingleton<IRecallShellKind, MauiRecallShellKind>();
         services.AddSingleton<IGrantedFolderAccessService, MauiGrantedFolderAccessService>();
         services.AddSingleton<IGrantedTextReader, MauiGrantedTextReader>();

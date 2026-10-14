@@ -50,6 +50,8 @@ public sealed class DeviceRecordService : IDeviceRecordService
 
     public string GetInitials() => DeviceInitials.FromDisplayName(GetDisplayName());
 
+    public void InvalidateCache() => cached = null;
+
     private DeviceRecordState EnsureLoaded()
     {
         if (cached is not null)
