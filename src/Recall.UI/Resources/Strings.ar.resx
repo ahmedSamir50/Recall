@@ -28,6 +28,7 @@
   <data name="Folders_Title" xml:space="preserve"><value>اختر ما يُسمح لريكول بقراءته</value></data>
   <data name="Folders_Lead" xml:space="preserve"><value>تُفهرس هذه المجلدات فقط. يمكنك الإضافة أو الإزالة لاحقًا من التفضيلات.</value></data>
   <data name="Folders_Add" xml:space="preserve"><value>إضافة مجلد</value></data>
+  <data name="Folders_Remove" xml:space="preserve"><value>إزالة المجلد</value></data>
   <data name="Folders_SkipNote" xml:space="preserve"><value>مُستثنى: مجلدات النظام والتطبيقات الأخرى وكل ما لا تختاره.</value></data>
   <data name="Folders_PickOne" xml:space="preserve"><value>اختر مجلدًا واحدًا على الأقل</value></data>
   <data name="Folders_PermissionDenied" xml:space="preserve"><value>لا يستطيع ريكول قراءة هذا المجلد</value></data>

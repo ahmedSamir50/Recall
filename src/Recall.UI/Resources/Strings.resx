@@ -28,6 +28,7 @@
   <data name="Folders_Title" xml:space="preserve"><value>Pick what Recall may read</value></data>
   <data name="Folders_Lead" xml:space="preserve"><value>Only these folders are indexed. You can add or remove them later in Preferences.</value></data>
   <data name="Folders_Add" xml:space="preserve"><value>Add folder</value></data>
+  <data name="Folders_Remove" xml:space="preserve"><value>Remove folder</value></data>
   <data name="Folders_SkipNote" xml:space="preserve"><value>Skipped: system folders, other apps, anything you don't pick.</value></data>
   <data name="Folders_PickOne" xml:space="preserve"><value>Pick at least one folder</value></data>
   <data name="Folders_PermissionDenied" xml:space="preserve"><value>Recall can't read this folder</value></data>

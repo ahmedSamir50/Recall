@@ -52,4 +52,4 @@ window.recallMountLatticeClassic = function mountLattice(canvas,{theme='dark',ma
   destroy(){cancelAnimationFrame(raf);ro.disconnect();io.disconnect();document.removeEventListener('visibilitychange',vis);removeEventListener('pointermove',pm)}};
 }
 
-window.mountLattice=mountLattice;
+window.mountLattice=window.recallMountLatticeClassic;

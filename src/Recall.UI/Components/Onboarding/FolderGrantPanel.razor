@@ -1,10 +1,10 @@
 @namespace Recall.UI.Components
 @inherits RecallComponentBase
 
-<section class="g2 rounded-2xl w-full max-w-640 p-5 rise">
+<section class="g2 rounded-2xl w-full max-w-full min-w-0 p-5 rise overflow-hidden">
     @if (ShowStepper)
     {
-        <ol class="flex gap-2 mb-6" aria-label="progress">
+        <ol class="flex gap-2 mb-6 w-full min-w-0" aria-label="progress">
             @for (var i = 1; i <= 3; i++)
             {
                 <li class="h-1 flex-1 rounded-full" style="background:@(i <= Step ? "var(--cyan-ink)" : "var(--c3)")"></li>
@@ -21,10 +21,10 @@
     <ul class="flex flex-col gap-2 mb-4">
         @foreach (var grant in Ui.Current.Grants)
         {
-            <li class="flex items-center gap-3 p-3 rounded-xl border bd" style="background:var(--c1)">
-                <span class="flex-1 min-w-0">
-                    <span class="block font-medium">@grant.DisplayName</span>
-                    <bdi class="ltr block f-mono text-12 ink3 truncate text-start">@grant.Path</bdi>
+            <li class="flex items-start gap-3 p-3 rounded-xl border bd w-full min-w-0" style="background:var(--c1)">
+                <span class="flex-1 min-w-0 overflow-hidden">
+                    <span class="block font-medium truncate">@grant.DisplayName</span>
+                    <bdi class="ltr block f-mono text-12 ink3 break-uri text-start">@PathLabel(grant.Path)</bdi>
                     <div class="flex flex-wrap gap-2 mt-2">
                         <label class="text-12 ink2 flex items-center gap-1">
                             <input type="checkbox" checked="@IsKindEnabled(grant.EnabledKinds, GrantFileKinds.Text)" @onchange="e => ToggleKind(grant.Path, GrantFileKinds.Text, (bool)e.Value!)" />
@@ -44,7 +44,7 @@
                         </label>
                     </div>
                 </span>
-                <button type="button" class="btn btn-g !py-1 text-13" @onclick="() => Remove(grant.Path)">×</button>
+                <button type="button" class="btn btn-g text-13 shrink-0" aria-label="@T("Folders_Remove")" @onclick="() => Remove(grant.Path)">×</button>
             </li>
         }
     </ul>

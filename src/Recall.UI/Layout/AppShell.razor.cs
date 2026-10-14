@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using Recall.Core.Device;
 using Recall.Core.Ports;
 using Recall.UI.State;
 
@@ -14,6 +15,21 @@ public partial class AppShell
     private IJSRuntime Js { get; set; } = null!;
 
     private ShellUiSnapshot Snapshot => Ui.Current;
+
+    private string Initials
+    {
+        get
+        {
+            try
+            {
+                return Device.GetInitials();
+            }
+            catch (DeviceIdNotReadyException)
+            {
+                return string.Empty;
+            }
+        }
+    }
 
     protected override void OnStoreChanged()
     {

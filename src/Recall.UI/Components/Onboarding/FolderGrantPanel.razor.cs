@@ -34,7 +34,16 @@ public partial class FolderGrantPanel
     {
         overlapWarning = null;
         permissionError = null;
-        var result = await Picker.PickFolderAsync();
+        FolderPickerResult result;
+        try
+        {
+            result = await Picker.PickFolderAsync();
+        }
+        catch (Exception)
+        {
+            permissionError = T("Folders_PermissionDenied");
+            return;
+        }
         if (result.Outcome == FolderPickerOutcome.Denied)
         {
             permissionError = T("Folders_PermissionDenied");
@@ -46,11 +55,7 @@ public partial class FolderGrantPanel
             return;
         }
 
-        var name = Path.GetFileName(result.Path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            name = result.Path;
-        }
+        var name = DisplayNameFor(result.Path);
 
         var add = Ui.TryAddGrant(new ScopeFolderGrant(result.Path, name, GrantFileKinds.All, result.ReopenToken));
         if (add.Status == ScopeGrantAddStatus.OverlapChildOfExistingParent)
@@ -86,4 +91,54 @@ public partial class FolderGrantPanel
     }
 
     private static bool IsKindEnabled(GrantFileKinds kinds, GrantFileKinds kind) => kinds.HasFlag(kind);
+
+    private static string PathLabel(string path)
+    {
+        var tree = TreeLabel(path);
+        return string.IsNullOrWhiteSpace(tree) ? path : tree;
+    }
+
+    private static string DisplayNameFor(string path)
+    {
+        var tree = TreeLabel(path);
+        if (!string.IsNullOrWhiteSpace(tree))
+        {
+            var colon = tree.LastIndexOf(':');
+            if (colon >= 0 && colon < tree.Length - 1)
+            {
+                return tree[(colon + 1)..];
+            }
+
+            return tree;
+        }
+
+        var trimmed = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var file = Path.GetFileName(trimmed);
+        return string.IsNullOrWhiteSpace(file) ? path : file;
+    }
+
+    private static string? TreeLabel(string path)
+    {
+        if (!path.StartsWith("content://", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var decoded = Uri.UnescapeDataString(path);
+        const string marker = "/tree/";
+        var index = decoded.LastIndexOf(marker, StringComparison.Ordinal);
+        if (index < 0)
+        {
+            return null;
+        }
+
+        var tree = decoded[(index + marker.Length)..];
+        var slash = tree.IndexOf('/');
+        if (slash >= 0)
+        {
+            tree = tree[..slash];
+        }
+
+        return tree;
+    }
 }

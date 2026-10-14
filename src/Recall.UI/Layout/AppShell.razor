@@ -5,14 +5,14 @@
     <header class="g1 h-header shrink-0 flex items-center gap-3 px-3 md:px-4 border-b bd">
         <div class="flex items-center gap-2 md:w-[200px]">
             <span class="w-7 h-7 rounded-lg grid place-items-center cy logo-mark" aria-hidden="true">
-                <RecallIcon Name="lat" Css="w-4 h-4" />
+                <InfinityMark Css="w-4 h-4" />
             </span>
             <span class="f-head font-semibold text-15">@RecallText.Get("Brand", Snapshot.Culture)</span>
         </div>
         <div class="flex-1"></div>
         <span class="hidden md:inline-flex"><PrivacyPill /></span>
         <ThemeLanguageToggles />
-        <span class="w-8 h-8 rounded-full grid place-items-center text-12 font-semibold" style="background:var(--violet-bg);color:var(--violet)" aria-hidden="true">@Device.GetInitials()</span>
+        <span class="w-8 h-8 rounded-full grid place-items-center text-12 font-semibold" style="background:var(--violet-bg);color:var(--violet)" aria-hidden="true">@Initials</span>
     </header>
     <div class="flex flex-1 min-h-0">
         <nav class="g1 hidden md:flex flex-col w-rail lg:w-railx shrink-0 border-e bd p-2 gap-1" aria-label="Main">

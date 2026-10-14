@@ -3,7 +3,9 @@
 @inherits RecallComponentBase
 
 <OnboardingHeader Step="1" />
-<main class="flex-1 overflow-auto grid place-items-center px-4 py-6">
-    <FolderGrantPanel Step="1" ShowStepper="true" ShowNavButtons="true"
-                      OnBack="HandleBack" OnContinue="HandleContinue" />
+<main class="flex-1 min-h-0 min-w-0 w-full overflow-auto px-4 py-6">
+    <div class="w-full max-w-640 min-w-0 mx-auto">
+        <FolderGrantPanel Step="1" ShowStepper="true" ShowNavButtons="true"
+                          OnBack="HandleBack" OnContinue="HandleContinue" />
+    </div>
 </main>
