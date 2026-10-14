@@ -8,9 +8,10 @@ A `@recall:` / `@reacall:` expert returns this YAML and nothing else. Do not edi
   confidence: <0-100>
   checked: "<one line: claim — path>"
   pushback: "<one line, or none>"
+  mitigation: "<the gap when a direct expert is under 96, or when an advisory finding needs an action, otherwise none>"
   concerns:
     - "<one line>"
-  recommendation: "<one line: the single change>"
+  recommendation: "<the action that closes the gap, or none when nothing is left>"
 ```
 
 Rules:
@@ -20,10 +21,14 @@ Rules:
 - `concerns` has at least one line. A rubber stamp with an empty list is a failed sign-off.
 - `recommendation` is one path. Options and essays stay out of this block.
 - `notes` is not a field. Do not add it.
-- Confidence scores how much of the shared context covers the claim, not how sure you feel. 80+ means the skill, canon, and the relevant file are already loaded. Do not re-read them to raise the score.
-- `approve` needs confidence at least 80 and no material gap.
+- Confidence is the honest result of the check. There is no floor of 80. Rounding a score up fails the sign-off. A low score used to skip the check fails it too.
+- Each plan names one or more direct experts from the whole panel. Every other expert on that plan is advisory. The panel is every id in `panel.md`, including ids added later.
+- Every expert, direct and advisory, checks their own row against canon, the named files, and the decisions those files already make before scoring. A gap that check can close is unfinished work: close it, then score again honestly.
+- The user will not approve a plan while any direct expert is under 96. That expert's verdict is `push-back` or `approve-with-conditions`. `mitigation` names the gap. `recommendation` names the action. Do not present the plan as ready.
+- An advisory expert is not held to 96. An advisory `push-back` or `block` still keeps the plan not ready.
+- A direct `approve` needs an honest confidence of 96 or higher, `mitigation: none`, no material gap, and an execution manifest. A plan that leaves a file, signature, branch, sentence, or test assertion for the implementing agent to choose is `push-back`.
 - `approve-with-conditions` means you approve if `recommendation` is adopted.
 - `push-back` means wrong logic, a missing branch test, or a rule break.
 - `block` means a canon non-negotiable or a test-honesty failure this plan cannot meet.
 
-The parent publishes the YAML list. It does not expand it into prose.
+The parent writes the YAML once, under `## Expert sign-offs` in the plan. It does not paste the same list in the chat, and it does not expand a field into a paragraph.

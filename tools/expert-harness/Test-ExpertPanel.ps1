@@ -68,6 +68,57 @@ if ($ruleText -notmatch 'Do not launch expert subagents' -or $planningText -notm
     $failures.Add('Harness still allows a subagent per expert')
 }
 
+$rulesPath = Join-Path $harnessDir 'development-rules.md'
+$signOffPath = Join-Path $harnessDir 'sign-off.md'
+$rulesText = Get-Content -Raw -Path $rulesPath
+$signOffText = Get-Content -Raw -Path $signOffPath
+
+$manifestChecks = @(
+    @{ Name = 'always-applied rule'; Text = $ruleText; Needles = @('execution manifest', 'Do not invent a file', 'stop and amend the plan', 'that plan finishes it', 'Write the YAML once', 'under 96', 'one or more direct experts', 'advisory') },
+    @{ Name = 'planning chain'; Text = $planningText; Needles = @('## Execution manifest', 'not executable', 'Do not invent', 'Do not paste that YAML in the chat', 'that plan finishes it', 'Do not round a score up to 96') },
+    @{ Name = 'development rules'; Text = $rulesText; Needles = @('execution manifest', 'stops and names the missing line', 'Close means done') },
+    @{ Name = 'sign-off'; Text = $signOffText; Needles = @('execution manifest', 'mitigation', 'under 96', 'honest', 'advisory') }
+)
+foreach ($check in $manifestChecks) {
+    foreach ($needle in $check.Needles) {
+        if ($check.Text -notmatch [regex]::Escape($needle)) {
+            $failures.Add("$($check.Name) is missing plan-grain clause: $needle")
+        }
+    }
+}
+
+$sampleAsDefinition = 'On an architecture plan that includes'
+foreach ($sampleFile in @(
+    (Join-Path $root '.cursor/rules/recall-harness.mdc'),
+    (Join-Path $harnessDir 'sign-off.md')
+)) {
+    $sampleText = Get-Content -Raw -Path $sampleFile
+    if ($sampleText.Contains($sampleAsDefinition)) {
+        $failures.Add("Direct experts are still a sample list: $sampleFile")
+    }
+}
+
+$confidenceFloor = @(
+    'Confidence is 80 or higher',
+    'at least 80',
+    'under 80',
+    'scores under 80'
+)
+$confidenceFiles = @(
+    (Join-Path $root '.cursor/rules/recall-harness.mdc'),
+    (Join-Path $harnessDir 'planning-chain.md'),
+    (Join-Path $harnessDir 'sign-off.md'),
+    (Join-Path $skillsDir 'recall-expert-harness/SKILL.md')
+)
+foreach ($phrase in $confidenceFloor) {
+    foreach ($confidenceFile in $confidenceFiles) {
+        $confidenceText = Get-Content -Raw -Path $confidenceFile
+        if ($confidenceText.Contains($phrase)) {
+            $failures.Add("80 confidence floor still present: $phrase ($confidenceFile)")
+        }
+    }
+}
+
 $fanOut = @(
     'Launch all ten',
     'Research the repo and InitDocs',
@@ -100,4 +151,8 @@ if ($failures.Count -gt 0) {
     exit 1
 }
 
+Write-Output "Fan-out ban OK (no subagent per expert, no second read of the shared files)"
+Write-Output "Execution manifest OK (plan names every file, signature, branch, sentence, and test)"
+Write-Output "Close means done OK (a close request finishes that parent unless a sign-off names a blocker)"
+Write-Output "Sign-off once OK (one or more direct experts per plan; advisory experts still check; under 96 is not ready)"
 Write-Output "Expert panel OK ($($expected.Count) experts)"

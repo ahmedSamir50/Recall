@@ -13,9 +13,30 @@ If the user message contains `@recall:` or `@reacall:`, or asks for a project, m
 
 1. Read `.cursor/skills/recall-expert-harness/SKILL.md` and follow `planning-chain.md`.
 2. Do not launch expert subagents. Sign the panel in this chat after one read of the shared files. A subagent per expert re-reads the same canon, rules, InitDocs, and worktree in a fresh context and multiplies the token cost by the panel size. That is forbidden for every plan, review, and follow-up.
-3. Publish each sign-off in full (verdict, confidence, checked, concerns, recommendation, push-back).
+3. Write each sign-off once, under `## Expert sign-offs` in the plan. The chat reply is the synthesis. Do not paste the YAML in the chat as well.
 4. Do not hide dissent, and do not treat agreement as valid without a checked list.
 5. Do not start implementation in that turn.
+6. A plan with no execution manifest is not executable. Do not approve it. The manifest names every file path, type and method signature, branch including the failure, literal, Arabic and English sentence, and test assertion. A heading with an empty list does not count.
+
+## Executing an accepted plan
+
+The execution manifest is the whole task. Edit only the paths it names. Write only the members, branches, literals, and tests it writes out. Do not invent a file, type, helper, refactor, or sentence. A missing path, signature, branch, or sentence is a stop: name the missing line and wait.
+
+A code review compares the diff to that manifest. Fix a hunk that contradicts a named branch. Revert a hunk the manifest does not name. Do not redesign, rename, or restyle. If the review would rewrite most of the files, stop and amend the plan.
+
+## Closing a task, epic, or phase
+
+When the user says to close a task, epic, or phase, that plan finishes it. The manifest includes every remaining partial and not-started child. After execution that parent is `done` and 100 in the one progress table. A leftover child is allowed only when a sign-off names a blocker, an external dependency, or a push-back the user has not accepted. Do not open another plan to finish the same close.
+
+## Sign-off effort
+
+Write the YAML once, in the plan. Confidence is an honest account of the check. Do not round it up, and do not use a low number in place of doing the check.
+
+Each plan names one or more direct experts from the whole panel in `panel.md`. The panel is every expert id there, including ids added later. It is not a sample list. Every expert the plan does not name as direct is advisory on that plan.
+
+Every expert, direct and advisory, does a best accountable effort on their own row before they score: the plan against canon, the named files, and the decisions those files already make. A gap that check can close is unfinished work. Finish it, then score again honestly.
+
+The user will not approve a plan while any direct expert is under 96. Do not present that plan as ready. Under 96, `mitigation` names the gap and `recommendation` names the action. An advisory expert is not held to 96. An advisory `push-back` or `block` still keeps the plan not ready.
 
 ## Otherwise
 

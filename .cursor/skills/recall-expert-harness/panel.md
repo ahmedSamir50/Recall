@@ -2,6 +2,8 @@
 
 Each expert is a Cursor agent (`.cursor/agents/<id>.md`) plus a skill (`.cursor/skills/<id>/SKILL.md`). The skill is the checklist. The agent is the persona. `canon.md` wins if they disagree.
 
+The panel is every id in the table below, including ids added later. A plan names one or more of them as its direct experts, from the rows that plan changes. Every other id is advisory on that plan. Direct and advisory both do a best accountable effort on their own row.
+
 | Id | Owns | Call in when the work touches |
 |---|---|---|
 | `dotnet-architect` | Process boundaries, solution layout, DI, .NET 10, analyzers, ADRs | Projects, hosting, composition root, a new dependency, an architecture change |
