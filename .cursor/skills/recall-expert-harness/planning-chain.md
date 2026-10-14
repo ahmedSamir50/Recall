@@ -80,3 +80,15 @@ Lead with blockers and push-backs. Do not average a `block` into an approval. `u
 ## After the user accepts
 
 Update `canon.md` only for decisions they accepted. Then implementation follows the owning skills, the development rules, and the test matrix. A later `@recall:` plan runs the full chain again.
+
+## After a `@recall:` plan is executed
+
+The turn that carries out an accepted `@recall:` plan updates the single progress table at the end of `docs/plan.md` before it says the work is done. That table is the only progress board. Do not add a second table, and do not put percentages in the phase or epic headings.
+
+- A bold phase row is the header: status and percentage.
+- A bold epic row under that phase is the subheader: status and percentage.
+- Each task row under that epic: status and percentage.
+- The last row is the footer for all epics: status and percentage.
+- A task is 100 when `done`, 50 when `partial`, and 0 when `not-started`.
+- An epic percentage is the mean of its tasks, rounded to the nearest whole number. A phase percentage is the mean of its tasks. The footer is the mean of every task in Phases 1–7.
+- Parent words stay on the all-or-nothing rule: `done` only when every child is `done`, `not-started` only when every child is `not-started`, otherwise `partial`.

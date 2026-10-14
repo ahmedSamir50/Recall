@@ -10,7 +10,7 @@ The vector-database facts below were checked in the local `AdamSystems.ZVec.NET`
 
 Target framework is `net10.0` everywhere, including the MAUI heads `net10.0-android`, `net10.0-ios`, `net10.0-windows10.0.19041.0`, and `net10.0-maccatalyst`. Runtime identifiers are `android-arm64`, `ios-arm64`, `win-x64`, and `maccatalyst-arm64`. `win-arm64` is not a v1 identifier. `ios-arm64` is a beta risk: if that head fails, the other three still ship.
 
-`Microsoft.ML.OnnxRuntime` and `AdamSystems.ZVec.NET` `1.0.0-beta.6+zvec.0.7.0` are in-process singletons. The package version stays pinned until an explicit GA upgrade. Tokenizer text uses `Microsoft.ML.Tokenizers` over the model's `tokenizers.json`.
+`Microsoft.ML.OnnxRuntime` and NuGet id `ZVec.NET` `1.0.0-beta.6` are in-process. `ZVec.NET` is not on nuget.org; this machine restores it from the local feed. Tokenizer text uses `Tokenizers.DotNet` 1.4.1 over `tokenizer.json`, because that file is BPE. Android and iOS have no tokenizer runtime in that package, so those shells fail closed. Windows uses `win-x64`. Mac Catalyst uses `osx-arm64`.
 
 Solution shape:
 
@@ -19,7 +19,7 @@ Solution shape:
 - `src/Recall.Maui/` — the only composition root and the only place with an HTTP client.
 - `src/Recall.Benchmarks/`, `tests/Recall.UnitTests/`, `tests/Recall.IntegrationTests/`, `tests/Recall.BenchTests/`, `tests/Recall.CorpusTests/`, `tools/corpus-builder/`, `tools/mrl-eval/`.
 
-`Recall.Maui` registers `AddZVec`, `AddOnnxRuntime`, and `AddRecallCore`, and it hosts the ingestion worker. Epic 1.1 does not call those methods and does not start the ingestion worker. The HTTP client is `IHttpClientFactory`, used only by the model-download adapter. `BannedApiAnalyzers` makes `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` a compile error inside `Recall.Core`, including `Recall.Core.Sync`.
+`Recall.Maui` calls `AddRecallCore` and `AddRecallAdapters`. The text ONNX session and the ZVec collection are created when a text job needs them. The HTTP client is `IHttpClientFactory`, used only by the model-download adapter. `BannedApiAnalyzers` makes `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` a compile error inside `Recall.Core`, including `Recall.Core.Sync`.
 
 Ports live in Core. Implementations live in the MAUI head:
 
@@ -111,15 +111,15 @@ v1 OCR is one shared detector plus two readers: official PP-OCRv6 small ONNX for
 
 ## 8. Model download
 
-`IModelDownloadService` is the only network path. It downloads an enabled EmbeddingGemma ONNX piece into the platform app-data folder, checks SHA-256, and can resume. The request carries no device id, file name, document text, or vector. Weights are never in the installer. We may generate and upload our own int8 and int4 files. GGUF Q5 and Q6 names do not run on this runtime.
+`IModelDownloadService` is the only network path. The text download writes the int8 ONNX, its external data file, and `tokenizer.json` into app data. A `206` appends, a `200` replaces the partial, and a short body stays a `.partial` file. Each complete file is SHA-256 checked before it is moved. Retry starts the download again. The request names the public weight file only. Weights are not committed under `tests/Recall.IntegrationTests/TestAssets/embeddinggemma-2-text/`. Float16 and a 4-bit file are not this download. GGUF Q5 and Q6 names do not run on this runtime.
 
 ## 9. Device record
 
-First launch mints a random device id and reads the OS device name. Both original values are immutable from day 0. The person can edit a display name. The id is not a hardware id and not an advertising id. It stays on the device and is not uploaded, including on the model-download request.
+First launch stores the public platform id when that read is ready: Android `ANDROID_ID` (rejecting `9774d56d682e549c`), iOS and Mac Catalyst `identifierForVendor`, Windows `MachineGuid`. A random id is stored only when the candidate is empty, whitespace, or known-bad. The native OS name is stored and stays read-only. The person edits only the display name. The id is not a serial, IMEI, UDID, or advertising id. It stays on the device and is not uploaded, including on the model-download request. See [adr/0001-platform-device-id.md](adr/0001-platform-device-id.md).
 
 ## 10. Sync stub
 
-The schema stays sync-ready and the transport stays absent. v1 writes an append-only plaintext op-log on local disk with four operations: `INSERT`, `DELETE`, `PIN`, and `UNPIN`. The log is never sent. Deletes are tombstones. The sync feature flag defaults to off. `ISyncAdapter` is a stub. `Recall.Core.Sync` has no transport. The UI does not collect a pairing code. v1 does not implement pairing, transport, or encryption. `ISecureStorageService` has no sync keys to hold.
+The schema stays sync-ready and the transport stays absent. v1 appends an unsent `INSERT` in memory and as one line in a UTC-day file under `oplog` (`yyyy-MM-dd.log`). The log is never sent. The operations reserved for later are `DELETE`, `PIN`, and `UNPIN`. The sync feature flag defaults to off. `Recall.Core.Sync` has no transport. The UI does not collect a pairing code. v1 does not implement pairing, transport, or encryption. `ISecureStorageService` has no sync keys to hold.
 
 ## 11. Tests
 
