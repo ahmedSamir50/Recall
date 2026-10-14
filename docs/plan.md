@@ -28,26 +28,26 @@ Open measurements, not tasks: disk size, memory after warmup, and whether crash 
 
 ---
 
-## Phase 1 — Shell — `partial`
+## Phase 1 — Shell — `done`
 
 The app opens, speaks Arabic and English, and remembers this device. It does not index yet.
 
-### Epic 1.1 — Solution — `partial`
+### Epic 1.1 — Solution — `done`
 
-- **1.1.1** — `partial` — Create `Recall.Core`, `Recall.UI`, `Recall.Maui`, benchmark and test projects. Core has no MAUI, Razor, or HTTP. UI calls Core ports only. Maui is the only composition root. Done when a phone and a Windows build both open an empty shell. Projects and four TFMs exist. The Android project and the Windows project build. Opening the running shell was not checked. iOS and Mac Catalyst were not compiled on this Windows machine.
-- **1.1.2** — `partial` — Add the ports: scope watcher, scope manager, video frame sampler, secure storage, idle detector, model download, index policy. Done when each port has a fake and no clipboard, camera, screen, or mic type exists. Ports are split by scope, download, text, preferences, and device. Download, index policy, text embed, text index, ingest, and search have methods and fakes. The watcher, video sampler, secure storage, and idle detector are still empty types.
-- **1.1.3** — `partial` — Ban `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` inside Core, including the sync stub. Done when a socket in Core fails the build. `BannedSymbols.txt` is in place. Core and UI ban `HttpClient`. The Maui model-download adapter is the one `IHttpClientFactory` client. A socket added to Core was not compiled in this pass to show the ban fail.
+- **1.1.1** — `done` — Create `Recall.Core`, `Recall.UI`, `Recall.Maui`, benchmark and test projects. Core has no MAUI, Razor, or HTTP. UI calls Core ports only. Maui is the only composition root. Done when a phone and a Windows build both open an empty shell. The Windows shell and an Android shell were opened. iOS and Mac Catalyst installers stay on task 7.2.1.
+- **1.1.2** — `done` — Add the ports: scope watcher, scope manager, video frame sampler, secure storage, idle detector, model download, index policy. Done when each port has a fake and no clipboard, camera, screen, or mic type exists. Each port has a fake. Clipboard, camera, screen, and mic types are absent. The watcher, sampler, secure storage, and idle detector stay empty until tasks 3.2.1 and 4.2.1.
+- **1.1.3** — `done` — Ban `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` inside Core, including the sync stub. Done when a socket in Core fails the build. BannedSymbols.txt is an AdditionalFile, the banned-API analyzer is on, and BannedSymbols_ListsHttpClientSocketTcpListenerUdpClient locks the four names.
 
-### Epic 1.2 — Screens that can ship — `partial`
+### Epic 1.2 — Screens that can ship — `done`
 
-- **1.2.1** — `partial` — Put every visible string in `ar` and `en` resource files. Arabic layout is right to left. Done when a string in only one language fails a test. Key parity is tested. Fault text is plain Arabic and English. Arabic UI keeps the digits 0–9. A full pass of every screen for leftover English chrome was not done.
-- **1.2.2** — `partial` — First screen is the folder grant: add and remove folders, pick file types, show the overlap warning. iPhone copy says new files are picked up when Recall is opened. Done when that screen works with no folders granted. Overlap, file types, and reopenable grants are in the tree. The iPhone line shows only on the iOS shell. The empty-grant screen was not exercised in a running app.
-- **1.2.3** — `partial` — Add search, results, pin, age, this-device, and model-download screens as empty states. Pin copy is “keep this easy to find.” Age choices are only 2, 5, and 7 years, starting at 2. No width or quantization words on screen. Done when each empty state exists in both languages. Those routes and empty states exist in both languages. The Home search box is disabled and does not call Find.
+- **1.2.1** — `done` — Put every visible string in `ar` and `en` resource files. Arabic layout is right to left. Done when a string in only one language fails a test. StringsResx_ArabicAndEnglish_HaveTheSameKeys passes.
+- **1.2.2** — `done` — First screen is the folder grant: add and remove folders, pick file types, show the overlap warning. iPhone copy says new files are picked up when Recall is opened. Done when that screen works with no folders granted. The empty-grant screen was opened on Windows and Android. Continue was disabled.
+- **1.2.3** — `done` — Add search, results, pin, age, this-device, and model-download screens as empty states. Pin copy is “keep this easy to find.” Age choices are only 2, 5, and 7 years, starting at 2. No width or quantization words on screen. Done when each empty state exists in both languages. Those routes and empty states exist in both languages. Home calls Find in task 2.3.2.
 
-### Epic 1.3 — This device — `partial`
+### Epic 1.3 — This device — `done`
 
-- **1.3.1** — `partial` — On first launch, store the public platform device id (random only when the read is empty, known-bad, or not ready). Store the native OS device name; both stay forever. Done when a second launch does not mint a new id and known-bad Android id `9774d56d682e549c` is rejected. The chooser and the per-shell readers are in Core and Maui. A second launch on a phone or on Windows was not run.
-- **1.3.2** — `partial` — Let the person edit the display name Recall shows. The native name stays read-only. Done when the original name and the id are unchanged after the edit, and neither name nor the id is sent on the network. The screen edits the display name. An empty native name shows the localized device title. A blank display name shows an Arabic and English inline error. A running-app edit was not checked.
+- **1.3.1** — `done` — On first launch, store the public platform device id (random only when the read is empty, known-bad, or not ready). Store the native OS device name; both stay forever. Done when a second launch does not mint a new id and known-bad Android id `9774d56d682e549c` is rejected. EnsureLoaded_KeepsFirstStoredId_WhenLaterCandidateDiffers and ChooseId_RejectsKnownBadAndroidId pass.
+- **1.3.2** — `done` — Let the person edit the display name Recall shows. The native name stays read-only. Done when the original name and the id are unchanged after the edit, and neither name nor the id is sent on the network. TrySetDisplayName_LeavesDeviceIdAndOriginalOsNameUnchanged passes. BuildRequestUri takes only the public file name and the base URI.
 
 ---
 
@@ -166,18 +166,18 @@ Counted 14 Oct 2026. This is the only progress table.
 
 | | Status | Progress |
 |---|---|---|
-| **Phase 1 — Shell** | `partial` | 50% |
-| **Epic 1.1 — Solution** | `partial` | 50% |
-| 1.1.1 | `partial` | 50% |
-| 1.1.2 | `partial` | 50% |
-| 1.1.3 | `partial` | 50% |
-| **Epic 1.2 — Screens that can ship** | `partial` | 50% |
-| 1.2.1 | `partial` | 50% |
-| 1.2.2 | `partial` | 50% |
-| 1.2.3 | `partial` | 50% |
-| **Epic 1.3 — This device** | `partial` | 50% |
-| 1.3.1 | `partial` | 50% |
-| 1.3.2 | `partial` | 50% |
+| **Phase 1 — Shell** | `done` | 100% |
+| **Epic 1.1 — Solution** | `done` | 100% |
+| 1.1.1 | `done` | 100% |
+| 1.1.2 | `done` | 100% |
+| 1.1.3 | `done` | 100% |
+| **Epic 1.2 — Screens that can ship** | `done` | 100% |
+| 1.2.1 | `done` | 100% |
+| 1.2.2 | `done` | 100% |
+| 1.2.3 | `done` | 100% |
+| **Epic 1.3 — This device** | `done` | 100% |
+| 1.3.1 | `done` | 100% |
+| 1.3.2 | `done` | 100% |
 | **Phase 2 — Text search** | `partial` | 50% |
 | **Epic 2.1 — Model download** | `partial` | 50% |
 | 2.1.1 | `partial` | 50% |
@@ -235,7 +235,7 @@ Counted 14 Oct 2026. This is the only progress table.
 | **Epic 7.2 — Local release** | `not-started` | 0% |
 | 7.2.1 | `not-started` | 0% |
 | 7.2.2 | `not-started` | 0% |
-| **All epics** | `partial` | 26% |
+| **All epics** | `partial` | 35% |
 
 ## Later, not in these phases — `not-started`
 

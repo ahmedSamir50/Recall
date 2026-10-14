@@ -6,7 +6,7 @@
     <section class="g2 rounded-2xl w-full max-w-640 p-5 rise">
         <h2 class="f-head font-semibold text-24 mb-2">@T("Models_Title")</h2>
         <p class="ink2 mb-6">@T("Models_Lead")</p>
-        <ul class="flex flex-col gap-3 mb-5">
+        <ul class="plain-list flex flex-col gap-3 mb-5">
             @foreach (var entry in ModelCatalog.All)
             {
                 <ModelRow Entry="entry" Label="@ModelLabel(entry.Modality)" AutoStart="true" />

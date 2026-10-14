@@ -27,10 +27,12 @@ public static class MauiProgram
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddMudServices();
         var settings = typeof(MauiProgram).Assembly.GetManifestResourceStream("Recall.Maui.appsettings.json");
-        if (settings is not null)
+        if (settings is null)
         {
-            builder.Configuration.AddJsonStream(settings);
+            throw new InvalidOperationException("Recall.Maui.appsettings.json is not embedded.");
         }
+
+        builder.Configuration.AddJsonStream(settings);
 
         var secretsPath = Path.Combine(FileSystem.AppDataDirectory, "appsettings.secrets.json");
         if (File.Exists(secretsPath))

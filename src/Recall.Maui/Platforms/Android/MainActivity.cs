@@ -67,33 +67,43 @@ public partial class MainActivity : MauiAppCompatActivity
 
         ViewCompat.SetOnApplyWindowInsetsListener(content, new SystemBarPadding(this));
         ViewCompat.RequestApplyInsets(content);
-        PublishSafeArea(content);
-        content.Post(() =>
-        {
-            publishedSafeTop = -1;
-            publishedSafeBottom = -1;
-            PublishSafeArea(content);
-        });
+        publishedSafeTop = -1;
+        publishedSafeBottom = -1;
+        safeAreaAttempts = 8;
+        TryPublishSafeArea(content);
     }
 
-    private void PublishSafeArea(Android.Views.View content)
+    private int safeAreaAttempts;
+
+    private void TryPublishSafeArea(Android.Views.View content)
     {
-        var insets = content.RootWindowInsets;
-        if (insets is null || !OperatingSystem.IsAndroidVersionAtLeast(30))
+        PublishSafeArea(content);
+        if (safeAreaAttempts <= 0)
         {
             return;
         }
 
-        var bars = insets.GetInsets(WindowInsets.Type.SystemBars() | WindowInsets.Type.DisplayCutout());
+        safeAreaAttempts--;
+        content.PostDelayed(new SafeAreaRetry(this), 400);
+    }
+
+    private void PublishSafeArea(Android.Views.View content)
+    {
+        var (topPx, bottomPx) = SystemBarPixels(content);
+        if (topPx <= 0)
+        {
+            return;
+        }
+
         var density = content.Resources?.DisplayMetrics?.Density ?? 1f;
         if (density < 1f)
         {
             density = 1f;
         }
 
-        var top = (int)Math.Ceiling(bars.Top / density);
-        var bottom = (int)Math.Ceiling(bars.Bottom / density);
-        if (top == publishedSafeTop && bottom == publishedSafeBottom)
+        var top = (int)Math.Ceiling(topPx / density);
+        var bottom = (int)Math.Ceiling(bottomPx / density);
+        if (safeAreaAttempts <= 0 && top == publishedSafeTop && bottom == publishedSafeBottom)
         {
             return;
         }
@@ -109,6 +119,26 @@ public partial class MainActivity : MauiAppCompatActivity
         web.EvaluateJavascript(
             $"document.documentElement.style.setProperty('--safe-top','{top}px');document.documentElement.style.setProperty('--safe-bottom','{bottom}px');",
             null);
+    }
+
+    private (int Top, int Bottom) SystemBarPixels(Android.Views.View content)
+    {
+        if (OperatingSystem.IsAndroidVersionAtLeast(30))
+        {
+            var insets = content.RootWindowInsets ?? Window?.DecorView?.RootWindowInsets;
+            if (insets is not null)
+            {
+                var bars = insets.GetInsets(WindowInsets.Type.SystemBars() | WindowInsets.Type.DisplayCutout());
+                if (bars.Top > 0)
+                {
+                    return (bars.Top, bars.Bottom);
+                }
+            }
+        }
+
+        var id = content.Resources?.GetIdentifier("status_bar_height", "dimen", "android") ?? 0;
+        var top = id > 0 ? content.Resources!.GetDimensionPixelSize(id) : 0;
+        return (top, 0);
     }
 
     private static Android.Webkit.WebView? FindWebView(Android.Views.View? root)
@@ -133,6 +163,25 @@ public partial class MainActivity : MauiAppCompatActivity
         }
 
         return null;
+    }
+
+    private sealed class SafeAreaRetry : Java.Lang.Object, Java.Lang.IRunnable
+    {
+        private readonly MainActivity activity;
+
+        public SafeAreaRetry(MainActivity activity)
+        {
+            this.activity = activity;
+        }
+
+        public void Run()
+        {
+            var content = activity.FindViewById(Android.Resource.Id.Content);
+            if (content is not null)
+            {
+                activity.TryPublishSafeArea(content);
+            }
+        }
     }
 
     private sealed class SystemBarPadding : Java.Lang.Object, IOnApplyWindowInsetsListener

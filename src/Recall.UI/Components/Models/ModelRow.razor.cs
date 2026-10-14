@@ -21,6 +21,9 @@ public partial class ModelRow
     [Parameter]
     public bool AutoStart { get; set; }
 
+    [Parameter]
+    public EventCallback<TextModelDownloadPhase> PhaseChanged { get; set; }
+
     private TextModelDownloadPhase phase = TextModelDownloadPhase.NotStarted;
     private long bytesReceived;
     private long? currentFileTotal;
@@ -68,7 +71,7 @@ public partial class ModelRow
         TextModelDownloadPhase.Downloading => FormatDownloadingLabel(),
         TextModelDownloadPhase.Verifying => T("Models_Status_Verifying"),
         TextModelDownloadPhase.Ready => T("Models_Status_Verified"),
-        TextModelDownloadPhase.HashFailed or TextModelDownloadPhase.Interrupted or TextModelDownloadPhase.Cancelled => FaultMessage,
+        TextModelDownloadPhase.HashFailed or TextModelDownloadPhase.Interrupted or TextModelDownloadPhase.Cancelled => string.Empty,
         _ => string.Empty,
     };
 
@@ -128,6 +131,10 @@ public partial class ModelRow
         completedFiles = snap.CompletedFiles;
         fileCount = snap.FileCount;
         fault = snap.Fault;
+        if (TextRow && PhaseChanged.HasDelegate)
+        {
+            _ = PhaseChanged.InvokeAsync(phase);
+        }
     }
 
     private async Task StartDownloadIfNeededAsync()

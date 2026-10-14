@@ -92,12 +92,6 @@ public partial class FolderGrantPanel
 
     private static bool IsKindEnabled(GrantFileKinds kinds, GrantFileKinds kind) => kinds.HasFlag(kind);
 
-    private static string PathLabel(string path)
-    {
-        var tree = TreeLabel(path);
-        return string.IsNullOrWhiteSpace(tree) ? path : tree;
-    }
-
     private static string DisplayNameFor(string path)
     {
         var tree = TreeLabel(path);

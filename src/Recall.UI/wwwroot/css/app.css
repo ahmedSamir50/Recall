@@ -19,6 +19,7 @@
 @media(min-width:1024px){.lg\:inline{display:inline}.lg\:w-railx{width:224px}.lg\:hidden{display:none}}
 .shell-root{position:relative;z-index:10;height:100vh;height:100dvh;width:100%;max-width:100%;min-width:0;display:flex;flex-direction:column;overflow-x:hidden;box-sizing:border-box;padding-top:max(env(safe-area-inset-top, 0px), var(--safe-top, 0px));padding-bottom:max(env(safe-area-inset-bottom, 0px), var(--safe-bottom, 0px))}
 .break-uri{overflow-wrap:anywhere;word-break:break-word}
+.stepper,.plain-list{list-style:none;margin:0;padding:0}
 .w-18{width:18px}.h-18{height:18px}.w-4{width:1rem}.h-4{height:1rem}.w-7{width:1.75rem}.h-7{height:1.75rem}
 .w-10{width:2.5rem}.h-10{height:2.5rem}.w-insp{width:320px}.max-w-1200{max-width:1200px}
 .logo-mark{background:linear-gradient(135deg,color-mix(in srgb,var(--cyan) 22%,transparent),color-mix(in srgb,var(--violet) 28%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cyan) 40%,transparent)}

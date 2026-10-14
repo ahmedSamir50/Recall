@@ -77,6 +77,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="appsettings.json" LogicalName="Recall.Maui.appsettings.json" />
+  </ItemGroup>
+  <ItemGroup>
     <MauiImage Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#0B0D12" />
     <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0B0D12" BaseSize="128,128" />
     <MauiFont Include="Resources\Fonts\OpenSans-Regular.ttf" />

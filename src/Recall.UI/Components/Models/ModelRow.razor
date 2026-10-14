@@ -3,9 +3,9 @@
 
 <li class="p-4 rounded-xl border bd" style="background:var(--c1);@HashFailureBorderStyle">
     <div class="flex items-center gap-3 @(TextRow ? "mb-3" : "")">
-        <span class="flex-1 min-w-0">
-            <span class="block font-medium">@Label</span>
-            <bdi class="ltr f-mono text-12 ink3">@Entry.ModelId</bdi>
+        <span class="flex-1 min-w-0 overflow-hidden">
+            <span class="block font-medium truncate">@Label</span>
+            <bdi class="ltr block f-mono text-12 ink3 break-uri">@Entry.ModelId</bdi>
         </span>
         @if (TextRow)
         {
