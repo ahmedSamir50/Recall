@@ -9,18 +9,33 @@ using Recall.Maui.Platform;
 
 namespace Recall.Maui;
 
-[Activity(Theme = "@style/Recall.MainTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
+[Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
 public partial class MainActivity : MauiAppCompatActivity
 {
+    private const string SavedStateRegistryKey = "androidx.lifecycle.BundlableSavedStateRegistry.key";
+    private const string SupportFragmentsKey = "android:support:fragments";
+
     private int publishedSafeTop = -1;
     private int publishedSafeBottom = -1;
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
+        DropRestoredNavigationFragment(savedInstanceState);
         base.OnCreate(savedInstanceState);
         AndroidFolderPickerCoordinator.BindLauncher(
             RegisterForActivityResult(new ActivityResultContracts.OpenDocumentTree(), new TreeResultCallback()));
-        KeepContentBelowSystemBars();
+    }
+
+    private static void DropRestoredNavigationFragment(Bundle? savedInstanceState)
+    {
+        if (savedInstanceState is null)
+        {
+            return;
+        }
+
+        savedInstanceState.Remove(SupportFragmentsKey);
+        savedInstanceState.Remove("android:fragments");
+        savedInstanceState.GetBundle(SavedStateRegistryKey)?.Remove(SupportFragmentsKey);
     }
 
     protected override void OnResume()
