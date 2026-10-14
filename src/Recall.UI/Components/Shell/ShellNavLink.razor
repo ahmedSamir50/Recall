@@ -1,7 +1,7 @@
 @namespace Recall.UI.Components
 @inherits UiStoreComponentBase
 
-<button type="button" class="@Css" aria-current="@(Active ? "page" : null)" @onclick="Go">
-    <RecallIcon Name="@Icon" Css="w-18 h-18 shrink-0 hidden lg:block" />
+<button type="button" class="@Css" aria-current="@(Active ? "page" : null)" aria-label="@Recall.UI.Localization.RecallText.Get(LabelKey, Ui.Current.Culture)" @onclick="Go">
+    <RecallIcon Name="@Icon" Css="w-18 h-18 shrink-0" />
     <span class="hidden lg:inline">@Recall.UI.Localization.RecallText.Get(LabelKey, Ui.Current.Culture)</span>
 </button>

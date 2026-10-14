@@ -13,6 +13,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
     private readonly string modelDirectory;
     private readonly object gate = new();
     private CancellationTokenSource? downloadCts;
+    private int lastPublishedPercent = -1;
     private TextModelDownloadSnapshot snapshot = new(TextModelDownloadPhase.NotStarted, 0, null);
 
     public MauiModelDownloadService(
@@ -56,6 +57,12 @@ public sealed class MauiModelDownloadService : IModelDownloadService
 
     private async Task RunDownloadAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken)
     {
+        var files = new (string Name, Uri BaseUri, string Sha256)[]
+        {
+            (options.OnnxFileName, options.OnnxBaseUri, options.OnnxSha256),
+            (options.OnnxDataFileName, options.OnnxBaseUri, options.OnnxDataSha256),
+            (options.TokenizerFileName, options.RepositoryBaseUri, options.TokenizerSha256),
+        };
         CancellationTokenSource cts;
         lock (gate)
         {
@@ -63,15 +70,18 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             downloadCts?.Dispose();
             cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             downloadCts = cts;
-            snapshot = snapshot with { Phase = TextModelDownloadPhase.Downloading, Fault = null };
+            lastPublishedPercent = -1;
+            snapshot = snapshot with { Phase = TextModelDownloadPhase.Downloading, Fault = null, CompletedFiles = 0, FileCount = files.Length };
         }
 
         var token = cts.Token;
         try
         {
-            await DownloadFileAsync(options.OnnxFileName, options.OnnxBaseUri, options.OnnxSha256, progress, token).ConfigureAwait(false);
-            await DownloadFileAsync(options.OnnxDataFileName, options.OnnxBaseUri, options.OnnxDataSha256, progress, token).ConfigureAwait(false);
-            await DownloadFileAsync(options.TokenizerFileName, options.RepositoryBaseUri, options.TokenizerSha256, progress, token).ConfigureAwait(false);
+            for (var index = 0; index < files.Length; index++)
+            {
+                var file = files[index];
+                await DownloadFileAsync(file.Name, file.BaseUri, file.Sha256, progress, token, index, files.Length).ConfigureAwait(false);
+            }
 
             lock (gate)
             {
@@ -115,15 +125,19 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         Uri baseUri,
         string expectedSha256,
         IProgress<ModelDownloadProgress>? progress,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int completedFiles,
+        int fileCount)
     {
         var targetPath = Path.Combine(modelDirectory, fileName);
         if (await ModelHashVerifier.MatchesExpectedHashAsync(targetPath, expectedSha256, cancellationToken).ConfigureAwait(false))
         {
+            PublishProgress(progress, completedFiles + 1, fileCount, 0, null);
             return;
         }
 
-        await DownloadBodyAsync(fileName, baseUri, expectedSha256, progress, cancellationToken, allowRange: true).ConfigureAwait(false);
+        await DownloadBodyAsync(fileName, baseUri, expectedSha256, progress, cancellationToken, allowRange: true, completedFiles, fileCount).ConfigureAwait(false);
+        PublishProgress(progress, completedFiles + 1, fileCount, 0, null);
     }
 
     private async Task DownloadBodyAsync(
@@ -132,7 +146,9 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         string expectedSha256,
         IProgress<ModelDownloadProgress>? progress,
         CancellationToken cancellationToken,
-        bool allowRange)
+        bool allowRange,
+        int completedFiles,
+        int fileCount)
     {
         var targetPath = Path.Combine(modelDirectory, fileName);
         var partialPath = targetPath + ".partial";
@@ -169,7 +185,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             TryDelete(partialPath);
             if (allowRange)
             {
-                await DownloadBodyAsync(fileName, baseUri, expectedSha256, progress, cancellationToken, allowRange: false).ConfigureAwait(false);
+                await DownloadBodyAsync(fileName, baseUri, expectedSha256, progress, cancellationToken, allowRange: false, completedFiles, fileCount).ConfigureAwait(false);
                 return;
             }
 
@@ -203,11 +219,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             {
                 await file.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
                 totalRead += read;
-                progress?.Report(new ModelDownloadProgress(totalRead, expectedTotal));
-                lock (gate)
-                {
-                    snapshot = snapshot with { BytesReceived = totalRead, Phase = TextModelDownloadPhase.Downloading };
-                }
+                PublishProgress(progress, completedFiles, fileCount, totalRead, expectedTotal);
             }
 
             await file.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -224,6 +236,36 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         }
 
         MovePartial(partialPath, targetPath);
+    }
+
+    private void PublishProgress(
+        IProgress<ModelDownloadProgress>? progress,
+        int completedFiles,
+        int fileCount,
+        long bytesReceived,
+        long? totalBytes)
+    {
+        var percent = TextModelDownloadUiPolicy.ComputeOverallPercent(completedFiles, fileCount, bytesReceived, totalBytes);
+        lock (gate)
+        {
+            snapshot = snapshot with
+            {
+                Phase = TextModelDownloadPhase.Downloading,
+                BytesReceived = bytesReceived,
+                CompletedFiles = completedFiles,
+                FileCount = fileCount,
+                CurrentFileTotal = totalBytes,
+                Fault = null,
+            };
+        }
+
+        if (!TextModelDownloadUiPolicy.ShouldPublishProgress(lastPublishedPercent, percent))
+        {
+            return;
+        }
+
+        lastPublishedPercent = percent;
+        progress?.Report(new ModelDownloadProgress(bytesReceived, totalBytes, completedFiles, fileCount));
     }
 
     private static void MovePartial(string partialPath, string targetPath)

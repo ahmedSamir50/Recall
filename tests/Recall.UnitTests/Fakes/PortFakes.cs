@@ -50,10 +50,20 @@ public sealed class FakeModelDownloadService : IModelDownloadService
 {
     public TextModelDownloadSnapshot Snapshot { get; set; } = new(TextModelDownloadPhase.NotStarted, 0, null);
 
+    public int DownloadCalls { get; private set; }
+
     public TextModelDownloadSnapshot GetTextDownloadSnapshot() => Snapshot;
 
-    public Task DownloadTextModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default) =>
-        Task.CompletedTask;
+    public Task DownloadTextModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
+    {
+        DownloadCalls++;
+        if (Snapshot.Phase == TextModelDownloadPhase.NotStarted)
+        {
+            Snapshot = Snapshot with { Phase = TextModelDownloadPhase.Downloading };
+        }
+
+        return Task.CompletedTask;
+    }
 
     public void CancelTextDownload()
     {

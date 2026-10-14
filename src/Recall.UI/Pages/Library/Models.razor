@@ -1,7 +1,6 @@
 @namespace Recall.UI.Pages
 @page "/models"
 @inherits RecallComponentBase
-@inject NavigationManager Nav
 
 <div class="p-4 md:p-6 flex justify-center">
     <section class="g2 rounded-2xl w-full max-w-640 p-5 rise">
@@ -10,11 +9,7 @@
         <ul class="flex flex-col gap-3 mb-5">
             @foreach (var entry in ModelCatalog.All)
             {
-                <li class="p-4 rounded-xl border bd" style="background:var(--c1)">
-                    <span class="block font-medium">@ModelLabel(entry.Modality)</span>
-                    <bdi class="ltr f-mono text-12 ink3 block">@entry.ModelId</bdi>
-                    <span class="f-mono text-12 ink3">@T("Models_NotReady")</span>
-                </li>
+                <ModelRow Entry="entry" Label="@ModelLabel(entry.Modality)" AutoStart="true" />
             }
         </ul>
         <p class="text-13 ink3">@T("Models_ShaNote")</p>

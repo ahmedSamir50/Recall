@@ -18,6 +18,12 @@ public partial class Preferences
 
     private void SetTheme(ThemePreference preference) => Ui.SetThemePreference(preference);
 
+    private void SetLocale(UiLocale locale)
+    {
+        Ui.SetLocale(locale);
+        Ui.ApplyCulture();
+    }
+
     private void SetAge(AgeCutoffYears years)
     {
         AgePreferences.Set(years);

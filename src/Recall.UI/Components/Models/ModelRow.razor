@@ -1,0 +1,44 @@
+@namespace Recall.UI.Components
+@inherits RecallComponentBase
+
+<li class="p-4 rounded-xl border bd" style="background:var(--c1);@HashFailureBorderStyle">
+    <div class="flex items-center gap-3 @(TextRow ? "mb-3" : "")">
+        <span class="flex-1 min-w-0">
+            <span class="block font-medium">@Label</span>
+            <bdi class="ltr f-mono text-12 ink3">@Entry.ModelId</bdi>
+        </span>
+        @if (TextRow)
+        {
+            <span class="f-mono text-12 flex items-center gap-1.5 shrink-0 @StatusToneClass">
+                @if (phase == TextModelDownloadPhase.Ready)
+                {
+                    <RecallIcon Name="check" Css="w-4 h-4" />
+                }
+                else if (phase == TextModelDownloadPhase.HashFailed)
+                {
+                    <RecallIcon Name="alert" Css="w-4 h-4" />
+                }
+                @StatusLabel
+            </span>
+        }
+        else
+        {
+            <span class="f-mono text-12 ink3 shrink-0">@T("Models_Entry_Deferred")</span>
+        }
+    </div>
+    @if (TextRow)
+    {
+        <div class="rounded-full overflow-hidden" style="height:6px;background:var(--c3)">
+            <div class="h-full rounded-full transition-bar" style="@ProgressBarStyle"></div>
+        </div>
+        @if (TextModelDownloadUiPolicy.ShouldOfferRetry(phase))
+        {
+            <div class="flex flex-wrap items-center justify-between gap-3 mt-3">
+                <p class="text-13 er">@FaultMessage</p>
+                <button type="button" class="btn btn-p text-13" @onclick="RetryAsync">
+                    <RecallIcon Name="retry" Css="w-4 h-4" />@T("Models_RetryDownload")
+                </button>
+            </div>
+        }
+    }
+</li>

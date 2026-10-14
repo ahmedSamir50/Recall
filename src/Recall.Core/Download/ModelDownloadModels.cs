@@ -11,12 +11,19 @@ public enum TextModelDownloadPhase
     Interrupted = 6,
 }
 
-public sealed record ModelDownloadProgress(long BytesReceived, long? TotalBytes);
+public sealed record ModelDownloadProgress(
+    long BytesReceived,
+    long? TotalBytes,
+    int CompletedFiles = 0,
+    int FileCount = 1);
 
 public sealed record TextModelDownloadSnapshot(
     TextModelDownloadPhase Phase,
     long BytesReceived,
-    TextModelDownloadFault? Fault);
+    TextModelDownloadFault? Fault,
+    int CompletedFiles = 0,
+    int FileCount = 1,
+    long? CurrentFileTotal = null);
 
 public enum TextModelDownloadFault
 {

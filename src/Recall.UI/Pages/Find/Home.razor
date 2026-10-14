@@ -9,9 +9,8 @@
                 <RecallIcon Name="search" Css="w-4 h-4 hidden md:block" />@T("Mode_Find")
             </span>
         </div>
-        <div class="order-first sm:order-none basis-full sm:basis-auto flex-1 min-w-0 px-2 py-2">
-            <label class="sr-only" for="search-query">@T("Search_Placeholder")</label>
-            <input id="search-query" type="search" class="w-full text-15 md:text-17 font-medium bg-transparent outline-none ink3" placeholder="@T("Search_Placeholder")" disabled />
+        <div class="order-first sm:order-none basis-full sm:basis-auto flex-1 min-w-0 px-2 py-2 flex items-center min-h-10" role="search" aria-disabled="true">
+            <span class="text-15 md:text-17 font-medium ink3 truncate">@T("Search_Placeholder")</span>
         </div>
         <kbd class="hidden lg:inline-flex pill f-mono text-11 ink2"><bdi class="ltr">Ctrl K</bdi></kbd>
     </div>
