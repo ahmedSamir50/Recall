@@ -1,6 +1,8 @@
 # Planning chain
 
-A project plan is not written by the parent alone. The full panel signs it.
+A project plan is not written by the parent alone. The full panel signs it in this chat, after one read of the shared files.
+
+Do not launch expert subagents. Each subagent has its own context, so ten of them re-read the same canon, rules, InitDocs, and worktree and multiply the token cost by the panel size. That fan-out is forbidden for a plan, a code review, a follow-up, and a doc pass.
 
 ## Trigger
 
@@ -12,17 +14,17 @@ A one-file bugfix does not use this chain. It still follows `development-rules.m
 
 ## Steps
 
-1. Read [canon.md](canon.md), [development-rules.md](development-rules.md), [test-honesty.md](test-honesty.md), [sign-off.md](sign-off.md), and [panel.md](panel.md).
-2. Launch all ten experts in one parallel batch. `subagent_type` is the expert id. Environment is local. Do not pick a model unless the user named one.
-3. Each prompt contains the plan verbatim plus the instructions below. Subagents do not see the user message unless you paste it.
-4. If a sign-off is missing a field, has an empty checked list, or agrees or rejects with no evidence, resume that expert once and ask for the missing evidence. Do not rewrite their verdict yourself.
+1. Read [canon.md](canon.md), [development-rules.md](development-rules.md), [test-honesty.md](test-honesty.md), [sign-off.md](sign-off.md), and [panel.md](panel.md) once. If this conversation already holds a file, do not read it again.
+2. Read the plan's named paths once. For a review of current changes, read the diff once. Do not open InitDocs unless the plan cites a passage.
+3. Stay in this context. Apply each expert checklist below and write that expert's YAML sign-off here. Open `.cursor/skills/<id>/SKILL.md` only when the plan touches that expert's row in [panel.md](panel.md). An untouched row still gets a sign-off, with `checked` citing `panel.md` and the scope miss, and that skill file stays unread.
+4. If a sign-off is missing a field, has an empty checked list, or agrees or rejects with no evidence, rewrite that block from the files already loaded. Do not spawn the expert to go look again.
 5. Publish the YAML list in the user-visible reply, first. Do not rewrite a short field into a paragraph. Then write the synthesis below. A plan card, a count, or a summary is not a sign-off.
 6. Write that same YAML into the open plan under `## Expert sign-offs` before the turn ends. Create the plan only after the blocks exist. If a plan tool creates the file first, edit the file in that same turn.
 7. Stop. The user decides which recommendations enter the plan. Do not code from an unsigned plan.
 
 ## Same plan, later message
 
-A later message that closes a decision, changes scope, or corrects what a source means is the same gate. Launch all ten experts again with the revised plan. Replace the YAML in the reply and in the plan. Do not keep the previous verdicts. Do not answer, and do not edit the plan's behavior, before the new blocks are in both places.
+A later message that closes a decision, changes scope, or corrects what a source means is the same gate. Re-sign in this context from files already loaded. Re-read only a path the new message names that is not already loaded. Replace the YAML in the reply and in the plan. Do not keep the previous verdicts. Do not launch expert subagents. Do not answer, and do not edit the plan's behavior, before the new blocks are in both places.
 
 The user does not ask for this. Do not ask the user why a sign-off is missing or unchanged. A question about the harness display is not a new plan. A request to execute the plan is not a new plan.
 
@@ -30,21 +32,9 @@ The user does not ask for this. Do not ask the user why a sign-off is missing or
 
 `dotnet-architect`, `vectors-embeddings`, `nlp`, `maui-platform`, `ux-ui`, `privacy-local-first`, `performance`, `unit-tests`, `retrieval-qa`, `docs-mkdocs`
 
-## Prompt to give each expert
+## How each sign-off is made
 
-```
-You are the Recall expert <id> on a planning sign-off.
-Read .cursor/skills/<id>/SKILL.md,
-.cursor/skills/recall-expert-harness/canon.md,
-.cursor/skills/recall-expert-harness/development-rules.md,
-.cursor/skills/recall-expert-harness/test-honesty.md,
-and .cursor/skills/recall-expert-harness/sign-off.md.
-
-Plan, verbatim:
-<paste>
-
-Research the repo and InitDocs before you answer. Push back when the plan, the user, or the docs are inconsistent, incomplete, or logically wrong. Push back when the plan does not name the files, folders, and literals a later agent would otherwise invent. Agree only if the checked list supports it. Return only the YAML sign-off from sign-off.md. Two sentences maximum in each field. Do not edit files.
-```
+The parent writes every block. Push back when the plan is inconsistent, incomplete, or logically wrong. Push back when the plan does not name the files, folders, and literals a later agent would otherwise invent. Agree only if the checked list supports it. Two sentences maximum in each field. Do not edit product files in this turn.
 
 ## How detailed the plan must be
 

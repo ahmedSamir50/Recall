@@ -58,7 +58,7 @@ A granted text file can be found by meaning and by words. Scope stays a one-shot
 ### Epic 2.1 — Model download — `partial`
 
 - **2.1.1** — `partial` — Download the int8 text ONNX into app data. Check SHA-256. Resume after a drop. The request may name the public weight file. It must not carry a user document name, document text, vector, device id, native device name, or custom display name. Float16 and the published 4-bit file are not this download. Vision and audio files stay unloaded. Done when a bad hash fails, a retry works, and the request builder omits those fields. `MauiModelDownloadService` appends a `206`, replaces on `200`, keeps a short body as `.partial`, hashes the three text files before moving them, and retry starts the download again. URLs, file names, and checksums come from `appsettings.json`. A live interrupted download was not run.
-- **2.1.2** — `not-started` — Show progress, hash failure, and retry. Copy says the fetch is model weights only. Done when those three states exist in Arabic and English. The models screen still shows the not-ready line only. The fault sentences exist in both languages and are not shown on that screen.
+- **2.1.2** — `partial` — Show progress, hash failure, and retry. Copy says the fetch is model weights only. Done when those three states exist in Arabic and English. The shell models screen shows those states and says the fetch is model weights only. The percent counts finished files plus the current file, and a progress tick is published only when that percent changes. `Verifying` is still never assigned. A live download was not run.
 - **2.1.3** — `partial` — Keep weights out of the installer. Done when the app package contains no ONNX weights. `*.onnx` and `tests/Recall.IntegrationTests/TestAssets/embeddinggemma-2-text/` are gitignored. The built app package was not opened to confirm it contains no weights.
 
 ### Epic 2.2 — Text embed and index — `partial`
@@ -178,10 +178,10 @@ Counted 14 Oct 2026. This is the only progress table.
 | **Epic 1.3 — This device** | `partial` | 50% |
 | 1.3.1 | `partial` | 50% |
 | 1.3.2 | `partial` | 50% |
-| **Phase 2 — Text search** | `partial` | 45% |
-| **Epic 2.1 — Model download** | `partial` | 33% |
+| **Phase 2 — Text search** | `partial` | 50% |
+| **Epic 2.1 — Model download** | `partial` | 50% |
 | 2.1.1 | `partial` | 50% |
-| 2.1.2 | `not-started` | 0% |
+| 2.1.2 | `partial` | 50% |
 | 2.1.3 | `partial` | 50% |
 | **Epic 2.2 — Text embed and index** | `partial` | 50% |
 | 2.2.1 | `partial` | 50% |
@@ -235,7 +235,7 @@ Counted 14 Oct 2026. This is the only progress table.
 | **Epic 7.2 — Local release** | `not-started` | 0% |
 | 7.2.1 | `not-started` | 0% |
 | 7.2.2 | `not-started` | 0% |
-| **All epics** | `partial` | 25% |
+| **All epics** | `partial` | 26% |
 
 ## Later, not in these phases — `not-started`
 

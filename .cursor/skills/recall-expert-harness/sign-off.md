@@ -20,7 +20,7 @@ Rules:
 - `concerns` has at least one line. A rubber stamp with an empty list is a failed sign-off.
 - `recommendation` is one path. Options and essays stay out of this block.
 - `notes` is not a field. Do not add it.
-- Confidence scores how much you read, not how sure you feel. 80+ means skill, canon, and the relevant file were read.
+- Confidence scores how much of the shared context covers the claim, not how sure you feel. 80+ means the skill, canon, and the relevant file are already loaded. Do not re-read them to raise the score.
 - `approve` needs confidence at least 80 and no material gap.
 - `approve-with-conditions` means you approve if `recommendation` is adopted.
 - `push-back` means wrong logic, a missing branch test, or a rule break.

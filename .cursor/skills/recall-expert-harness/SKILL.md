@@ -1,11 +1,10 @@
 ---
 name: recall-expert-harness
 description: >-
-  Convenes the full Recall expert panel for project plans triggered by
-  @recall: or @reacall:, and routes doc reviews and implementation to the
-  owning expert. Use when the user writes @recall:, @reacall:, asks for a
-  project, milestone, or feature plan, or mentions the harness, experts, or
-  hardening docs.
+  Signs Recall plans in one shared context for @recall: or @reacall:.
+  Do not spawn a subagent per expert. Use when the user writes @recall:,
+  @reacall:, asks for a project, milestone, or feature plan, or mentions
+  the harness, experts, or hardening docs.
 disable-model-invocation: true
 ---
 
@@ -15,7 +14,7 @@ Recall is a local-only .NET 10 MAUI Blazor Hybrid app: EmbeddingGemma 2 (ONNX) +
 
 ## Planning trigger
 
-A message that contains `@recall:` or `@reacall:`, or that asks for a project, milestone, phase, or feature plan, runs the full panel. Follow [planning-chain.md](planning-chain.md). Do not draft the plan yourself and then ask the experts to nod.
+A message that contains `@recall:` or `@reacall:`, or that asks for a project, milestone, phase, or feature plan, runs the full panel in this chat. Follow [planning-chain.md](planning-chain.md). Do not launch expert subagents. Do not draft the plan yourself and then ask the experts to nod.
 
 Each expert returns the block in [sign-off.md](sign-off.md). The parent publishes that YAML in the reply and in the plan on every gate, including a later message that changes the plan. Rubber-stamping fails the chain. The user does not ask for the sign-off.
 

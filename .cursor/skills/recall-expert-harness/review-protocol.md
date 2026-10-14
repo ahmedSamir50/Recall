@@ -14,7 +14,7 @@ A `@recall:` or `@reacall:` project plan does not use this protocol. It uses [pl
 
 ## Steps
 
-1. Read `canon.md` and `panel.md`.
+1. Read `canon.md` and `panel.md` once. Stay in this chat. Do not launch expert subagents. Do not re-read a harness file this conversation already holds.
 2. Name the document under review and its status (InitDocs seed vs Latest App Docs).
 3. Assign sections using the table in `panel.md`. Skip experts with nothing to review.
 4. For each assigned expert, read `.cursor/skills/<id>/SKILL.md` and write one finding block. Do not edit the document in this step.

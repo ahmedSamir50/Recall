@@ -12,8 +12,8 @@ alwaysApply: true
 If the user message contains `@recall:` or `@reacall:`, or asks for a project, milestone, phase, or feature plan:
 
 1. Read `.cursor/skills/recall-expert-harness/SKILL.md` and follow `planning-chain.md`.
-2. Launch all ten expert subagents in one parallel batch before writing the plan.
-3. Publish each sign-off in full (verdict, confidence, notes, recommendations, options, alternatives, risks, push-back).
+2. Do not launch expert subagents. Sign the panel in this chat after one read of the shared files. A subagent per expert re-reads the same canon, rules, InitDocs, and worktree in a fresh context and multiplies the token cost by the panel size. That is forbidden for every plan, review, and follow-up.
+3. Publish each sign-off in full (verdict, confidence, checked, concerns, recommendation, push-back).
 4. Do not hide dissent, and do not treat agreement as valid without a checked list.
 5. Do not start implementation in that turn.
 

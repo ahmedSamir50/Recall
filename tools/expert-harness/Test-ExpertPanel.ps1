@@ -64,6 +64,31 @@ if ($ruleText -notmatch '@recall:' -or $ruleText -notmatch '@reacall:') {
     $failures.Add('Always-apply rule does not trigger both @recall: and @reacall:')
 }
 
+if ($ruleText -notmatch 'Do not launch expert subagents' -or $planningText -notmatch 'Do not launch expert subagents') {
+    $failures.Add('Harness still allows a subagent per expert')
+}
+
+$fanOut = @(
+    'Launch all ten',
+    'Research the repo and InitDocs',
+    'Research the repo before you answer',
+    'Research the plan against this skill, the canon, and the repo'
+)
+$scanRoots = @(
+    (Join-Path $root '.cursor/rules'),
+    (Join-Path $root '.cursor/agents'),
+    (Join-Path $root '.cursor/skills')
+)
+foreach ($phrase in $fanOut) {
+    foreach ($scanRoot in $scanRoots) {
+        $hits = Get-ChildItem -LiteralPath $scanRoot -Recurse -File -Include *.md,*.mdc |
+            Select-String -SimpleMatch -Pattern $phrase
+        foreach ($hit in $hits) {
+            $failures.Add("Fan-out phrase still present: $phrase ($($hit.Path))")
+        }
+    }
+}
+
 Get-ChildItem -LiteralPath $agentsDir -Filter '*.md' | ForEach-Object {
     if ($expected -notcontains $_.BaseName) {
         $failures.Add("Agent $($_.BaseName) is not in the expected panel list")
