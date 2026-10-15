@@ -39,7 +39,7 @@ The app opens, speaks Arabic and English, and remembers this device. It does not
 ### Epic 1.1 — Solution — `done`
 
 - **1.1.1** — `done` — Create `Recall.Core`, `Recall.UI`, `Recall.Maui`, benchmark and test projects. Core has no MAUI, Razor, or HTTP. UI calls Core ports only. Maui is the only composition root. Done when a phone and a Windows build both open an empty shell. The Windows shell and an Android shell were opened. iOS and Mac Catalyst installers stay on task 7.2.1.
-- **1.1.2** — `done` — Add the ports: scope watcher, scope manager, video frame sampler, secure storage, idle detector, model download, index policy. Done when each port has a fake and no clipboard, camera, screen, or mic type exists. Each port has a fake. Clipboard, camera, screen, and mic types are absent. The watcher, sampler, secure storage, and idle detector stay empty until tasks 3.2.1 and 4.2.1.
+- **1.1.2** — `done` — Add the ports: scope watcher, scope manager, video frame sampler, secure storage, idle detector, model download, index policy. Done when each port has a fake and no clipboard, camera, screen, or mic type exists. Each port has a fake. Clipboard, camera, screen, and mic types are absent. The watcher is no longer empty. The sampler, secure storage, and idle detector stay empty until task 4.2.1.
 - **1.1.3** — `done` — Ban `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` inside Core, including the sync stub. Done when a socket in Core fails the build. BannedSymbols.txt is an AdditionalFile, the banned-API analyzer is on, and BannedSymbols_ListsHttpClientSocketTcpListenerUdpClient locks the four names.
 
 ### Epic 1.2 — Screens that can ship — `done`
@@ -81,24 +81,24 @@ A granted text file can be found by meaning and by words. Scope stays a one-shot
 
 ---
 
-## Phase 3 — Folders that stay current — `not-started`
+## Phase 3 — Folders that stay current — `done`
 
 New, changed, and deleted files inside a grant update the index without a timer.
 
-### Epic 3.1 — Grants — `not-started`
+### Epic 3.1 — Grants — `done`
 
-- **3.1.1** — `not-started` — If one grant sits inside another, keep the parent and warn. Done when `D:\` plus `D:\Photos` indexes `D:\` only, with the warning in both languages.
-- **3.1.2** — `not-started` — A path the person allowed but has not indexed yet is offered from the search page. Done when **Index now** indexes it and a child of an already allowed parent is not offered again.
+- **3.1.1** — `done` — If one grant sits inside another, keep the parent and warn. Done when `D:\` plus `D:\Photos` indexes `D:\` only, with the warning in both languages. `TryAddGrant_NullGrant_Throws`, `TryAddGrant_BlankPath_ThrowsAndDoesNotSave`, `TryAddGrant_ChildOfGrantedParent_ReturnsOverlap`, `TryAddGrant_ParentReplacesChild_KeepsDriveRoot`, `TryAddGrant_ParentReplacesTwoChildren_KeepsDriveRoot`, `TryAddGrant_PhotosExtra_IsNotAChild`, `TryAddGrant_Duplicate_DoesNotSave`, `OverlapKey_BothOverlapStatuses_ReturnWarning`, `OverlapKey_AddedAndDuplicate_ReturnNull`, and `OverlapWarning_BothLanguages_SayParentIsKept` lock it.
+- **3.1.2** — `done` — A path the person allowed but has not indexed yet is offered from the search page. Done when **Index now** indexes it and a child of an already allowed parent is not offered again. `ListOffers_Empty_IsEmpty`, `ListOffers_UnfinishedRoot_IsOffered`, `ListOffers_FinishedRoot_IsHidden`, `ListOffers_ChildOfAllowedParent_IsHidden`, `ListOffers_ChildWithoutParentInList_IsOffered`, `IndexAsync_FinishesGrant_AndOfferDisappears`, `ShouldShow_NullOrEmpty_IsFalse`, `ShouldShow_OneOffer_IsTrue`, and `HomeRazor_IndexNow_UsesBothLanguagesAndLtrPath` lock it.
 
-### Epic 3.2 — Watch and scan — `not-started`
+### Epic 3.2 — Watch and scan — `done`
 
-- **3.2.1** — `not-started` — Android watches a Storage Access Framework tree. Windows uses `FileSystemWatcher`. Mac uses `FSEventStream`. The watcher runs only while Recall runs. Done when each shell reports created, modified, renamed, and deleted for a granted folder.
-- **3.2.2** — `not-started` — iPhone walks the granted folder when the app comes to the foreground and diffs `checkpoints.db`. Done when a file added while the app was closed is queued on the next open, and no background watch exists.
-- **3.2.3** — `not-started` — A rename updates the path. Embed again only when the bytes changed. A delete keeps the vector, writes a tombstone, and marks the source missing. Done when those three cases are tested.
+- **3.2.1** — `done` — Every shell diffs the granted reader against checkpoints.db on open and on resume. Windows, Mac Catalyst, and a real Android directory add one FileSystemWatcher per parent. iPhone does not construct FileSystemWatcher. A content:// grant has no live watcher. Done when each shell reports created, modified, renamed, and deleted for a granted folder. `Choose_WindowsAndroidMacIosUnknown_MapToWatcherKind`, `TryAdd_BlankPath_IsIgnored`, `TryAdd_SamePath_ReplacesWithoutGrowing`, `TryAdd_SixtyFifthPath_OverflowsAndRequestsRescan`, `Drain_ClearsItems`, `AcknowledgeRescan_ClearsFlag`, `TryMap_BlankOrError_ReturnsFalse`, `TryMap_RenamedWithPrevious_ReturnsRenamed`, `TryMap_RenamedWithoutPrevious_ReturnsCreated`, `TryMap_DeletedChangedCreated_ReturnThoseKinds`, `Select_NullOrEmpty_ReturnsEmpty`, `Select_Blank_IsDropped`, `Select_Duplicate_KeepsOne`, `Select_ChildOfParent_DropsChild`, `Select_ThousandChildren_StaysOneRoot`, `Select_TwoSiblingRoots_ReturnsBoth`, `Choose_WindowsMacAndroid_UseFilesystemWatcher`, `CanWatchDirectories_IosPhone_IsFalse`, `CanWatchDirectories_MacCatalyst_IsTrue`, `CanWatchDirectories_Windows_IsTrue`, `WindowsFileScopeWatcher_NestedGrants_OpensOneWatcher`, `WindowsFileScopeWatcher_ContentUri_OpensZeroAndRescans`, `DisabledScopeWatcher_Start_DoesNotWatch`, `Stop_LeavesWatchingFalse`, `WindowsFileScopeWatcher_TempFolder_ReportsCreatedModifiedRenamedDeleted`, `Stop_DisposesAndClearsWatching`, `OnError_RequestsRescan`, `OnCreated_Ios_StartsLoopWithoutWatcher`, `OnCreated_Unknown_DoesNotStart`, `OnCreated_Windows_StartsWatcher`, `RequestRescan_BeforeLoop_SetsFlag`, `PumpOnce_WaitsUntilReport`, `TryAdd_ConcurrentWithDrain_DoesNotThrow`, `PumpOnce_Cancel_Stops`, and `Stop_StopsWatcher` lock it.
+- **3.2.2** — `done` — iPhone walks the granted folder when the app comes to the foreground and diffs `checkpoints.db`. Done when a file added while the app was closed is queued on the next open, and no background watch exists. `Diff_AddedWhileClosed_EmitsCreated`, `Diff_SameHash_EmitsNothing`, `Diff_DifferentHash_EmitsModified`, `Diff_MissingStored_EmitsDeleted`, `Diff_AlreadyMissing_EmitsNothing`, `Diff_UniqueHashPair_EmitsRenamed`, `Diff_RepeatedHash_DoesNotPair`, `Diff_BlankPath_IsIgnored`, `OnResumed_Ios_RequestsRescan`, and `PumpOnce_ExceptionOnFirstChange_AppliesSecond` lock it.
+- **3.2.3** — `done` — A rename updates the path. Embed again only when the bytes changed. A delete keeps the vector, writes a tombstone, and marks the source missing. Done when those three cases are tested. `Apply_Deleted_AppendsDeleteAndDoesNotEmbed`, `Apply_DeletedWhenAlreadyMissing_DoesNotAppendAgain`, `Apply_DeletedWithNoChunks_MarksMissingOnly`, `Apply_RenamedSameHash_DoesNotEmbed`, `Apply_RenamedChangedHash_RetiresAndEmbedsOnce`, `Apply_RenamedUnknownPrevious_IngestsNewPath`, `Apply_RenamedMissingDocument_MarksPreviousMissing`, `Apply_CreatedNullDocument_DoesNotWrite`, `Apply_BlankPath_DoesNotWrite`, `Apply_Cancelled_Throws`, `TryRead_MissingBlockedIgnoredOrUnsafe_ReturnsNull`, `TryRead_AdmittedText_ReturnsDocument`, `Apply_RetiredChunk_DropsHit`, `Apply_MissingChunk_SetsSourceMissing`, `Apply_ChunkPath_ReplacesStoredPath`, `Apply_PathOutsideGrant_DropsHit`, `Apply_NoChunk_KeepsHit`, `Build_SourceMissing_IsUnavailableEvenWhenFileExists`, `Build_MissingFile_IsUnavailable`, and `Build_PresentFile_IsAvailable` lock it.
 
-### Epic 3.3 — Crash cursor — `not-started`
+### Epic 3.3 — Crash cursor — `done`
 
-- **3.3.1** — `not-started` — Write ingest progress to `checkpoints.db` in a transaction. Done when a kill midway resumes the unfinished file and does not re-index a finished one.
+- **3.3.1** — `done` — Write ingest progress to `checkpoints.db` in a transaction. Done when a kill midway resumes the unfinished file and does not re-index a finished one. `Decide_NullReadingMissingAndChangedHash_Read`, `Decide_FinishedSameHash_Skip`, `Decide_BlankHash_Throws`, `MarkReading_Committed_SurvivesNewStore`, `MarkFinished_DuplicateChunkId_RollsBackToReading`, `MarkFinished_ThenDecide_SkipsSameHash`, `RoundTrip_QuoteInPath_UsesParameter`, `RenamePath_MovesFileAndLiveChunks`, `MarkMissing_KeepsChunkRowAndSetsMissing`, `RetirePath_SetsRetired`, `IsGrantFinished_OnlyWhenFinished`, `IngestGrant_UnknownPath_DoesNotRead`, `IngestGrant_TextAndCodeOff_DoesNotRead`, `IngestDocument_FinishedSameHash_DoesNotEmbed`, `IngestDocument_Reading_Embeds`, `IngestDocument_ThrowAfterMarkReading_StaysReading`, `Resume_ReadingRow_EmbedsAgain_FinishedRow_DoesNotEmbed`, `AppendDelete_Blank_Throws`, `AppendDelete_Memory_IsDeleteAndUnsent`, `AppendDelete_NoDirectory_WritesNoFile`, and `AppendDelete_Directory_WritesDeleteLine` lock it.
 
 ---
 
@@ -168,7 +168,7 @@ Vision waits on tasks A.2.2, A.2.3, A.2.4, A.2.7, and A.2.8. It does not wait on
 
 ### Epic 6.2 — Search across both ages — `not-started`
 
-- **6.2.1** — `not-started` — Dense search stays per encoder. Embed the question once with that encoder, cut it to the long width and the old width, and merge those two with RRF at `k=60`. A text embedding is not a picture vector or an audio vector. A picture query’s dense search stays in the picture and video collections. Audio dense search stays in the audio collection. Those dense lists are not fused. Word search is separate. A text query also runs BM25 on the words stored on a picture row, a video row, and an audio row. OCR words and a sibling transcript stay on that media row. They are not copied into `items_text`. Each collection fuses its own dense and BM25 at `k=60`, and a BM25 hit from another collection joins that merge at the same `k`. A row whose encoder-file hash differs from the file that should search that collection stays out of the merge. Done when both ages of one encoder return one fused list, a text query does not return a picture that has no matching words, and a search for the words on a scanned page or on `talk.srt` opens that media file.
+- **6.2.1** — `not-started` — Dense search stays per encoder. Embed the question once with that encoder, cut it to the long width and the old width. A text embedding is not a picture vector or an audio vector. A picture query’s dense search stays in the picture and video collections. A picture query has no query words, so that search is dense only. Audio dense search stays in the audio collection. Those dense lists are not fused. Word search is separate. A text query also runs BM25 on the words stored on a picture row, a video row, and an audio row. OCR words and a sibling transcript stay on that media row. They are not copied into `items_text`. Inside one collection, dense and BM25 fuse with `ZVecRrfReranker` at rank 60, as in task 2.3.1. A text query’s hit in a picture, video, or audio collection is BM25 only, so that one list passes through. The long and old lists, the picture collection and the video collection (they share the vision encoder), and a BM25 list from another collection, merge in Core at `k=60`. That merge is not one database reranker. A BM25 hit is kept only when the winning grant allows that file’s type, as in task A.2.3, and a path outside the grant is not returned. A row whose encoder-file hash differs from the file that should search that collection stays out of the merge. Done when both ages of one encoder return one fused list, a text query does not return a picture that has no matching words, and a search for the words on a scanned page or on `talk.srt` opens that media file.
 
 ---
 
@@ -176,7 +176,7 @@ Vision waits on tasks A.2.2, A.2.3, A.2.4, A.2.7, and A.2.8. It does not wait on
 
 ### Epic 7.1 — Tests that can fail — `partial`
 
-- **7.1.1** — `partial` — Unit-test every method and every branch that decides behavior for the ports and policies above, with fakes for ONNX and ZVec. Done when deleting a branch makes a test go red. A coverage percent of 60% then 70% is a floor, not the exit. Unit tests cover the text prefix, chunk split, download resume rules, grant boundary, width 128, age cutoff, and device id. Later-phase branches have no tests because that code does not exist.
+- **7.1.1** — `partial` — Unit-test every method and every branch that decides behavior for the ports and policies above, with fakes for ONNX and ZVec. Done when deleting a branch makes a test go red. A coverage percent of 60% then 70% is a floor, not the exit. Unit tests cover the text prefix, chunk split, download resume rules, grant boundary, width 128, age cutoff, and device id. Phase 3 branches now have tests; later phases still do not.
 - **7.1.2** — `not-started` — Integration-test real ONNX plus real ZVec: crash restart from `checkpoints.db`, and zero non-local bytes after the model download has finished. The unit cursor locks stay task 3.3.1. This task is the kill-and-restart run, not a second copy of those locks. Done when those two runs exist. A text-search integration test is in the tree. Crash restart and the egress check are not.
 - **7.1.3** — `not-started` — Golden retrieval in English, Arabic, Chinese, Hindi, and French. Recall@10 for the same query stays within 5 points across those five. Text stays at 512 unless this run clears 256. Done when that report exists. UI languages stay Arabic and English either way.
 
@@ -220,16 +220,16 @@ Counted 15 Oct 2026. This is the only progress table.
 | **Epic 2.3 — Query text** | `done` | 100% |
 | 2.3.1 | `done` | 100% |
 | 2.3.2 | `done` | 100% |
-| **Phase 3 — Folders that stay current** | `not-started` | 0% |
-| **Epic 3.1 — Grants** | `not-started` | 0% |
-| 3.1.1 | `not-started` | 0% |
-| 3.1.2 | `not-started` | 0% |
-| **Epic 3.2 — Watch and scan** | `not-started` | 0% |
-| 3.2.1 | `not-started` | 0% |
-| 3.2.2 | `not-started` | 0% |
-| 3.2.3 | `not-started` | 0% |
-| **Epic 3.3 — Crash cursor** | `not-started` | 0% |
-| 3.3.1 | `not-started` | 0% |
+| **Phase 3 — Folders that stay current** | `done` | 100% |
+| **Epic 3.1 — Grants** | `done` | 100% |
+| 3.1.1 | `done` | 100% |
+| 3.1.2 | `done` | 100% |
+| **Epic 3.2 — Watch and scan** | `done` | 100% |
+| 3.2.1 | `done` | 100% |
+| 3.2.2 | `done` | 100% |
+| 3.2.3 | `done` | 100% |
+| **Epic 3.3 — Crash cursor** | `done` | 100% |
+| 3.3.1 | `done` | 100% |
 | **Phase Three Addendum — Gaps left by Phases 1–3** | `partial` | 31% |
 | **Epic A.2 — Closures** | `partial` | 31% |
 | A.2.2 | `not-started` | 0% |
@@ -274,7 +274,7 @@ Counted 15 Oct 2026. This is the only progress table.
 | **Epic 7.2 — Local release** | `not-started` | 0% |
 | 7.2.1 | `not-started` | 0% |
 | 7.2.2 | `not-started` | 0% |
-| **All epics** | `partial` | 44% |
+| **All epics** | `partial` | 56% |
 
 # Version 1.5
 
