@@ -19,6 +19,12 @@ public sealed class ScopeGrantService : IScopeManagerService
 
     public ScopeGrantAddResult TryAddGrant(ScopeFolderGrant grant)
     {
+        ArgumentNullException.ThrowIfNull(grant);
+        if (string.IsNullOrWhiteSpace(grant.Path))
+        {
+            throw new ArgumentException("Grant path must not be blank.", nameof(grant));
+        }
+
         var path = ScopeGrantPolicy.Normalize(grant.Path);
         var grants = store.List().ToList();
         if (grants.Any(g => ScopeGrantPolicy.Normalize(g.Path).Equals(path, StringComparison.OrdinalIgnoreCase)))
@@ -35,6 +41,19 @@ public sealed class ScopeGrantService : IScopeManagerService
                     ScopeGrantAddStatus.OverlapChildOfExistingParent,
                     existingPath);
             }
+        }
+
+        var children = grants
+            .Where(g => ScopeGrantPolicy.IsChildPath(path, ScopeGrantPolicy.Normalize(g.Path)))
+            .ToList();
+        if (children.Count > 0)
+        {
+            grants = grants
+                .Where(g => !ScopeGrantPolicy.IsChildPath(path, ScopeGrantPolicy.Normalize(g.Path)))
+                .ToList();
+            grants.Add(grant with { Path = path });
+            store.Save(grants);
+            return new ScopeGrantAddResult(ScopeGrantAddStatus.OverlapParentReplacesChildren, path);
         }
 
         grants.Add(grant with { Path = path });

@@ -14,6 +14,19 @@
             <input @bind="query" @bind:event="oninput" aria-label="@T("Search_Placeholder")" placeholder="@T("Search_Placeholder")" @onkeydown="OnKeyDownAsync" class="w-full search-input" />
         </div>
     </div>
+    @if (IndexNowPanel.ShouldShow(offers))
+    {
+        <section class="g2 rounded-2xl p-4 max-w-640 mx-auto mb-4">
+            <p class="ink2 text-13 mb-2">@T("Home_IndexNowLead")</p>
+            @foreach (var grant in offers)
+            {
+                <div class="flex items-center gap-2 mb-2">
+                    <bdi class="ltr">@grant.DisplayName</bdi>
+                    <button type="button" class="btn btn-g" @onclick="() => IndexNowAsync(grant.Path)">@T("Home_IndexNow")</button>
+                </div>
+            }
+        </section>
+    }
     @if (!TextFindSession.ShouldQuery(query) || !hasSearched)
     {
         <section class="g2 rounded-2xl p-8 md:p-12 text-center rise max-w-640 mx-auto">

@@ -1,5 +1,5 @@
-Status: decided-absent
+Status: in-code
 
-## Interfaces only
+## Watchers
 
-`IFileScopeWatcherService`, `IVideoFrameSamplerService`, and `IIdleDetectorService` exist in `ScopePorts.cs`. No class in `src/` implements them. `ISecureStorageService` exists and has no implementing class. Accepted rules, not code: Android SAF or `FileObserver` only where SAF does not apply; Windows `FileSystemWatcher`; Mac Catalyst `FSEventStream`; iOS has no background watch and would diff on foreground. `checkpoints.db` is not in `src/`. Tasks 3.2.1, 3.2.2, 3.2.3, and 3.3.1 are not started.
+Every shell diffs the granted reader against checkpoints.db when the window is created and when it resumes. A parent directory adds one FileSystemWatcher with IncludeSubdirectories on Windows, Mac Catalyst, and a real Android directory. iPhone does not construct FileSystemWatcher. A content:// grant has no live watcher. The loop wakes when a change is reported or a rescan is requested. It does not poll. The change buffer holds at most 64 paths. ScopeWatcherKindPolicy.Choose maps Windows, Android, and MacCatalyst to WindowsFileSystem. Ios and Unknown map to None. DisabledScopeWatcher does not watch. No FileObserver, no background iPhone watch, no FSEventStream call, no ContentObserver.

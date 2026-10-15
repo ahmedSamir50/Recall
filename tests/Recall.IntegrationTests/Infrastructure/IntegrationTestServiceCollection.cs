@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Recall.Core.Checkpoints;
 using Recall.Core.DependencyInjection;
 using Recall.Adapters.DependencyInjection;
 
@@ -11,6 +12,7 @@ public static class IntegrationTestServiceCollection
         var services = new ServiceCollection();
         services.AddRecallCore();
         services.AddSingleton<Recall.Core.Ports.IScopeGrantStore, InMemoryScopeGrantStore>();
+        services.AddSingleton<IIngestCursorStore>(_ => new SqliteIngestCursorStore(Path.Combine(vectorRoot, CheckpointSql.FileName)));
         services.AddRecallAdapters(modelDirectory, vectorRoot);
         return services.BuildServiceProvider();
     }

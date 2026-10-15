@@ -6,15 +6,15 @@ The ingest call.
 
 ## Trigger
 
-`IngestGrantedTextAsync`. There is no watcher trigger.
+`IngestGrantedTextAsync`, watcher, foreground scan, and Index now.
 
 ## Path
 
-Skip a grant only when both Text and Code are off, read each document, plan chunks, embed once, cut to 512, insert, and append the op-log only when insert returns true.
+Skip a grant only when both Text and Code are off, `MarkGrantReading`, read each document, `IngestDocumentAsync`, then `MarkGrantFinished`. `IngestDocumentAsync` skips embed when `IngestCursorPolicy.Decide` returns `Skip`; otherwise `MarkReading`, embed, then `MarkFinished`.
 
 ## Failure
 
-Blank content throws, cancellation throws, and a repeated content id skips insert and skips the log.
+Blank content throws, cancellation throws, a repeated content id skips insert and skips the log, and a throw after `MarkReading` leaves `Reading` for resume. Finished same hash skips embed.
 
 ## Domains
 

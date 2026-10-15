@@ -8,13 +8,13 @@ Read this page, then [for-agents.md](for-agents.md), then the domain page or the
 
 ## What exists now
 
-In the tree now: shell, Arabic and English chrome, device record, folder grants, text model download, text embed at stored width 512, one `items_text` collection, hybrid Find, local file open, age cutoff stored as 2, 5, or 7, sync flag off, local op-log insert lines.
+In the tree now: shell, Arabic and English chrome, device record, folder grants, text model download, text embed at stored width 512, one `items_text` collection, hybrid Find, local file open, age cutoff stored as 2, 5, or 7, sync flag off, local op-log insert and delete lines, scope watchers, `checkpoints.db`, Code grant flag, skip-folder and secret filters.
 
 Progress numbers live only in [plan.md](plan.md). Domains start at [domains/index.md](domains/index.md). Use cases start at [use-cases/index.md](use-cases/index.md). The file catalog is [code/map.md](code/map.md).
 
 ## What is not in the tree
 
-Not in the tree: scope watchers, `checkpoints.db`, vision, video sampling, OCR, audio encoder, sibling transcripts, pin storage, vector aging, a Code grant flag, skip-folder and secret filters, golden recall report, four-shell release.
+Not in the tree: vision, video sampling, OCR, audio encoder, sibling transcripts, pin storage, vector aging, golden recall report, four-shell release.
 
 ```mermaid
 flowchart TD

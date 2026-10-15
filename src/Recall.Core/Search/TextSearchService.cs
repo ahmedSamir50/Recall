@@ -1,3 +1,4 @@
+using Recall.Core.Checkpoints;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
 using Recall.Core.Text;
@@ -10,12 +11,14 @@ public sealed class TextSearchService : ITextSearchService
     private readonly ITextEmbeddingEncoder encoder;
     private readonly ITextVectorIndex index;
     private readonly IIndexPolicy indexPolicy;
+    private readonly IIngestCursorStore cursors;
 
-    public TextSearchService(ITextEmbeddingEncoder encoder, ITextVectorIndex index, IIndexPolicy indexPolicy)
+    public TextSearchService(ITextEmbeddingEncoder encoder, ITextVectorIndex index, IIndexPolicy indexPolicy, IIngestCursorStore cursors)
     {
         this.encoder = encoder;
         this.index = index;
         this.indexPolicy = indexPolicy;
+        this.cursors = cursors;
     }
 
     public async Task<IReadOnlyList<TextSearchHit>> FindAsync(
@@ -35,7 +38,19 @@ public sealed class TextSearchService : ITextSearchService
         var storedWidth = (int)indexPolicy.TextStoredWidth;
         var query512 = MatryoshkaVectorMath.CutAndNormalize(full768.Span, storedWidth);
         var request = new TextSearchRequest(query, query512, grantedPaths, TopK: 20);
-        return index.Search(request, cancellationToken);
+        var hits = index.Search(request, cancellationToken);
+        var marked = new List<TextSearchHit>();
+        foreach (var hit in hits)
+        {
+            var chunk = cursors.FindChunk(hit.ContentId);
+            var applied = SearchHitMarks.Apply(hit, chunk, grants);
+            if (applied is not null)
+            {
+                marked.Add(applied);
+            }
+        }
+
+        return marked;
     }
 
     private static HashSet<string> BuildGrantedPathSet(IReadOnlyList<ScopeFolderGrant> grants)

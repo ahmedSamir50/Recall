@@ -185,3 +185,6 @@ public sealed partial class MauiGrantedTextReader
 ```
 
 No branch.
+
+
+

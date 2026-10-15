@@ -1,5 +1,7 @@
+using Recall.Core.Checkpoints;
 using Recall.Core.Device;
 using Recall.Core.Download;
+using Recall.Core.Ingest;
 using Recall.Core.Ports;
 using Recall.Core.Preferences;
 using Recall.Core.Scope;
@@ -11,6 +13,193 @@ namespace Recall.UnitTests.Fakes;
 
 public sealed class FakeFileScopeWatcherService : IFileScopeWatcherService
 {
+    public int StartCount { get; private set; }
+
+    public bool Watching { get; private set; }
+
+    public void Start(IReadOnlyList<ScopeFolderGrant> grants, IScopeChangeSink sink)
+    {
+        StartCount++;
+        Watching = true;
+    }
+
+    public void Stop()
+    {
+        Watching = false;
+    }
+}
+
+public sealed class FakeScopeChangeSink : IScopeChangeSink
+{
+    public List<ScopeChange> Reports { get; } = [];
+
+    public int RescanCount { get; private set; }
+
+    public bool RescanRequested => RescanCount > 0;
+
+    public void Report(ScopeChange change)
+    {
+        lock (Reports)
+        {
+            Reports.Add(change);
+        }
+    }
+
+    public void RequestRescan()
+    {
+        RescanCount++;
+    }
+}
+
+public sealed class FakeIngestCursorStore : IIngestCursorStore
+{
+    private readonly Dictionary<string, IngestFileRow> files = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, IngestChunkRow> chunks = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, IngestCursorState> grants = new(StringComparer.OrdinalIgnoreCase);
+
+    public IngestFileRow? GetFile(string path)
+    {
+        return files.TryGetValue(path, out var row) ? row : null;
+    }
+
+    public IReadOnlyList<IngestFileRow> ListFiles(string grantPath)
+    {
+        return files.Values
+            .Where(f => string.Equals(
+                ScopeGrantPolicy.Normalize(f.GrantPath),
+                ScopeGrantPolicy.Normalize(grantPath),
+                StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    public IReadOnlyList<IngestChunkRow> ListChunks(string path)
+    {
+        return chunks.Values
+            .Where(c => string.Equals(c.Path, path, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    public IngestChunkRow? FindChunk(string contentId)
+    {
+        return chunks.TryGetValue(contentId, out var row) ? row : null;
+    }
+
+    public void MarkReading(string path, string contentHash, string grantPath)
+    {
+        files[path] = new IngestFileRow(path, contentHash, IngestCursorState.Reading, grantPath);
+    }
+
+    public void MarkFinished(string path, string contentHash, string grantPath, IReadOnlyList<(string ContentId, int Ordinal)> chunks)
+    {
+        if (chunks is not null)
+        {
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var chunk in chunks)
+            {
+                if (!seen.Add(chunk.ContentId))
+                {
+                    throw new InvalidOperationException("Duplicate chunk id.");
+                }
+
+                if (this.chunks.TryGetValue(chunk.ContentId, out var existing)
+                    && !string.Equals(existing.Path, path, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException("Duplicate chunk id.");
+                }
+            }
+        }
+
+        foreach (var id in this.chunks.Keys.ToList())
+        {
+            if (string.Equals(this.chunks[id].Path, path, StringComparison.OrdinalIgnoreCase))
+            {
+                this.chunks.Remove(id);
+            }
+        }
+
+        files[path] = new IngestFileRow(path, contentHash, IngestCursorState.Finished, grantPath);
+        if (chunks is not null)
+        {
+            foreach (var chunk in chunks)
+            {
+                this.chunks[chunk.ContentId] = new IngestChunkRow(chunk.ContentId, path, chunk.Ordinal, false, false);
+            }
+        }
+    }
+
+    public void RenamePath(string previousPath, string nextPath)
+    {
+        if (!files.TryGetValue(previousPath, out var row))
+        {
+            return;
+        }
+
+        files.Remove(previousPath);
+        files[nextPath] = row with { Path = nextPath };
+        foreach (var id in chunks.Keys.ToList())
+        {
+            var chunk = chunks[id];
+            if (string.Equals(chunk.Path, previousPath, StringComparison.OrdinalIgnoreCase) && !chunk.Retired)
+            {
+                chunks[id] = chunk with { Path = nextPath };
+            }
+        }
+    }
+
+    public void MarkMissing(string path)
+    {
+        if (files.TryGetValue(path, out var row))
+        {
+            files[path] = row with { State = IngestCursorState.Missing };
+        }
+        else
+        {
+            files[path] = new IngestFileRow(path, string.Empty, IngestCursorState.Missing, string.Empty);
+        }
+
+        foreach (var id in chunks.Keys.ToList())
+        {
+            var chunk = chunks[id];
+            if (string.Equals(chunk.Path, path, StringComparison.OrdinalIgnoreCase))
+            {
+                chunks[id] = chunk with { Missing = true };
+            }
+        }
+    }
+
+    public void RetirePath(string path)
+    {
+        foreach (var id in chunks.Keys.ToList())
+        {
+            var chunk = chunks[id];
+            if (string.Equals(chunk.Path, path, StringComparison.OrdinalIgnoreCase))
+            {
+                chunks[id] = chunk with { Retired = true };
+            }
+        }
+    }
+
+    public void MarkGrantReading(string grantPath)
+    {
+        grants[ScopeGrantPolicy.Normalize(grantPath)] = IngestCursorState.Reading;
+        grants[grantPath] = IngestCursorState.Reading;
+    }
+
+    public void MarkGrantFinished(string grantPath)
+    {
+        grants[ScopeGrantPolicy.Normalize(grantPath)] = IngestCursorState.Finished;
+        grants[grantPath] = IngestCursorState.Finished;
+    }
+
+    public bool IsGrantFinished(string grantPath)
+    {
+        if (grants.TryGetValue(grantPath, out var state))
+        {
+            return state == IngestCursorState.Finished;
+        }
+
+        return grants.TryGetValue(ScopeGrantPolicy.Normalize(grantPath), out var normalized) && normalized == IngestCursorState.Finished;
+    }
 }
 
 public sealed class FakeScopeManagerService : IScopeManagerService
@@ -124,7 +313,23 @@ public sealed class FakeTextEmbeddingEncoder : ITextEmbeddingEncoder
 
 public sealed class FakeGrantedTextIngestService : IGrantedTextIngestService
 {
+    public int IngestGrantCalls { get; private set; }
+
+    public int IngestDocumentCalls { get; private set; }
+
     public Task IngestGrantedTextAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    public Task IngestGrantAsync(string path, CancellationToken cancellationToken = default)
+    {
+        IngestGrantCalls++;
+        return Task.CompletedTask;
+    }
+
+    public Task IngestDocumentAsync(ScopeFolderGrant grant, GrantedTextDocument document, CancellationToken cancellationToken = default)
+    {
+        IngestDocumentCalls++;
+        return Task.CompletedTask;
+    }
 }
 
 public sealed class FakeTextSearchService : ITextSearchService

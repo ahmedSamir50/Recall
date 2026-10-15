@@ -43,6 +43,8 @@ nav:
       - Onboard and grant: use-cases/onboard-and-grant.md
       - Download text model: use-cases/download-text-model.md
       - Ingest granted text: use-cases/ingest-granted-text.md
+      - Watch a grant: use-cases/watch-a-grant.md
+      - Index now: use-cases/index-now.md
       - Find text: use-cases/find-text.md
       - Open result: use-cases/open-result.md
       - Rename device: use-cases/rename-device.md

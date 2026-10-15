@@ -20,4 +20,5 @@ public sealed record TextSearchHit(
     string FileName,
     DateTimeOffset ModifiedAt,
     TextMatchReason MatchReason,
-    double Score);
+    double Score,
+    bool SourceMissing = false);

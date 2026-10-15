@@ -5,6 +5,8 @@ Status: in-code
 - [onboard-and-grant.md](onboard-and-grant.md)
 - [download-text-model.md](download-text-model.md)
 - [ingest-granted-text.md](ingest-granted-text.md)
+- [watch-a-grant.md](watch-a-grant.md)
+- [index-now.md](index-now.md)
 - [find-text.md](find-text.md)
 - [open-result.md](open-result.md)
 - [rename-device.md](rename-device.md)

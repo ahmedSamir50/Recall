@@ -6,11 +6,13 @@ Scope owns which folders and file kinds Recall may read. Types: `ScopeGrantServi
 
 ## Does not own
 
-It does not own ingest, search scoring, or a watcher.
+It does not own ingest or search scoring. Native subscriptions stay in the MAUI head.
 
 ## Use cases
 
-Use cases: [onboard-and-grant](../use-cases/onboard-and-grant.md), [ingest-granted-text](../use-cases/ingest-granted-text.md), [find-text](../use-cases/find-text.md). Watch and index-now are on the [absent](../use-cases/absent.md) use-case page.
+Use cases: [onboard-and-grant](../use-cases/onboard-and-grant.md), [ingest-granted-text](../use-cases/ingest-granted-text.md), [find-text](../use-cases/find-text.md), [watch-a-grant](../use-cases/watch-a-grant.md), [index-now](../use-cases/index-now.md).
+
+Scope owns overlap, the change decision, and the cursor policy.
 
 ## Store
 

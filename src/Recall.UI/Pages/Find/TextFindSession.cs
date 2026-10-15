@@ -31,13 +31,17 @@ public static class TextFindSession
             return TextFindView.Empty;
         }
 
-        var cards = hits.Select(hit => new TextFindCard(
-            hit.SourcePath,
-            hit.FileName,
-            "Kind_Document",
-            hit.ModifiedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
-            "Search_Match_MeaningAndWords",
-            !fileExists(hit.SourcePath))).ToList();
+        var cards = hits.Select(hit =>
+        {
+            var unavailable = hit.SourceMissing || !fileExists(hit.SourcePath);
+            return new TextFindCard(
+                hit.SourcePath,
+                hit.FileName,
+                "Kind_Document",
+                hit.ModifiedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+                "Search_Match_MeaningAndWords",
+                unavailable);
+        }).ToList();
 
         var immediate = cards.Take(ImmediateCardCount).ToList();
         var deferred = cards.Skip(ImmediateCardCount).ToList();

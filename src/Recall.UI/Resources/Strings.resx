@@ -33,7 +33,9 @@
   <data name="Folders_PickOne" xml:space="preserve"><value>Pick at least one folder</value></data>
   <data name="Folders_PermissionDenied" xml:space="preserve"><value>Recall can't read this folder</value></data>
   <data name="Folders_IosNote" xml:space="preserve"><value>New files are picked up when Recall is opened.</value></data>
-  <data name="Folders_OverlapWarning" xml:space="preserve"><value>This folder is already included through a parent folder you picked.</value></data>
+  <data name="Folders_OverlapWarning" xml:space="preserve"><value>Recall keeps the parent folder. The folder inside it is not indexed again.</value></data>
+  <data name="Home_IndexNow" xml:space="preserve"><value>Index now</value></data>
+  <data name="Home_IndexNowLead" xml:space="preserve"><value>This folder is allowed and not indexed yet.</value></data>
   <data name="Folders_TypesLabel" xml:space="preserve"><value>File types to include</value></data>
   <data name="Folders_TypeText" xml:space="preserve"><value>Text</value></data>
   <data name="Folders_TypeImage" xml:space="preserve"><value>Images</value></data>

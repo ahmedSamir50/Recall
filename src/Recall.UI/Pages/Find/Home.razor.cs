@@ -12,6 +12,9 @@ public partial class Home
     [Inject]
     private ILocalFileOpener Opener { get; set; } = null!;
 
+    [Inject]
+    private IIndexNowService IndexNow { get; set; } = null!;
+
     private string? query;
 
     private string? faultKey;
@@ -19,6 +22,13 @@ public partial class Home
     private TextFindView view = TextFindView.Empty;
 
     private bool hasSearched;
+
+    private IReadOnlyList<Recall.Core.Scope.ScopeFolderGrant> offers = [];
+
+    protected override void OnInitialized()
+    {
+        offers = IndexNow.ListOffers();
+    }
 
     private Task OnKeyDownAsync(KeyboardEventArgs args)
     {
@@ -52,6 +62,20 @@ public partial class Home
             faultKey = TextFindSession.FaultKey(ex);
             view = TextFindView.Empty;
             hasSearched = true;
+        }
+    }
+
+    private async Task IndexNowAsync(string path)
+    {
+        try
+        {
+            await IndexNow.IndexAsync(path);
+            offers = IndexNow.ListOffers();
+            faultKey = null;
+        }
+        catch (Exception ex)
+        {
+            faultKey = TextFindSession.FaultKey(ex);
         }
     }
 

@@ -1,3 +1,16 @@
+## src/Recall.Core/Scope/ScopeWatchRoots.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public static class ScopeWatchRoots
+ScopeWatchRoots
+    public static IReadOnlyList<string> Select(IReadOnlyList<string>? paths)
+    if (paths is null || paths.Count == 0)
+    if (string.IsNullOrWhiteSpace(path))
+    if (normalized.Any(existing => existing.Equals(value, StringComparison.OrdinalIgnoreCase)))
+    if (normalized.Any(other => ScopeGrantPolicy.IsChildPath(other, path)))
+```
+
 ## src/Recall.Core/Scope/ScopeGrantPolicy.cs
 
 ```csharp
@@ -33,6 +46,11 @@ public sealed class ScopeGrantService : IScopeManagerService
 ```
 
 
+
+```csharp
+if (string.IsNullOrWhiteSpace(grant.Path))
+if (children.Count > 0)
+``` 
 ## src/Recall.Core/Scope/ScopeFolderGrant.cs
 
 ```csharp
@@ -74,6 +92,11 @@ public static class ContentUri
 No branch.
 
 
+
+```csharp
+if (string.IsNullOrWhiteSpace(path))
+if (path.StartsWith(Scheme, StringComparison.OrdinalIgnoreCase))
+``` 
 ## src/Recall.Core/Scope/GitIgnoreMatcher.cs
 
 ```csharp
@@ -175,4 +198,276 @@ public static class BuiltInSkips
     if (string.IsNullOrEmpty(fileName))
     if (string.IsNullOrEmpty(extensionWithoutDot))
 ```
+
+
+
+## 
+
+```csharp
+namespace Recall.Adapters.DependencyInjection;
+public type AdapterServiceCollectionExtensions
+AdapterServiceCollectionExtensions
+public static class AdapterServiceCollectionExtensions
+public static IServiceCollection AddRecallAdapters(
+
+No branch.
+``` 
+
+
+
+## src/Recall.Core/Checkpoints/CheckpointSql.cs
+
+```csharp
+namespace Recall.Core.Checkpoints;
+public type CheckpointSql
+CheckpointSql
+public static class CheckpointSql
+public const string FileName = "checkpoints.db";
+public const string CreateFileTable =
+public const string CreateChunkTable =
+public const string CreateChunkPathIndex =
+public const string CreateGrantTable =
+public const string EnsureSchema =
+
+No branch.
+``` 
+
+
+
+## src/Recall.Core/Checkpoints/IIngestCursorStore.cs
+
+```csharp
+namespace Recall.Core.Checkpoints;
+public type IIngestCursorStore
+IIngestCursorStore
+public interface IIngestCursorStore
+
+No branch.
+``` 
+
+
+
+## src/Recall.Core/Checkpoints/IngestCursorModels.cs
+
+```csharp
+namespace Recall.Core.Checkpoints;
+public type IngestCursorState
+IngestCursorState
+public type IngestCursorDecision
+IngestCursorDecision
+public type IngestFileRow
+IngestFileRow
+public type IngestChunkRow
+IngestChunkRow
+public type GrantScanRow
+GrantScanRow
+public type IngestCursorPolicy
+IngestCursorPolicy
+public enum IngestCursorState
+public enum IngestCursorDecision
+public sealed record IngestFileRow(string Path, string ContentHash, IngestCursorState State, string GrantPath);
+public sealed record IngestChunkRow(string ContentId, string Path, int Ordinal, bool Missing, bool Retired);
+public sealed record GrantScanRow(string GrantPath, IngestCursorState State);
+public static class IngestCursorPolicy
+public static IngestCursorDecision Decide(IngestFileRow? row, string contentHash)
+    if (string.IsNullOrWhiteSpace(contentHash))
+    if (row is null)
+    if (row.State == IngestCursorState.Reading)
+    if (row.State == IngestCursorState.Missing)
+    if (row.State == IngestCursorState.Finished
+``` 
+
+
+
+## src/Recall.Core/Checkpoints/SqliteIngestCursorStore.cs
+
+```csharp
+namespace Recall.Core.Checkpoints;
+public type SqliteIngestCursorStore
+SqliteIngestCursorStore
+public sealed class SqliteIngestCursorStore : IIngestCursorStore
+public SqliteIngestCursorStore(string databasePath)
+public IngestFileRow? GetFile(string path)
+public IReadOnlyList<IngestFileRow> ListFiles(string grantPath)
+public IReadOnlyList<IngestChunkRow> ListChunks(string path)
+public IngestChunkRow? FindChunk(string contentId)
+public void MarkReading(string path, string contentHash, string grantPath)
+public void MarkFinished(string path, string contentHash, string grantPath, IReadOnlyList<(string ContentId, int Ordinal)> chunks)
+public void RenamePath(string previousPath, string nextPath)
+public void MarkMissing(string path)
+public void RetirePath(string path)
+public void MarkGrantReading(string grantPath)
+public void MarkGrantFinished(string grantPath)
+public bool IsGrantFinished(string grantPath)
+    if (string.IsNullOrWhiteSpace(databasePath))
+    if (reader.Read())
+    if (chunks is not null)
+    if (!reader.Read())
+    if (value is null || value == DBNull.Value)
+    if (!string.IsNullOrWhiteSpace(directory))
+    DELETE FROM ingest_chunk WHERE path = @path AND retired = @retired
+``` 
+
+
+
+
+```csharp
+if (duplicate is not null)
+if (liveById.ContainsKey(chunk.ContentId))
+``` 
+## src/Recall.Core/Scope/DisabledScopeWatcher.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type DisabledScopeWatcher
+DisabledScopeWatcher
+public sealed class DisabledScopeWatcher : IFileScopeWatcherService
+public int StartCount { get; private set; }
+public bool Watching { get; private set; }
+public void Start(IReadOnlyList<ScopeFolderGrant> grants, IScopeChangeSink sink)
+public void Stop()
+
+No branch.
+``` 
+
+
+
+## src/Recall.Core/Scope/ForegroundGrantDiff.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type WatchedFile
+WatchedFile
+public type ForegroundGrantDiff
+ForegroundGrantDiff
+public readonly record struct WatchedFile(string Path, string ContentHash);
+public static class ForegroundGrantDiff
+public static IReadOnlyList<ScopeChange> Diff(
+    if (current is not null)
+    if (string.IsNullOrWhiteSpace(file.Path))
+    if (stored is not null)
+    if (!storedByPath.TryGetValue(pair.Key, out var row))
+    if (!string.Equals(row.ContentHash, pair.Value, StringComparison.Ordinal))
+    if (pair.Value.State == IngestCursorState.Missing)
+    if (created.Count == 1 && deleted.Count == 1
+    if (created.Count > 0 && deleted.Count > 0)
+    if (deletedByHash.TryGetValue(hash, out var delList)
+``` 
+
+
+
+## src/Recall.Core/Scope/ScopeChange.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type ScopeChangeKind
+ScopeChangeKind
+public type ScopeChange
+ScopeChange
+public enum ScopeChangeKind
+public sealed record ScopeChange(ScopeChangeKind Kind, string Path, string? PreviousPath);
+
+No branch.
+``` 
+
+
+
+## src/Recall.Core/Scope/ScopeChangeBuffer.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type ScopeChangeBufferAddResult
+ScopeChangeBufferAddResult
+public type ScopeChangeBuffer
+ScopeChangeBuffer
+public enum ScopeChangeBufferAddResult
+public sealed class ScopeChangeBuffer
+public bool NeedsRescan { get { lock (gate) { return needsRescan; } } }
+public int Count { get { lock (gate) { return items.Count; } } }
+public ScopeChangeBufferAddResult TryAdd(ScopeChange change)
+public IReadOnlyList<ScopeChange> Drain()
+public void AcknowledgeRescan()
+public void RequestRescan()
+    if (string.IsNullOrWhiteSpace(change.Path))
+    if (items.ContainsKey(change.Path))
+    if (items.Count >= ScopeWatchLimits.ChangeCapacity)
+``` 
+
+
+
+## src/Recall.Core/Scope/ScopeWatcherKindPolicy.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type ScopeWatcherKind
+ScopeWatcherKind
+public type ScopeWatcherKindPolicy
+ScopeWatcherKindPolicy
+public enum ScopeWatcherKind
+public static class ScopeWatcherKindPolicy
+public static ScopeWatcherKind Choose(RecallShellKind kind)
+    if (kind == RecallShellKind.Windows || kind == RecallShellKind.Android || kind == RecallShellKind.MacCatalyst)
+``` 
+
+
+
+## src/Recall.Core/Scope/ScopeWatchLimits.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type ScopeWatchLimits
+ScopeWatchLimits
+public static class ScopeWatchLimits
+public const int ChangeCapacity = 64;
+
+No branch.
+``` 
+
+
+
+## src/Recall.Core/Scope/WindowsFileScopeWatcher.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type WindowsFileScopeWatcher
+WindowsFileScopeWatcher
+public sealed class WindowsFileScopeWatcher : IFileScopeWatcherService, IDisposable
+public bool Watching { get; private set; }
+public int WatcherCount => watchers.Count;
+public static bool CanWatchDirectories(bool isIos, bool isMacCatalyst)
+public void Start(IReadOnlyList<ScopeFolderGrant> grants, IScopeChangeSink sink)
+public void Stop()
+public void Dispose()
+    if (isIos && !isMacCatalyst)
+    if (!CanWatchDirectories(OperatingSystem.IsIOS(), OperatingSystem.IsMacCatalyst()))
+    if (ContentUri.IsContent(path))
+    if (!Directory.Exists(path))
+    if (watchers.Count == 0)
+    if (WindowsWatchEventMapper.TryMap(WindowsWatchKind.Created, args.FullPath, null, out var change))
+    if (WindowsWatchEventMapper.TryMap(WindowsWatchKind.Changed, args.FullPath, null, out var change))
+    if (WindowsWatchEventMapper.TryMap(WindowsWatchKind.Renamed, args.FullPath, args.OldFullPath, out var change))
+    if (WindowsWatchEventMapper.TryMap(WindowsWatchKind.Deleted, args.FullPath, null, out var change))
+``` 
+
+
+
+## src/Recall.Core/Scope/WindowsWatchEventMapper.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type WindowsWatchKind
+WindowsWatchKind
+public type WindowsWatchEventMapper
+WindowsWatchEventMapper
+public enum WindowsWatchKind
+public static class WindowsWatchEventMapper
+public static bool TryMap(WindowsWatchKind kind, string path, string? previousPath, out ScopeChange change)
+    if (string.IsNullOrWhiteSpace(path))
+    if (kind == WindowsWatchKind.Error)
+    if (kind == WindowsWatchKind.Renamed)
+    if (!string.IsNullOrWhiteSpace(previousPath))
+    if (kind == WindowsWatchKind.Deleted)
+    if (kind == WindowsWatchKind.Changed)
+    if (kind == WindowsWatchKind.Created)
+``` 
 

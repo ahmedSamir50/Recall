@@ -6,6 +6,10 @@ using Recall.Core.Vocabulary;
 
 namespace Recall.Core.Text;
 
+public sealed record TextIngestChunk(string ContentId, int Ordinal);
+
+public sealed record TextIngestResult(string ContentHash, IReadOnlyList<TextIngestChunk> Chunks);
+
 public sealed class TextIngestEngine
 {
     private readonly ITextEmbeddingEncoder encoder;
@@ -28,7 +32,7 @@ public sealed class TextIngestEngine
         this.opLog = opLog;
     }
 
-    public async Task IngestFileAsync(string filePath, string rawText, DateTimeOffset modifiedAt, CancellationToken cancellationToken)
+    public async Task<TextIngestResult> IngestFileAsync(string filePath, string rawText, DateTimeOffset modifiedAt, CancellationToken cancellationToken)
     {
         var storedWidth = (int)indexPolicy.TextStoredWidth;
         indexPolicy.EnsureStorableWidth(Modality.Text, storedWidth);
@@ -37,6 +41,7 @@ public sealed class TextIngestEngine
         var sourceHash = ContentIdBuilder.HashSourceContent(rawText);
         var chunks = TextChunkPlanner.PlanChunks(title, rawText, tokenCounter.CountTokens);
 
+        var resultChunks = new List<TextIngestChunk>();
         foreach (var chunk in chunks)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -48,6 +53,10 @@ public sealed class TextIngestEngine
             {
                 opLog.AppendInsert(contentId);
             }
+
+            resultChunks.Add(new TextIngestChunk(contentId, chunk.Ordinal));
         }
+
+        return new TextIngestResult(sourceHash, resultChunks);
     }
 }

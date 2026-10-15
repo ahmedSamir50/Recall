@@ -12,6 +12,10 @@ public sealed class TextSearchService : ITextSearchService
 ```
 
 
+
+```csharp
+if (applied is not null)
+``` 
 ## src/Recall.Core/Search/TextSearchModels.cs
 
 ```csharp
@@ -86,3 +90,21 @@ public interface IOpenIndexedFileService
 ```
 
 No branch.
+
+
+## src/Recall.Core/Search/SearchHitMarks.cs
+
+```csharp
+namespace Recall.Core.Search;
+public type SearchHitMarks
+SearchHitMarks
+public static class SearchHitMarks
+public static TextSearchHit? Apply(
+    if (chunk is null)
+    if (chunk.Retired)
+    if (grants is not null)
+    if (grant is null || string.IsNullOrWhiteSpace(grant.Path))
+    if (ScopeGrantPolicy.IsInsideGrant(grant.Path, effectivePath))
+    if (!inside)
+``` 
+

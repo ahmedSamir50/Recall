@@ -10,7 +10,7 @@
 - How does activating a hit choose opened, missing, or failed? [docs/features/open-file.md](features/open-file.md). Source: `src/Recall.Core/Search/LocalFileOpenPolicy.cs`.
 - Which age values are stored, and what does not shrink a vector? [docs/features/age-cutoff.md](features/age-cutoff.md). Source: `src/Recall.Core/Preferences/AgeCutoffPreferenceService.cs`.
 - Is sync transport in the tree? [docs/features/sync-stub.md](features/sync-stub.md). Source: `src/Recall.Core/Sync/SyncFeature.cs`.
-- Is there a watcher class in `src/`? [docs/features/watchers.md](features/watchers.md). Source: `src/Recall.Core/Ports/ScopePorts.cs`.
+- Which watcher runs while Recall is open, and how does iPhone catch up? [docs/features/watchers.md](features/watchers.md). Sources: `src/Recall.Core/Scope/ScopeWatchCoordinator.cs`, `src/Recall.Core/Scope/ScopeChangeBuffer.cs`, `src/Recall.Core/Checkpoints/SqliteIngestCursorStore.cs`.
 - Are vision, video sampling, and OCR in the tree? [docs/features/vision-and-ocr.md](features/vision-and-ocr.md). No type for those readers is in `src/`.
 - Is an audio encoder or a sibling transcript indexed? [docs/features/audio-and-transcripts.md](features/audio-and-transcripts.md). No speech-to-text package is in the solution.
 - Is a code grant flag or a skip filter in the tree? [docs/features/code-and-skips.md](features/code-and-skips.md). Source: `src/Recall.Core/Scope/GrantFileKinds.cs`.

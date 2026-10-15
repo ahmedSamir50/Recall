@@ -33,7 +33,9 @@
   <data name="Folders_PickOne" xml:space="preserve"><value>اختر مجلدًا واحدًا على الأقل</value></data>
   <data name="Folders_PermissionDenied" xml:space="preserve"><value>لا يستطيع ريكول قراءة هذا المجلد</value></data>
   <data name="Folders_IosNote" xml:space="preserve"><value>تُلتقط الملفات الجديدة عند فتح ريكول.</value></data>
-  <data name="Folders_OverlapWarning" xml:space="preserve"><value>هذا المجلد داخل مجلد اخترته من قبل، فهو مشمول أصلًا.</value></data>
+  <data name="Folders_OverlapWarning" xml:space="preserve"><value>يبقي ريكول المجلد الأب. لا يُفهرس المجلد الذي بداخله مرة أخرى.</value></data>
+  <data name="Home_IndexNow" xml:space="preserve"><value>فهرس الآن</value></data>
+  <data name="Home_IndexNowLead" xml:space="preserve"><value>هذا المجلد مسموح ولم يُفهرس بعد.</value></data>
   <data name="Folders_TypesLabel" xml:space="preserve"><value>اختر أنواع الملفات لكل مجلد</value></data>
   <data name="Folders_TypeText" xml:space="preserve"><value>نص</value></data>
   <data name="Folders_TypeImage" xml:space="preserve"><value>صور</value></data>

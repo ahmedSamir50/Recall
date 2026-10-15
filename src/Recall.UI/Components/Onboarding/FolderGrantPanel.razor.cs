@@ -58,9 +58,10 @@ public partial class FolderGrantPanel
         var name = DisplayNameFor(result.Path);
 
         var add = Ui.TryAddGrant(new ScopeFolderGrant(result.Path, name, GrantFileKinds.All, result.ReopenToken));
-        if (add.Status == ScopeGrantAddStatus.OverlapChildOfExistingParent)
+        var overlapKey = FolderGrantMessages.OverlapKey(add.Status);
+        if (overlapKey is not null)
         {
-            overlapWarning = T("Folders_OverlapWarning");
+            overlapWarning = T(overlapKey);
         }
     }
 

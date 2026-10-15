@@ -389,6 +389,34 @@ public sealed class FakeUserSkipStore : IUserSkipStore
 ```
 
 
+
+```csharp
+FakeScopeChangeSink
+FakeIngestCursorStore
+if (chunks is not null)
+if (this.chunks.ContainsKey(chunk.ContentId))
+if (!files.TryGetValue(previousPath, out var row))
+if (string.Equals(chunk.Path, previousPath, StringComparison.OrdinalIgnoreCase) && !chunk.Retired)
+if (files.TryGetValue(path, out var row))
+if (string.Equals(chunk.Path, path, StringComparison.OrdinalIgnoreCase))
+if (grants.TryGetValue(grantPath, out var state))
+``` 
+
+```csharp
+if (this.chunks.ContainsKey(chunk.ContentId) && !liveIds.Contains(chunk.ContentId))
+if (!newIds.Add(chunk.ContentId))
+``` 
+
+```csharp
+if (!seen.Add(chunk.ContentId))
+if (this.chunks.TryGetValue(chunk.ContentId, out var existing)
+if (chunks is null)
+if (string.Equals(row.Path, path, StringComparison.OrdinalIgnoreCase) && !row.Retired && !wanted.Contains(id))
+``` 
+
+```csharp
+if (string.Equals(this.chunks[id].Path, path, StringComparison.OrdinalIgnoreCase))
+``` 
 ## tests/Recall.UnitTests/Fakes/PreferenceFakes.cs
 
 ```csharp
@@ -506,4 +534,171 @@ public sealed class CodeAndSkipTests
     catch (IOException)
     if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
 ```
+
+
+
+## tests/Recall.UnitTests/Phase3CursorTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public type Phase3CursorTests
+Phase3CursorTests
+public sealed class Phase3CursorTests
+public void Decide_NullReadingMissingAndChangedHash_Read()
+public void Decide_FinishedSameHash_Skip()
+public void Decide_BlankHash_Throws()
+public void MarkReading_Committed_SurvivesNewStore()
+public void MarkFinished_DuplicateChunkId_RollsBackToReading()
+public void MarkFinished_ThenDecide_SkipsSameHash()
+public void MarkFinished_SameContentId_ReplacesLiveChunk()
+public void RoundTrip_QuoteInPath_UsesParameter()
+public void RenamePath_MovesFileAndLiveChunks()
+public void MarkMissing_KeepsChunkRowAndSetsMissing()
+public void RetirePath_SetsRetired()
+public void IsGrantFinished_OnlyWhenFinished()
+public void CheckpointSql_UsesParametersAndFileName()
+public int Calls { get; private set; }
+public List<GrantedTextDocument> Documents { get; } = [];
+public async IAsyncEnumerable<GrantedTextDocument> ReadAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+public async Task IngestGrant_UnknownPath_DoesNotRead()
+public async Task IngestGrant_TextAndCodeOff_DoesNotRead()
+public async Task IngestDocument_FinishedSameHash_DoesNotEmbed()
+public async Task IngestDocument_Reading_Embeds()
+public async Task IngestDocument_ThrowAfterMarkReading_StaysReading()
+public async Task Resume_ReadingRow_EmbedsAgain_FinishedRow_DoesNotEmbed()
+public ValueTask<ReadOnlyMemory<float>> EmbedPrefixedTextAsync(string prefixedText, CancellationToken cancellationToken = default)
+public int Calls { get; private set; }
+public bool FailNext { get; set; } = true;
+public ValueTask<ReadOnlyMemory<float>> EmbedPrefixedTextAsync(string prefixedText, CancellationToken cancellationToken = default)
+public async Task Apply_Deleted_AppendsDeleteAndDoesNotEmbed()
+public async Task Apply_DeletedWhenAlreadyMissing_DoesNotAppendAgain()
+public async Task Apply_DeletedWithNoChunks_MarksMissingOnly()
+public async Task Apply_RenamedSameHash_DoesNotEmbed()
+public async Task Apply_RenamedChangedHash_RetiresAndEmbedsOnce()
+public async Task Apply_RenamedUnknownPrevious_IngestsNewPath()
+public async Task Apply_RenamedMissingDocument_MarksPreviousMissing()
+public async Task Apply_CreatedNullDocument_DoesNotWrite()
+public async Task Apply_BlankPath_DoesNotWrite()
+public async Task Apply_Cancelled_Throws()
+public async Task TryRead_MissingBlockedIgnoredOrUnsafe_ReturnsNull()
+public async Task TryRead_AdmittedText_ReturnsDocument()
+public void Apply_RetiredChunk_DropsHit()
+public void Apply_MissingChunk_SetsSourceMissing()
+public void Apply_ChunkPath_ReplacesStoredPath()
+public void Apply_PathOutsideGrant_DropsHit()
+public void Apply_NoChunk_KeepsHit()
+public void Build_SourceMissing_IsUnavailableEvenWhenFileExists()
+public void Build_MissingFile_IsUnavailable()
+public void Build_PresentFile_IsAvailable()
+public void AppendDelete_Blank_Throws()
+public void AppendDelete_Memory_IsDeleteAndUnsent()
+public void AppendDelete_NoDirectory_WritesNoFile()
+public void AppendDelete_Directory_WritesDeleteLine()
+    catch (IOException ex)
+    if (FailNext)
+    if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+``` 
+
+
+
+## tests/Recall.UnitTests/Phase3GrantTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public type Phase3GrantTests
+Phase3GrantTests
+public sealed class Phase3GrantTests
+public void TryAddGrant_NullGrant_Throws()
+public void TryAddGrant_BlankPath_ThrowsAndDoesNotSave()
+public void TryAddGrant_ChildOfGrantedParent_ReturnsOverlap()
+public void TryAddGrant_ParentReplacesChild_KeepsDriveRoot()
+public void TryAddGrant_ParentReplacesTwoChildren_KeepsDriveRoot()
+public void TryAddGrant_PhotosExtra_IsNotAChild()
+public void TryAddGrant_Duplicate_DoesNotSave()
+public void IsContent_Blank_IsFalse()
+public void IsContent_ContentScheme_IsTrue()
+public void IsContent_DrivePath_IsFalse()
+public void Choose_WindowsAndroidMacIosUnknown_MapToWatcherKind()
+public void OverlapKey_BothOverlapStatuses_ReturnWarning()
+public void OverlapKey_AddedAndDuplicate_ReturnNull()
+public void OverlapWarning_BothLanguages_SayParentIsKept()
+public void ShouldShow_NullOrEmpty_IsFalse()
+public void ShouldShow_OneOffer_IsTrue()
+public void HomeRazor_IndexNow_UsesBothLanguagesAndLtrPath()
+public void ListOffers_Empty_IsEmpty()
+public void ListOffers_UnfinishedRoot_IsOffered()
+public void ListOffers_FinishedRoot_IsHidden()
+public void ListOffers_ChildOfAllowedParent_IsHidden()
+public void ListOffers_ChildWithoutParentInList_IsOffered()
+public async Task IndexAsync_FinishesGrant_AndOfferDisappears()
+public async Task IndexAsync_FinishedGrant_CallsIngest()
+public void AddRecallCore_CanBeCalledWithoutMaui()
+public async IAsyncEnumerable<GrantedTextDocument> ReadAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+    if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+``` 
+
+
+
+## tests/Recall.UnitTests/Phase3WatchTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public type Phase3WatchTests
+Phase3WatchTests
+public sealed class Phase3WatchTests
+public void TryAdd_BlankPath_IsIgnored()
+public void TryAdd_SamePath_ReplacesWithoutGrowing()
+public void TryAdd_SixtyFifthPath_OverflowsAndRequestsRescan()
+public void Drain_ClearsItems()
+public void AcknowledgeRescan_ClearsFlag()
+public void TryMap_BlankOrError_ReturnsFalse()
+public void TryMap_RenamedWithPrevious_ReturnsRenamed()
+public void TryMap_RenamedWithoutPrevious_ReturnsCreated()
+public void TryMap_DeletedChangedCreated_ReturnThoseKinds()
+public void Select_NullOrEmpty_ReturnsEmpty()
+public void Select_Blank_IsDropped()
+public void Select_Duplicate_KeepsOne()
+public void Select_ChildOfParent_DropsChild()
+public void Select_ThousandChildren_StaysOneRoot()
+public void Select_TwoSiblingRoots_ReturnsBoth()
+public void Choose_WindowsMacAndroid_UseFilesystemWatcher()
+public void CanWatchDirectories_IosPhone_IsFalse()
+public void CanWatchDirectories_MacCatalyst_IsTrue()
+public void CanWatchDirectories_Windows_IsTrue()
+public void Diff_AddedWhileClosed_EmitsCreated()
+public void Diff_SameHash_EmitsNothing()
+public void Diff_DifferentHash_EmitsModified()
+public void Diff_MissingStored_EmitsDeleted()
+public void Diff_AlreadyMissing_EmitsNothing()
+public void Diff_UniqueHashPair_EmitsRenamed()
+public void Diff_RepeatedHash_DoesNotPair()
+public void Diff_BlankPath_IsIgnored()
+public void DisabledScopeWatcher_Start_DoesNotWatch()
+public void Stop_LeavesWatchingFalse()
+public async Task WindowsFileScopeWatcher_TempFolder_ReportsCreatedModifiedRenamedDeleted()
+public void Stop_DisposesAndClearsWatching()
+public void OnError_RequestsRescan()
+public void OnCreated_Ios_StartsLoopWithoutWatcher()
+public void OnCreated_Unknown_DoesNotStart()
+public void OnCreated_Windows_StartsWatcher()
+public void RequestRescan_BeforeLoop_SetsFlag()
+public void OnResumed_Ios_RequestsRescan()
+public void OnResumed_Windows_RequestsRescan()
+public void OnResumed_Mac_RequestsRescan()
+public void WindowsFileScopeWatcher_NestedGrants_OpensOneWatcher()
+public void WindowsFileScopeWatcher_ContentUri_OpensZeroAndRescans()
+public async Task PumpOnce_WaitsUntilReport()
+public void TryAdd_ConcurrentWithDrain_DoesNotThrow()
+public async Task PumpOnce_ExceptionOnFirstChange_AppliesSecond()
+public async Task PumpOnce_Cancel_Stops()
+public void Stop_StopsWatcher()
+public async IAsyncEnumerable<GrantedTextDocument> ReadAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+public List<string> Succeeded { get; } = [];
+public Task IngestGrantedTextAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+public Task IngestGrantAsync(string path, CancellationToken cancellationToken = default) => Task.CompletedTask;
+public Task IngestDocumentAsync(ScopeFolderGrant grant, GrantedTextDocument document, CancellationToken cancellationToken = default)
+    if (kinds.Contains(ScopeChangeKind.Created)
+    catch (IOException ex)
+    if (document.FileName.Contains("first", StringComparison.OrdinalIgnoreCase))
+``` 
 

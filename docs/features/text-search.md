@@ -10,4 +10,4 @@ Status: in-code
 
 ## Drop
 
-A hit whose path fails `IsInsideGrant` is dropped. `ReadModified` uses unix epoch when the field is missing or not an integer. Cancellation throws before the query and again inside the hit loop. `TextMatchReason` on a returned hit is `DenseAndFullText`. This search does not query an image, video, audio, or old collection. Those collections do not exist.
+A hit whose path fails `IsInsideGrant` is dropped. Retired hits drop. Missing hits stay with `SourceMissing`. Checkpoint path replaces the stored path before the grant check. `ReadModified` uses unix epoch when the field is missing or not an integer. Cancellation throws before the query and again inside the hit loop. `TextMatchReason` on a returned hit is `DenseAndFullText`. This search does not query an image, video, audio, or old collection. Those collections do not exist.

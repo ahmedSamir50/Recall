@@ -10,4 +10,4 @@ That method checks the storable width, hashes the raw text, plans chunks, and fo
 
 ## Extensions
 
-Extensions in appsettings `TextIngest`: `.txt,.md,.markdown,.csv,.json,.xml,.html,.htm`. Code files use `IsSafeCodeText`. There is no watcher. A file added later is not picked up until something calls ingest again. That gap is phase 3, status decided-absent.
+Extensions in appsettings `TextIngest`: `.txt,.md,.markdown,.csv,.json,.xml,.html,.htm`. Code files use `IsSafeCodeText`. Watcher, foreground scan, and Index now call ingest. Finished same hash skips embed.

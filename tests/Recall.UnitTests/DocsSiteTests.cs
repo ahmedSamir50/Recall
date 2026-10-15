@@ -54,6 +54,8 @@ public sealed class DocsSiteTests
         "onboard-and-grant.md",
         "download-text-model.md",
         "ingest-granted-text.md",
+        "watch-a-grant.md",
+        "index-now.md",
         "find-text.md",
         "open-result.md",
         "rename-device.md",

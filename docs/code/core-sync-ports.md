@@ -122,6 +122,10 @@ public interface ILocalFileOpener
 No branch.
 
 
+
+```csharp
+IIndexNowService
+``` 
 ## src/Recall.Core/Ports/ScopePorts.cs
 
 ```csharp
@@ -149,6 +153,10 @@ public interface IIdleDetectorService
 No branch.
 
 
+
+```csharp
+IScopeChangeSink
+``` 
 ## src/Recall.Core/Ports/OnboardingPorts.cs
 
 ```csharp

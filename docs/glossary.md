@@ -12,6 +12,6 @@ Content id is the hex SHA-256 of the preimage on the [content-id](data/content-i
 
 Op-log is the local unsent insert log.
 
-Scope watcher is the decided-absent filesystem listener, and the product does not use ambient capture.
+Scope watcher runs only while Recall is open. iPhone scans on foreground. It is not ambient capture.
 
 The word tier is retired and means stored width.

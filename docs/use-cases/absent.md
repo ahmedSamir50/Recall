@@ -1,13 +1,5 @@
 Status: decided-absent. Speech-to-text is forbidden.
 
-## Watch a grant
-
-No steps. Feature: [watchers](../features/watchers.md).
-
-## Index now
-
-No steps. Feature: [folder-grants](../features/folder-grants.md).
-
 ## Find a picture
 
 No steps. Feature: [vision-and-ocr](../features/vision-and-ocr.md).

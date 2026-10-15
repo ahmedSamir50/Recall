@@ -22,6 +22,11 @@ public partial class App : Application
 No branch.
 
 
+
+```csharp
+if (services is null)
+if (coordinator is null || shell is null)
+``` 
 ## src/Recall.Maui/MainPage.xaml.cs
 
 ```csharp
@@ -43,6 +48,10 @@ public static class MauiServiceCollectionExtensions
 No branch.
 
 
+
+```csharp
+if (kind == ScopeWatcherKind.WindowsFileSystem)
+``` 
 ## src/Recall.Maui/Platform/Preferences/MauiAgeCutoffPreferenceStore.cs
 
 ```csharp

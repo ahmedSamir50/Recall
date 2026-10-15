@@ -1,3 +1,4 @@
+using Recall.Core.Ingest;
 using Recall.Core.Scope;
 using Recall.Core.Search;
 using Recall.Core.Vocabulary;
@@ -26,6 +27,17 @@ public interface ITextVectorIndex
 public interface IGrantedTextIngestService
 {
     Task IngestGrantedTextAsync(CancellationToken cancellationToken = default);
+
+    Task IngestGrantAsync(string path, CancellationToken cancellationToken = default);
+
+    Task IngestDocumentAsync(ScopeFolderGrant grant, GrantedTextDocument document, CancellationToken cancellationToken = default);
+}
+
+public interface IIndexNowService
+{
+    IReadOnlyList<ScopeFolderGrant> ListOffers();
+
+    Task IndexAsync(string path, CancellationToken cancellationToken = default);
 }
 
 public interface ITextSearchService

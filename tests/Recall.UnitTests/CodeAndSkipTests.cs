@@ -1508,7 +1508,7 @@ public sealed class CodeAndSkipTests
         {
             Directory.CreateDirectory(oplogDir);
             var engine = new TextIngestEngine(encoder, index, new FakeIndexPolicy(), new FakeTextTokenCounter(), new LocalOpLogWriter(oplogDir));
-            var service = new GrantedTextIngestService(scope, reader, engine);
+            var service = new GrantedTextIngestService(scope, reader, engine, new FakeIngestCursorStore());
 
             // Act
             await service.IngestGrantedTextAsync(TestContext.Current.CancellationToken);
@@ -1528,7 +1528,7 @@ public sealed class CodeAndSkipTests
         // Arrange
         var encoder = new FakeTextEmbeddingEncoder();
         var index = new FakeTextVectorIndex();
-        var service = new TextSearchService(encoder, index, new FakeIndexPolicy());
+        var service = new TextSearchService(encoder, index, new FakeIndexPolicy(), new FakeIngestCursorStore());
         var grants = new List<ScopeFolderGrant>
         {
             new("D:\\Code", "Code", GrantFileKinds.Code),
@@ -1551,7 +1551,7 @@ public sealed class CodeAndSkipTests
         // Arrange
         var encoder = new FakeTextEmbeddingEncoder();
         var index = new FakeTextVectorIndex();
-        var service = new TextSearchService(encoder, index, new FakeIndexPolicy());
+        var service = new TextSearchService(encoder, index, new FakeIndexPolicy(), new FakeIngestCursorStore());
         var grants = new List<ScopeFolderGrant> { new("D:\\Code", "Code", GrantFileKinds.Code) };
 
         // Act

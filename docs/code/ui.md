@@ -250,6 +250,10 @@ public partial class FolderGrantPanel
 ```
 
 
+
+```csharp
+if (overlapKey is not null)
+``` 
 ## src/Recall.UI/Components/Onboarding/OnboardingHeader.razor.cs
 
 ```csharp
@@ -614,3 +618,31 @@ Markup only.
 ```razor
 @page "/shell-redirect"
 ```
+
+
+## src/Recall.UI/Components/Onboarding/FolderGrantMessages.cs
+
+```csharp
+namespace Recall.UI.Components;
+public type FolderGrantMessages
+FolderGrantMessages
+public static class FolderGrantMessages
+public static string? OverlapKey(ScopeGrantAddStatus status)
+    if (status == ScopeGrantAddStatus.OverlapChildOfExistingParent)
+    if (status == ScopeGrantAddStatus.OverlapParentReplacesChildren)
+``` 
+
+
+
+## src/Recall.UI/Pages/Find/IndexNowPanel.cs
+
+```csharp
+namespace Recall.UI.Pages;
+public type IndexNowPanel
+IndexNowPanel
+public static class IndexNowPanel
+public static bool ShouldShow(IReadOnlyList<ScopeFolderGrant>? offers)
+    if (offers is null)
+    if (offers.Count == 0)
+``` 
+

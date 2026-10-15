@@ -14,6 +14,11 @@ public sealed class TextIngestEngine
 ```
 
 
+
+```csharp
+TextIngestChunk
+TextIngestResult
+``` 
 ## src/Recall.Core/Text/TextChunkPlanner.cs
 
 ```csharp
@@ -118,6 +123,11 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
 ```
 
 
+
+```csharp
+if (grant is null)
+if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
+``` 
 ## src/Recall.Core/Ingest/GrantedTextDocument.cs
 
 ```csharp
@@ -162,3 +172,134 @@ public interface IGrantedTextReader
 ```
 
 No branch.
+
+
+## src/Recall.Core/Ingest/FilesystemScopeFileReader.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public type FilesystemScopeFileReader
+FilesystemScopeFileReader
+public static class FilesystemScopeFileReader
+public static async Task<GrantedTextDocument?> TryReadAsync(
+    if (string.IsNullOrWhiteSpace(path))
+    if (!File.Exists(path))
+    if (!string.IsNullOrWhiteSpace(directory))
+    if (!string.IsNullOrWhiteSpace(relativeDir) && relativeDir != ".")
+    if (segments.Any(segment => FileAdmission.IsBlockedFolder(segment, user)))
+    if (!string.IsNullOrWhiteSpace(folderName) && FileAdmission.IsBlockedFolder(folderName, user))
+    if (!string.IsNullOrWhiteSpace(relativeCheck))
+    if (ignored)
+    if (FileAdmission.Decide(fileName, grant.EnabledKinds, user, ignored) != FileAdmissionResult.Read)
+    if (!safe)
+    catch (Exception ex)
+``` 
+
+
+
+## src/Recall.Core/Ingest/ForegroundScanService.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public type ForegroundScanService
+ForegroundScanService
+public sealed class ForegroundScanService
+public ForegroundScanService(
+public async Task ScanAsync(CancellationToken cancellationToken = default)
+    if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Text) && !grant.EnabledKinds.HasFlag(GrantFileKinds.Code))
+    if (change.Kind == ScopeChangeKind.Created || change.Kind == ScopeChangeKind.Modified || change.Kind == ScopeChangeKind.Renamed)
+``` 
+
+
+
+## src/Recall.Core/Ingest/IndexNowOfferPolicy.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public type IndexNowOfferPolicy
+IndexNowOfferPolicy
+public static class IndexNowOfferPolicy
+public static IReadOnlyList<ScopeFolderGrant> ListOffers(
+    if (grants is null || grants.Count == 0)
+    if (ReferenceEquals(grant, other))
+    if (ScopeGrantPolicy.IsChildPath(ScopeGrantPolicy.Normalize(other.Path), grant.Path))
+    if (isChild)
+    if (finishedPaths is not null && finishedPaths.Contains(grant.Path))
+``` 
+
+
+
+## src/Recall.Core/Ingest/IndexNowService.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public type IndexNowService
+IndexNowService
+public sealed class IndexNowService : IIndexNowService
+public IndexNowService(IScopeManagerService scope, IIngestCursorStore cursors, IGrantedTextIngestService ingest)
+public IReadOnlyList<ScopeFolderGrant> ListOffers()
+public async Task IndexAsync(string path, CancellationToken cancellationToken = default)
+    if (grant is null || string.IsNullOrWhiteSpace(grant.Path))
+    if (cursors.IsGrantFinished(grant.Path) || cursors.IsGrantFinished(normalized))
+    if (string.IsNullOrWhiteSpace(path))
+``` 
+## src/Recall.Core/Ingest/ScopeChangeApplier.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public type ScopeChangeApplier
+ScopeChangeApplier
+public sealed class ScopeChangeApplier
+public ScopeChangeApplier(IIngestCursorStore cursors, IGrantedTextIngestService ingest, LocalOpLogWriter opLog)
+public async Task ApplyAsync(
+    if (string.IsNullOrWhiteSpace(change.Path))
+    if (change.Kind == ScopeChangeKind.Deleted)
+    if (row is not null && row.State == IngestCursorState.Missing)
+    if (live.Count > 0)
+    if (change.Kind == ScopeChangeKind.Renamed)
+    if (string.IsNullOrWhiteSpace(previous))
+    if (grant is not null && document is not null)
+    if (previousRow is null)
+    if (document is null)
+    if (string.Equals(previousRow.ContentHash, nextHash, StringComparison.Ordinal))
+    if (grant is not null)
+    if (change.Kind == ScopeChangeKind.Created || change.Kind == ScopeChangeKind.Modified)
+    if (grant is null)
+``` 
+
+
+
+## src/Recall.Core/Ingest/ScopeWatchCoordinator.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public type ScopeWatchCoordinator
+ScopeWatchCoordinator
+public sealed class ScopeWatchCoordinator : IScopeChangeSink, IDisposable
+public ScopeWatchCoordinator(
+public ScopeChangeBuffer Buffer => buffer;
+public bool IsRunning => loopTask is not null && !loopTask.IsCompleted;
+public void Report(ScopeChange change)
+public void RequestRescan()
+public void OnCreated(RecallShellKind kind)
+public void OnResumed(RecallShellKind kind)
+public void Stop()
+public async Task PumpOnceAsync(CancellationToken cancellationToken = default)
+public void Dispose()
+    if (kind != RecallShellKind.Windows && kind != RecallShellKind.Android && kind != RecallShellKind.MacCatalyst && kind != RecallShellKind.Ios)
+    if (ScopeWatcherKindPolicy.Choose(kind) == ScopeWatcherKind.WindowsFileSystem)
+    if (!IsRunning)
+    if (wake.CurrentCount == 0)
+    catch (Exception ex)
+    if (buffer.NeedsRescan)
+    catch (OperationCanceledException)
+    if (grant is null && change.Kind == ScopeChangeKind.Renamed && !string.IsNullOrWhiteSpace(change.PreviousPath))
+    if (grant is not null && !string.IsNullOrWhiteSpace(change.Path))
+    if (string.IsNullOrWhiteSpace(path))
+    if (grant is null || string.IsNullOrWhiteSpace(grant.Path))
+    if (ContentUri.IsContent(grant.Path))
+    if (string.Equals(grant.Path, path, StringComparison.OrdinalIgnoreCase))
+    if (ScopeGrantPolicy.IsInsideGrant(grant.Path, path))
+    if (IsRunning)
+    if (disposed)
+``` 
