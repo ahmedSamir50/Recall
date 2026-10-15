@@ -1,0 +1,496 @@
+## tests/Recall.UnitTests/ArabicDigitShapingTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class ArabicDigitShapingTests
+    public void ShapeDigits_KeepsLatinDigits()
+```
+
+No branch.
+
+
+## tests/Recall.UnitTests/DeviceRecordServiceTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class DeviceRecordServiceTests
+    public void ChooseId_AcceptsNonEmptyCandidate()
+    public void ChooseId_RejectsKnownBadAndroidId()
+    public void ChooseId_RejectsWhitespaceCandidate()
+    public void EnsureLoaded_DoesNotSaveWhenCandidateNotReady()
+    public void EnsureLoaded_KeepsFirstStoredId_WhenLaterCandidateDiffers()
+    public void TrySetDisplayName_LeavesDeviceIdAndOriginalOsNameUnchanged()
+    public void TrySetDisplayName_Empty_ReturnsEmpty()
+    public void TrySetDisplayName_EqualName_ReturnsUnchanged()
+    public void EnsureLoaded_StoresEmptyNativeName()
+    public void GetInitials_CoversGraphemeCases(string name, string expectedInitials)
+        public DeviceRecordState? Load() => State;
+        public void Save(DeviceRecordState state) => State = state;
+        public string NewDeviceId()
+```
+
+No branch.
+
+
+## tests/Recall.UnitTests/LocaleServiceTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class LocaleServiceTests
+    public void LangCode_Arabic_IsAr()
+    public void LangCode_English_IsEn()
+    public void ShapeDigits_English_LeavesLatinDigits()
+    public void ApplyCulture_Arabic_SetsCurrentCulture()
+```
+
+No branch.
+
+
+## tests/Recall.UnitTests/LocalFileOpenPolicyTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class LocalFileOpenPolicyTests
+    public void Classify_Whitespace_IsEmpty() =>
+    public void Classify_ContentScheme_IsContentUri() =>
+    public void Classify_ContentScheme_IgnoresCase() =>
+    public void Classify_DiskPath_IsFilesystem() =>
+    public void Decide_Thrown_IsFailed() =>
+    public void Decide_Empty_IsFailed() =>
+    public void Decide_ContentAccepted_IsOpened() =>
+    public void Decide_ContentRejected_IsFailed() =>
+    public void Decide_MissingFile_IsMissing() =>
+    public void Decide_LauncherOpened_IsOpened() =>
+    public void Decide_LauncherRejected_IsFailed() =>
+    public void Exists_Empty_IsFalse() =>
+    public void Exists_ContentStream_IsTrue() =>
+    public void Exists_ContentStream_IsFalse() =>
+    public void Exists_Filesystem_MatchesDisk()
+```
+
+No branch.
+
+
+## tests/Recall.UnitTests/ModelCatalogTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class ModelCatalogTests
+    public void All_ContainsTextVisionAndAudio_WithoutLanguageOrSpeechRows()
+```
+
+No branch.
+
+
+## tests/Recall.UnitTests/Phase2CloseTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class Phase2CloseTests
+    public void MarkVerifying_SetsPhaseAndClearsFault()
+    public void PlanChunks_UnderBudget_StaysOnePiece()
+    public void PlanChunks_BlankContent_Throws()
+    public void PlanChunks_NullCounter_Throws()
+    public void MauiProject_ContainsNoOnnxWeights()
+    public void HomeRazor_OmitsDemoCards()
+    public void AppCss_DefinesFillHeight()
+    public void AppCss_BottomSafeUsesPublishedInset()
+    public void Solution_DoesNotReferenceMudBlazor()
+    public void ThemeChoiceClass_SystemSelected_IsPrimary() =>
+    public void ThemeChoiceClass_SystemSelected_DarkIsGhost() =>
+    public void ThemeChoiceClass_DarkSelected_IsPrimary() =>
+    public void ThemeChoiceClass_DarkSelected_LightIsGhost() =>
+    public void ThemeChoiceClass_LightSelected_IsPrimary() =>
+    public void ThemeChoiceClass_LightSelected_SystemIsGhost() =>
+            if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+        throw new InvalidOperationException("Recall.slnx was not found above the test output directory.");
+```
+
+
+## tests/Recall.UnitTests/ResourceKeyParityTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class ResourceKeyParityTests
+    public void StringsResx_ArabicAndEnglish_HaveTheSameKeys()
+            if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+        throw new InvalidOperationException("Recall.slnx was not found.");
+```
+
+
+## tests/Recall.UnitTests/ReviewFixTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class ReviewFixTests
+    public void DownloadTransfer_PlacesBody(int status, long existing, DownloadBodyPlacement placement)
+    public void DownloadTransfer_PartialContentLengthIsRemainder()
+    public void DownloadTransfer_ShortReadIsNotComplete_UnknownLengthEofIsComplete()
+    public void EmptyTitle_DoesNotEmbedTheWordNone()
+    public void LongNote_EachChunkKeepsTitlePrefix_AndDoesNotSplitSurrogate()
+    public void MeanPool_AveragesTwoIdenticalRows()
+    public void IsInsideGrant_DoesNotMatchSiblingPrefix()
+    public void HybridFusion_Requires60()
+    public void AgeCutoff_AndEmptyGrantKinds_UseFaultCodes()
+        public Recall.Core.Vocabulary.AgeCutoffYears Get() => Recall.Core.Vocabulary.AgeCutoffYears.Five;
+        public void Set(Recall.Core.Vocabulary.AgeCutoffYears years)
+        public IReadOnlyList<ScopeFolderGrant> List() => stored;
+        public void Save(IReadOnlyList<ScopeFolderGrant> grants)
+            if (char.IsHighSurrogate(text[i]) && (i + 1 >= text.Length || !char.IsLowSurrogate(text[i + 1])))
+            if (char.IsLowSurrogate(text[i]) && (i == 0 || !char.IsHighSurrogate(text[i - 1])))
+```
+
+
+## tests/Recall.UnitTests/ScopeGrantServiceTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class ScopeGrantServiceTests
+    public void CanContinue_NoFolders_ReturnsFalse()
+    public void CanContinue_OneFolder_ReturnsTrue()
+    public void TryAddGrant_ChildOfGrantedParent_ReturnsOverlap()
+    public void RemoveGrant_LastFolder_DisablesContinue()
+    public async Task FolderPicker_Cancelled_ReturnsCancelledOutcome()
+    public async Task FolderPicker_Selected_ReturnsPath()
+    public async Task FolderPicker_Denied_ReturnsDeniedOutcome()
+```
+
+No branch.
+
+
+## tests/Recall.UnitTests/ShellUiStoreTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class ShellUiStoreTests
+    public void SetThemePreference_WhenCalled_UpdatesSnapshot()
+    public void TryAddGrant_WhenFolderAdded_ReflectsInSnapshot()
+    public void Dispose_WhenCalled_DoesNotThrow()
+    public void SetRoute_WhenPathChanges_UpdatesSnapshotRoute()
+```
+
+No branch.
+
+
+## tests/Recall.UnitTests/SolutionShapeTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class SolutionShapeTests
+    public void RequiredPorts_WhenCoreAssemblyIsLoaded_ExposesTheSevenPorts()
+    public void ForbiddenCapturePorts_WhenSourceIsRead_DoNotExist()
+    public void EachPort_HasAFakeInUnitTests()
+    public void SyncFeature_WhenDefault_IsOff()
+    public void Modality_Members_AreTextImageVideoAudio()
+    public void StoredWidth_Members_Are768_512_256()
+    public void AgeCutoff_Members_Are2_5_7()
+    public void OpLogOperation_Members_AreInsertDeletePinUnpin()
+    public void BannedSymbols_ListsHttpClientSocketTcpListenerUdpClient()
+    public void MauiTfms_IncludeTheFourShells_AndNotWinArm64()
+    public void CoreCsproj_DoesNotReferenceMauiOnnxOrZVec()
+    public void Solution_DoesNotReferenceSpeechOrLanguageModel()
+    public void Shell_HasNoHardcodedUserVisibleSentence()
+    public void Manifest_HasNoCapturePermission()
+    public void RecallSlnx_WhenRead_ContainsRequiredProjects()
+    public void RepoRoot_UsesSlnxOnly_NotLegacySln()
+    public void RecallUi_WhenScanned_DoesNotInjectThemeLocaleOrScopeServices()
+    public void RazorMarkup_WhenScanned_HasNoCodeBlocks()
+    public void AddRecallCore_CanBeCalledWithoutMaui()
+    public void HttpClient_IsAbsentFromCoreAndUiSource()
+            if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+        throw new InvalidOperationException("Recall.slnx was not found above the test output directory.");
+```
+
+
+## tests/Recall.UnitTests/TextFindSessionTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class TextFindSessionTests
+    public void ShouldQuery_Blank_IsFalse() =>
+    public void ShouldQuery_Sentence_IsTrue() =>
+    public void FaultKey_Null_IsNull() =>
+    public void FaultKey_Cancelled_IsSearchFault() =>
+    public void FaultKey_Other_IsSearchFault() =>
+    public void Build_Empty_HasNoCards()
+    public void Build_SixHits_FirstFiveAreImmediate()
+    public void Build_MissingFile_StaysUnavailable()
+    public void Build_LocalTime_UsesInvariantDigits()
+    public void MarkUnavailable_OnlyMissing()
+    public void OpenFaultKey_OnlyFailed()
+```
+
+No branch.
+
+
+## tests/Recall.UnitTests/TextGuardTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class TextGuardTests
+    public void DefaultExtensions_DoNotIncludeLog()
+    public void Signature_RejectsExecutableAndScript_AcceptsNote()
+    public void OpLog_WritesOneFileForTheUtcDay()
+```
+
+No branch.
+
+
+## tests/Recall.UnitTests/TextModelDownloadUiPolicyTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class TextModelDownloadUiPolicyTests
+    public void ShouldAutoStartDownload_OnlyWhenNotStarted(TextModelDownloadPhase phase, bool expected) =>
+    public void ShouldOfferRetry_ForRecoverableFailures(TextModelDownloadPhase phase, bool expected) =>
+    public void ShouldPublishProgress_OnlyWhenTheShownPercentChanges(int last, int next, bool expected) =>
+    public void ComputePercent_UsesFloorAndRejectsEmptyOrNegativeTotals()
+    public void ComputeOverallPercent_DoesNotResetWhenTheNextFileStarts()
+```
+
+No branch.
+
+
+## tests/Recall.UnitTests/TextPipelineTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class TextPipelineTests
+    public void WrapSearchQuery_SecondWrap_Throws()
+    public void WrapTitledDocument_FormatsOnce()
+    public void ContentId_ChangesWhenChunkOrdinalChanges()
+    public void ContentId_DoesNotChangeWhenDeviceFieldsDiffer()
+    public void IndexPolicy_Text512_Accepts_128Throws()
+    public void Matryoshka_AfterCut_LengthIsOne()
+    public void DownloadRequestBuilder_OmitsForbiddenPayload()
+```
+
+No branch.
+
+
+## tests/Recall.UnitTests/ThemeServiceTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class ThemeServiceTests
+    public void GetEffectiveTheme_SystemAndOsDark_ReturnsDark()
+    public void GetEffectiveTheme_SystemAndOsLight_ReturnsLight()
+    public void GetEffectiveTheme_ForcedDark_ReturnsDark()
+    public void GetEffectiveTheme_ForcedLight_ReturnsLight()
+    public void ParseStored_UnknownValue_FallsBackToSystem()
+    public void SetPreference_RoundTripsThroughFakeStore()
+```
+
+No branch.
+
+
+## tests/Recall.UnitTests/UiCultureTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class UiCultureTests
+    public void Lang_Arabic_IsAr()
+    public void Lang_Other_IsEn()
+    public void Dir_Arabic_IsRtl()
+    public void Dir_English_IsLtr()
+```
+
+No branch.
+
+
+## tests/Recall.UnitTests/Fakes/DeviceFakes.cs
+
+```csharp
+namespace Recall.UnitTests.Fakes;
+public sealed class FakeDeviceIdCandidateProvider : IDeviceIdCandidateProvider
+    public DeviceIdCandidate GetCandidate() => Candidate;
+```
+
+No branch.
+
+
+## tests/Recall.UnitTests/Fakes/PortFakes.cs
+
+```csharp
+namespace Recall.UnitTests.Fakes;
+public sealed class FakeFileScopeWatcherService : IFileScopeWatcherService
+public sealed class FakeScopeManagerService : IScopeManagerService
+public sealed class FakeVideoFrameSamplerService : IVideoFrameSamplerService
+public sealed class FakeSecureStorageService : ISecureStorageService
+public sealed class FakeIdleDetectorService : IIdleDetectorService
+public sealed class FakeOnboardingCompletionStore : IOnboardingCompletionStore
+public sealed class FakeDebugAppReset : IDebugAppReset
+public sealed class FakeModelDownloadService : IModelDownloadService
+public sealed class FakeIndexPolicy : IIndexPolicy
+public sealed class FakeTextTokenCounter : ITextTokenCounter
+public sealed class FakeTextEmbeddingEncoder : ITextEmbeddingEncoder
+public sealed class FakeGrantedTextIngestService : IGrantedTextIngestService
+public sealed class FakeTextSearchService : ITextSearchService
+public sealed class FakeDeviceIdCandidateProviderPort : IDeviceIdCandidateProvider
+public sealed class FakeRandomDeviceIdSourcePort : IRandomDeviceIdSource
+public sealed class FakeTextVectorIndex : ITextVectorIndex
+public sealed class FakeSyncAdapter : ISyncAdapter
+public sealed class FakeThemePreferenceStorePort : IThemePreferenceStore
+public sealed class FakeUiLocaleStorePort : IUiLocaleStore
+public sealed class FakeSystemThemeProviderPort : ISystemThemeProvider
+public sealed class FakeScopeGrantStorePort : IScopeGrantStore
+public sealed class FakeFolderPickerServicePort : IFolderPickerService
+public sealed class FakeDeviceRecordService : IDeviceRecordService
+public sealed class FakeDeviceRecordStore : IDeviceRecordStore
+public sealed class FakeDeviceOsNameProvider : IDeviceOsNameProvider
+public sealed class FakeAgeCutoffPreferenceStore : IAgeCutoffPreferenceStore
+public sealed class FakeRecallShellKind : IRecallShellKind
+public sealed class FakeGrantedFolderAccessService : IGrantedFolderAccessService
+    public FakeScopeManagerService()
+    public IReadOnlyList<Recall.Core.Scope.ScopeFolderGrant> ListGrants() => inner.ListGrants();
+    public Recall.Core.Scope.ScopeGrantAddResult TryAddGrant(Recall.Core.Scope.ScopeFolderGrant grant) =>
+    public void RemoveGrant(string path) => inner.RemoveGrant(path);
+    public void SetGrantFileKinds(string path, GrantFileKinds kinds) => inner.SetGrantFileKinds(path, kinds);
+    public bool CanContinue() => inner.CanContinue();
+    public bool IsComplete() => Complete;
+    public void MarkComplete() => Complete = true;
+    public void ResetToOnboarding() => Complete = false;
+    public Task ResetAllLocalDataAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public TextModelDownloadSnapshot GetTextDownloadSnapshot() => Snapshot;
+    public Task DownloadTextModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
+    public void CancelTextDownload()
+    public Task RetryTextDownloadAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default) =>
+    public void EnsureStorableWidth(Modality modality, int width)
+    public int CountTokens(string text) => Math.Max(1, text.Length / 4);
+    public ValueTask<ReadOnlyMemory<float>> EmbedPrefixedTextAsync(string prefixedText, CancellationToken cancellationToken = default)
+    public Task IngestGrantedTextAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    public Task<IReadOnlyList<TextSearchHit>> FindAsync(string query, IReadOnlyList<ScopeFolderGrant> grants, CancellationToken cancellationToken = default) =>
+    public DeviceIdCandidate GetCandidate() => new("fake", true);
+    public string NewDeviceId() => "random";
+    public bool TryInsert(TextIndexInsert insert)
+    public IReadOnlyList<TextSearchHit> Search(TextSearchRequest request, CancellationToken cancellationToken = default) => [];
+    public Recall.Core.Preferences.ThemePreference Get() => Recall.Core.Preferences.ThemePreference.System;
+    public void Set(Recall.Core.Preferences.ThemePreference preference)
+    public Recall.Core.Preferences.UiLocale Get() => Recall.Core.Preferences.UiLocale.En;
+    public void Set(Recall.Core.Preferences.UiLocale locale)
+    public bool IsDark() => true;
+    public IReadOnlyList<Recall.Core.Scope.ScopeFolderGrant> List() => [];
+    public void Save(IReadOnlyList<Recall.Core.Scope.ScopeFolderGrant> grants)
+    public Task<FolderPickerResult> PickFolderAsync(CancellationToken cancellationToken = default) =>
+    public string GetDeviceId() => "fake-device-id";
+    public string GetOriginalOsName() => "Recall device";
+    public string GetDisplayName() => "Recall device";
+    public DisplayNameSetResult TrySetDisplayName(string displayName) => DisplayNameSetResult.Saved;
+    public string GetInitials() => "RD";
+    public Recall.Core.Device.DeviceRecordState? Load() => null;
+    public void Save(Recall.Core.Device.DeviceRecordState state)
+    public string GetOsDeviceName() => OsName;
+    public Recall.Core.Vocabulary.AgeCutoffYears Get() => Value;
+    public void Set(Recall.Core.Vocabulary.AgeCutoffYears years) => Value = years;
+    public void RestorePersistedAccess() => RestoreCount++;
+        if (Snapshot.Phase == TextModelDownloadPhase.NotStarted)
+        if (Inserts.Any(i => i.ContentId == insert.ContentId))
+```
+
+
+## tests/Recall.UnitTests/Fakes/PreferenceFakes.cs
+
+```csharp
+namespace Recall.UnitTests.Fakes;
+public sealed class FakeThemePreferenceStore : IThemePreferenceStore
+public sealed class FakeUiLocaleStore : IUiLocaleStore
+public sealed class FakeSystemThemeProvider : ISystemThemeProvider
+public sealed class FakeScopeGrantStore : IScopeGrantStore
+public sealed class FakeFolderPickerService : IFolderPickerService
+    public ThemePreference Get() => Value;
+    public void Set(ThemePreference preference) => Value = preference;
+    public UiLocale Get() => Value;
+    public void Set(UiLocale locale) => Value = locale;
+    public bool IsDark() => OsIsDark;
+    public IReadOnlyList<Recall.Core.Scope.ScopeFolderGrant> List() => grants;
+    public void Save(IReadOnlyList<Recall.Core.Scope.ScopeFolderGrant> grants) =>
+    public Task<FolderPickerResult> PickFolderAsync(CancellationToken cancellationToken = default) =>
+```
+
+No branch.
+
+
+## tests/Recall.IntegrationTests/OnnxTextGraphTests.cs
+
+```csharp
+namespace Recall.IntegrationTests;
+public sealed class OnnxTextGraphTests
+    public void EmptyFeatureDimensions_Null_Throws()
+    public void EmptyFeatureDimensions_Empty_Throws()
+    public void EmptyFeatureDimensions_Symbolic_BecomesZero() =>
+    public void EmptyFeatureDimensions_FixedLeading_BecomesZero() =>
+    public void EmptyFeatureDimensions_AlreadyEmpty_Stays() =>
+    public void RequireTextInputs_Null_Throws()
+    public void RequireTextInputs_AllFive_Returns()
+    public void RequireTextInputs_MissingVideoFeatures_Throws()
+    public void RequireFloat_Null_Throws()
+    public void RequireFloat_Float_Returns()
+    public void RequireFloat_Int64_Throws()
+```
+
+No branch.
+
+
+## tests/Recall.IntegrationTests/TextSearchIntegrationTests.cs
+
+```csharp
+namespace Recall.IntegrationTests;
+public sealed class TextSearchIntegrationTests : IDisposable
+    public void QuantizeTypeUndefined_ProducesFloatIndex()
+    public void Search_DropsPathOutsideGrant()
+    public void RrfRankConstant_Is60()
+    public void IndexPolicy_Rejects128WideStore()
+    public async Task HybridQuery_ReturnsGrantedHit_FromPinnedNote()
+    public void Dispose()
+        if (Directory.Exists(root))
+```
+
+
+## tests/Recall.IntegrationTests/Infrastructure/InMemoryScopeGrantStore.cs
+
+```csharp
+namespace Recall.IntegrationTests.Infrastructure;
+    public IReadOnlyList<ScopeFolderGrant> List() => grants;
+    public void Save(IReadOnlyList<ScopeFolderGrant> grants) => this.grants = grants.ToList();
+```
+
+No public type.
+
+No branch.
+
+
+## tests/Recall.IntegrationTests/Infrastructure/IntegrationTestServiceCollection.cs
+
+```csharp
+namespace Recall.IntegrationTests.Infrastructure;
+public static class IntegrationTestServiceCollection
+    public static ServiceProvider Build(string modelDirectory, string vectorRoot)
+```
+
+No branch.
+
+
+## tests/Recall.IntegrationTests/Infrastructure/IntegrationTextModelPaths.cs
+
+```csharp
+namespace Recall.IntegrationTests.Infrastructure;
+public static class IntegrationTextModelPaths
+    public static string ResolveModelDirectory()
+    public static bool IsReady(string directory) =>
+        if (!string.IsNullOrWhiteSpace(env) && IsReady(env))
+            if (IsReady(dir))
+        throw new InvalidOperationException(
+            if (File.Exists(Path.Combine(dir.FullName, "Recall.slnx")))
+        throw new InvalidOperationException("Recall.slnx not found.");
+```
+
+
+## tests/Recall.BenchTests/TextBenchmarkHostTests.cs
+
+```csharp
+namespace Recall.BenchTests;
+public sealed class TextBenchmarkHostTests
+    public void LabelThisProcess_MatchesOperatingSystem()
+```
+
+No branch.
