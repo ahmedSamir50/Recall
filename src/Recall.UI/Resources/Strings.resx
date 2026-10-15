@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
@@ -33,18 +33,18 @@
   <data name="Folders_PickOne" xml:space="preserve"><value>Pick at least one folder</value></data>
   <data name="Folders_PermissionDenied" xml:space="preserve"><value>Recall can't read this folder</value></data>
   <data name="Folders_IosNote" xml:space="preserve"><value>New files are picked up when Recall is opened.</value></data>
-  <data name="Folders_OverlapWarning" xml:space="preserve"><value>This folder is already covered by a parent grant.</value></data>
-  <data name="Folders_TypesLabel" xml:space="preserve"><value>File types in this folder</value></data>
+  <data name="Folders_OverlapWarning" xml:space="preserve"><value>This folder is already included through a parent folder you picked.</value></data>
+  <data name="Folders_TypesLabel" xml:space="preserve"><value>File types to include</value></data>
   <data name="Folders_TypeText" xml:space="preserve"><value>Text</value></data>
   <data name="Folders_TypeImage" xml:space="preserve"><value>Images</value></data>
   <data name="Folders_TypeVideo" xml:space="preserve"><value>Video</value></data>
   <data name="Folders_TypeAudio" xml:space="preserve"><value>Audio</value></data>
   <data name="Models_Title" xml:space="preserve"><value>Download the on-device models</value></data>
-  <data name="Models_Lead" xml:space="preserve"><value>One-time download of model weights only. After this, search works without internet.</value></data>
+  <data name="Models_Lead" xml:space="preserve"><value>A one-time download of the on-device AI. After this, search works without internet.</value></data>
   <data name="Models_ShaNote" xml:space="preserve"><value>Each downloaded file is verified before use. Damaged or incomplete files are discarded and downloaded again.</value></data>
-  <data name="Models_Entry_Text" xml:space="preserve"><value>Text embeddings</value></data>
-  <data name="Models_Entry_Vision" xml:space="preserve"><value>Vision embeddings</value></data>
-  <data name="Models_Entry_Audio" xml:space="preserve"><value>Audio embeddings</value></data>
+  <data name="Models_Entry_Text" xml:space="preserve"><value>Understands text</value></data>
+  <data name="Models_Entry_Vision" xml:space="preserve"><value>Understands photos</value></data>
+  <data name="Models_Entry_Audio" xml:space="preserve"><value>Understands voice</value></data>
   <data name="Models_NotReady" xml:space="preserve"><value>Not downloaded yet</value></data>
   <data name="Models_Entry_Deferred" xml:space="preserve"><value>Not in this version</value></data>
   <data name="Models_Status_Queued" xml:space="preserve"><value>Queued</value></data>
@@ -53,10 +53,10 @@
   <data name="Models_Status_Verified" xml:space="preserve"><value>Verified</value></data>
   <data name="Models_RetryDownload" xml:space="preserve"><value>Retry download</value></data>
   <data name="Ready_Title" xml:space="preserve"><value>Your memory is ready</value></data>
-  <data name="Ready_Lead" xml:space="preserve"><value>Search is available. Indexing starts after models download in a later step.</value></data>
+  <data name="Ready_Lead" xml:space="preserve"><value>You're set. Search unlocks once the on-device models finish downloading.</value></data>
   <data name="Ready_Start" xml:space="preserve"><value>Start searching</value></data>
   <data name="Search_EmptyTitle" xml:space="preserve"><value>Ask anything you remember</value></data>
-  <data name="Search_EmptyLead" xml:space="preserve"><value>Type a sentence to search your granted folders once indexing is on.</value></data>
+  <data name="Search_EmptyLead" xml:space="preserve"><value>Type a sentence to search the folders you picked, once setup is done.</value></data>
   <data name="Search_Placeholder" xml:space="preserve"><value>Search your memory in a sentence</value></data>
   <data name="Mode_Find" xml:space="preserve"><value>Find</value></data>
   <data name="Mode_Group" xml:space="preserve"><value>Group</value></data>
@@ -74,17 +74,17 @@
   <data name="Debug_ResetAll_Lead" xml:space="preserve"><value>Clears preferences, folder grants, models, and device record, then returns to onboarding.</value></data>
   <data name="Debug_ResetAll_Button" xml:space="preserve"><value>Reset all local data</value></data>
   <data name="Preferences_Age" xml:space="preserve"><value>Keep media at full detail for</value></data>
-  <data name="Preferences_AgeLead" xml:space="preserve"><value>Years before older photos, video, and audio may shrink in a later release. Text is not affected.</value></data>
+  <data name="Preferences_AgeLead" xml:space="preserve"><value>Older photos, video and audio may be stored smaller to save space. Text is never affected.</value></data>
   <data name="Preferences_DeviceLink" xml:space="preserve"><value>This device name</value></data>
   <data name="Preferences_PinLink" xml:space="preserve"><value>Pinned items</value></data>
   <data name="Pin_EmptyTitle" xml:space="preserve"><value>Nothing pinned yet</value></data>
-  <data name="Pin_EmptyLead" xml:space="preserve"><value>Keep this easy to find.</value></data>
+  <data name="Pin_EmptyLead" xml:space="preserve"><value>Pin important items to reach them quickly.</value></data>
   <data name="Device_Title" xml:space="preserve"><value>This device</value></data>
-  <data name="Device_Lead" xml:space="preserve"><value>Recall shows this name in the shell. Your device id stays on this device and is never sent.</value></data>
+  <data name="Device_Lead" xml:space="preserve"><value>This is the name you'll see in the app. It's stored only on this device and never sent anywhere.</value></data>
   <data name="Device_DisplayNameRequired" xml:space="preserve"><value>Enter a display name.</value></data>
   <data name="Device_DisplayNameLabel" xml:space="preserve"><value>Name Recall shows</value></data>
   <data name="Device_OriginalNameLabel" xml:space="preserve"><value>Original device name</value></data>
-  <data name="Device_IdLabel" xml:space="preserve"><value>Device id</value></data>
+  <data name="Device_IdLabel" xml:space="preserve"><value>Device ID</value></data>
   <data name="Device_Save" xml:space="preserve"><value>Save</value></data>
   <data name="Theme_Label" xml:space="preserve"><value>Theme</value></data>
   <data name="Theme_System" xml:space="preserve"><value>System</value></data>
@@ -128,7 +128,7 @@
   <data name="Home_UnavailLead" xml:space="preserve"><value>Moved or on a disconnected drive. Kept as a placeholder.</value></data>
   <data name="Home_UnavailBtn" xml:space="preserve"><value>Locate</value></data>
   <data name="Home_AudioTitle" xml:space="preserve"><value>Audio search runs on desktop</value></data>
-  <data name="Home_AudioLead" xml:space="preserve"><value>2 voice memos weren’t searched on this phone.</value></data>
+  <data name="Home_AudioLead" xml:space="preserve"><value>Some voice memos weren't searched on this device.</value></data>
   <data name="Home_Inspector" xml:space="preserve"><value>Details</value></data>
   <data name="Home_Why" xml:space="preserve"><value>Why this matched</value></data>
   <data name="Home_Why1" xml:space="preserve"><value>Image: scooter, red, arch</value></data>
@@ -163,16 +163,16 @@
   <data name="Landing_Card1Title" xml:space="preserve"><value>Local only</value></data>
   <data name="Landing_Card1Body" xml:space="preserve"><value>Your files are read in place from folders you pick. The index lives in an encrypted local database.</value></data>
   <data name="Landing_Card2Title" xml:space="preserve"><value>One search, every kind</value></data>
-  <data name="Landing_Card2Body" xml:space="preserve"><value>Photos, voice memos, PDFs and code share one meaning space — so “red scooter” finds all of them.</value></data>
+  <data name="Landing_Card2Body" xml:space="preserve"><value>Photos, voice memos, PDFs and code are understood by meaning — so “red scooter” finds all of them.</value></data>
   <data name="Landing_Card3Title" xml:space="preserve"><value>Verified models</value></data>
-  <data name="Landing_Card3Body" xml:space="preserve"><value>Models download once and are checked against a SHA-256 hash. A failed check is discarded and retried.</value></data>
+  <data name="Landing_Card3Body" xml:space="preserve"><value>Models download once and are verified automatically. A damaged file is discarded and downloaded again.</value></data>
   <data name="Landing_Card4Title" xml:space="preserve"><value>Honest limits</value></data>
   <data name="Landing_Card4Body" xml:space="preserve"><value>Voice-memo search runs on desktop in v1. Device sync isn’t in this version.</value></data>
   <data name="Landing_StepsHead" xml:space="preserve"><value>Three steps, then it’s quiet</value></data>
   <data name="Landing_Step1Title" xml:space="preserve"><value>Choose folders</value></data>
   <data name="Landing_Step1Body" xml:space="preserve"><value>Only what you pick is indexed.</value></data>
   <data name="Landing_Step2Title" xml:space="preserve"><value>Download models</value></data>
-  <data name="Landing_Step2Body" xml:space="preserve"><value>One time, ~2.2 GB, verified.</value></data>
+  <data name="Landing_Step2Body" xml:space="preserve"><value>One-time download (~2.2 GB). Checked automatically.</value></data>
   <data name="Landing_Step3Title" xml:space="preserve"><value>Ask</value></data>
   <data name="Landing_Step3Body" xml:space="preserve"><value>Find, group or tag in plain language.</value></data>
   <data name="Landing_CloseHead" xml:space="preserve"><value>Take your memory back.</value></data>
@@ -181,10 +181,10 @@
   <data name="Landing_DemoQuery" xml:space="preserve"><value>red scooter near the Colosseum</value></data>
   <data name="Fault_EmbeddingWidthUnexpected" xml:space="preserve"><value>Search couldn't read this note.</value></data>
   <data name="Fault_TextModelNotReady" xml:space="preserve"><value>The text model isn't on this device yet.</value></data>
-  <data name="Fault_SearchPrefixAppliedTwice" xml:space="preserve"><value>That search was sent twice. Try it once more.</value></data>
-  <data name="Fault_DocumentPrefixAppliedTwice" xml:space="preserve"><value>That note was prepared twice.</value></data>
-  <data name="Fault_StoredWidthBlocked" xml:space="preserve"><value>This search size isn't supported.</value></data>
-  <data name="Fault_TextWidthNot512" xml:space="preserve"><value>Text search is using the wrong size.</value></data>
+  <data name="Fault_SearchPrefixAppliedTwice" xml:space="preserve"><value>Something got mixed up. Try again.</value></data>
+  <data name="Fault_DocumentPrefixAppliedTwice" xml:space="preserve"><value>Something got mixed up preparing this file.</value></data>
+  <data name="Fault_StoredWidthBlocked" xml:space="preserve"><value>This search isn't supported on this device.</value></data>
+  <data name="Fault_TextWidthNot512" xml:space="preserve"><value>Text search hit a technical problem.</value></data>
   <data name="Fault_AgeCutoffNotAllowed" xml:space="preserve"><value>Choose 2, 5, or 7 years.</value></data>
   <data name="Fault_GrantFileKindsEmpty" xml:space="preserve"><value>Leave at least one file type on.</value></data>
   <data name="Fault_DeviceIdNotReady" xml:space="preserve"><value>This device isn't ready yet. Try again in a moment.</value></data>
@@ -195,8 +195,8 @@
   <data name="Fault_RrfRankConstant" xml:space="preserve"><value>Search couldn't rank these results.</value></data>
   <data name="Models_DownloadInterrupted" xml:space="preserve"><value>Download paused. What was saved is still here.</value></data>
   <data name="Search_NoHitsTitle" xml:space="preserve"><value>Nothing matched</value></data>
-  <data name="Search_NoHitsLead" xml:space="preserve"><value>Try another sentence in a granted folder.</value></data>
+  <data name="Search_NoHitsLead" xml:space="preserve"><value>Try another sentence â€” search only covers folders you've picked.</value></data>
   <data name="Search_Match_MeaningAndWords" xml:space="preserve"><value>Meaning and words</value></data>
   <data name="Search_OpenFailed" xml:space="preserve"><value>The file could not be opened.</value></data>
-  <data name="Search_Fault" xml:space="preserve"><value>Search could not run. Check that the text model is on this device.</value></data>
+  <data name="Search_Fault" xml:space="preserve"><value>Search couldn't run. The offline search files may still be downloading.</value></data>
 </root>

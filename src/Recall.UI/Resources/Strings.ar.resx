@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
@@ -33,18 +33,18 @@
   <data name="Folders_PickOne" xml:space="preserve"><value>اختر مجلدًا واحدًا على الأقل</value></data>
   <data name="Folders_PermissionDenied" xml:space="preserve"><value>لا يستطيع ريكول قراءة هذا المجلد</value></data>
   <data name="Folders_IosNote" xml:space="preserve"><value>تُلتقط الملفات الجديدة عند فتح ريكول.</value></data>
-  <data name="Folders_OverlapWarning" xml:space="preserve"><value>هذا المجلد مُغطى بمنح أبٍ موجود.</value></data>
-  <data name="Folders_TypesLabel" xml:space="preserve"><value>أنواع الملفات في كل مجلد</value></data>
+  <data name="Folders_OverlapWarning" xml:space="preserve"><value>هذا المجلد داخل مجلد اخترته من قبل، فهو مشمول أصلًا.</value></data>
+  <data name="Folders_TypesLabel" xml:space="preserve"><value>اختر أنواع الملفات لكل مجلد</value></data>
   <data name="Folders_TypeText" xml:space="preserve"><value>نص</value></data>
   <data name="Folders_TypeImage" xml:space="preserve"><value>صور</value></data>
   <data name="Folders_TypeVideo" xml:space="preserve"><value>فيديو</value></data>
   <data name="Folders_TypeAudio" xml:space="preserve"><value>صوت</value></data>
-  <data name="Models_Title" xml:space="preserve"><value>نزّل النماذج على جهازك</value></data>
-  <data name="Models_Lead" xml:space="preserve"><value>تنزيل لمرة واحدة لأوزان النموذج فقط. بعدها يعمل البحث دون إنترنت.</value></data>
-  <data name="Models_ShaNote" xml:space="preserve"><value>يتم التحقق من كل ملف بعد تنزيله، وأي ملف تالف أو ناقص يُستبعد ويُعاد تنزيله.</value></data>
-  <data name="Models_Entry_Text" xml:space="preserve"><value>تضمينات النص</value></data>
-  <data name="Models_Entry_Vision" xml:space="preserve"><value>تضمينات الصور</value></data>
-  <data name="Models_Entry_Audio" xml:space="preserve"><value>تضمينات الصوت</value></data>
+  <data name="Models_Title" xml:space="preserve"><value>حمّل النماذج على جهازك</value></data>
+  <data name="Models_Lead" xml:space="preserve"><value>حمّل نموذج يعمل على جهازك مرة واحدة، وبعده يعمل البحث دون إنترنت.</value></data>
+  <data name="Models_ShaNote" xml:space="preserve"><value>يتم التحقق من كل ملف بعد تحميله، وأي ملف تالف أو ناقص يُستبعد ويُعاد تحميله.</value></data>
+  <data name="Models_Entry_Text" xml:space="preserve"><value>يفهم النص</value></data>
+  <data name="Models_Entry_Vision" xml:space="preserve"><value>يفهم الصور</value></data>
+  <data name="Models_Entry_Audio" xml:space="preserve"><value>يفهم الصوت</value></data>
   <data name="Models_NotReady" xml:space="preserve"><value>لم يُنزَّل بعد</value></data>
   <data name="Models_Entry_Deferred" xml:space="preserve"><value>غير متوفر في هذا الإصدار</value></data>
   <data name="Models_Status_Queued" xml:space="preserve"><value>في الانتظار</value></data>
@@ -53,10 +53,10 @@
   <data name="Models_Status_Verified" xml:space="preserve"><value>تم التحقق</value></data>
   <data name="Models_RetryDownload" xml:space="preserve"><value>أعد التحميل</value></data>
   <data name="Ready_Title" xml:space="preserve"><value>ذاكرتك جاهزة</value></data>
-  <data name="Ready_Lead" xml:space="preserve"><value>البحث متاح. تبدأ الفهرسة بعد تنزيل النماذج في خطوة لاحقة.</value></data>
+  <data name="Ready_Lead" xml:space="preserve"><value>كل شيء جاهز. يعمل البحث بشكل طبيعي بعد اكتمال تحميل النماذج على جهازك.</value></data>
   <data name="Ready_Start" xml:space="preserve"><value>ابدأ البحث</value></data>
   <data name="Search_EmptyTitle" xml:space="preserve"><value>اسأل عن أي شيء تتذكره</value></data>
-  <data name="Search_EmptyLead" xml:space="preserve"><value>اكتب جملة للبحث في المجلدات المسموحة بعد تفعيل الفهرسة.</value></data>
+  <data name="Search_EmptyLead" xml:space="preserve"><value>اكتب جملة للبحث في المجلدات التي اخترتها بعد اكتمال الإعداد.</value></data>
   <data name="Search_Placeholder" xml:space="preserve"><value>ابحث في ذاكرتك بجملة</value></data>
   <data name="Mode_Find" xml:space="preserve"><value>ابحث</value></data>
   <data name="Mode_Group" xml:space="preserve"><value>جمّع</value></data>
@@ -74,13 +74,13 @@
   <data name="Debug_ResetAll_Lead" xml:space="preserve"><value>يمسح التفضيلات ومنح المجلدات والنماذج وسجل الجهاز، ثم يعيدك إلى الإعداد.</value></data>
   <data name="Debug_ResetAll_Button" xml:space="preserve"><value>إعادة ضبط كل البيانات المحلية</value></data>
   <data name="Preferences_Age" xml:space="preserve"><value>احتفظ بالوسائط بالتفصيل الكامل لمدة</value></data>
-  <data name="Preferences_AgeLead" xml:space="preserve"><value>سنوات قبل أن تُصغَّر الصور والفيديو والصوت لاحقًا. النص لا يتأثر.</value></data>
+  <data name="Preferences_AgeLead" xml:space="preserve"><value>قد تُحفظ الصور والفيديو والصوت القديمة بحجم أصغر لتوفير المساحة. أما النص فلا يتأثر أبدًا.</value></data>
   <data name="Preferences_DeviceLink" xml:space="preserve"><value>اسم هذا الجهاز</value></data>
   <data name="Preferences_PinLink" xml:space="preserve"><value>العناصر المثبّتة</value></data>
   <data name="Pin_EmptyTitle" xml:space="preserve"><value>لا عناصر مثبّتة بعد</value></data>
-  <data name="Pin_EmptyLead" xml:space="preserve"><value>اجعلها سهلة للعثور.</value></data>
+  <data name="Pin_EmptyLead" xml:space="preserve"><value>ثبّت العناصر المهمة لتصل إليها بسرعة.</value></data>
   <data name="Device_Title" xml:space="preserve"><value>هذا الجهاز</value></data>
-  <data name="Device_Lead" xml:space="preserve"><value>يعرض ريكول هذا الاسم في الواجهة. يبقى مُعرّف الجهاز على هذا الجهاز ولا يُرسل أبدًا.</value></data>
+  <data name="Device_Lead" xml:space="preserve"><value>هذا هو الاسم الذي ستراه في التطبيق. يُحفظ على هذا الجهاز فقط ولا يُرسل أبدًا.</value></data>
   <data name="Device_DisplayNameRequired" xml:space="preserve"><value>أدخل اسمًا للعرض.</value></data>
   <data name="Device_DisplayNameLabel" xml:space="preserve"><value>الاسم الذي يعرضه ريكول</value></data>
   <data name="Device_OriginalNameLabel" xml:space="preserve"><value>اسم الجهاز الأصلي</value></data>
@@ -120,7 +120,7 @@
   <data name="Home_Card1Note" xml:space="preserve"><value>«تذكّر أن تتحقق من طراز المحرك لاحقًا.»</value></data>
   <data name="Home_Card2Title" xml:space="preserve"><value>ملاحظة صوتية · ٣٠ ثانية</value></data>
   <data name="Home_Card2Quote" xml:space="preserve"><value>“Vespa rossa vicino al Colosseo, modello anni ’70 ben restaurato…”</value></data>
-  <data name="Home_Card2Translated" xml:space="preserve"><value>مترجم: «فيسبا حمراء قرب الكولوسيوم، طراز السبعينيات مُرمَّم.»</value></data>
+  <data name="Home_Card2Translated" xml:space="preserve"><value>الترجمة: «فيسبا حمراء قرب الكولوسيوم، طراز السبعينيات مُرمَّم.»</value></data>
   <data name="Home_Card3Title" xml:space="preserve"><value>قائمة قطع السكوتر.pdf</value></data>
   <data name="Home_Card3Meta" xml:space="preserve"><value>صفحة ٣ · «كاربراتير، ٥٠ سي سي»</value></data>
   <data name="Home_Card4Title" xml:space="preserve"><value>لقطات فيديو · ٣ لحظات</value></data>
@@ -128,7 +128,7 @@
   <data name="Home_UnavailLead" xml:space="preserve"><value>نُقل أو على قرص غير متصل. يبقى كعنصر نائب.</value></data>
   <data name="Home_UnavailBtn" xml:space="preserve"><value>حدّد موقعه</value></data>
   <data name="Home_AudioTitle" xml:space="preserve"><value>البحث الصوتي على الكمبيوتر</value></data>
-  <data name="Home_AudioLead" xml:space="preserve"><value>لم يُبحث في ملاحظتين صوتيتين على هذا الهاتف.</value></data>
+  <data name="Home_AudioLead" xml:space="preserve"><value>لم يُبحث في بعض الملاحظات الصوتية على هذا الجهاز.</value></data>
   <data name="Home_Inspector" xml:space="preserve"><value>التفاصيل</value></data>
   <data name="Home_Why" xml:space="preserve"><value>لماذا ظهرت هذه النتيجة</value></data>
   <data name="Home_Why1" xml:space="preserve"><value>الصورة: سكوتر، أحمر، قوس</value></data>
@@ -144,9 +144,9 @@
   <data name="Home_MatchDemo" xml:space="preserve"><value>٩٨٪</value></data>
   <data name="Landing_Platforms" xml:space="preserve"><value>ويندوز · أندرويد · آيفون</value></data>
   <data name="Landing_Headline" xml:space="preserve"><value>ذاكرتك.</value></data>
-  <data name="Landing_HeadlineAccent" xml:space="preserve"><value>قابلة للبحث. خاصة.</value></data>
+  <data name="Landing_HeadlineAccent" xml:space="preserve"><value>قابل للبحث. ولك وحدك.</value></data>
   <data name="Landing_Lead" xml:space="preserve"><value>اسأل بجملة، ويجد ريكول الصورة أو الملاحظة الصوتية أو الصفحة أو سطر الكود — بنماذج تعمل على جهازك. لا يغادره شيء.</value></data>
-  <data name="Landing_DownloadWin" xml:space="preserve"><value>نزّل لويندوز</value></data>
+  <data name="Landing_DownloadWin" xml:space="preserve"><value>حمّل لويندوز</value></data>
   <data name="Landing_PrivacyLink" xml:space="preserve"><value>كيف تبقى بياناتك خاصة</value></data>
   <data name="Landing_GetRecall" xml:space="preserve"><value>احصل على ريكول</value></data>
   <data name="Landing_NavHow" xml:space="preserve"><value>كيف يعمل</value></data>
@@ -163,15 +163,15 @@
   <data name="Landing_Card1Title" xml:space="preserve"><value>محلي فقط</value></data>
   <data name="Landing_Card1Body" xml:space="preserve"><value>تُقرأ ملفاتك في مكانها من المجلدات التي تختارها. يعيش الفهرس في قاعدة بيانات محلية مشفّرة.</value></data>
   <data name="Landing_Card2Title" xml:space="preserve"><value>بحث واحد لكل الأنواع</value></data>
-  <data name="Landing_Card2Body" xml:space="preserve"><value>الصور والملاحظات الصوتية والمستندات والكود في فضاء معنى واحد — فتجد «سكوتر أحمر» كلها.</value></data>
-  <data name="Landing_Card3Title" xml:space="preserve"><value>نماذج موثّقة</value></data>
-  <data name="Landing_Card3Body" xml:space="preserve"><value>تُنزّل النماذج مرة واحدة ويُتحقق منها ببصمة SHA-256. أي فشل يُحذف ويُعاد.</value></data>
+  <data name="Landing_Card2Body" xml:space="preserve"><value>الصور والملاحظات الصوتية والمستندات والكود تُفهم بالمعنى — فابحث عن «سكوتر أحمر» وستجده أينما كان.</value></data>
+  <data name="Landing_Card3Title" xml:space="preserve"><value>نماذج مضمونة</value></data>
+  <data name="Landing_Card3Body" xml:space="preserve"><value>تُحمَّل النماذج مرة واحدة ويتم التحقق منها تلقائيًا، وأي ملف تالف يُستبعد ويُعاد تحميله.</value></data>
   <data name="Landing_Card4Title" xml:space="preserve"><value>حدود واضحة</value></data>
   <data name="Landing_Card4Body" xml:space="preserve"><value>البحث في الملاحظات الصوتية على الكمبيوتر في الإصدار ١. المزامنة بين الأجهزة ليست في هذا الإصدار.</value></data>
   <data name="Landing_StepsHead" xml:space="preserve"><value>ثلاث خطوات، ثم يعمل بهدوء</value></data>
   <data name="Landing_Step1Title" xml:space="preserve"><value>اختر المجلدات</value></data>
   <data name="Landing_Step1Body" xml:space="preserve"><value>يُفهرس ما تختاره فقط.</value></data>
-  <data name="Landing_Step2Title" xml:space="preserve"><value>نزّل النماذج</value></data>
+  <data name="Landing_Step2Title" xml:space="preserve"><value>حمّل النماذج</value></data>
   <data name="Landing_Step2Body" xml:space="preserve"><value>مرة واحدة، نحو ٢٫٢ غ.ب، موثّقة.</value></data>
   <data name="Landing_Step3Title" xml:space="preserve"><value>اسأل</value></data>
   <data name="Landing_Step3Body" xml:space="preserve"><value>ابحث أو جمّع أو وسِّم بلغة عادية.</value></data>
@@ -179,24 +179,24 @@
   <data name="Landing_CloseLead" xml:space="preserve"><value>مجاني خلال المعاينة. بالعربية والإنجليزية.</value></data>
   <data name="Landing_Footer" xml:space="preserve"><value>ريكول · صُنع لشخص واحد: أنت.</value></data>
   <data name="Landing_DemoQuery" xml:space="preserve"><value>السكوتر الأحمر قرب الكولوسيوم</value></data>
-  <data name="Fault_EmbeddingWidthUnexpected" xml:space="preserve"><value>ما قدر البحث يقرأ هذه الملاحظة.</value></data>
-  <data name="Fault_TextModelNotReady" xml:space="preserve"><value>نموذج النص غير موجود على هذا الجهاز بعد.</value></data>
-  <data name="Fault_SearchPrefixAppliedTwice" xml:space="preserve"><value>أُرسل هذا البحث مرتين. أعد المحاولة مرة واحدة.</value></data>
-  <data name="Fault_DocumentPrefixAppliedTwice" xml:space="preserve"><value>جُهّزت هذه الملاحظة مرتين.</value></data>
-  <data name="Fault_StoredWidthBlocked" xml:space="preserve"><value>حجم البحث هذا غير مدعوم.</value></data>
-  <data name="Fault_TextWidthNot512" xml:space="preserve"><value>بحث النص يستخدم حجمًا غير صحيح.</value></data>
-  <data name="Fault_AgeCutoffNotAllowed" xml:space="preserve"><value>اختر سنتين أو 5 أو 7 سنوات.</value></data>
+  <data name="Fault_EmbeddingWidthUnexpected" xml:space="preserve"><value>تعذّر على البحث قراءة هذه الملاحظة.</value></data>
+  <data name="Fault_TextModelNotReady" xml:space="preserve"><value>البحث بالنص غير جاهز بعد على هذا الجهاز.</value></data>
+  <data name="Fault_SearchPrefixAppliedTwice" xml:space="preserve"><value>حدث خلل بسيط. حاول مجددًا.</value></data>
+  <data name="Fault_DocumentPrefixAppliedTwice" xml:space="preserve"><value>حدث خلل أثناء تجهيز هذا الملف.</value></data>
+  <data name="Fault_StoredWidthBlocked" xml:space="preserve"><value>هذا البحث غير مدعوم على هذا الجهاز.</value></data>
+  <data name="Fault_TextWidthNot512" xml:space="preserve"><value>حدثت مشكلة تقنية في بحث النص.</value></data>
+  <data name="Fault_AgeCutoffNotAllowed" xml:space="preserve"><value>اختر سنتين أو ٥ أو ٧ سنوات.</value></data>
   <data name="Fault_GrantFileKindsEmpty" xml:space="preserve"><value>اترك نوع ملف واحدًا على الأقل مفعّلًا.</value></data>
   <data name="Fault_DeviceIdNotReady" xml:space="preserve"><value>هذا الجهاز غير جاهز بعد. أعد المحاولة بعد لحظة.</value></data>
   <data name="Fault_DownloadHashMismatch" xml:space="preserve"><value>التحميل غير مطابق وتم حذفه.</value></data>
-  <data name="Fault_DownloadIncomplete" xml:space="preserve"><value>توقف التحميل. يمكنك متابعته.</value></data>
-  <data name="Fault_DownloadTransport" xml:space="preserve"><value>انقطع التحميل. يمكنك متابعته.</value></data>
-  <data name="Fault_TokenizerNativeUnsupported" xml:space="preserve"><value>بحث النص غير متاح على هذا الهاتف بعد.</value></data>
-  <data name="Fault_RrfRankConstant" xml:space="preserve"><value>ما قدر البحث يرتّب هذه النتائج.</value></data>
-  <data name="Models_DownloadInterrupted" xml:space="preserve"><value>التحميل متوقف. الجزء المحفوظ ما زال هنا.</value></data>
+  <data name="Fault_DownloadIncomplete" xml:space="preserve"><value>توقّف التحميل، ويمكنك إكماله.</value></data>
+  <data name="Fault_DownloadTransport" xml:space="preserve"><value>انقطع التحميل، ويمكنك إكماله.</value></data>
+  <data name="Fault_TokenizerNativeUnsupported" xml:space="preserve"><value>بحث النص غير متاح على هذا الجهاز بعد.</value></data>
+  <data name="Fault_RrfRankConstant" xml:space="preserve"><value>تعذّر على البحث ترتيب هذه النتائج.</value></data>
+  <data name="Models_DownloadInterrupted" xml:space="preserve"><value>توقّف التحميل مؤقتًا، وما تم حفظه ما زال موجودًا.</value></data>
   <data name="Search_NoHitsTitle" xml:space="preserve"><value>لا توجد نتيجة مطابقة</value></data>
-  <data name="Search_NoHitsLead" xml:space="preserve"><value>جرّب جملة أخرى في مجلد مسموح.</value></data>
+  <data name="Search_NoHitsLead" xml:space="preserve"><value>جرّب جملة أخرى — فالبحث يقتصر على المجلدات التي اخترتها.</value></data>
   <data name="Search_Match_MeaningAndWords" xml:space="preserve"><value>المعنى والكلمات</value></data>
   <data name="Search_OpenFailed" xml:space="preserve"><value>تعذر فتح الملف.</value></data>
-  <data name="Search_Fault" xml:space="preserve"><value>تعذر البحث. تحقق من أن نموذج النص موجود على هذا الجهاز.</value></data>
+  <data name="Search_Fault" xml:space="preserve"><value>تعذّر البحث. قد لا يزال تحميل ملفات البحث قيد التنفيذ.</value></data>
 </root>
