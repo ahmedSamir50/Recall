@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
@@ -41,7 +41,7 @@
   <data name="Folders_TypeAudio" xml:space="preserve"><value>صوت</value></data>
   <data name="Models_Title" xml:space="preserve"><value>نزّل النماذج على جهازك</value></data>
   <data name="Models_Lead" xml:space="preserve"><value>تنزيل لمرة واحدة لأوزان النموذج فقط. بعدها يعمل البحث دون إنترنت.</value></data>
-  <data name="Models_ShaNote" xml:space="preserve"><value>نتحقق من كل ملف ببصمة SHA-256 قبل استخدامه.</value></data>
+  <data name="Models_ShaNote" xml:space="preserve"><value>يتم التحقق من كل ملف بعد تنزيله، وأي ملف تالف أو ناقص يُستبعد ويُعاد تنزيله.</value></data>
   <data name="Models_Entry_Text" xml:space="preserve"><value>تضمينات النص</value></data>
   <data name="Models_Entry_Vision" xml:space="preserve"><value>تضمينات الصور</value></data>
   <data name="Models_Entry_Audio" xml:space="preserve"><value>تضمينات الصوت</value></data>
