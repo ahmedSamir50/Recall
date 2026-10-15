@@ -18,6 +18,8 @@ A parent is `done` only when every child is `done`. A parent is `not-started` on
 
 **Progress percentage.** A task is 100 when `done`, 50 when `partial`, and 0 when `not-started`. An epic's percentage is the mean of its tasks, rounded to the nearest whole number. A phase's percentage is the mean of its tasks, the same way. The only place those figures are written is the one table at the end of this plan. Do not invent a finer score.
 
+Phase Three Addendum sits between Phase 3 and Phase 4. Its tasks are in that same table. The all-epics row is the mean of every task in Phases 1–7 and that addendum.
+
 Will not be built: a web app, clipboard, camera, screen, or microphone capture, any language model, any speech-to-text model, browser history, sync transport, a cloud build, HNSW-RaBitQ, bundled model weights, and stored vectors at 128 numbers.
 
 Stack for every task: `net10.0`, MAUI Blazor Hybrid, Tailwind, four shells (`android-arm64`, `ios-arm64`, `win-x64`, `maccatalyst-arm64`), `Microsoft.ML.OnnxRuntime`, NuGet id `ZVec.NET` at `1.0.0-beta.6` from [Directory.Packages.props](../Directory.Packages.props) (local tree `D:\A_S\AdamSystems.ZVec.NET` reports `1.0.0-beta.6+zvec.0.7.0`; do not restore a package named `AdamSystems.ZVec.NET`). Git remote is Bitbucket. Build and release stay on the developer machine.
@@ -97,6 +99,32 @@ New, changed, and deleted files inside a grant update the index without a timer.
 ### Epic 3.3 — Crash cursor — `not-started`
 
 - **3.3.1** — `not-started` — Write ingest progress to `checkpoints.db` in a transaction. Done when a kill midway resumes the unfinished file and does not re-index a finished one.
+
+---
+
+## Phase Three Addendum — Gaps left by Phases 1–3 — `partial`
+
+This phase is new. It does not rewrite Phases 1, 2, or 3. Those rows stay as written.
+
+### Epic A.1 — Readings — `done`
+
+- **A.1.1** — `done` — “Stack for every task” names the four RIDs. Task 1.1.1 stays done on a phone and Windows. The four-shell install proof stays 7.2.1. Done when this sentence is the reading.
+- **A.1.2** — `done` — The watcher is task 3.2.1. The video sampler is task 4.2.1. Secure storage stays an empty interface, and v1 puts no keys there. The idle detector stays a Phase 1 port. Its job is task A.2.8, not task 4.2.1. The scope-manager fake is not the overlap rule. That rule stays tasks 3.1.1 and 3.1.2. Done when this map is the reading.
+- **A.1.3** — `done` — Task 1.2.2 stays done. The overlap warning in both languages stays `OverlapWarning_BothLanguages_SayParentIsKept`. The iPhone line stays “New files are picked up when Recall is opened.” Done when task 1.2.2 is not reopened.
+- **A.1.4** — `done` — The Phase 2 intro is not edited. A granted text file is found on Windows and Mac. Android and iOS stay fail-closed until a tokenizer runtime exists. Task 2.2.4 stays done. Done when this limit is the reading.
+- **A.1.5** — `done` — These locks already exist. This addendum does not redo them and does not rewrite the Phase 3 rows. Same bytes on rename update the path and do not embed: `Apply_RenamedSameHash_DoesNotEmbed` and `Apply_ChunkPath_ReplacesStoredPath`. A delete appends `DELETE`, keeps the vector, and Find shows the hit unavailable: `Apply_Deleted_AppendsDeleteAndDoesNotEmbed`, `Apply_MissingChunk_SetsSourceMissing`, and `Build_SourceMissing_IsUnavailableEvenWhenFileExists`. A `Reading` file is read again, and a finished file with the same hash is skipped: `Resume_ReadingRow_EmbedsAgain_FinishedRow_DoesNotEmbed` and `Decide_FinishedSameHash_Skip`. The cursor file and its chunk rows commit in one transaction. The vector insert happens before that commit. The op-log `INSERT` is appended only after that insert succeeds. A crash after the insert and before the commit leaves the file `Reading`, and the next read skips an id the store already has. `D:\Photos` versus `D:\PhotosExtra` is not parent-wins: `TryAddGrant_PhotosExtra_IsNotAChild` beside `TryAddGrant_ChildOfGrantedParent_ReturnsOverlap`. Android renamed is that same hash diff, `Diff_UniqueHashPair_EmitsRenamed`, not a native Storage Access Framework event. Done when those names stay the locks.
+
+### Epic A.2 — Closures — `partial`
+
+- **A.2.1** — `not-started` — Index now on Windows and Mac catches a file that changed while Recall was closed, inside a grant that is already indexed. No timer. Task 3.2.1 stays: the watcher runs only while Recall runs, and `OnResumed_Windows_DoesNotRescan` stays. Task 3.1.2 stays: a never-indexed path is offered, and a child of an allowed parent is not offered again. `IndexNowService.IndexAsync` on a finished grant runs `ForegroundScanService.ScanAsync`. Done when that press queues created, modified, renamed, and deleted from the `checkpoints.db` diff, and a child path is still not offered.
+- **A.2.2** — `not-started` — When a file’s chunk count shrinks, ordinals past the new count are retired. Each retired id appends `DELETE`. The vector row stays. Find does not return those hits. `SqliteIngestCursorStore.MarkFinished` is the commit. Done when a file that goes from two chunks to one leaves the second id retired and absent from Find.
+- **A.2.3** — `partial` — Parent wins file types. Same path stays a duplicate. A child of a parent stays refused. A parent added after children replaces those children. The parent’s file types are the grant. The child’s types are not merged. `ScopeGrantService.TryAddGrant` already keeps the parent grant. Done when a parent granted Text only, added after a child granted Images, keeps Text only, and a test locks that.
+- **A.2.4** — `not-started` — Each collection stores, in `checkpoints.db`, the SHA-256 of the ONNX file that wrote its vectors. That hash is not part of the content id. Search does not return vectors written by a different hash. Done when a second hash hides the older vectors and the content id is unchanged.
+- **A.2.5** — `done` — Task 2.2.6 stays done on its written Done when. This task locks the canon classes that sentence names and that check does not. Exact name: `IsCodeFile_MakefileAnyCase_IsTrue`. Skip folder: `IsBlockedFolder_Git_IsTrue`. Secret other than `.env`: `IsSecret_Pem_IsTrue`. Lock file: `IsLockFile_PackageLock_IsTrue`. Done when those four tests stay the locks.
+- **A.2.6** — `partial` — The text collection creates one float HNSW index and one full-text index on the raw note text. Task 2.2.3 stays the float-index check. `ZVecTextVectorIndex` already sets `ZVecFtsIndexParam` on `raw_text`. Done when a test fails if that full-text index param is removed.
+- **A.2.7** — `partial` — When the text model download reaches Ready, `MauiModelDownloadService` reads each grant once through `IngestGrantedTextAsync`. A grant with Text off and Code off is not read. A finished file with the same bytes is not embedded again. That pass does not start a watcher. `IngestGrant_TextAndCodeOff_DoesNotRead` and `IngestDocument_FinishedSameHash_DoesNotEmbed` stay. Done when a test shows the Ready path calls that read.
+- **A.2.8** — `not-started` — The idle detector pauses ingest. It does not sample video and it is not task 4.2.1. `IIdleDetectorService` is the port. Done when an idle signal skips the next ingest and a busy signal does not.
+- **A.2.9** — `not-started` — The mobile half of task 2.2.5 stays open. Task 2.2.5 stays `done` on the Phase 2 row. The desktop run and the written 800 ms cell stay the desktop record. Done when a labeled phone run, not an emulator, reports hybrid top-20 ≤60 ms and encoder load ≤600 ms.
 
 ---
 
@@ -206,6 +234,23 @@ Counted 15 Oct 2026. This is the only progress table.
 | 3.2.3 | `not-started` | 0% |
 | **Epic 3.3 — Crash cursor** | `not-started` | 0% |
 | 3.3.1 | `not-started` | 0% |
+| **Phase Three Addendum — Gaps left by Phases 1–3** | `partial` | 54% |
+| **Epic A.1 — Readings** | `done` | 100% |
+| A.1.1 | `done` | 100% |
+| A.1.2 | `done` | 100% |
+| A.1.3 | `done` | 100% |
+| A.1.4 | `done` | 100% |
+| A.1.5 | `done` | 100% |
+| **Epic A.2 — Closures** | `partial` | 28% |
+| A.2.1 | `not-started` | 0% |
+| A.2.2 | `not-started` | 0% |
+| A.2.3 | `partial` | 50% |
+| A.2.4 | `not-started` | 0% |
+| A.2.5 | `done` | 100% |
+| A.2.6 | `partial` | 50% |
+| A.2.7 | `partial` | 50% |
+| A.2.8 | `not-started` | 0% |
+| A.2.9 | `not-started` | 0% |
 | **Phase 4 — Pictures, video, and words in documents** | `not-started` | 0% |
 | **Epic 4.1 — Vision** | `not-started` | 0% |
 | 4.1.1 | `not-started` | 0% |
@@ -239,7 +284,7 @@ Counted 15 Oct 2026. This is the only progress table.
 | **Epic 7.2 — Local release** | `not-started` | 0% |
 | 7.2.1 | `not-started` | 0% |
 | 7.2.2 | `not-started` | 0% |
-| **All epics** | `partial` | 48% |
+| **All epics** | `partial` | 49% |
 
 # Version 1.5
 
