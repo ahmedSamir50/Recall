@@ -104,31 +104,26 @@ New, changed, and deleted files inside a grant update the index without a timer.
 
 ## Phase Three Addendum — Gaps left by Phases 1–3 — `partial`
 
-This phase is new. It does not rewrite Phases 1, 2, or 3. Those rows stay as written.
+This phase is new. It does not rewrite Phases 1, 2, or 3. Those rows stay as written. The sentences in this paragraph are not tasks.
 
-### Epic A.1 — Readings — `done`
-
-- **A.1.1** — `done` — “Stack for every task” names the four RIDs. Task 1.1.1 stays done on a phone and Windows. The four-shell install proof stays 7.2.1. Done when this sentence is the reading.
-- **A.1.2** — `done` — The watcher is task 3.2.1. The video sampler is task 4.2.1. Secure storage stays an empty interface, and v1 puts no keys there. The idle detector stays a Phase 1 port. Its job is task A.2.8, not task 4.2.1. The scope-manager fake is not the overlap rule. That rule stays tasks 3.1.1 and 3.1.2. Done when this map is the reading.
-- **A.1.3** — `done` — Task 1.2.2 stays done. The overlap warning in both languages stays `OverlapWarning_BothLanguages_SayParentIsKept`. The iPhone line stays “New files are picked up when Recall is opened.” Done when task 1.2.2 is not reopened.
-- **A.1.4** — `done` — The Phase 2 intro is not edited. A granted text file is found on Windows and Mac. Android and iOS stay fail-closed until a tokenizer runtime exists. Task 2.2.4 stays done. Done when this limit is the reading.
-- **A.1.5** — `done` — These locks already exist. This addendum does not redo them and does not rewrite the Phase 3 rows. Same bytes on rename update the path and do not embed: `Apply_RenamedSameHash_DoesNotEmbed` and `Apply_ChunkPath_ReplacesStoredPath`. A delete appends `DELETE`, keeps the vector, and Find shows the hit unavailable: `Apply_Deleted_AppendsDeleteAndDoesNotEmbed`, `Apply_MissingChunk_SetsSourceMissing`, and `Build_SourceMissing_IsUnavailableEvenWhenFileExists`. A `Reading` file is read again, and a finished file with the same hash is skipped: `Resume_ReadingRow_EmbedsAgain_FinishedRow_DoesNotEmbed` and `Decide_FinishedSameHash_Skip`. The cursor file and its chunk rows commit in one transaction. The vector insert happens before that commit. The op-log `INSERT` is appended only after that insert succeeds. A crash after the insert and before the commit leaves the file `Reading`, and the next read skips an id the store already has. `D:\Photos` versus `D:\PhotosExtra` is not parent-wins: `TryAddGrant_PhotosExtra_IsNotAChild` beside `TryAddGrant_ChildOfGrantedParent_ReturnsOverlap`. Android renamed is that same hash diff, `Diff_UniqueHashPair_EmitsRenamed`, not a native Storage Access Framework event. Done when those names stay the locks.
+“Stack for every task” names the four RIDs. Task 1.1.1 stays done on a phone and Windows. The four-shell install stays task 7.2.1. Task 1.1.2 says the sampler, secure storage, and the idle detector stay empty until task 4.2.1. That sentence stays. The sampler is task 4.2.1. Secure storage stays empty, and task 4.2.1 does not fill it. The idle detector is task A.2.8. Task 1.2.2 stays done. A granted text file is found on Windows and Mac. Android and iOS stay fail-closed until a tokenizer runtime exists. Task 3.2.1 diffs every shell against `checkpoints.db` on open and on resume. That diff is the catcher for a file that changed while Recall was closed. There is no timer, and Index now is not that catcher. Task 3.1.2 still offers only a path that is not indexed yet. A finished grant stays hidden. The cursor file and its chunk rows commit in one transaction. The vector insert happens before that commit. The op-log `INSERT` is appended only after that insert succeeds. A crash after the insert and before the commit leaves the file `Reading`, and the next read skips an id the store already has. The op-log file is not inside that transaction. A crash in the gap between the cursor commit and the op-log append has no recovery in this plan. Search on this device still works, because the vector and the cursor are already committed. The lost line is only an unsent sync entry. Sync stays off. If sync is later turned on, that gap has to be closed first.
 
 ### Epic A.2 — Closures — `partial`
 
-- **A.2.1** — `not-started` — Index now on Windows and Mac catches a file that changed while Recall was closed, inside a grant that is already indexed. No timer. Task 3.2.1 stays: the watcher runs only while Recall runs, and `OnResumed_Windows_DoesNotRescan` stays. Task 3.1.2 stays: a never-indexed path is offered, and a child of an allowed parent is not offered again. `IndexNowService.IndexAsync` on a finished grant runs `ForegroundScanService.ScanAsync`. Done when that press queues created, modified, renamed, and deleted from the `checkpoints.db` diff, and a child path is still not offered.
-- **A.2.2** — `not-started` — When a file’s chunk count shrinks, ordinals past the new count are retired. Each retired id appends `DELETE`. The vector row stays. Find does not return those hits. `SqliteIngestCursorStore.MarkFinished` is the commit. Done when a file that goes from two chunks to one leaves the second id retired and absent from Find.
-- **A.2.3** — `partial` — Parent wins file types. Same path stays a duplicate. A child of a parent stays refused. A parent added after children replaces those children. The parent’s file types are the grant. The child’s types are not merged. `ScopeGrantService.TryAddGrant` already keeps the parent grant. Done when a parent granted Text only, added after a child granted Images, keeps Text only, and a test locks that.
-- **A.2.4** — `not-started` — Each collection stores, in `checkpoints.db`, the SHA-256 of the ONNX file that wrote its vectors. That hash is not part of the content id. Search does not return vectors written by a different hash. Done when a second hash hides the older vectors and the content id is unchanged.
+- **A.2.2** — `not-started` — When a file’s chunk count shrinks, ordinals past the new count are retired. Each retired id appends `DELETE` once. A shrink from two chunks to one appends one `DELETE`. The vector row stays. Find does not return those hits. `SqliteIngestCursorStore.MarkFinished` is the commit. This is not the file-delete path in task 3.2.3. A file that is already missing does not append `DELETE` again. A later delete of the whole file appends `DELETE` only for ordinals that are not already retired. Done when a file that goes from two chunks to one leaves the second id retired and absent from Find.
+- **A.2.3** — `partial` — Parent wins file types. Same path stays a duplicate. A child of a parent stays refused. A parent added after children replaces those children. The parent’s file types are the grant. The child’s types are not merged. `ScopeGrantService.TryAddGrant` already keeps the parent grant. Done when a parent granted Text only, added after a child granted Images, keeps Text only, and a test locks that. The parent row is already kept. The Text-only test is left.
+- **A.2.4** — `not-started` — The text collection stores, in `checkpoints.db`, the SHA-256 of the ONNX file that wrote its vectors. That hash is not part of the content id. Search of that collection hides vectors written by a different hash. It does not re-embed them. A finished file whose source hash is unchanged stays skipped, as in task 3.3.1. Those hidden vectors stay hidden until the source bytes change. There is no rebuild task. v1 does not replace the text encoder file whose checksum task 2.1.1 already accepted with a different hash, and a new hash is not downloaded over that file. Picture, video, and audio collections store the same kind of hash when Phases 4 and 5 create them. Task 6.1.2 writes the short row with the hash of the file that produced it and deletes the long row. Task 6.2.1 merges only rows that hash filter kept. Done when a second text-encoder hash hides the older text vectors and the content id is unchanged.
 - **A.2.5** — `done` — Task 2.2.6 stays done on its written Done when. This task locks the canon classes that sentence names and that check does not. Exact name: `IsCodeFile_MakefileAnyCase_IsTrue`. Skip folder: `IsBlockedFolder_Git_IsTrue`. Secret other than `.env`: `IsSecret_Pem_IsTrue`. Lock file: `IsLockFile_PackageLock_IsTrue`. Done when those four tests stay the locks.
-- **A.2.6** — `partial` — The text collection creates one float HNSW index and one full-text index on the raw note text. Task 2.2.3 stays the float-index check. `ZVecTextVectorIndex` already sets `ZVecFtsIndexParam` on `raw_text`. Done when a test fails if that full-text index param is removed.
-- **A.2.7** — `partial` — When the text model download reaches Ready, `MauiModelDownloadService` reads each grant once through `IngestGrantedTextAsync`. A grant with Text off and Code off is not read. A finished file with the same bytes is not embedded again. That pass does not start a watcher. `IngestGrant_TextAndCodeOff_DoesNotRead` and `IngestDocument_FinishedSameHash_DoesNotEmbed` stay. Done when a test shows the Ready path calls that read.
-- **A.2.8** — `not-started` — The idle detector pauses ingest. It does not sample video and it is not task 4.2.1. `IIdleDetectorService` is the port. Done when an idle signal skips the next ingest and a busy signal does not.
-- **A.2.9** — `not-started` — The mobile half of task 2.2.5 stays open. Task 2.2.5 stays `done` on the Phase 2 row. The desktop run and the written 800 ms cell stay the desktop record. Done when a labeled phone run, not an emulator, reports hybrid top-20 ≤60 ms and encoder load ≤600 ms.
+- **A.2.6** — `partial` — The text collection creates one float HNSW index and one full-text index on the raw note text. Task 2.2.3 stays the float-index check. `ZVecTextVectorIndex` already sets `ZVecFtsIndexParam` on `raw_text`. Done when a test fails if that full-text index param is removed. The param is already set. That failing test is left.
+- **A.2.7** — `partial` — When the text model download reaches Ready, `MauiModelDownloadService` reads each grant once through `IngestGrantedTextAsync`. A grant with Text off and Code off is not read. A finished file with the same bytes is not embedded again. That pass does not start a watcher. `IngestGrant_TextAndCodeOff_DoesNotRead` and `IngestDocument_FinishedSameHash_DoesNotEmbed` stay. Done when a test shows the Ready path calls that read. The Ready call is already there. The test of that call is left.
+- **A.2.8** — `not-started` — The idle detector pauses ingest. It does not sample video. Task 4.2.1 is the sampler only. Task 1.1.2’s “until 4.2.1” sentence is not edited; this task is the idle port. `IIdleDetectorService` is that port. An idle signal defers the next ingest until the device is busy again. It does not drop the file. Done when an idle signal defers that ingest and a busy signal runs it.
+- **A.2.9** — `not-started` — Lines 12–17 would call task 2.2.5 `partial`, because its exit still lists hybrid ≤60 ms mobile and load ≤600 ms mobile, and the same paragraph says the mobile cell is unmeasured. This phase does not rewrite that row, so the row stays `done`. The desktop run and the written 800 ms cell stay the desktop record. Done when a labeled phone run, not an emulator, reports hybrid top-20 ≤60 ms and encoder load ≤600 ms. The phone run is left.
 
 ---
 
 ## Phase 4 — Pictures, video, and words in documents — `not-started`
+
+Vision waits on tasks A.2.2, A.2.3, A.2.4, A.2.7, and A.2.8. It does not wait on A.2.6 or A.2.9. A.2.6 is the text full-text index. A.2.9 is the labeled phone run of the task 2.2.5 text gate: one text session, a 512-d float HNSW graph, `EfSearch` 64, hybrid top-20 ≤60 ms, and encoder load ≤600 ms. Those two stay in the addendum because that phase sits between Phase 3 and Phase 4. They do not gate these tasks.
 
 ### Epic 4.1 — Vision — `not-started`
 
@@ -137,7 +132,7 @@ This phase is new. It does not rewrite Phases 1, 2, or 3. Those rows stay as wri
 
 ### Epic 4.2 — Video frames — `not-started`
 
-- **4.2.1** — `not-started` — Sample one JPEG frame every two seconds with the platform sampler. Embed those frames with the vision encoder into the video collection at 768. Done when a two-second cadence is what the sampler emits.
+- **4.2.1** — `not-started` — Sample one JPEG frame every two seconds with the platform sampler. Embed those frames with the vision encoder into the video collection at 768. The soundtrack is task 5.1.3. Done when a two-second cadence is what the sampler emits.
 
 ### Epic 4.3 — OCR for English and Arabic — `not-started`
 
@@ -154,6 +149,7 @@ This phase is new. It does not rewrite Phases 1, 2, or 3. Those rows stay as wri
 
 - **5.1.1** — `not-started` — If the audio file type is off, show one line and do not embed. If it is on, download the audio ONNX file, embed, store in the audio collection at 768, then unload. Done when the encoder is not still loaded after the job, and there is no microphone control.
 - **5.1.2** — `done` — Do not add a speech-to-text model. Done when the solution contains no ASR package. The solution has no speech-to-text package.
+- **5.1.3** — `not-started` — When the audio file type is on, a video soundtrack is overlapping windows of the audio encoder’s native length. Each window stores a start and an end. Unload the vision session before the audio session loads. Frames stay the one JPEG every two seconds from task 4.2.1. The hop length is not set here. Done when a video with audio on produces those windows and the vision session is not loaded during them.
 
 ### Epic 5.2 — Sibling transcript files — `not-started`
 
@@ -167,12 +163,12 @@ This phase is new. It does not rewrite Phases 1, 2, or 3. Those rows stay as wri
 ### Epic 6.1 — Move old pictures, video, and audio — `partial`
 
 - **6.1.1** — `done` — Read the person’s choice of 2, 5, or 7 years. Default is 2. Done when any other number is rejected. Preferences stores 2, 5, or 7, and another number throws. Shrink of old media is task 6.1.2 and has not started.
-- **6.1.2** — `not-started` — When a picture, video, or audio file is older than that, cut its 768 vector to 512, L2-normalize, insert into the old collection, and delete the long row. Text never moves. Done when only one copy remains.
+- **6.1.2** — `not-started` — When a picture, video, or audio file is older than that, cut its 768 vector to 512, L2-normalize, insert into the old collection, and delete the long row. The short row stores the encoder-file hash from task A.2.4. That delete is the age move, not a source tombstone. Text never moves. Done when only one copy remains.
 - **6.1.3** — `not-started` — A pin stays at 768. Growing a shortened item back embeds the file again. Done when a pinned old photo is still in the long collection.
 
 ### Epic 6.2 — Search across both ages — `not-started`
 
-- **6.2.1** — `not-started` — Embed the question once, cut it to each live collection’s width, search each collection the grant allows, and merge with RRF at `k=60`. Done when a query that should hit both ages returns one fused list.
+- **6.2.1** — `not-started` — Embed the question once with that collection’s encoder, cut it to the long width and the old width, search those two collections when the grant allows them, and merge with RRF at `k=60`. A text query searches `items_text` only. A picture query searches the picture and video collections only. Audio is searched with the audio encoder only. Those lists are not fused, because one embedding cannot serve a different encoder. A row whose encoder-file hash differs from the file that should search that collection stays out of the merge. Done when a query that should hit both ages of one encoder returns one fused list, and a text query does not return a picture.
 
 ---
 
@@ -181,7 +177,7 @@ This phase is new. It does not rewrite Phases 1, 2, or 3. Those rows stay as wri
 ### Epic 7.1 — Tests that can fail — `partial`
 
 - **7.1.1** — `partial` — Unit-test every method and every branch that decides behavior for the ports and policies above, with fakes for ONNX and ZVec. Done when deleting a branch makes a test go red. A coverage percent of 60% then 70% is a floor, not the exit. Unit tests cover the text prefix, chunk split, download resume rules, grant boundary, width 128, age cutoff, and device id. Later-phase branches have no tests because that code does not exist.
-- **7.1.2** — `not-started` — Integration-test real ONNX plus real ZVec: crash restart from `checkpoints.db`, and zero non-local bytes after the model download has finished. Done when those two runs exist. A text-search integration test is in the tree. Crash restart and the egress check are not.
+- **7.1.2** — `not-started` — Integration-test real ONNX plus real ZVec: crash restart from `checkpoints.db`, and zero non-local bytes after the model download has finished. The unit cursor locks stay task 3.3.1. This task is the kill-and-restart run, not a second copy of those locks. Done when those two runs exist. A text-search integration test is in the tree. Crash restart and the egress check are not.
 - **7.1.3** — `not-started` — Golden retrieval in English, Arabic, Chinese, Hindi, and French. Recall@10 for the same query stays within 5 points across those five. Text stays at 512 unless this run clears 256. Done when that report exists. UI languages stay Arabic and English either way.
 
 ### Epic 7.2 — Local release — `not-started`
@@ -234,15 +230,8 @@ Counted 15 Oct 2026. This is the only progress table.
 | 3.2.3 | `not-started` | 0% |
 | **Epic 3.3 — Crash cursor** | `not-started` | 0% |
 | 3.3.1 | `not-started` | 0% |
-| **Phase Three Addendum — Gaps left by Phases 1–3** | `partial` | 54% |
-| **Epic A.1 — Readings** | `done` | 100% |
-| A.1.1 | `done` | 100% |
-| A.1.2 | `done` | 100% |
-| A.1.3 | `done` | 100% |
-| A.1.4 | `done` | 100% |
-| A.1.5 | `done` | 100% |
-| **Epic A.2 — Closures** | `partial` | 28% |
-| A.2.1 | `not-started` | 0% |
+| **Phase Three Addendum — Gaps left by Phases 1–3** | `partial` | 31% |
+| **Epic A.2 — Closures** | `partial` | 31% |
 | A.2.2 | `not-started` | 0% |
 | A.2.3 | `partial` | 50% |
 | A.2.4 | `not-started` | 0% |
@@ -262,10 +251,11 @@ Counted 15 Oct 2026. This is the only progress table.
 | 4.3.2 | `not-started` | 0% |
 | 4.3.3 | `not-started` | 0% |
 | 4.3.4 | `not-started` | 0% |
-| **Phase 5 — Audio and transcripts that already exist** | `partial` | 25% |
-| **Epic 5.1 — Audio files** | `partial` | 50% |
+| **Phase 5 — Audio and transcripts that already exist** | `partial` | 20% |
+| **Epic 5.1 — Audio files** | `partial` | 33% |
 | 5.1.1 | `not-started` | 0% |
 | 5.1.2 | `done` | 100% |
+| 5.1.3 | `not-started` | 0% |
 | **Epic 5.2 — Sibling transcript files** | `not-started` | 0% |
 | 5.2.1 | `not-started` | 0% |
 | 5.2.2 | `not-started` | 0% |
@@ -284,7 +274,7 @@ Counted 15 Oct 2026. This is the only progress table.
 | **Epic 7.2 — Local release** | `not-started` | 0% |
 | 7.2.1 | `not-started` | 0% |
 | 7.2.2 | `not-started` | 0% |
-| **All epics** | `partial` | 49% |
+| **All epics** | `partial` | 44% |
 
 # Version 1.5
 
@@ -362,7 +352,7 @@ v1 still has no language model. Group labels stay the deterministic TF-IDF label
 
 ## Later, not in these phases — `not-started`
 
-Sync may later say a file is on another of the person’s devices. It will not copy the file. v1 only keeps the local id, the local op-log (`INSERT`, `DELETE`, `PIN`, `UNPIN`), and a sync flag that stays off.
+Sync may later say a file is on another of the person’s devices. It will not copy the file. v1 only keeps the local id, the local op-log (`INSERT`, `DELETE`, `PIN`, `UNPIN`), and a sync flag that stays off. A crash can drop one unsent op-log line after the cursor commit. Search on this device still works. That line is not repaired while sync stays off.
 
 The group browser is not in v1. Group labels, when built, are the strongest word, the date range, and the counts, in the person’s language. No language model writes them.
 
