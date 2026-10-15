@@ -39,3 +39,15 @@ No steps. Feature: [code-and-skips](../features/code-and-skips.md).
 ## Speech-to-text
 
 Speech-to-text is forbidden and has no steps.
+
+## Name a person
+
+No steps. Feature: [people](../features/people.md).
+
+## Keep place from a file
+
+No steps. Feature: [file details](../features/file-details.md).
+
+## Ask this device
+
+No steps. Feature: [local notes](../features/local-notes.md).

@@ -64,7 +64,7 @@ EmbeddingGemma 2 facts the panel must not invent past:
 - **Keyword folding.** BM25 text is NFKC-normalized. Drop U+0640, U+064B through U+065F, and U+0670. Map U+0622, U+0623, U+0625, and U+0671 to U+0627. Do not use Porter stemming as the only analyzer. Do not split Chinese on spaces.
 - **Broken Arabic text layer.** A PDF text layer that drops Arabic letters inside a word is OCR'd with the Arabic reader. The count that triggers this is not set here.
 - **Indexes.** Plain HNSW on all four RIDs. `QuantizeType` stays `Undefined` (one float32 index). Turning it on builds a second index beside the float one (`segment.cc` creates both). That does not shrink the file. Enable `Int8`, `Int4`, or `Fp16` only after a benchmark shows query time about 2× or 3× faster. Do not create `ZVecHnswRabitqIndexParam`. DiskANN is out of v1.
-- **Zero LLM.** No sidecar, no chat, no generative summary, no model download for a language model, in v1 or v1.5. Cluster labels are deterministic: top TF-IDF term + locale date range + locale modality count. The cluster browser UI is v1.5; the label strings are specified now.
+- **Zero LLM in v1.** No sidecar process, no chat, no generative summary, and no language-model download in v1. v1.5 may download one opt-in local generative ONNX model into the same model-download path. Cluster labels stay deterministic: top TF-IDF term + locale date range + locale modality count. The cluster browser UI is v1.5; the label strings are specified now.
 - **Sync is design-only.** Schema stays sync-ready (content-addressable ids, append-only op-log, `ISyncAdapter` stub, feature flag off). Do not implement pairing, transport, or encryption in v1.
 - **Device identity from day 0.** First launch stores the public platform device id (random only when the read is empty, known-bad, or not ready) and the native OS device name. Both original values are kept forever. The person can edit a display name. Serial, IMEI, UDID, advertising id, and Mac `IOPlatformUUID` are not read. The id and both names stay on the device and are not sent with the model download.
 - **User-facing copy:** Arabic and English only at the start (`ar`, `en`). This replaces the InitDocs five-locale UI list for product chrome. See `development-rules.md`.
@@ -96,7 +96,7 @@ A @recall plan updates the docs pages for the code it changes. The user does not
 
 - Sending vectors, file contents, or other user data off the device.
 - A cloud embedding API or a hosted vector database.
-- An LLM of any size for any feature.
+- An LLM in v1, a cloud language model, or a second process that runs a language model.
 - A speech-to-text model. A transcript is used only when that file is already next to the media.
 - Ambient OS capture in v1.
 - Bundling ONNX weights in the app binary.

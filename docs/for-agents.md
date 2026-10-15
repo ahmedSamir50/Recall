@@ -14,6 +14,10 @@
 - Are vision, video sampling, and OCR in the tree? [docs/features/vision-and-ocr.md](features/vision-and-ocr.md). No type for those readers is in `src/`.
 - Is an audio encoder or a sibling transcript indexed? [docs/features/audio-and-transcripts.md](features/audio-and-transcripts.md). No speech-to-text package is in the solution.
 - Is a code grant flag or a skip filter in the tree? [docs/features/code-and-skips.md](features/code-and-skips.md). Source: `src/Recall.Core/Scope/GrantFileKinds.cs`.
+- Does the text split read a heading? [docs/features/structure-chunks.md](features/structure-chunks.md). No structure reader is in src/.
+- Is a person name stored? [docs/features/people.md](features/people.md). No people type is in src/.
+- Does Recall keep a place from a file? [docs/features/file-details.md](features/file-details.md). No file-detail reader is in src/.
+- Is a notes model downloaded? [docs/features/local-notes.md](features/local-notes.md). v1 has no language model.
 - Which desktop benchmark means are recorded? [docs/features/proof.md](features/proof.md). Source: `docs/plan.md`.
 - Which keys and folders are on the device? [docs/data/stores.md](data/stores.md).
 - What does each preference key store? [docs/data/preferences.md](data/preferences.md). Source: `src/Recall.Core/Preferences/AgeCutoffPreferenceService.cs`.

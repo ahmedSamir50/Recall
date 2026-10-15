@@ -8,5 +8,6 @@
 - [ADR 0008: Locales versus golden languages](0008-locales-versus-golden-languages.md)
 - [ADR 0009: Sync off](0009-sync-off.md)
 - [ADR 0010: Closed product cuts](0010-closed-product-cuts.md)
+- [ADR 0011: v1.5 local generative model](0011-v15-local-generative.md)
 
 An open item is not an ADR.

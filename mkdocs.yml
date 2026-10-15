@@ -72,6 +72,10 @@ nav:
       - Vision and OCR: features/vision-and-ocr.md
       - Audio and transcripts: features/audio-and-transcripts.md
       - Code and skips: features/code-and-skips.md
+      - Structure chunks: features/structure-chunks.md
+      - People: features/people.md
+      - File details: features/file-details.md
+      - Local notes: features/local-notes.md
       - Proof: features/proof.md
   - Code:
       - Map: code/map.md

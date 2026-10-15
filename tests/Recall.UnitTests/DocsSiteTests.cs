@@ -26,6 +26,10 @@ public sealed class DocsSiteTests
         "docs/features/vision-and-ocr.md",
         "docs/features/audio-and-transcripts.md",
         "docs/features/code-and-skips.md",
+        "docs/features/structure-chunks.md",
+        "docs/features/people.md",
+        "docs/features/file-details.md",
+        "docs/features/local-notes.md",
         "docs/features/proof.md",
     ];
 
@@ -122,6 +126,35 @@ public sealed class DocsSiteTests
         missing.Should().BeEmpty();
         text.Should().Contain("Every file under src, tests, and tools is a heading under docs/code.");
         text.Should().Contain("A domain owns one reason to change.");
+    }
+
+    [Fact]
+    public void ExtensionDecisions_StayOpen_AndDoNotClaimTheyRun()
+    {
+        // Arrange
+        var repo = FindRepoRoot();
+        var structure = File.ReadAllText(Path.Combine(repo, "docs", "features", "structure-chunks.md"));
+        var people = File.ReadAllText(Path.Combine(repo, "docs", "features", "people.md"));
+        var details = File.ReadAllText(Path.Combine(repo, "docs", "features", "file-details.md"));
+        var notes = File.ReadAllText(Path.Combine(repo, "docs", "features", "local-notes.md"));
+        var nonGoals = File.ReadAllText(Path.Combine(repo, "docs", "non-goals.md"));
+        var canon = File.ReadAllText(Path.Combine(repo, ".cursor", "skills", "recall-expert-harness", "canon.md"));
+
+        // Act
+        var open = structure.Contains("Status: open", StringComparison.Ordinal)
+            && people.Contains("Status: open", StringComparison.Ordinal)
+            && details.Contains("Status: open", StringComparison.Ordinal)
+            && notes.Contains("Status: open", StringComparison.Ordinal);
+
+        // Assert
+        open.Should().BeTrue();
+        structure.Should().Contain("Chunks are not averaged.");
+        people.Should().Contain("A stored face vector at 128 numbers is forbidden.");
+        details.Should().Contain("Recall does not send the place to a server.");
+        notes.Should().Contain("v1 has no language model.");
+        nonGoals.Should().Contain("No language model in v1.");
+        canon.Should().Contain("Zero LLM in v1.");
+        canon.Should().NotContain("in v1 or v1.5");
     }
 
     [Fact]

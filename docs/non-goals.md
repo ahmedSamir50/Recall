@@ -6,7 +6,7 @@ No web client.
 
 No clipboard, camera, screen, or microphone capture.
 
-No language model.
+No language model in v1. A v1.5 local model is [local notes](features/local-notes.md) and is not in the tree.
 
 No speech-to-text model.
 

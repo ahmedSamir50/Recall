@@ -39,4 +39,4 @@ Use this when hardening a document. Primary writes the finding. Consulted expert
 
 ## Out of panel on purpose
 
-No separate LLM expert: an LLM sidecar is an anti-goal. No web-client expert: there is no web target. No sync-implementation expert: v1 ships sync disabled; `privacy-local-first` guards the design so it is not built early and not broken. IdeaTank siblings (PhotoMind, LegalLens, and the rest) are not separate v1 apps. Granted source files are text in v1.
+No separate LLM expert. A sidecar process is an anti-goal. ADR 0011 is the v1.5 local model. No web-client expert: there is no web target. No sync-implementation expert: v1 ships sync disabled; `privacy-local-first` guards the design so it is not built early and not broken. IdeaTank siblings (PhotoMind, LegalLens, and the rest) are not separate v1 apps. Granted source files are text in v1.

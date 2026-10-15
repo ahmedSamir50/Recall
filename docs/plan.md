@@ -247,6 +247,8 @@ Sync may later say a file is on another of the person’s devices. It will not c
 
 The group browser is not in v1. Group labels, when built, are the strongest word, the date range, and the counts, in the person’s language. No language model writes them.
 
+v1.5 may download one opt-in local notes model. The rules are in features/local-notes.md. That model does not write group labels. People, file details, and structure-aware splits are open feature pages and are not task rows. This paragraph adds no task row.
+
 Browser history is not in v1.
 
 A compressed ZVec index stays off until a measured search is about two or three times faster. That switch builds a second index beside the float one and does not shrink the file.
