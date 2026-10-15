@@ -254,6 +254,35 @@ public sealed class DocsSiteTests
         gaps.Should().BeEmpty();
     }
 
+    [Fact]
+    public void Plan_Version15_FollowsTheV1Shape_AndStaysOutOfTheV1Total()
+    {
+        // Arrange
+        var repo = FindRepoRoot();
+        var plan = File.ReadAllText(Path.Combine(repo, "docs", "plan.md"));
+        var implementation = File.ReadAllText(Path.Combine(repo, "InitDocs", "Recall_App_Implementation_Plan.md"));
+        var technical = File.ReadAllText(Path.Combine(repo, "InitDocs", "Recall_App_Technical_Details.md"));
+
+        // Act
+        var versionHeading = plan.IndexOf("# Version 1.5", StringComparison.Ordinal);
+        var allEpics = plan.IndexOf("**All epics**", StringComparison.Ordinal);
+        var allTasks = plan.IndexOf("**All v1.5 tasks**", StringComparison.Ordinal);
+        var afterTasks = allTasks < 0 ? string.Empty : plan[allTasks..];
+
+        // Assert
+        plan.Should().Contain("# Version 1.5");
+        plan.Should().Contain("## Phase 1 — Sections");
+        implementation.Should().Contain("# Version 1.5");
+        implementation.Should().Contain("## Phase 1 — Sections");
+        technical.Should().Contain("# Version 1.5");
+        technical.Should().Contain("## Phase 1 — Sections");
+        versionHeading.Should().BeGreaterThan(allEpics);
+        afterTasks.Should().Contain("not-started");
+        afterTasks.IndexOf("0%", StringComparison.Ordinal).Should().BeGreaterThan(afterTasks.IndexOf("not-started", StringComparison.Ordinal));
+        implementation.Should().Contain("History. The living plan is docs/plan.md.");
+        technical.Should().Contain("History. The living plan is docs/plan.md.");
+    }
+
     private static Dictionary<string, string> CatalogSections(string repo)
     {
         var text = new StringBuilder();

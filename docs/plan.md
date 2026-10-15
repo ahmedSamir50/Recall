@@ -241,13 +241,87 @@ Counted 15 Oct 2026. This is the only progress table.
 | 7.2.2 | `not-started` | 0% |
 | **All epics** | `partial` | 48% |
 
+# Version 1.5
+
+## Phase 1 — Sections — `not-started`
+
+The 8192 budget and the title prefix stay. A heading, a table, and a fence are read as structure.
+
+### Epic 1.1 — Structure split — `not-started`
+
+- **1.1.1** — `not-started` — Split a long note on a Markdown heading, a fenced block kept whole when it fits, a pipe table kept whole when it fits, an HTML heading, a whole HTML table, `pre`, or `code` when it fits, and a PDF page. The breadcrumb is the heading path inside `title: {file name} | text:`. A unit larger than 8192 tokens uses the rune cut and repeats the breadcrumb. A code file splits on a blank line inside the budget, otherwise the rune cut. Chunks are not averaged. Done when a fenced block that fits is one piece and a plain note still uses the rune cut.
+- **1.1.2** — `not-started` — Show that heading path on the Find card. Done when an empty heading draws no extra line, in Arabic and English.
+
+### Epic 1.2 — Links inside a grant — `not-started`
+
+- **1.2.1** — `not-started` — Keep a Markdown or HTML link that points at another file inside the grant, and show at most three of those names on the card. Drop `http` and `https`. Done when a link outside the grant is absent from the card.
+
+## Phase 2 — File details — `not-started`
+
+Picture, video, and audio ingest must already exist. This phase does not add a camera.
+
+### Epic 2.1 — Details already in the file — `not-started`
+
+- **2.1.1** — `not-started` — Read capture time, camera make, model, lens, ISO, and keywords already stored in a granted file. Keywords join that row’s word search and are not a separate dense vector. Done when a file with no keywords adds no extra vector.
+- **2.1.2** — `not-started` — `FileDetails.KeepPlace` defaults false. Latitude and longitude are stored only while that switch is on. Recall does not send the place to a server. Done when the switch starts off and a place value is absent from the model-download request. English `Keep place from the file`. Arabic `احتفظ بالمكان من الملف`.
+
+## Phase 3 — People — `not-started`
+
+EmbeddingGemma does not identify a person. The switch `People.FindSameFace` defaults false. No camera-roll capture.
+
+### Epic 3.1 — Same face — `not-started`
+
+- **3.1.1** — `not-started` — Suggest a shared face only inside a granted folder, and only after the person turns the switch on. The detector candidate is OpenCV YuNet. Video uses the existing one JPEG every two seconds, and at most five faces on a frame. Done when the switch starts off and a folder that was not granted is not scanned.
+- **3.1.2** — `not-started` — Store a face vector only after an Apache-compatible ONNX file at 256 or 512 numbers is named and hashed. A stored face vector at 128 numbers is forbidden. InsightFace buffalo weights are not a dependency. The same-face threshold stays unmeasured until that file exists. Done when a 128-wide store throws and no buffalo file is referenced.
+- **3.1.3** — `not-started` — A cluster id is a local GUID the screen never shows and never sends. The person types the name, and search uses that name. English `Name this person`. Arabic `سمّ هذا الشخص`. Done when search for that name returns the granted photos in the cluster and the GUID is absent from the screen.
+
+## Phase 4 — Notes — `not-started`
+
+v1 still has no language model. Group labels stay the deterministic TF-IDF label.
+
+### Epic 4.1 — One local model — `not-started`
+
+- **4.1.1** — `not-started` — `Notes.Enabled` defaults false. The download is one local ONNX file generated for ONNX Runtime GenAI, checked with SHA-256, from `Qwen/Qwen3-0.6B` after that pinned commit’s license file says Apache-2.0. The switch stays off on a shell whose generative library does not load, including iPhone while GenAI lists iOS as under development. The model is unloaded before a text, vision, or audio encoder loads. LiteGraph is not a dependency. Done when notes off means no generative file is loaded, and the download request carries no document, vector, face template, or place. English `Notes are off`. Arabic `الملاحظات متوقفة`. English `Notes are not available on this iPhone yet`. Arabic `الملاحظات غير متاحة على هذا الآيفون بعد`.
+
+### Epic 4.2 — Entity rows — `not-started`
+
+- **4.2.1** — `not-started` — When notes are on, entity and relation rows live in the local SQLite database and merge as a changed file arrives. Search still returns when notes are off. Done when a notes-off search uses the existing hybrid path and does not call the generative library.
+- **4.2.2** — `not-started` — The notes model does not write group labels. Done when a group label is still the strongest word, the date range, and the counts.
+
+## Progress
+
+| | Status | Progress |
+|---|---|---|
+| **Phase 1 — Sections** | `not-started` | 0% |
+| **Epic 1.1 — Structure split** | `not-started` | 0% |
+| 1.1.1 | `not-started` | 0% |
+| 1.1.2 | `not-started` | 0% |
+| **Epic 1.2 — Links inside a grant** | `not-started` | 0% |
+| 1.2.1 | `not-started` | 0% |
+| **Phase 2 — File details** | `not-started` | 0% |
+| **Epic 2.1 — Details already in the file** | `not-started` | 0% |
+| 2.1.1 | `not-started` | 0% |
+| 2.1.2 | `not-started` | 0% |
+| **Phase 3 — People** | `not-started` | 0% |
+| **Epic 3.1 — Same face** | `not-started` | 0% |
+| 3.1.1 | `not-started` | 0% |
+| 3.1.2 | `not-started` | 0% |
+| 3.1.3 | `not-started` | 0% |
+| **Phase 4 — Notes** | `not-started` | 0% |
+| **Epic 4.1 — One local model** | `not-started` | 0% |
+| 4.1.1 | `not-started` | 0% |
+| **Epic 4.2 — Entity rows** | `not-started` | 0% |
+| 4.2.1 | `not-started` | 0% |
+| 4.2.2 | `not-started` | 0% |
+| **All v1.5 tasks** | `not-started` | 0% |
+
 ## Later, not in these phases — `not-started`
 
 Sync may later say a file is on another of the person’s devices. It will not copy the file. v1 only keeps the local id, the local op-log (`INSERT`, `DELETE`, `PIN`, `UNPIN`), and a sync flag that stays off.
 
 The group browser is not in v1. Group labels, when built, are the strongest word, the date range, and the counts, in the person’s language. No language model writes them.
 
-v1.5 may download one opt-in local notes model. The rules are in features/local-notes.md. That model does not write group labels. People, file details, and structure-aware splits are open feature pages and are not task rows. This paragraph adds no task row.
+Version 1.5 is the separate board after the progress table. It is not part of Phases 1–7.
 
 Browser history is not in v1.
 
