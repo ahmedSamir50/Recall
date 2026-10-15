@@ -19,8 +19,8 @@ public partial class ShellNavLink
     private bool Active => string.Equals(Ui.Current.RoutePath, Href, StringComparison.Ordinal);
 
     private string Css => Active
-        ? "flex items-center gap-3 h-10 px-3 rounded-xl text-14 w-full text-start nav-active cy font-medium"
-        : "flex items-center gap-3 h-10 px-3 rounded-xl text-14 w-full text-start ink2";
+        ? "nav-link flex items-center gap-3 h-10 px-3 rounded-xl text-14 w-full text-start nav-active cy font-medium"
+        : "nav-link flex items-center gap-3 h-10 px-3 rounded-xl text-14 w-full text-start ink2";
 
     private void Go() => Nav.NavigateTo(Href);
 }

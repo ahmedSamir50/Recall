@@ -22,6 +22,7 @@
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <EnableMsixTooling>false</EnableMsixTooling>
+    <ApplicationIcon>Platforms\Windows\appicon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
     <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
@@ -83,6 +84,9 @@
     <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0B0D12" BaseSize="128,128" />
     <MauiFont Include="Resources\Fonts\OpenSans-Regular.ttf" />
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+    <Content Include="Platforms\Windows\appicon.ico" Link="appicon.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <Target Name="RecallClearMismatchedRuntimeIdentifier" BeforeTargets="ProcessFrameworkReferences">
     <PropertyGroup>

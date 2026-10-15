@@ -20,9 +20,9 @@ window.recallMountLatticeClassic = function mountLattice(canvas,{theme='dark',ma
   float grid=max(smoothstep(.48,.5,abs(f.x)),smoothstep(.48,.5,abs(f.y)))*.06;
   float cg=1.-smoothstep(0.,1.2,length(uv-vec2(.35,.1)));
   vec3 dark=(vec3(.047,.055,.075)+(mix(cyan,vio,w2)*(core*1.4+halo+syn*.25)+cyan*grid+vio*cg*.15)*.65)*vig;
-  vec3 ink=mix(vec3(0.,.42,.5),vec3(.38,.18,.7),w2);
-  float amt=clamp((core*1.1+halo*.8+syn*.18)*.55+grid*.7+cg*.04,0.,.85);
-  vec3 lite=mix(vec3(.955,.96,.968),ink,amt)*mix(.97,1.,vig);
+  vec3 ink=mix(vec3(0.,.38,.46),vec3(.33,.15,.65),w2);
+  float amt=clamp((core*1.25+halo*.9+syn*.2)*.68+grid*1.1+cg*.05,0.,.92);
+  vec3 lite=mix(vec3(.955,.96,.968),ink,amt)*mix(.96,1.,vig);
   vec3 col=mix(dark,lite,u_light);
   gl_FragColor=vec4(col,1.);}`;
  const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(o));return o};

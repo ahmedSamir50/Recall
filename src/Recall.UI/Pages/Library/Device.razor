@@ -8,7 +8,7 @@
     <div class="g2 rounded-2xl p-5 flex flex-col gap-4">
         <div>
             <p class="lbl mb-2">@T("Device_DisplayNameLabel")</p>
-            <input type="text" class="w-full rounded-xl border bd px-3 py-2 text-15" @bind="displayName" @bind:event="oninput" />
+            <input type="text" class="w-full rounded-xl border bd px-3 py-2 text-15 field-input" @bind="displayName" @bind:event="oninput" />
             @if (!string.IsNullOrEmpty(displayNameError))
             {
                 <p class="text-13 er mt-2">@displayNameError</p>

@@ -8,13 +8,13 @@
             <p class="lbl mb-1">@T("Lattice_Kicker")</p>
             <h1 class="f-head font-semibold text-22">@T("Lattice_Title")</h1>
         </div>
-        <p class="text-12 ink3 hidden md:block">@T("Lattice_SyncStub")</p>
+        <p class="text-12 hidden md:block"><span class="hint">@T("Lattice_SyncStub")</span></p>
     </div>
-    <div class="g2 rounded-2xl flex-1 min-h-[420px] relative overflow-hidden" dir="ltr">
-        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    <div class="g2 rounded-2xl flex-1 min-h-[420px] relative overflow-hidden lattice-frame" dir="ltr">
+        <svg class="absolute inset-0 w-full h-full block" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
             @foreach (var node in Nodes.Skip(1))
             {
-                <line x1="50" y1="50" x2="@node.X" y2="@node.Y" stroke="var(--line-2)" stroke-width="0.25" vector-effect="non-scaling-stroke" />
+                <line x1="50" y1="50" x2="@node.X" y2="@node.Y" class="lattice-line" stroke-width="0.25" vector-effect="non-scaling-stroke" />
             }
         </svg>
         @foreach (var node in Nodes)

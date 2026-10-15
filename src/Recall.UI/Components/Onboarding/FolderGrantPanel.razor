@@ -15,7 +15,7 @@
     <p class="ink2 mb-6">@T("Folders_Lead")</p>
     @if (ShowIosNote)
     {
-        <p class="text-13 ink3 mb-4">@T("Folders_IosNote")</p>
+        <p class="mb-4"><span class="hint">@T("Folders_IosNote")</span></p>
     }
     <p class="lbl mb-2">@T("Folders_TypesLabel")</p>
     <ul class="plain-list flex flex-col gap-2 mb-4">
@@ -23,8 +23,8 @@
         {
             <li class="p-3 rounded-xl border bd w-full min-w-0" style="background:var(--c1)">
                 <div class="flex items-center justify-between gap-3 min-w-0">
-                    <span class="font-medium truncate">@grant.DisplayName</span>
-                    <button type="button" class="btn btn-g shrink-0" aria-label="@T("Folders_Remove")" @onclick="() => Remove(grant.Path)">×</button>
+                    <span class="font-medium truncate flex-1 min-w-0">@grant.DisplayName</span>
+                    <button type="button" class="btn-icon" aria-label="@T("Folders_Remove")" title="@T("Folders_Remove")" @onclick="() => Remove(grant.Path)">×</button>
                 </div>
                 <div class="flex flex-wrap gap-2 mt-2">
                         <label class="text-12 ink2 flex items-center gap-1">
@@ -56,7 +56,7 @@
         <p class="text-13 er mb-3">@permissionError</p>
     }
     <button type="button" class="btn btn-g w-full justify-center mb-4 border-dashed" @onclick="AddFolderAsync">@T("Folders_Add")</button>
-    <p class="text-13 ink3 flex gap-2 mb-6">@T("Folders_SkipNote")</p>
+    <p class="mb-6"><span class="hint">@T("Folders_SkipNote")</span></p>
     @if (!Ui.Current.CanContinueFolders)
     {
         <p class="text-13 ink3 mb-4">@T("Folders_PickOne")</p>
