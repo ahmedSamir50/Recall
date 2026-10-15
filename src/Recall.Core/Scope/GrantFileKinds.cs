@@ -8,5 +8,6 @@ public enum GrantFileKinds
     Image = 2,
     Video = 4,
     Audio = 8,
-    All = Text | Image | Video | Audio,
+    Code = 16,
+    All = Text | Image | Video | Audio | Code,
 }

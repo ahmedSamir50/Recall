@@ -20,6 +20,8 @@ public static class RecallCoreServiceCollectionExtensions
         services.AddSingleton<ThemeService>();
         services.AddSingleton<LocaleService>();
         services.AddSingleton<AgeCutoffPreferenceService>();
+        services.AddSingleton<IUserSkipStore, MemoryUserSkipStore>();
+        services.AddSingleton<UserSkipService>();
         services.AddSingleton<IScopeManagerService, ScopeGrantService>();
         services.AddSingleton<IIndexPolicy, RecallIndexPolicy>();
         services.AddSingleton<LocalOpLogWriter>();

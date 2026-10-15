@@ -6,13 +6,14 @@ namespace Recall.Maui.Platform;
 
 public sealed partial class MauiGrantedTextReader : IGrantedTextReader
 {
-    private readonly DirectoryGrantedTextReader files = new();
+    private readonly DirectoryGrantedTextReader files;
     private readonly IGrantedFolderAccessService access;
     private int restored;
 
-    public MauiGrantedTextReader(IGrantedFolderAccessService access)
+    public MauiGrantedTextReader(IGrantedFolderAccessService access, IUserSkipStore skips)
     {
         this.access = access;
+        files = new DirectoryGrantedTextReader(skips);
     }
 
     public IAsyncEnumerable<GrantedTextDocument> ReadAsync(ScopeFolderGrant grant, CancellationToken cancellationToken)

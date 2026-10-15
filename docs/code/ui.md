@@ -367,9 +367,8 @@ namespace Recall.UI.Pages;
 public partial class Preferences
     public static bool IsThemeSelected(ThemePreference current, ThemePreference choice) => current == choice;
     public static string ThemeChoiceClass(ThemePreference current, ThemePreference choice) =>
+        if (status == UserSkipAddStatus.Added)
 ```
-
-No branch.
 
 
 ## src/Recall.UI/Pages/Onboarding/Folders.razor.cs

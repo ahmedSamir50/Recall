@@ -21,7 +21,7 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
     {
         foreach (var grant in scope.ListGrants())
         {
-            if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Text))
+            if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Text) && !grant.EnabledKinds.HasFlag(GrantFileKinds.Code))
             {
                 continue;
             }

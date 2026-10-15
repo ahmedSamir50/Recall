@@ -30,6 +30,100 @@
             </div>
             <p class="text-13 ink3 mt-2">@T("Preferences_AgeLead")</p>
         </div>
+        <div>
+            <p class="lbl mb-2">@T("Skips_Heading")</p>
+            <p class="text-13 ink3 mb-3">@T("Skips_Note")</p>
+            <div class="flex flex-col gap-4">
+                <div>
+                    <p class="lbl mb-2">@T("Skips_CodeExtensions")</p>
+                    <p class="text-13 ink3 mb-2">@T("Skips_CodeIndexed")</p>
+                    <ul class="plain-list flex flex-col gap-1 mb-2">
+                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.CodeExtensions)
+                        {
+                            <li class="text-13 ink2">@row</li>
+                        }
+                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.ExactCodeNames)
+                        {
+                            <li class="text-13 ink2">@row</li>
+                        }
+                        @foreach (var row in skips.Extensions)
+                        {
+                            <li class="text-13 ink2 flex items-center justify-between gap-2"><span>@row</span><button type="button" class="btn btn-g" @onclick="() => RemoveExtension(row)">@T("Skips_Remove")</button></li>
+                        }
+                    </ul>
+                    <div class="flex gap-2">
+                        <input class="inp flex-1" value="@extensionDraft" @onchange="e => extensionDraft = e.Value?.ToString() ?? string.Empty" />
+                        <button type="button" class="btn btn-g" @onclick="ApplyExtension">@T("Skips_Add")</button>
+                    </div>
+                    @if (extensionNotice is not null)
+                    {
+                        <p class="text-13 ink3 mt-2">@T(extensionNotice)</p>
+                    }
+                </div>
+                <div>
+                    <p class="lbl mb-2">@T("Skips_Folders")</p>
+                    <ul class="plain-list flex flex-col gap-1 mb-2">
+                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.SkipFolders)
+                        {
+                            <li class="text-13 ink2">@row</li>
+                        }
+                        @foreach (var row in skips.FolderNames)
+                        {
+                            <li class="text-13 ink2 flex items-center justify-between gap-2"><span>@row</span><button type="button" class="btn btn-g" @onclick="() => RemoveFolder(row)">@T("Skips_Remove")</button></li>
+                        }
+                    </ul>
+                    <div class="flex gap-2">
+                        <input class="inp flex-1" value="@folderDraft" @onchange="e => folderDraft = e.Value?.ToString() ?? string.Empty" />
+                        <button type="button" class="btn btn-g" @onclick="ApplyFolder">@T("Skips_Add")</button>
+                    </div>
+                    @if (folderNotice is not null)
+                    {
+                        <p class="text-13 ink3 mt-2">@T(folderNotice)</p>
+                    }
+                </div>
+                <div>
+                    <p class="lbl mb-2">@T("Skips_Secrets")</p>
+                    <ul class="plain-list flex flex-col gap-1 mb-2">
+                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.SecretExtensions)
+                        {
+                            <li class="text-13 ink2">.@row</li>
+                        }
+                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.SecretNames)
+                        {
+                            <li class="text-13 ink2">@row</li>
+                        }
+                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.DatabaseExtensions)
+                        {
+                            <li class="text-13 ink2">.@row</li>
+                        }
+                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.LockNames)
+                        {
+                            <li class="text-13 ink2">@row</li>
+                        }
+                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.MinifiedSuffixes)
+                        {
+                            <li class="text-13 ink2">@row</li>
+                        }
+                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.SecretDisplayRows)
+                        {
+                            <li class="text-13 ink2">@row</li>
+                        }
+                        @foreach (var row in skips.FileNames)
+                        {
+                            <li class="text-13 ink2 flex items-center justify-between gap-2"><span>@row</span><button type="button" class="btn btn-g" @onclick="() => RemoveFile(row)">@T("Skips_Remove")</button></li>
+                        }
+                    </ul>
+                    <div class="flex gap-2">
+                        <input class="inp flex-1" value="@fileDraft" @onchange="e => fileDraft = e.Value?.ToString() ?? string.Empty" />
+                        <button type="button" class="btn btn-g" @onclick="ApplyFile">@T("Skips_Add")</button>
+                    </div>
+                    @if (fileNotice is not null)
+                    {
+                        <p class="text-13 ink3 mt-2">@T(fileNotice)</p>
+                    }
+                </div>
+            </div>
+        </div>
         <div class="flex flex-col gap-2">
             <button type="button" class="btn btn-g text-start" @onclick="GoDevice">@T("Preferences_DeviceLink")</button>
             <button type="button" class="btn btn-g text-start" @onclick="GoPin">@T("Preferences_PinLink")</button>

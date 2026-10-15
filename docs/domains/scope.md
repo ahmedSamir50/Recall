@@ -2,7 +2,7 @@ Status: in-code
 
 ## Owns
 
-Scope owns which folders and file kinds Recall may read. Types: `ScopeGrantService`, `ScopeGrantPolicy`, `ScopeFolderGrant`, `GrantFileKinds`. The flags in code are `None` 0, `Text` 1, `Image` 2, `Video` 4, `Audio` 8, and `All` is those four. There is no Code flag. Task 2.2.6 is decided-absent.
+Scope owns which folders and file kinds Recall may read. Types: `ScopeGrantService`, `ScopeGrantPolicy`, `ScopeFolderGrant`, `GrantFileKinds`. The flags in code are `None` 0, `Text` 1, `Image` 2, `Video` 4, `Audio` 8, `Code` 16, and `All` includes Code.
 
 ## Does not own
 

@@ -349,3 +349,14 @@ public partial class App : MauiWinUIApplication
 ```
 
 No branch.
+
+
+## src/Recall.Maui/Platform/Preferences/MauiUserSkipStore.cs
+
+```csharp
+namespace Recall.Maui.Platform;
+public sealed class MauiUserSkipStore : IUserSkipStore
+```
+
+No branch.
+

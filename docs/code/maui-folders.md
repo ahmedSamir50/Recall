@@ -119,7 +119,7 @@ No branch.
 ```csharp
 namespace Recall.Maui.Platform;
 public sealed partial class MauiGrantedTextReader : IGrantedTextReader
-    public MauiGrantedTextReader(IGrantedFolderAccessService access)
+    public MauiGrantedTextReader(IGrantedFolderAccessService access, IUserSkipStore skips)
     public IAsyncEnumerable<GrantedTextDocument> ReadAsync(ScopeFolderGrant grant, CancellationToken cancellationToken)
         public IAsyncEnumerator<GrantedTextDocument> GetAsyncEnumerator(CancellationToken cancellationToken = default)
             public ValueTask<bool> MoveNextAsync() => ValueTask.FromResult(false);
@@ -139,14 +139,30 @@ public sealed partial class MauiGrantedTextReader
         if (string.IsNullOrEmpty(rootId))
             if (children is null)
             if (cursor is null)
+            if (modifiedColumn >= 0 && !cursor.IsNull(modifiedColumn))
+            if (!isDir && string.Equals(name, ".gitignore", StringComparison.OrdinalIgnoreCase))
+            if (isDir && string.Equals(name, ".git", StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrEmpty(gitIgnoreId))
+            if (ignoreUri is not null)
+            if (ignoreStream is not null)
+            if (!string.IsNullOrEmpty(gitDirId))
+            if (excludeLines is not null)
+            if (string.Equals(name, ".gitignore", StringComparison.OrdinalIgnoreCase))
                 if (string.Equals(mime, DocumentsContract.Document.MimeTypeDir, StringComparison.Ordinal))
-                    if (id.Length > 0)
-                if (!GrantTextFiles.IsTextFile(name) || id.Length == 0)
+                if (id.Length == 0)
+                if (FileAdmission.IsBlockedFolder(name, user))
+                if (GitIgnoreMatcher.IsIgnored(childRelative, shared))
+                if (GitIgnoreMatcher.LastDecision(childRelative, true, shared) == GitIgnoreDecision.Ignore)
+                if (FileAdmission.Decide(name, grant.EnabledKinds, user, gitIgnored) != FileAdmissionResult.Read)
                 if (documentUri is null)
                 if (stream is null)
-                if (!TextFileSignature.IsSafeText(sample.AsSpan(0, sampleCount)))
-                if (modifiedColumn >= 0 && !cursor.IsNull(modifiedColumn))
-                    if (milliseconds > 0)
+                if (!safe)
+                if (modifiedMs > 0)
+            if (added > 0)
+            if (string.IsNullOrEmpty(infoId))
+            if (string.IsNullOrEmpty(excludeId))
+            if (excludeUri is null)
+            if (string.Equals(name, childName, StringComparison.OrdinalIgnoreCase))
 ```
 
 

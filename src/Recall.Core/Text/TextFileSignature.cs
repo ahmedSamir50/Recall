@@ -52,6 +52,43 @@ public static class TextFileSignature
         return IsSafeText(buffer.AsSpan(0, read));
     }
 
+    public static bool IsSafeCodeText(ReadOnlySpan<byte> sample)
+    {
+        if (sample.IsEmpty || HasBlockedMagic(sample))
+        {
+            return false;
+        }
+
+        if (HasUtf16Bom(sample))
+        {
+            return sample.Length > 2;
+        }
+
+        var controls = 0;
+        foreach (var value in sample)
+        {
+            if (value == 0)
+            {
+                return false;
+            }
+
+            if (value < 9 || (value > 13 && value < 32))
+            {
+                controls++;
+            }
+        }
+
+        return controls * 20 <= sample.Length;
+    }
+
+    public static async Task<bool> FileIsSafeCodeTextAsync(string path, CancellationToken cancellationToken)
+    {
+        var buffer = new byte[SampleBytes];
+        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, SampleBytes, FileOptions.Asynchronous);
+        var read = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+        return IsSafeCodeText(buffer.AsSpan(0, read));
+    }
+
     private static bool HasUtf16Bom(ReadOnlySpan<byte> sample) =>
         sample.Length >= 2 && ((sample[0] == 0xFF && sample[1] == 0xFE) || (sample[0] == 0xFE && sample[1] == 0xFF));
 

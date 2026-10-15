@@ -39,6 +39,18 @@
   <data name="Folders_TypeImage" xml:space="preserve"><value>صور</value></data>
   <data name="Folders_TypeVideo" xml:space="preserve"><value>فيديو</value></data>
   <data name="Folders_TypeAudio" xml:space="preserve"><value>صوت</value></data>
+  <data name="Folders_TypeCode" xml:space="preserve"><value>كود</value></data>
+  <data name="Skips_Heading" xml:space="preserve"><value>الملفات المتخطاة</value></data>
+  <data name="Skips_CodeExtensions" xml:space="preserve"><value>امتدادات الكود</value></data>
+  <data name="Skips_Folders" xml:space="preserve"><value>مجلدات لا تُقرأ</value></data>
+  <data name="Skips_Secrets" xml:space="preserve"><value>الأسرار وقواعد البيانات</value></data>
+  <data name="Skips_Add" xml:space="preserve"><value>أضف غيرها</value></data>
+  <data name="Skips_Note" xml:space="preserve"><value>لن يفتح ريكول هذه الملفات، حتى داخل مجلد سمحت به.</value></data>
+  <data name="Skips_CodeIndexed" xml:space="preserve"><value>تُفهرس عند تفعيل الكود.</value></data>
+  <data name="Skips_Empty" xml:space="preserve"><value>اكتب اسماً أولاً.</value></data>
+  <data name="Skips_Duplicate" xml:space="preserve"><value>هذا السطر موجود.</value></data>
+  <data name="Skips_BuiltIn" xml:space="preserve"><value>هذا السطر مدمج ويبقى.</value></data>
+  <data name="Skips_Remove" xml:space="preserve"><value>إزالة</value></data>
   <data name="Models_Title" xml:space="preserve"><value>حمّل النماذج على جهازك</value></data>
   <data name="Models_Lead" xml:space="preserve"><value>حمّل نموذج يعمل على جهازك مرة واحدة، وبعده يعمل البحث دون إنترنت.</value></data>
   <data name="Models_ShaNote" xml:space="preserve"><value>يتم التحقق من كل ملف بعد تحميله، وأي ملف تالف أو ناقص يُستبعد ويُعاد تحميله.</value></data>

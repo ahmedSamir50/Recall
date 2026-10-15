@@ -17,9 +17,30 @@ public partial class Preferences
     [Inject]
     private IDebugAppReset DebugReset { get; set; } = null!;
 
+    [Inject]
+    private UserSkipService SkipService { get; set; } = null!;
+
     private AgeCutoffYears age;
 
-    protected override void OnInitialized() => age = AgePreferences.Get();
+    private UserSkipAdditions skips = UserSkipAdditions.Empty;
+
+    private string extensionDraft = string.Empty;
+
+    private string folderDraft = string.Empty;
+
+    private string fileDraft = string.Empty;
+
+    private string? extensionNotice;
+
+    private string? folderNotice;
+
+    private string? fileNotice;
+
+    protected override void OnInitialized()
+    {
+        age = AgePreferences.Get();
+        skips = SkipService.Load();
+    }
 
     private void SetTheme(ThemePreference preference) => Ui.SetThemePreference(preference);
 
@@ -38,6 +59,60 @@ public partial class Preferences
     {
         AgePreferences.Set(years);
         age = years;
+    }
+
+    private void ApplyExtension()
+    {
+        var status = SkipService.TryAdd(UserSkipKind.Extension, extensionDraft);
+        extensionNotice = UserSkipService.MessageKey(status);
+        if (status == UserSkipAddStatus.Added)
+        {
+            extensionDraft = string.Empty;
+        }
+
+        skips = SkipService.Load();
+    }
+
+    private void ApplyFolder()
+    {
+        var status = SkipService.TryAdd(UserSkipKind.FolderName, folderDraft);
+        folderNotice = UserSkipService.MessageKey(status);
+        if (status == UserSkipAddStatus.Added)
+        {
+            folderDraft = string.Empty;
+        }
+
+        skips = SkipService.Load();
+    }
+
+    private void ApplyFile()
+    {
+        var status = SkipService.TryAdd(UserSkipKind.FileName, fileDraft);
+        fileNotice = UserSkipService.MessageKey(status);
+        if (status == UserSkipAddStatus.Added)
+        {
+            fileDraft = string.Empty;
+        }
+
+        skips = SkipService.Load();
+    }
+
+    private void RemoveExtension(string value)
+    {
+        SkipService.TryRemove(UserSkipKind.Extension, value);
+        skips = SkipService.Load();
+    }
+
+    private void RemoveFolder(string value)
+    {
+        SkipService.TryRemove(UserSkipKind.FolderName, value);
+        skips = SkipService.Load();
+    }
+
+    private void RemoveFile(string value)
+    {
+        SkipService.TryRemove(UserSkipKind.FileName, value);
+        skips = SkipService.Load();
     }
 
     private void GoFolders() => Nav.NavigateTo("/folders");

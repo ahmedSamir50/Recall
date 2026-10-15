@@ -110,6 +110,7 @@ public sealed class SolutionShapeTests
             typeof(ITextSearchService),
             typeof(IOnboardingCompletionStore),
             typeof(IDebugAppReset),
+            typeof(IUserSkipStore),
         };
 
         // Act

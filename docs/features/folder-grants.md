@@ -10,7 +10,7 @@ Status: in-code
 
 ## Search filter
 
-`IsInsideGrant` is true for the same path or a child. Blank paths are false. Equal paths are not children. `D:\Photos` is not inside `D:\PhotosExtra`. Search builds the path set only from grants whose kinds include `Text`. An empty set makes `FindAsync` return an empty list.
+`IsInsideGrant` is true for the same path or a child. Blank paths are false. Equal paths are not children. `D:\Photos` is not inside `D:\PhotosExtra`. Search builds the path set from grants whose kinds include `Text` or `Code`. A stored 15 does not gain Code. An empty set makes `FindAsync` return an empty list.
 
 ## Not done
 

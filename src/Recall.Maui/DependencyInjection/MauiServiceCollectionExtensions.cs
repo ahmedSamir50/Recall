@@ -24,6 +24,7 @@ public static class MauiServiceCollectionExtensions
         services.AddSingleton<IDeviceOsNameProvider, MauiDeviceOsNameProvider>();
         services.AddSingleton<IDeviceIdCandidateProvider, MauiDeviceIdCandidateProvider>();
         services.AddSingleton<IAgeCutoffPreferenceStore, MauiAgeCutoffPreferenceStore>();
+        services.AddSingleton<IUserSkipStore, MauiUserSkipStore>();
         services.AddSingleton<IOnboardingCompletionStore, MauiOnboardingCompletionStore>();
         services.AddSingleton<IRecallShellKind, MauiRecallShellKind>();
         services.AddSingleton<IGrantedFolderAccessService, MauiGrantedFolderAccessService>();

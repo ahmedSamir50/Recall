@@ -29,6 +29,13 @@ public interface IAgeCutoffPreferenceStore
     void Set(AgeCutoffYears years);
 }
 
+public interface IUserSkipStore
+{
+    UserSkipAdditions Load();
+
+    void Save(UserSkipAdditions additions);
+}
+
 public enum RecallShellKind
 {
     Unknown = 0,

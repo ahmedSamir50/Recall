@@ -10,7 +10,7 @@ First launch, or Add folder.
 
 ## Path
 
-Welcome goes to folders. `TryAddGrant` saves a new normalized path as `Added`. A duplicate returns `Duplicate` and does not save. A child of an existing parent returns `OverlapChildOfExistingParent` and does not save. Continue stays disabled until `CanContinue`.
+Welcome goes to folders. `TryAddGrant` saves a new normalized path as `Added`. A duplicate returns `Duplicate` and does not save. A child of an existing parent returns `OverlapChildOfExistingParent` and does not save. The kind list includes Code. Continue stays disabled until `CanContinue`.
 
 ## Failure
 

@@ -41,7 +41,7 @@ public sealed class TextSearchService : ITextSearchService
     private static HashSet<string> BuildGrantedPathSet(IReadOnlyList<ScopeFolderGrant> grants)
     {
         return grants
-            .Where(grant => grant.EnabledKinds.HasFlag(GrantFileKinds.Text))
+            .Where(grant => grant.EnabledKinds.HasFlag(GrantFileKinds.Text) || grant.EnabledKinds.HasFlag(GrantFileKinds.Code))
             .Select(grant => grant.Path)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }

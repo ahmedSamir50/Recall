@@ -43,6 +43,10 @@
                             <input type="checkbox" checked="@IsKindEnabled(grant.EnabledKinds, GrantFileKinds.Audio)" @onchange="e => ToggleKind(grant.Path, GrantFileKinds.Audio, (bool)e.Value!)" />
                             @T("Folders_TypeAudio")
                         </label>
+                        <label class="text-12 ink2 flex items-center gap-1">
+                            <input type="checkbox" checked="@IsKindEnabled(grant.EnabledKinds, GrantFileKinds.Code)" @onchange="e => ToggleKind(grant.Path, GrantFileKinds.Code, (bool)e.Value!)" />
+                            @T("Folders_TypeCode")
+                        </label>
                 </div>
             </li>
         }

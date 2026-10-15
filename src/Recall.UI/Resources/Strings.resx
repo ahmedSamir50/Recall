@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
@@ -39,6 +39,18 @@
   <data name="Folders_TypeImage" xml:space="preserve"><value>Images</value></data>
   <data name="Folders_TypeVideo" xml:space="preserve"><value>Video</value></data>
   <data name="Folders_TypeAudio" xml:space="preserve"><value>Audio</value></data>
+  <data name="Folders_TypeCode" xml:space="preserve"><value>Code</value></data>
+  <data name="Skips_Heading" xml:space="preserve"><value>Skipped files</value></data>
+  <data name="Skips_CodeExtensions" xml:space="preserve"><value>Code extensions</value></data>
+  <data name="Skips_Folders" xml:space="preserve"><value>Folders never read</value></data>
+  <data name="Skips_Secrets" xml:space="preserve"><value>Secrets and databases</value></data>
+  <data name="Skips_Add" xml:space="preserve"><value>Add another</value></data>
+  <data name="Skips_Note" xml:space="preserve"><value>Recall never opens these, even inside a folder you granted.</value></data>
+  <data name="Skips_CodeIndexed" xml:space="preserve"><value>Indexed when Code is on.</value></data>
+  <data name="Skips_Empty" xml:space="preserve"><value>Type a name first.</value></data>
+  <data name="Skips_Duplicate" xml:space="preserve"><value>That row is already listed.</value></data>
+  <data name="Skips_BuiltIn" xml:space="preserve"><value>That row is built in and stays.</value></data>
+  <data name="Skips_Remove" xml:space="preserve"><value>Remove</value></data>
   <data name="Models_Title" xml:space="preserve"><value>Download the on-device models</value></data>
   <data name="Models_Lead" xml:space="preserve"><value>A one-time download of the on-device AI. After this, search works without internet.</value></data>
   <data name="Models_ShaNote" xml:space="preserve"><value>Each downloaded file is verified before use. Damaged or incomplete files are discarded and downloaded again.</value></data>

@@ -2,7 +2,7 @@ Status: in-code
 
 ## Owns
 
-Text owns prefixes, the 8192 split, content ids, and ingest of granted text. Types: `EmbeddingTaskPrefixes`, `TextChunkPlanner`, `ContentIdBuilder`, `TextIngestEngine`.
+Text owns prefixes, the 8192 split, content ids, and ingest of granted text. Types: `EmbeddingTaskPrefixes`, `TextChunkPlanner`, `ContentIdBuilder`, `TextIngestEngine`. A granted code file is ingested as text.
 
 ## Does not own
 

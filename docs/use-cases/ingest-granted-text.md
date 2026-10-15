@@ -10,7 +10,7 @@ The ingest call.
 
 ## Path
 
-Skip a grant without text, read each document, plan chunks, embed once, cut to 512, insert, and append the op-log only when insert returns true.
+Skip a grant only when both Text and Code are off, read each document, plan chunks, embed once, cut to 512, insert, and append the op-log only when insert returns true.
 
 ## Failure
 

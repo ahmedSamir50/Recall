@@ -114,7 +114,7 @@ namespace Recall.Core.Ingest;
 public sealed class GrantedTextIngestService : IGrantedTextIngestService
     public GrantedTextIngestService(IScopeManagerService scope, IGrantedTextReader reader, TextIngestEngine engine)
     public async Task IngestGrantedTextAsync(CancellationToken cancellationToken = default)
-            if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Text))
+            if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Text) && !grant.EnabledKinds.HasFlag(GrantFileKinds.Code))
 ```
 
 
@@ -133,11 +133,23 @@ No branch.
 ```csharp
 namespace Recall.Core.Ingest;
 public sealed class DirectoryGrantedTextReader : IGrantedTextReader
+    public DirectoryGrantedTextReader(IUserSkipStore skips)
     public async IAsyncEnumerable<GrantedTextDocument> ReadAsync(
         ScopeFolderGrant grant,
         [EnumeratorCancellation] CancellationToken cancellationToken)
         if (!Directory.Exists(grant.Path))
-            if (!GrantTextFiles.IsTextFile(file) || !await TextFileSignature.FileIsSafeTextAsync(file, cancellationToken).ConfigureAwait(false))
+        if (Directory.Exists(entry))
+        if (FileAdmission.IsBlockedFolder(name, user))
+        if (IsDirectoryIgnored(relativeDir, shared))
+        if (GitIgnoreMatcher.IsIgnored(relativeDir, shared))
+        if (GitIgnoreMatcher.LastDecision(relativeDir, true, shared) == GitIgnoreDecision.Ignore
+        if (FileAdmission.Decide(name, kinds, user, gitIgnored) != FileAdmissionResult.Read)
+        if (!safe)
+        if (added > 0)
+        if (relative == ".")
+        if (File.Exists(ignorePath))
+        if (File.Exists(excludePath))
+        if (string.IsNullOrEmpty(relativeDir) || relativeDir == ".")
 ```
 
 

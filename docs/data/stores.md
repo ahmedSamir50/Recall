@@ -2,7 +2,7 @@ Status: in-code
 
 ## On device
 
-MAUI Preferences keys `recall.onboarding.complete`, `recall.scope.grants`, `recall.preferences.ageCutoff`, `recall.locale`, `recall.device.record`, `recall.theme`. App-data `models/text`, `zvec/items_text`, `oplog/yyyy-MM-dd.log`, optional `appsettings.secrets.json`.
+MAUI Preferences keys `recall.onboarding.complete`, `recall.scope.grants`, `recall.preferences.ageCutoff`, `recall.locale`, `recall.device.record`, `recall.theme`, `recall.skips.user`. App-data `models/text`, `zvec/items_text`, `oplog/yyyy-MM-dd.log`, optional `appsettings.secrets.json`.
 
 ## Not on device
 

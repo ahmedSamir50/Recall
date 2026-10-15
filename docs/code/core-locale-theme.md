@@ -94,6 +94,7 @@ public interface IThemePreferenceStore
 public interface IUiLocaleStore
 public interface ISystemThemeProvider
 public interface IAgeCutoffPreferenceStore
+public interface IUserSkipStore
 public enum RecallShellKind
 public interface IRecallShellKind
     ThemePreference Get();
@@ -103,6 +104,54 @@ public interface IRecallShellKind
     bool IsDark();
     AgeCutoffYears Get();
     void Set(AgeCutoffYears years);
+    UserSkipAdditions Load();
+    void Save(UserSkipAdditions additions);
 ```
 
 No branch.
+
+
+## src/Recall.Core/Preferences/MemoryUserSkipStore.cs
+
+```csharp
+namespace Recall.Core.Preferences;
+public sealed class MemoryUserSkipStore : IUserSkipStore
+```
+
+No branch.
+
+
+
+## src/Recall.Core/Preferences/UserSkipService.cs
+
+```csharp
+namespace Recall.Core.Preferences;
+public sealed record UserSkipAdditions(IReadOnlyList<string> Extensions, IReadOnlyList<string> FolderNames, IReadOnlyList<string> FileNames)
+public enum UserSkipKind
+public enum UserSkipAddStatus
+public static class UserSkipJson
+public sealed class UserSkipService
+    if (string.IsNullOrWhiteSpace(json))
+    catch (JsonException)
+    if (document is null)
+    if (string.IsNullOrWhiteSpace(raw))
+    if (trimmed.Contains('/') || trimmed.Contains('\\'))
+    if (kind == UserSkipKind.Extension)
+    if (!value.StartsWith('.'))
+    if (value == ".")
+    if (BuiltInSkips.ContainsCodeExtension(value)
+    if (current.Extensions.Any(candidate => string.Equals(candidate, value, StringComparison.OrdinalIgnoreCase)))
+    if (kind == UserSkipKind.FolderName)
+    if (BuiltInSkips.ContainsFolder(value))
+    if (current.FolderNames.Any(candidate => string.Equals(candidate, value, StringComparison.OrdinalIgnoreCase)))
+    if (BuiltInSkips.ContainsExactCodeName(fileValue)
+    if (current.FileNames.Any(candidate => string.Equals(candidate, fileValue, StringComparison.OrdinalIgnoreCase)))
+    if (found is null)
+    if (!current.FolderNames.Any(candidate => string.Equals(candidate, value, StringComparison.OrdinalIgnoreCase)))
+    if (!current.FileNames.Any(candidate => string.Equals(candidate, fileValue, StringComparison.OrdinalIgnoreCase)))
+    if (status == UserSkipAddStatus.Added)
+    if (status == UserSkipAddStatus.Empty)
+    if (status == UserSkipAddStatus.Duplicate)
+    if (status == UserSkipAddStatus.BuiltIn)
+```
+

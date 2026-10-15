@@ -10,4 +10,4 @@ Status: in-code
 
 ## Find
 
-Home has Find only. Group and Tag are not on the page. Enter calls `SubmitAsync`. A blank query does not call `FindAsync`. A query that passes shows up to 20 hits, the first 5 immediate. `Lattice` is the sync-off page, not a cluster graph. `Pin` is the empty state. Preferences stores theme, locale, and age, and links to folders, models, pin, and device.
+Home has Find only. Group and Tag are not on the page. Enter calls `SubmitAsync`. A blank query does not call `FindAsync`. A query that passes shows up to 20 hits, the first 5 immediate. `Lattice` is the sync-off page, not a cluster graph. `Pin` is the empty state. Preferences stores theme, locale, and age, shows the skipped-files groups with the canon heading, three labels, and the add button, and links to folders, models, pin, and device.

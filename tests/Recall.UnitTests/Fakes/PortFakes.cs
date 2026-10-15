@@ -1,6 +1,7 @@
 using Recall.Core.Device;
 using Recall.Core.Download;
 using Recall.Core.Ports;
+using Recall.Core.Preferences;
 using Recall.Core.Scope;
 using Recall.Core.Search;
 using Recall.Core.Sync;
@@ -109,9 +110,12 @@ public sealed class FakeTextEmbeddingEncoder : ITextEmbeddingEncoder
 {
     public int Calls { get; private set; }
 
+    public string LastPrefixed { get; private set; } = string.Empty;
+
     public ValueTask<ReadOnlyMemory<float>> EmbedPrefixedTextAsync(string prefixedText, CancellationToken cancellationToken = default)
     {
         Calls++;
+        LastPrefixed = prefixedText;
         var vector = new float[768];
         vector[0] = prefixedText.Length;
         return ValueTask.FromResult<ReadOnlyMemory<float>>(vector);
@@ -143,6 +147,8 @@ public sealed class FakeTextVectorIndex : ITextVectorIndex
 {
     public List<TextIndexInsert> Inserts { get; } = [];
 
+    public TextSearchRequest? LastRequest { get; private set; }
+
     public bool TryInsert(TextIndexInsert insert)
     {
         if (Inserts.Any(i => i.ContentId == insert.ContentId))
@@ -154,7 +160,11 @@ public sealed class FakeTextVectorIndex : ITextVectorIndex
         return true;
     }
 
-    public IReadOnlyList<TextSearchHit> Search(TextSearchRequest request, CancellationToken cancellationToken = default) => [];
+    public IReadOnlyList<TextSearchHit> Search(TextSearchRequest request, CancellationToken cancellationToken = default)
+    {
+        LastRequest = request;
+        return [];
+    }
 }
 
 public sealed class FakeSyncAdapter : ISyncAdapter
@@ -247,4 +257,13 @@ public sealed class FakeGrantedFolderAccessService : IGrantedFolderAccessService
     public int RestoreCount { get; private set; }
 
     public void RestorePersistedAccess() => RestoreCount++;
+}
+
+public sealed class FakeUserSkipStore : IUserSkipStore
+{
+    public UserSkipAdditions Stored { get; private set; } = UserSkipAdditions.Empty;
+
+    public UserSkipAdditions Load() => Stored;
+
+    public void Save(UserSkipAdditions additions) => Stored = additions;
 }

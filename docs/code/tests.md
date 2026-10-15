@@ -341,6 +341,7 @@ public sealed class FakeDeviceOsNameProvider : IDeviceOsNameProvider
 public sealed class FakeAgeCutoffPreferenceStore : IAgeCutoffPreferenceStore
 public sealed class FakeRecallShellKind : IRecallShellKind
 public sealed class FakeGrantedFolderAccessService : IGrantedFolderAccessService
+public sealed class FakeUserSkipStore : IUserSkipStore
     public FakeScopeManagerService()
     public IReadOnlyList<Recall.Core.Scope.ScopeFolderGrant> ListGrants() => inner.ListGrants();
     public Recall.Core.Scope.ScopeGrantAddResult TryAddGrant(Recall.Core.Scope.ScopeFolderGrant grant) =>
@@ -494,3 +495,15 @@ public sealed class TextBenchmarkHostTests
 ```
 
 No branch.
+
+
+## tests/Recall.UnitTests/CodeAndSkipTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class CodeAndSkipTests
+    if (Directory.Exists(root))
+    catch (IOException)
+    if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+```
+

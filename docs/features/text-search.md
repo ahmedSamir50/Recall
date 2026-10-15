@@ -2,7 +2,7 @@ Status: in-code
 
 ## Find
 
-`FindAsync` throws on blank query. No text grants returns an empty list. Otherwise it wraps the search prefix, embeds once, cuts to 512, and searches with `TopK` 20.
+`FindAsync` throws on blank query. No Text or Code grants returns an empty list. Otherwise it wraps the search prefix, embeds once, cuts to 512, and searches with `TopK` 20. A Code grant is in the path set. The query is not prefixed with `code:`.
 
 ## Fusion
 
