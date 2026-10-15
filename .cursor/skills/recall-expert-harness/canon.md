@@ -84,9 +84,11 @@ Recall.slnx
   tests/Recall.CorpusTests/
   tools/corpus-builder/
   tools/mrl-eval/
-  docs/                     # future Latest App Docs (MkDocs), not created yet
+  docs/                     # Latest App Docs (MkDocs). docs/plan.md is the only progress table. docs/index.md is the entry. docs/code/ is the file catalog. docs/technical-details.md and docs/screen-map.md are retired pointers.
   InitDocs/                 # historical seed, kept
 ```
+
+A @recall plan updates the docs pages for the code it changes. The user does not have to ask.
 
 `Recall.Core` is headless-testable. The six platform ports are interfaces in Core. Adapters are written in Recall.Maui when that epic starts. `IIndexPolicy` stays an interface in Core. Width, age cutoff, and modality rules are Core types. The MAUI head does not choose them. v1 does **not** include `IClipboardService`, `ICameraRollService`, `IScreenCaptureService`, or `IAudioRecorderService`.
 

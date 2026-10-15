@@ -84,6 +84,10 @@ Lead with blockers and push-backs. Do not average a `block` into an approval. `u
 
 Update `canon.md` only for decisions they accepted. Implementation and the later code review obey the execution manifest. They do not design. A later `@recall:` plan runs the full chain again. A second plan does not finish a close the previous plan left `partial` unless the sign-off named a blocker the user has now accepted.
 
+## Docs
+
+Every plan execution manifest has a docs list. Each line is a docs/ path, add or edit, and the sentences that change. Execution updates those pages before it updates the progress table. The user does not ask for this. A behavior change with an empty docs list is a failed sign-off from docs-mkdocs, unless the sign-off says there is no docs surface.
+
 ## After a `@recall:` plan is executed
 
 The turn that carries out an accepted `@recall:` plan updates the single progress table at the end of `docs/plan.md` before it says the work is done. That table is the only progress board. Do not add a second table, and do not put percentages in the phase or epic headings.

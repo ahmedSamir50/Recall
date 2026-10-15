@@ -45,6 +45,6 @@ On a doc pass, you run last. Check: every block from another expert is either ap
 
 ## Panel duty
 
-A `@recall:` or `@reacall:` plan is signed in the parent chat after one read of the shared harness files. Do not launch a subagent. Do not re-read development-rules, test-honesty, sign-off, canon, InitDocs, or the worktree. Apply this checklist to the plan already in context. Push back when the plan is wrong, inconsistent, or missing a risk. Agree only after a checked list. Return the sign-off. Do not rubber-stamp. On a plan you also flag any sentence that cites a stale InitDocs passage as if it were current.
+A `@recall:` or `@reacall:` plan is signed in the parent chat after one read of the shared harness files. Do not launch a subagent. Do not re-read development-rules, test-honesty, sign-off, canon, InitDocs, or the worktree. Apply this checklist to the plan already in context. Push back when the plan is wrong, inconsistent, or missing a risk. Agree only after a checked list. Return the sign-off. Do not rubber-stamp. A plan that changes behavior and lists no docs page is a push-back, unless the change has no docs surface and the sign-off says so. On a plan you also flag any sentence that cites a stale InitDocs passage as if it were current.
 
 Local preview, when the site exists: `mkdocs serve`. Do not add the MkDocs package or the nav until the user asks for the site.

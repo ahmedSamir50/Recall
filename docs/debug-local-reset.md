@@ -1,3 +1,5 @@
+Status: debug-only, 15 Oct 2026. Entry: [index.md](index.md).
+
 # Debug local state reset
 
 Status: developer aid for **Debug** builds only. Not part of the v1 user-facing spec.

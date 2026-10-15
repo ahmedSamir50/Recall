@@ -1,0 +1,102 @@
+site_name: Recall
+docs_dir: docs
+strict: true
+
+theme:
+  name: material
+
+markdown_extensions:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - For agents: for-agents.md
+  - Non-goals: non-goals.md
+  - Architecture:
+      - Process: architecture/process.md
+      - Projects: architecture/projects.md
+      - Composition: architecture/composition.md
+      - Relations: architecture/relations.md
+  - Domains:
+      - Index: domains/index.md
+      - Scope: domains/scope.md
+      - Device: domains/device.md
+      - Locale: domains/locale.md
+      - Theme: domains/theme.md
+      - Preferences: domains/preferences.md
+      - Download: domains/download.md
+      - Text: domains/text.md
+      - Search: domains/search.md
+      - Vector index: domains/vector-index.md
+      - Sync: domains/sync.md
+      - Shell: domains/shell.md
+      - Faults: domains/faults.md
+  - Use cases:
+      - Index: use-cases/index.md
+      - Onboard and grant: use-cases/onboard-and-grant.md
+      - Download text model: use-cases/download-text-model.md
+      - Ingest granted text: use-cases/ingest-granted-text.md
+      - Find text: use-cases/find-text.md
+      - Open result: use-cases/open-result.md
+      - Rename device: use-cases/rename-device.md
+      - Switch theme and language: use-cases/switch-theme-and-language.md
+      - Choose age: use-cases/choose-age.md
+      - Reset local data: use-cases/reset-local-data.md
+      - Absent: use-cases/absent.md
+  - Data:
+      - Stores: data/stores.md
+      - Preferences: data/preferences.md
+      - Device record: data/device-record.md
+      - items_text: data/items-text.md
+      - Op-log: data/oplog.md
+      - Content id: data/content-id.md
+  - Features:
+      - Screens: features/screens.md
+      - Folder grants: features/folder-grants.md
+      - Model download: features/model-download.md
+      - Text embed: features/text-embed.md
+      - Text chunking: features/text-chunking.md
+      - Text ingest: features/text-ingest.md
+      - Text search: features/text-search.md
+      - Open file: features/open-file.md
+      - Age cutoff: features/age-cutoff.md
+      - Sync stub: features/sync-stub.md
+      - Watchers: features/watchers.md
+      - Vision and OCR: features/vision-and-ocr.md
+      - Audio and transcripts: features/audio-and-transcripts.md
+      - Code and skips: features/code-and-skips.md
+      - Proof: features/proof.md
+  - Code:
+      - Map: code/map.md
+      - Core scope: code/core-scope.md
+      - Core device: code/core-device.md
+      - Core text: code/core-text.md
+      - Core search: code/core-search.md
+      - Core download: code/core-download.md
+      - Core locale and theme: code/core-locale-theme.md
+      - Core sync and ports: code/core-sync-ports.md
+      - Adapters: code/adapters.md
+      - Maui folders: code/maui-folders.md
+      - Maui device: code/maui-device.md
+      - Maui host: code/maui-host.md
+      - UI: code/ui.md
+      - Benchmarks and tools: code/benchmarks-and-tools.md
+      - Tests: code/tests.md
+  - ADR index: adr/index.md
+  - Open decisions: decisions/open.md
+  - Privacy: privacy.md
+  - Performance: performance.md
+  - Testing: testing.md
+  - Glossary: glossary.md
+  - Plan: plan.md
+  - Debug local reset: debug-local-reset.md
+  - Retired:
+      - Technical notes: technical-details.md
+      - Screen map: screen-map.md

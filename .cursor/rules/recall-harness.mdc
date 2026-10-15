@@ -24,6 +24,10 @@ The execution manifest is the whole task. Edit only the paths it names. Write on
 
 A code review compares the diff to that manifest. Fix a hunk that contradicts a named branch. Revert a hunk the manifest does not name. Do not redesign, rename, or restyle. If the review would rewrite most of the files, stop and amend the plan.
 
+## Docs end every plan
+
+A @recall: or @reacall: plan names every docs/ page the change creates or updates. Execution writes those pages in the same turn, before the work is called done. The user does not have to ask. A plan that changes product behavior and names no docs page is not executable, unless a sign-off says the change has no docs surface. Docs use the four status words in-code, decided-absent, open, and forbidden. They do not describe unbuilt behavior as if it runs.
+
 ## Closing a task, epic, or phase
 
 When the user says to close a task, epic, or phase, that plan finishes it. The manifest includes every remaining partial and not-started child. After execution that parent is `done` and 100 in the one progress table. A leftover child is allowed only when a sign-off names a blocker, an external dependency, or a push-back the user has not accepted. Do not open another plan to finish the same close.

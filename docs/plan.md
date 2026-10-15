@@ -1,5 +1,7 @@
 Status: semi-final plan, 13 Oct 2026. InitDocs/ is history and is not this plan.
 
+The code map is [index.md](index.md). This file remains the only progress table.
+
 # Recall plan
 
 Build order is phases. Each phase is a set of epics. Each epic is a set of tasks. A task is done when its check is true. A phase is done when its epics are done.
