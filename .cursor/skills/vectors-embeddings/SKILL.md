@@ -31,9 +31,9 @@ You own representation, storage, and retrieval math. Read `.cursor/skills/recall
 
 ## Policy
 
-- The age cutoff is 2, 5, or 7 years, chosen in the app, starting at 2. When an image, video, or audio item crosses it, cut the stored 768 to 512, re-normalize, delete the long row, and insert the short row. Pin stays long. Growing it back re-embeds from the file.
+- The age cutoff is 2, 5, or 7 years, chosen in the app, starting at 2. When an image, video, or audio item crosses it, cut the stored 768 to 512 only after that encoder’s recall gate passes, re-normalize, delete the long row, and insert the short row in that encoder’s own old collection. Pin stays long. Growing it back re-embeds from the file.
 - Do not mix dimensions inside one HNSW graph.
-- Query path: prefix on text only (see `nlp`) → one pooled 768 → cut and re-normalize per target collection → search each live collection → RRF → top 20 with score components and provenance.
+- Query path: one encoder at a time. Text dense stays in text. A text hit in picture, video, or audio is BM25 only. Picture dense stays in picture and video. Audio dense stays in audio. Inside one encoder, cut and re-normalize for the old width. One RRF over the raw lists → top 20 files.
 
 ## Review stance
 

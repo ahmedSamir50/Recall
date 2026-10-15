@@ -38,7 +38,7 @@ You own the four shells and the native edges. Shared policy stays in `Recall.Cor
 ## Store and power
 
 - Privacy copy and review notes: the user picks folders; Recall does not watch the clipboard, camera, screen, or mic.
-- Idle detection is for pausing ingestion, not for hidden capture.
+- Idle detection runs ingest while the device is idle and defers it while the device is busy. It is not for hidden capture.
 - Battery budgets in the plan (≤ 4% / 30 min background ingest on a Pixel, ≤ 3% on iPhone) apply to in-scope file bursts, not to an always-on agent. There is no always-on agent in v1.
 - Secure storage (Android Keystore, iOS Secure Enclave, Windows DPAPI, macOS Keychain) may exist as an interface. v1 has no sync keys to put there. Do not invent a pairing flow.
 
