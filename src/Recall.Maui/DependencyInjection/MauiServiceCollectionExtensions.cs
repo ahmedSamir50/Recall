@@ -1,7 +1,9 @@
 using Recall.Adapters.DependencyInjection;
+using Recall.Core.Checkpoints;
 using Recall.Core.Download;
 using Recall.Core.Ingest;
 using Recall.Core.Ports;
+using Recall.Core.Scope;
 using Recall.Core.Sync;
 using Recall.Maui.Platform;
 using Recall.Maui.Platform.Debug;
@@ -32,6 +34,18 @@ public static class MauiServiceCollectionExtensions
         services.AddSingleton(new LocalOpLogWriter(Path.Combine(FileSystem.AppDataDirectory, LocalOpLogWriter.DirectoryName)));
         services.AddSingleton<IModelDownloadService, MauiModelDownloadService>();
         services.AddSingleton<ILocalFileOpener, MauiLocalFileOpener>();
+        services.AddSingleton<IIngestCursorStore>(_ => new SqliteIngestCursorStore(Path.Combine(FileSystem.AppDataDirectory, CheckpointSql.FileName)));
+        services.AddSingleton<WindowsFileScopeWatcher>();
+        services.AddSingleton<IFileScopeWatcherService>(sp =>
+        {
+            var kind = ScopeWatcherKindPolicy.Choose(sp.GetRequiredService<IRecallShellKind>().Kind);
+            if (kind == ScopeWatcherKind.WindowsFileSystem)
+            {
+                return sp.GetRequiredService<WindowsFileScopeWatcher>();
+            }
+
+            return sp.GetRequiredService<DisabledScopeWatcher>();
+        });
 
         var modelDir = Path.Combine(FileSystem.AppDataDirectory, textModel.RelativeModelDirectory);
         var vectorRoot = Path.Combine(FileSystem.AppDataDirectory, textModel.RelativeVectorDirectory);

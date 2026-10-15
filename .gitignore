@@ -51,3 +51,4 @@ Desktop.ini
 /.cursor/recall-windows-shell.png
 /android.log
 BenchmarkDotNet.Artifacts/**/*
+# src/Recall.Maui/Platform and src/Recall.Maui/Platforms are custom platform source. Do not ignore them.

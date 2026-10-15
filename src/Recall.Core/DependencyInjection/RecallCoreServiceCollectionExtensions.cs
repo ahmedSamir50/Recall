@@ -31,6 +31,11 @@ public static class RecallCoreServiceCollectionExtensions
         services.AddSingleton<ITextSearchService, TextSearchService>();
         services.AddSingleton<TextIngestEngine>();
         services.AddSingleton<IGrantedTextIngestService, GrantedTextIngestService>();
+        services.AddSingleton<ScopeChangeApplier>();
+        services.AddSingleton<ForegroundScanService>();
+        services.AddSingleton<IIndexNowService, IndexNowService>();
+        services.AddSingleton<ScopeWatchCoordinator>();
+        services.AddSingleton<DisabledScopeWatcher>();
         return services;
     }
 }

@@ -4,6 +4,16 @@ namespace Recall.Core.Ports;
 
 public interface IFileScopeWatcherService
 {
+    void Start(IReadOnlyList<ScopeFolderGrant> grants, IScopeChangeSink sink);
+
+    void Stop();
+}
+
+public interface IScopeChangeSink
+{
+    void Report(ScopeChange change);
+
+    void RequestRescan();
 }
 
 public interface IScopeManagerService
