@@ -13,6 +13,9 @@ public static class TextModelDownloadUiPolicy
     public static bool ShouldPublishProgress(int lastPublishedPercent, int nextPercent) =>
         nextPercent != lastPublishedPercent;
 
+    public static TextModelDownloadSnapshot MarkVerifying(TextModelDownloadSnapshot snapshot) =>
+        snapshot with { Phase = TextModelDownloadPhase.Verifying, Fault = null };
+
     public static int ComputeOverallPercent(int completedFiles, int fileCount, long bytesReceived, long? totalBytes)
     {
         if (fileCount <= 0)

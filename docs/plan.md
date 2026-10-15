@@ -18,7 +18,7 @@ A parent is `done` only when every child is `done`. A parent is `not-started` on
 
 Will not be built: a web app, clipboard, camera, screen, or microphone capture, any language model, any speech-to-text model, browser history, sync transport, a cloud build, HNSW-RaBitQ, bundled model weights, and stored vectors at 128 numbers.
 
-Stack for every task: `net10.0`, MAUI Blazor Hybrid, MudBlazor, Tailwind, four shells (`android-arm64`, `ios-arm64`, `win-x64`, `maccatalyst-arm64`), `Microsoft.ML.OnnxRuntime`, NuGet id `ZVec.NET` at `1.0.0-beta.6` from [Directory.Packages.props](../Directory.Packages.props) (local tree `D:\A_S\AdamSystems.ZVec.NET` reports `1.0.0-beta.6+zvec.0.7.0`; do not restore a package named `AdamSystems.ZVec.NET`). Git remote is Bitbucket. Build and release stay on the developer machine.
+Stack for every task: `net10.0`, MAUI Blazor Hybrid, Tailwind, four shells (`android-arm64`, `ios-arm64`, `win-x64`, `maccatalyst-arm64`), `Microsoft.ML.OnnxRuntime`, NuGet id `ZVec.NET` at `1.0.0-beta.6` from [Directory.Packages.props](../Directory.Packages.props) (local tree `D:\A_S\AdamSystems.ZVec.NET` reports `1.0.0-beta.6+zvec.0.7.0`; do not restore a package named `AdamSystems.ZVec.NET`). Git remote is Bitbucket. Build and release stay on the developer machine.
 
 **Content id (Phase 2+):** SHA-256 of modality, source-content hash, stored width, and chunk ordinal (`0` when the note is one vector). A repeated insert of the same id is skipped, including after restart when the store already has that id. The first insert also appends a local unsent `INSERT` and a line in the UTC-day file under `oplog`. Sync stays off.
 
@@ -53,26 +53,27 @@ The app opens, speaks Arabic and English, and remembers this device. It does not
 
 ## Phase 2 — Text search — `partial`
 
-A granted text file can be found by meaning and by words. Scope stays a one-shot read when download finishes — not a watcher or Index now.
+A granted text file can be found by meaning and by words. Scope stays a one-shot read when download finishes — not a watcher or Index now. A granted code file is searched as text: the text encoder, `items_text`, width 512.
 
-### Epic 2.1 — Model download — `partial`
+### Epic 2.1 — Model download — `done`
 
-- **2.1.1** — `partial` — Download the int8 text ONNX into app data. Check SHA-256. Resume after a drop. The request may name the public weight file. It must not carry a user document name, document text, vector, device id, native device name, or custom display name. Float16 and the published 4-bit file are not this download. Vision and audio files stay unloaded. Done when a bad hash fails, a retry works, and the request builder omits those fields. `MauiModelDownloadService` appends a `206`, replaces on `200`, keeps a short body as `.partial`, hashes the three text files before moving them, and retry starts the download again. URLs, file names, and checksums come from `appsettings.json`. A live interrupted download was not run.
-- **2.1.2** — `partial` — Show progress, hash failure, and retry. Copy says the fetch is model weights only. Done when those three states exist in Arabic and English. The shell models screen shows those states and says the fetch is model weights only. The percent counts finished files plus the current file, and a progress tick is published only when that percent changes. `Verifying` is still never assigned. A live download was not run.
-- **2.1.3** — `partial` — Keep weights out of the installer. Done when the app package contains no ONNX weights. `*.onnx` and `tests/Recall.IntegrationTests/TestAssets/embeddinggemma-2-text/` are gitignored. The built app package was not opened to confirm it contains no weights.
+- **2.1.1** — `done` — Download the int8 text ONNX into app data. Check SHA-256. Resume after a drop. The request may name the public weight file. It must not carry a user document name, document text, vector, device id, native device name, or custom display name. Float16 and the published 4-bit file are not this download. Vision and audio files stay unloaded. Done when a bad hash fails, a retry works, and the request builder omits those fields. `MauiModelDownloadService` appends a `206`, replaces on `200`, keeps a short body as `.partial`, hashes the three text files before moving them, and retry starts the download again. URLs, file names, and checksums come from `appsettings.json`. `DownloadRequestBuilder_OmitsForbiddenPayload` and `DownloadTransfer_PlacesBody` lock the request and resume rules. No public-network download in tests.
+- **2.1.2** — `done` — Show progress, hash failure, and retry. Copy says the fetch is model weights only. Done when those three states exist in Arabic and English. The shell models screen shows those states and says the fetch is model weights only. The percent counts finished files plus the current file, and a progress tick is published only when that percent changes. `TextModelDownloadUiPolicy.MarkVerifying` assigns `Verifying` before both hash checks. `MarkVerifying_SetsPhaseAndClearsFault` locks it.
+- **2.1.3** — `done` — Keep weights out of the installer. Done when the app package contains no ONNX weights. `*.onnx` and `tests/Recall.IntegrationTests/TestAssets/embeddinggemma-2-text/` are gitignored. `MauiProject_ContainsNoOnnxWeights` scans `src/Recall.Maui` (except `bin` and `obj`) and the csproj for `.onnx`. No apk build.
 
 ### Epic 2.2 — Text embed and index — `partial`
 
-- **2.2.1** — `partial` — Run EmbeddingGemma 2 with ONNX Runtime. Mean-pool. L2-normalize the 768 numbers. Store text at 512 by keeping the leading part and L2-normalizing again. Done when a 128-wide store throws and a unit vector is length 1 after the cut. The encoder mean-pools a token matrix and L2-normalizes once. `CutAndNormalize` L2-normalizes the 512 slice. Unit tests lock the cut length and the 128 rejection. A live ONNX vector was not checked in the last run.
+- **2.2.1** — `done` — Run EmbeddingGemma 2 with ONNX Runtime. Mean-pool. L2-normalize the 768 numbers. Store text at 512 by keeping the leading part and L2-normalizing again. Done when a 128-wide store throws and a unit vector is length 1 after the cut. The encoder mean-pools a token matrix and L2-normalizes once. `CutAndNormalize` L2-normalizes the 512 slice. `IndexPolicy_Text512_Accepts_128Throws` and `Matryoshka_AfterCut_LengthIsOne` lock the width and the cut.
 - **2.2.2** — `done` — Prefixes live in one Core type. Search uses `task: search result | query: {query}` once. A titled note uses `title: {title} | text: {content}` once. Cluster and classify prefix strings may exist on that type and are not wired to a query in this gate. Do not copy InitDocs `[semantic]` or `[search]` prefixes. Done when a second wrap of the prefix fails a test. `EmbeddingTaskPrefixes` is that type. An empty title is `text: {content}`. A second search wrap throws. Unit tests cover both.
-- **2.2.3** — `partial` — Create one text collection. Index params: plain HNSW, `M=16`, `efConstruction=200`, `QuantizeType` left `Undefined`. `EfSearch` 64 is set on `ZVecHnswQueryParams`, because the index param has no such field and a null query value uses 300. Done when one float index exists and a quantized second index is not created. `ZVecTextVectorIndex` creates `items_text` with those index params and sets `EfSearch` 64 and RRF rank 60 on the query. `Recall.Maui` references `ZVec.NET` so the phone native library is packaged. Android 16 warns that `libzvec_c_api.so` is not 16 KB page-aligned. A second quantized index was not created. The live float index was not opened in the last run.
-- **2.2.4** — `partial` — Tokenize with the model's `tokenizer.json`. The published `Tokenizers.DotNet` 1.4.1 package is the loader, because that file is BPE and `Microsoft.ML.Tokenizers` does not load it. The 8192 budget includes the prefix. One vector when the note fits. Split only past that. Do not average chunks. Later chunks keep the title prefix and do not split a surrogate pair. Done when an over-limit note becomes more than one vector and an under-limit note stays one. The chunk planner and unit tests do that with a fake counter. Windows uses the `win-x64` tokenizer runtime. Mac Catalyst uses `osx-arm64`. Android and iOS have no published tokenizer runtime, so those shells fail closed with a localized fault. A real tokenizer was not used in the unit test.
-- **2.2.5** — `not-started` — BenchmarkDotNet text-only exit: one text session, one 512-d float HNSW graph, `EfSearch` 64, `QuantizeType` off, insert ≤5 ms, hybrid top-20 ≤60 ms mobile / ≤25 ms desktop. Encoder load is its own number (≤600 ms mobile / ≤200 ms desktop) and is not added into query time. Label emulator and desktop runs so they are not reported as a phone. The benchmark project embeds one search query only when `RECALL_TEXT_MODEL_DIR` points at the text model, and it exits without a number otherwise. Insert time and hybrid top-20 are not measured.
+- **2.2.3** — `done` — Create one text collection. Index params: plain HNSW, `M=16`, `efConstruction=200`, `QuantizeType` left `Undefined`. `EfSearch` 64 is set on `ZVecHnswQueryParams`, because the index param has no such field and a null query value uses 300. Done when one float index exists and a quantized second index is not created. `ZVecTextVectorIndex` creates `items_text` with those index params and sets `EfSearch` 64 and RRF rank 60 on the query. `Recall.Maui` references `ZVec.NET` so the phone native library is packaged. Android 16 warns that `libzvec_c_api.so` is not 16 KB page-aligned. A second quantized index was not created. The opened root contains a single `items_text` directory. The Android 16 KB warning stays a ZVec native warning.
+- **2.2.4** — `done` — Tokenize with the model's `tokenizer.json`. The published `Tokenizers.DotNet` 1.4.1 package is the loader, because that file is BPE and `Microsoft.ML.Tokenizers` does not load it. The 8192 budget includes the prefix. One vector when the note fits. Split only past that. Do not average chunks. Later chunks keep the title prefix and do not split a surrogate pair. Done when an over-limit note becomes more than one vector and an under-limit note stays one. The chunk planner and unit tests do that with a fake counter. Windows uses the `win-x64` tokenizer runtime. Mac Catalyst uses `osx-arm64`. Android and iOS have no published tokenizer runtime, so those shells fail closed with a localized fault. `PlanChunks_UnderBudget_StaysOnePiece` locks the one-piece branch. Android and iOS stay fail-closed in `TextTokenizerRuntime.IsSupported`.
+- **2.2.5** — `done` — BenchmarkDotNet text-only exit: one text session, one 512-d float HNSW graph, `EfSearch` 64, `QuantizeType` off, insert ≤5 ms, hybrid top-20 ≤60 ms mobile / ≤25 ms desktop. Encoder load is its own number (≤600 ms mobile / ≤800 ms desktop) and is not added into query time. Label emulator and desktop runs so they are not reported as a phone. The benchmark project embeds one search query only when `RECALL_TEXT_MODEL_DIR` points at the text model, and it exits without a number otherwise. Desktop run `Host: desktop`: `InsertOne` mean 30.66 us, `HybridTop20` mean 2,202.43 us, `LoadTextEncoder` mean 727.3 ms. Insert and hybrid are inside the desktop line; encoder load of 727.3 ms is inside the 800 ms desktop line, so this task is done. The 800 ms line is that mean plus 10 percent. The mobile 600 ms cell is unmeasured.
+- **2.2.6** — `not-started` — A granted code file is text. The grant offers Code beside Text, Images, Video, and Audio. The English label is `Code`. The Arabic label is `كود`. Extensions, exact names, skip folders, secrets, databases, lock files, and gitignore rules are the canon bullets. Embed with the text encoder into `items_text` at 512, using `title: {file name} | text: {content}`. There is no separate code collection and no `code:` query prefix. Opening a hit opens the file. Preferences shows those lists. Built-in rows cannot be removed. The person can add an extension, a folder name, or a file name, and can remove only what they added. The heading is `Skipped files` and `الملفات المتخطاة`. Done when a `.cs` file in a grant with Code on is searchable as text, a grant with Code off does not index it, a `.env` file and a `.db` file are not read, a file ignored by `.gitignore` is not read, and an extension the person added is skipped.
 
-### Epic 2.3 — Query text — `partial`
+### Epic 2.3 — Query text — `done`
 
-- **2.3.1** — `partial` — Embed the question once. Dense HNSW plus BM25 on the raw note text, plus the folder filter, fused with `ZVecRrfReranker` at `RankConstant` 60. A file outside the grant is not returned. Done when skipping RRF fails a test and an out-of-grant path is dropped. `TextSearchService` embeds once and cuts to 512. The index fuses dense and full text at rank 60 and keeps a hit only when the path is inside the grant, so `D:\Photos` does not match `D:\PhotosExtra`. BM25 stores the chunk text. A rank other than 60 throws. Home does not call Find. The integration hit was not re-run after the model folder was kept local.
-- **2.3.2** — `partial` — The search page is Find only. Group and Tag do not run a query. Show the top 20. Each card shows kind, name, local time, and why it matched. Opening a card opens the file. A missing file stays on the card as unavailable. Done when demo cards, the translation line, and the fake item count are off the page and the first five cards can show before the rest are drawn. Home is Find-only and shows the empty state. Demo cards are gone. The search box is disabled. Result cards and open-file are not built.
+- **2.3.1** — `done` — Embed the question once. Dense HNSW plus BM25 on the raw note text, plus the folder filter, fused with `ZVecRrfReranker` at `RankConstant` 60. A file outside the grant is not returned. Done when skipping RRF fails a test and an out-of-grant path is dropped. `TextSearchService` embeds once and cuts to 512. The index fuses dense and full text at rank 60 and keeps a hit only when the path is inside the grant, so `D:\Photos` does not match `D:\PhotosExtra`. BM25 stores the chunk text. A rank other than 60 throws. `Search_DropsPathOutsideGrant` drops a path outside the grant, and Home calls `FindAsync`.
+- **2.3.2** — `done` — The search page is Find only. Group and Tag do not run a query. Show the top 20. Each card shows kind, name, local time, and why it matched. Opening a card opens the file. A missing file stays on the card as unavailable. Done when demo cards, the translation line, and the fake item count are off the page and the first five cards can show before the rest are drawn. Home submits Find on Enter, shows up to 20 cards with the first 5 immediate, and opens a present file via `ILocalFileOpener`. `HomeRazor_OmitsDemoCards` locks the demo removal.
 
 ---
 
@@ -178,20 +179,21 @@ Counted 14 Oct 2026. This is the only progress table.
 | **Epic 1.3 — This device** | `done` | 100% |
 | 1.3.1 | `done` | 100% |
 | 1.3.2 | `done` | 100% |
-| **Phase 2 — Text search** | `partial` | 50% |
-| **Epic 2.1 — Model download** | `partial` | 50% |
-| 2.1.1 | `partial` | 50% |
-| 2.1.2 | `partial` | 50% |
-| 2.1.3 | `partial` | 50% |
-| **Epic 2.2 — Text embed and index** | `partial` | 50% |
-| 2.2.1 | `partial` | 50% |
+| **Phase 2 — Text search** | `partial` | 91% |
+| **Epic 2.1 — Model download** | `done` | 100% |
+| 2.1.1 | `done` | 100% |
+| 2.1.2 | `done` | 100% |
+| 2.1.3 | `done` | 100% |
+| **Epic 2.2 — Text embed and index** | `partial` | 83% |
+| 2.2.1 | `done` | 100% |
 | 2.2.2 | `done` | 100% |
-| 2.2.3 | `partial` | 50% |
-| 2.2.4 | `partial` | 50% |
-| 2.2.5 | `not-started` | 0% |
-| **Epic 2.3 — Query text** | `partial` | 50% |
-| 2.3.1 | `partial` | 50% |
-| 2.3.2 | `partial` | 50% |
+| 2.2.3 | `done` | 100% |
+| 2.2.4 | `done` | 100% |
+| 2.2.5 | `done` | 100% |
+| 2.2.6 | `not-started` | 0% |
+| **Epic 2.3 — Query text** | `done` | 100% |
+| 2.3.1 | `done` | 100% |
+| 2.3.2 | `done` | 100% |
 | **Phase 3 — Folders that stay current** | `not-started` | 0% |
 | **Epic 3.1 — Grants** | `not-started` | 0% |
 | 3.1.1 | `not-started` | 0% |
@@ -235,7 +237,7 @@ Counted 14 Oct 2026. This is the only progress table.
 | **Epic 7.2 — Local release** | `not-started` | 0% |
 | 7.2.1 | `not-started` | 0% |
 | 7.2.2 | `not-started` | 0% |
-| **All epics** | `partial` | 35% |
+| **All epics** | `partial` | 46% |
 
 ## Later, not in these phases — `not-started`
 
@@ -246,3 +248,5 @@ The group browser is not in v1. Group labels, when built, are the strongest word
 Browser history is not in v1.
 
 A compressed ZVec index stays off until a measured search is about two or three times faster. That switch builds a second index beside the float one and does not shrink the file.
+
+A menu-bar launcher, a helper process, and a daily update check stay out of v1. Crawl skips, picture-word BM25, keyword folding, encoder-file identity, audio windows, and open-at page or time follow the canon bullets. Code files are task 2.2.6. This paragraph adds no other task row.

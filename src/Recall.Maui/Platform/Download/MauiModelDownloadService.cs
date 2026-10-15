@@ -196,6 +196,11 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         var status = (int)response.StatusCode;
         if (status == DownloadTransfer.StatusRangeNotSatisfiable)
         {
+            lock (gate)
+            {
+                snapshot = TextModelDownloadUiPolicy.MarkVerifying(snapshot);
+            }
+
             if (await ModelHashVerifier.MatchesExpectedHashAsync(partialPath, expectedSha256, cancellationToken).ConfigureAwait(false))
             {
                 MovePartial(partialPath, targetPath);
@@ -247,6 +252,11 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             {
                 throw new RecallFaultException(RecallFault.DownloadIncomplete);
             }
+        }
+
+        lock (gate)
+        {
+            snapshot = TextModelDownloadUiPolicy.MarkVerifying(snapshot);
         }
 
         if (!await ModelHashVerifier.MatchesExpectedHashAsync(partialPath, expectedSha256, cancellationToken).ConfigureAwait(false))

@@ -1,6 +1,7 @@
 @namespace Recall.UI.Pages
 @page "/"
 @inherits RecallComponentBase
+@using Microsoft.AspNetCore.Components.Web.Virtualization
 
 <div class="px-3 md:px-6 pt-4 md:pt-6 max-w-1500 mx-auto">
     <div class="g3 rounded-2xl p-2 flex flex-wrap sm:flex-nowrap items-center gap-2 mb-6">
@@ -9,14 +10,72 @@
                 <RecallIcon Name="search" Css="w-4 h-4 hidden md:block" />@T("Mode_Find")
             </span>
         </div>
-        <div class="order-first sm:order-none basis-full sm:basis-auto flex-1 min-w-0 px-2 py-2 flex items-center min-h-10" role="search" aria-disabled="true">
-            <span class="text-15 md:text-17 font-medium ink3 truncate">@T("Search_Placeholder")</span>
+        <div class="order-first sm:order-none basis-full sm:basis-auto flex-1 min-w-0 px-2 py-2 flex items-center min-h-10" role="search">
+            <input @bind="query" @bind:event="oninput" aria-label="@T("Search_Placeholder")" placeholder="@T("Search_Placeholder")" @onkeydown="OnKeyDownAsync" class="w-full" />
         </div>
-        <kbd class="hidden lg:inline-flex pill f-mono text-11 ink2"><bdi class="ltr">Ctrl K</bdi></kbd>
     </div>
-    <section class="g2 rounded-2xl p-8 md:p-12 text-center rise max-w-640 mx-auto">
-        <RecallIcon Name="search" Css="w-10 h-10 mx-auto mb-4 cy" />
-        <h1 class="f-head font-semibold text-22 mb-2">@T("Search_EmptyTitle")</h1>
-        <p class="ink2 text-15">@T("Search_EmptyLead")</p>
-    </section>
+    @if (!TextFindSession.ShouldQuery(query) || !hasSearched)
+    {
+        <section class="g2 rounded-2xl p-8 md:p-12 text-center rise max-w-640 mx-auto">
+            <RecallIcon Name="search" Css="w-10 h-10 mx-auto mb-4 cy" />
+            <h1 class="f-head font-semibold text-22 mb-2">@T("Search_EmptyTitle")</h1>
+            <p class="ink2 text-15">@T("Search_EmptyLead")</p>
+        </section>
+    }
+    else
+    {
+        @if (faultKey is not null)
+        {
+            <section class="g2 rounded-2xl p-8 md:p-12 text-center rise max-w-640 mx-auto">
+                <p class="ink2 text-15">@T(faultKey)</p>
+            </section>
+        }
+        else if (!view.HasHits)
+        {
+            <section class="g2 rounded-2xl p-8 md:p-12 text-center rise max-w-640 mx-auto">
+                <h1 class="f-head font-semibold text-22 mb-2">@T("Search_NoHitsTitle")</h1>
+                <p class="ink2 text-15">@T("Search_NoHitsLead")</p>
+            </section>
+        }
+        else
+        {
+            <section class="flex flex-col gap-2 max-w-640 mx-auto">
+                @foreach (var card in view.Immediate)
+                {
+                    <article class="g2 rounded-2xl p-4">
+                        <p class="lbl mb-1">@T(card.KindKey)</p>
+                        <h2 class="font-semibold text-16 mb-1">@card.FileName</h2>
+                        <p class="ink2 text-13 mb-1"><bdi class="ltr">@card.LocalTime</bdi></p>
+                        <p class="ink2 text-13 mb-2">@T(card.ReasonKey)</p>
+                        @if (card.Unavailable)
+                        {
+                            <p class="font-medium text-14">@T("Home_UnavailTitle")</p>
+                            <p class="ink2 text-13">@T("Home_UnavailLead")</p>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-g" @onclick="() => OpenAsync(card)">@T("Home_OpenFile")</button>
+                        }
+                    </article>
+                }
+                <Virtualize Items="view.Deferred.ToList()" Context="card">
+                    <article class="g2 rounded-2xl p-4">
+                        <p class="lbl mb-1">@T(card.KindKey)</p>
+                        <h2 class="font-semibold text-16 mb-1">@card.FileName</h2>
+                        <p class="ink2 text-13 mb-1"><bdi class="ltr">@card.LocalTime</bdi></p>
+                        <p class="ink2 text-13 mb-2">@T(card.ReasonKey)</p>
+                        @if (card.Unavailable)
+                        {
+                            <p class="font-medium text-14">@T("Home_UnavailTitle")</p>
+                            <p class="ink2 text-13">@T("Home_UnavailLead")</p>
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-g" @onclick="() => OpenAsync(card)">@T("Home_OpenFile")</button>
+                        }
+                    </article>
+                </Virtualize>
+            </section>
+        }
+    }
 </div>

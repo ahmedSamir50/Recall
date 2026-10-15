@@ -90,7 +90,7 @@ public partial class MainActivity : MauiAppCompatActivity
     private void PublishSafeArea(Android.Views.View content)
     {
         var (topPx, bottomPx) = SystemBarPixels(content);
-        if (topPx <= 0)
+        if (topPx <= 0 && bottomPx <= 0)
         {
             return;
         }

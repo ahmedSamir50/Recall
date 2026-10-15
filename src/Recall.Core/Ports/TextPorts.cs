@@ -32,3 +32,10 @@ public interface ITextSearchService
 {
     Task<IReadOnlyList<TextSearchHit>> FindAsync(string query, IReadOnlyList<ScopeFolderGrant> grants, CancellationToken cancellationToken = default);
 }
+
+public interface ILocalFileOpener
+{
+    bool Exists(string sourcePath);
+
+    Task<LocalFileOpenResult> OpenAsync(string sourcePath, CancellationToken cancellationToken = default);
+}

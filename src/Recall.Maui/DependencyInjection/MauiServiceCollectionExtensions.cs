@@ -5,6 +5,7 @@ using Recall.Core.Ports;
 using Recall.Core.Sync;
 using Recall.Maui.Platform;
 using Recall.Maui.Platform.Debug;
+using Recall.Maui.Platform.Files;
 
 namespace Recall.Maui.DependencyInjection;
 
@@ -29,6 +30,7 @@ public static class MauiServiceCollectionExtensions
         services.AddSingleton<IGrantedTextReader, MauiGrantedTextReader>();
         services.AddSingleton(new LocalOpLogWriter(Path.Combine(FileSystem.AppDataDirectory, LocalOpLogWriter.DirectoryName)));
         services.AddSingleton<IModelDownloadService, MauiModelDownloadService>();
+        services.AddSingleton<ILocalFileOpener, MauiLocalFileOpener>();
 
         var modelDir = Path.Combine(FileSystem.AppDataDirectory, textModel.RelativeModelDirectory);
         var vectorRoot = Path.Combine(FileSystem.AppDataDirectory, textModel.RelativeVectorDirectory);

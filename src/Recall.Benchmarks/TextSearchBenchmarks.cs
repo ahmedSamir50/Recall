@@ -26,4 +26,14 @@ public class TextSearchBenchmarks
         var vector = await runtime.GetEncoder().EmbedPrefixedTextAsync(EmbeddingTaskPrefixes.WrapSearchQuery("red planet"));
         return vector.Length;
     }
+
+    [Benchmark]
+    public int LoadTextEncoder()
+    {
+        var directory = TextBenchmarkHost.FindModelDirectory()
+            ?? throw new InvalidOperationException(TextBenchmarkHost.ModelDirectoryVariable);
+        using var local = new TextModelRuntime(directory);
+        local.GetEncoder();
+        return 1;
+    }
 }

@@ -194,4 +194,9 @@
   <data name="Fault_TokenizerNativeUnsupported" xml:space="preserve"><value>بحث النص غير متاح على هذا الهاتف بعد.</value></data>
   <data name="Fault_RrfRankConstant" xml:space="preserve"><value>ما قدر البحث يرتّب هذه النتائج.</value></data>
   <data name="Models_DownloadInterrupted" xml:space="preserve"><value>التحميل متوقف. الجزء المحفوظ ما زال هنا.</value></data>
+  <data name="Search_NoHitsTitle" xml:space="preserve"><value>لا توجد نتيجة مطابقة</value></data>
+  <data name="Search_NoHitsLead" xml:space="preserve"><value>جرّب جملة أخرى في مجلد مسموح.</value></data>
+  <data name="Search_Match_MeaningAndWords" xml:space="preserve"><value>المعنى والكلمات</value></data>
+  <data name="Search_OpenFailed" xml:space="preserve"><value>تعذر فتح الملف.</value></data>
+  <data name="Search_Fault" xml:space="preserve"><value>تعذر البحث. تحقق من أن نموذج النص موجود على هذا الجهاز.</value></data>
 </root>

@@ -23,6 +23,11 @@ public partial class Preferences
 
     private void SetTheme(ThemePreference preference) => Ui.SetThemePreference(preference);
 
+    public static bool IsThemeSelected(ThemePreference current, ThemePreference choice) => current == choice;
+
+    public static string ThemeChoiceClass(ThemePreference current, ThemePreference choice) =>
+        IsThemeSelected(current, choice) ? "btn-p" : "btn-g";
+
     private void SetLocale(UiLocale locale)
     {
         Ui.SetLocale(locale);

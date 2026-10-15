@@ -22,7 +22,7 @@ Do not show clipboard, camera, screen-recording, or microphone toggles in v1. Do
 - **Onboarding / scope manager.** Add and remove roots. Per-root extensions. Explain iOS plainly: new files are picked up when you open Recall.
 - **Search.** The query looks only in allowed folders and file types. Find, Group, and Tag map to the model-card text prefixes. A picture used as a query has to sit inside an allowed folder. If the user enabled audio files, those files are searchable. There is no microphone control.
 - **Results.** Virtualized cards. Each card shows modality, file name, local time, tier, and why it matched (dense vs BM25 vs fused). Activate opens the source file. First five cards can render immediately; the rest virtualize (plan §7.4).
-- **Pin manager.** A pin keeps the long vector. Say that in the UI as "keep this easy to find," not as a dimension lecture. UI kit is MudBlazor plus Tailwind. Do not tell the user about widths, Q4, or Int8.
+- **Pin manager.** A pin keeps the long vector. Say that in the UI as "keep this easy to find," not as a dimension lecture. UI kit is Tailwind. Do not tell the user about widths, Q4, or Int8.
 - **Age.** The person picks how long photos, video, and audio stay easy to match: 2, 5, or 7 years. The screen starts on 2 years. Do not mention dimensions.
 - **This device.** First run shows the name the computer or phone already has. The person can change the name Recall shows. The first name and the device id stay stored and are not edited away.
 - **Sync.** If a sync entry exists, it says sync is not in this version. No pairing wizard.

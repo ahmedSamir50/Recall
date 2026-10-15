@@ -25,7 +25,8 @@ public sealed class TextSearchIntegrationTests : IDisposable
     [Fact]
     public void QuantizeTypeUndefined_ProducesFloatIndex()
     {
-        using var index = new ZVecTextVectorIndex(Path.Combine(root, "zvec_quant"));
+        var databaseRoot = Path.Combine(root, "zvec_quant");
+        using var index = new ZVecTextVectorIndex(databaseRoot);
         var vector = new float[512];
         vector[0] = 1f;
         var inserted = index.TryInsert(new TextIndexInsert(
@@ -40,6 +41,56 @@ public sealed class TextSearchIntegrationTests : IDisposable
             vector,
             DateTimeOffset.UtcNow));
         inserted.Should().BeTrue();
+        Directory.GetDirectories(databaseRoot).Select(Path.GetFileName).Should().Equal("items_text");
+    }
+
+    [Fact]
+    public void Search_DropsPathOutsideGrant()
+    {
+        var databaseRoot = Path.Combine(root, "zvec_grant");
+        using var index = new ZVecTextVectorIndex(databaseRoot);
+        var outsideDir = Path.Combine(root, "outside");
+        var insideDir = Path.Combine(root, "inside");
+        Directory.CreateDirectory(outsideDir);
+        Directory.CreateDirectory(insideDir);
+        var outsidePath = Path.Combine(outsideDir, "note.txt");
+        var insidePath = Path.Combine(insideDir, "note.txt");
+        var outsideVector = new float[512];
+        outsideVector[0] = 1f;
+        var insideVector = new float[512];
+        insideVector[0] = 1f;
+        index.TryInsert(new TextIndexInsert(
+            ContentIdBuilder.Build(
+                Recall.Core.Vocabulary.Modality.Text,
+                ContentIdBuilder.HashSourceContent("outside note"),
+                Recall.Core.Vocabulary.StoredWidth.W512,
+                0),
+            outsidePath,
+            "note.txt",
+            "outside note about mars",
+            outsideVector,
+            DateTimeOffset.UtcNow));
+        index.TryInsert(new TextIndexInsert(
+            ContentIdBuilder.Build(
+                Recall.Core.Vocabulary.Modality.Text,
+                ContentIdBuilder.HashSourceContent("inside note"),
+                Recall.Core.Vocabulary.StoredWidth.W512,
+                0),
+            insidePath,
+            "note.txt",
+            "inside note about mars",
+            insideVector,
+            DateTimeOffset.UtcNow));
+        var query = new float[512];
+        query[0] = 1f;
+        var hits = index.Search(new TextSearchRequest(
+            "mars",
+            query,
+            new HashSet<string>([insideDir], StringComparer.OrdinalIgnoreCase),
+            TopK: 20), TestContext.Current.CancellationToken);
+        hits.Should().HaveCount(1);
+        hits[0].SourcePath.Should().Contain("inside");
+        hits.Should().OnlyContain(h => !h.SourcePath.Contains("outside", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -53,7 +104,7 @@ public sealed class TextSearchIntegrationTests : IDisposable
     {
         var policy = new Recall.Core.Indexing.RecallIndexPolicy();
         var act = () => policy.EnsureStorableWidth(Recall.Core.Vocabulary.Modality.Text, 128);
-        act.Should().Throw<ArgumentOutOfRangeException>();
+        act.Should().Throw<Recall.Core.Faults.RecallFaultException>().Which.Fault.Should().Be(Recall.Core.Faults.RecallFault.StoredWidthBlocked);
     }
 
     [Fact]

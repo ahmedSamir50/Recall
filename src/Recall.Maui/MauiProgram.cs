@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using MudBlazor.Services;
 using Recall.Core.DependencyInjection;
 using Recall.Maui.DependencyInjection;
 using Recall.Core.Catalog;
@@ -25,7 +24,6 @@ public static class MauiProgram
             });
 
         builder.Services.AddMauiBlazorWebView();
-        builder.Services.AddMudServices();
         var settings = typeof(MauiProgram).Assembly.GetManifestResourceStream("Recall.Maui.appsettings.json");
         if (settings is null)
         {

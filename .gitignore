@@ -50,3 +50,4 @@ Desktop.ini
 /.cursor/recall-windows-shell.png
 /.cursor/recall-windows-shell.png
 /android.log
+BenchmarkDotNet.Artifacts/**/*

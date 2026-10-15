@@ -25,4 +25,14 @@ public static class TextBenchmarkHost
 
         return directory;
     }
+
+    public static string LabelThisProcess()
+    {
+        if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
+        {
+            return "phone";
+        }
+
+        return "desktop";
+    }
 }

@@ -9,9 +9,9 @@
         <div>
             <p class="lbl mb-2">@T("Preferences_Theme")</p>
             <div class="flex flex-wrap gap-2">
-                <button type="button" class="btn btn-g" @onclick="() => SetTheme(ThemePreference.System)">@T("Theme_System")</button>
-                <button type="button" class="btn btn-g" @onclick="() => SetTheme(ThemePreference.Dark)">@T("Theme_Dark")</button>
-                <button type="button" class="btn btn-g" @onclick="() => SetTheme(ThemePreference.Light)">@T("Theme_Light")</button>
+                <button type="button" class="btn @ThemeChoiceClass(Ui.Current.ThemePreference, ThemePreference.System)" aria-pressed="@IsThemeSelected(Ui.Current.ThemePreference, ThemePreference.System)" @onclick="() => SetTheme(ThemePreference.System)">@T("Theme_System")</button>
+                <button type="button" class="btn @ThemeChoiceClass(Ui.Current.ThemePreference, ThemePreference.Dark)" aria-pressed="@IsThemeSelected(Ui.Current.ThemePreference, ThemePreference.Dark)" @onclick="() => SetTheme(ThemePreference.Dark)">@T("Theme_Dark")</button>
+                <button type="button" class="btn @ThemeChoiceClass(Ui.Current.ThemePreference, ThemePreference.Light)" aria-pressed="@IsThemeSelected(Ui.Current.ThemePreference, ThemePreference.Light)" @onclick="() => SetTheme(ThemePreference.Light)">@T("Theme_Light")</button>
             </div>
         </div>
         <div>

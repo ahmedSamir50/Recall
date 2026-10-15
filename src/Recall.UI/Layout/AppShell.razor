@@ -1,7 +1,7 @@
 @inherits ShellLayoutBase
 
 <LatticeBackground />
-<div class="shell-root">
+<div class="shell-root shell-tabs">
     <header class="g1 h-header shrink-0 flex items-center gap-3 px-3 md:px-4 border-b bd">
         <div class="flex items-center gap-2 md:w-[200px]">
             <span class="w-7 h-7 rounded-lg grid place-items-center cy logo-mark" aria-hidden="true">
@@ -34,7 +34,7 @@
                 <bdi class="ltr f-mono ink3 text-11">@RecallText.Get("OnDevice_ModelsLine", Snapshot.Culture)</bdi>
             </div>
         </nav>
-        <main class="flex-1 min-w-0 overflow-auto pb-20 md:pb-0">@Body</main>
+        <main class="flex-1 min-w-0 overflow-auto pb-nav md:pb-0">@Body</main>
     </div>
     <footer class="g1 h-status shrink-0 hidden md:flex items-center gap-5 px-4 border-t bd f-mono text-11 ink2">
         <span class="flex items-center gap-1.5">

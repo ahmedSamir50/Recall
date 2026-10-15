@@ -14,6 +14,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
+    <PackageReference Include="FluentAssertions" />
     <ProjectReference Include="..\..\src\Recall.Core\Recall.Core.csproj" />
+    <ProjectReference Include="..\..\src\Recall.Benchmarks\Recall.Benchmarks.csproj" />
   </ItemGroup>
 </Project>
