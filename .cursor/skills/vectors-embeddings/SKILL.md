@@ -1,7 +1,7 @@
 ---
 name: vectors-embeddings
 description: >-
-  Recall vectors and embeddings expert for EmbeddingGemma 2 ONNX, MRL tiering,
+  Recall vectors and embeddings expert for EmbeddingGemma 2 through in-process llama.cpp, MRL tiering,
   ZVec.NET collections, HNSW, RaBitQ, and in-DB RRF. Use when changing
   encoders, dimensions, shards, insert, hybrid search, or index parameters.
 disable-model-invocation: true

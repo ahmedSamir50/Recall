@@ -2,6 +2,8 @@
 
 # Recall — Technical Details
 
+Historical seed. EmbeddingGemma sentences in this file that say ONNX are not the spec. The accepted embedder is in-process llama.cpp. PP-OCRv6 stays ONNX.
+
 > **Engineering and ML deep-dive** for the Recall on-device multimodal second-brain application.
 > Architecture, algorithms, math derivations, and idiomatic C# integration patterns for EmbeddingGemma 2 (ONNX) + ZVec.NET + .NET MAUI Blazor Hybrid.
 > Companion to `Recall_App_Implementation_Plan.md`.

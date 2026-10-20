@@ -5,7 +5,7 @@ Status: in-code
 - `src/Recall.Core` headless.
 - `src/Recall.UI` Razor, depends on Core ports.
 - `src/Recall.Maui` composition root.
-- `src/Recall.Adapters` ONNX and ZVec.
+- `src/Recall.Adapters` in-process llama.cpp and ZVec.
 - `src/Recall.Benchmarks`.
 - `tests/Recall.UnitTests`.
 - `tests/Recall.IntegrationTests`.

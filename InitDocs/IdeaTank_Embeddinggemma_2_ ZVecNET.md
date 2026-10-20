@@ -2,6 +2,8 @@
 
 # IdeaTank — Building on `google/embeddinggemma-2` + `ZVec.NET`
 
+Historical seed. EmbeddingGemma sentences in this file that say ONNX are not the spec. The accepted embedder is in-process llama.cpp. PP-OCRv6 stays ONNX.
+
 > A two-round brainstorm of super-applications, products, and POCs that become possible — and in some cases *only* possible — when you pair **Google's EmbeddingGemma 2** with **ZVec.NET** (the .NET SDK for Alibaba's in-process ZVec vector database).
 >
 > **Round 1** captured the first-pass ideas. **Round 2** refines them after verifying the actual capabilities of both pieces of the stack, and adds new ideas unlocked by features I had under-exploited the first time (MRL truncation, task prefixes, modular encoder loading, 8K context, ONNX export, Native AOT, mobile RIDs, in-DB hybrid rerankers).

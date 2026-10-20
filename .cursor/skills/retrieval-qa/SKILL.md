@@ -29,7 +29,7 @@ Audio-query cases do not run on the mobile encoder profile. Mark them desktop-on
 
 ## Integration fixture
 
-`RecallFixture` (`IAsyncLifetime`) builds Core + real ZVec + real ONNX once per class, points the DB at a temp file, and deletes it on dispose. Tests do not share a developer's home index.
+`RecallFixture` (`IAsyncLifetime`) builds Core + real ZVec + real llama.cpp once per class, points the DB at a temp file, and deletes it on dispose. Tests do not share a developer's home index.
 
 Also required before v1 ships:
 

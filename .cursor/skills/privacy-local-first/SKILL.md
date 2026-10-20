@@ -13,7 +13,7 @@ You protect the thesis: the embedder and the database are in-process, so user da
 
 ## Allowed network
 
-One path: `IModelDownloadService` downloading EmbeddingGemma ONNX weights from the Hugging Face CDN, SHA-256 checked, resumable. Request and response must not contain file names, document text, vectors, or a user id.
+One path: `IModelDownloadService` downloading EmbeddingGemma GGUF weights and, when an OCR reader is enabled, PP-OCRv6 ONNX weights from the Hugging Face CDN, SHA-256 checked, resumable. Request and response must not contain file names, document text, vectors, or a user id.
 
 `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` are a compile error inside `Recall.Core`, including Sync. That namespace is interface-only in v1. The one HTTP client lives in the MAUI model-download adapter.
 

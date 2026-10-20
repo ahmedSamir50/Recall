@@ -7,7 +7,7 @@ The panel is the ids in the table below. Do not search for an expert who is not 
 | Id | Owns | Call in when the work touches |
 |---|---|---|
 | `dotnet-architect` | Process boundaries, solution layout, DI, .NET 10, analyzers, ADRs | Projects, hosting, composition root, a new dependency, an architecture change |
-| `vectors-embeddings` | ONNX sessions, MRL tiers, ZVec collections, HNSW / RaBitQ, RRF | Embeddings, indexes, insert or query paths, dimension or shard changes |
+| `vectors-embeddings` | llama.cpp sessions and PP-OCRv6 ONNX sessions, MRL tiers, ZVec collections, HNSW / RaBitQ, RRF | Embeddings, indexes, insert or query paths, dimension or shard changes |
 | `nlp` | Task prefixes, tokenization, chunking, BM25 text, multilingual behavior, deterministic labels | Query text, languages, OCR/ASR assumptions, cluster labels |
 | `maui-platform` | Four RIDs, filesystem scope, foreground iOS scan, video sampling, model download, secure storage | Platform heads, permissions, battery, store constraints |
 | `ux-ui` | Razor UX, onboarding, result cards, empty states, localization, RTL | Screens, copy, accessibility, Blazor components |

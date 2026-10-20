@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 # Unit tests
 
-You own `tests/Recall.UnitTests`. Real ONNX sessions and real ZVec files belong to `retrieval-qa`.
+You own `tests/Recall.UnitTests`. Real llama.cpp sessions and real ZVec files belong to `retrieval-qa`.
 
 ## Conventions
 

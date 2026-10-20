@@ -2,7 +2,7 @@
 name: vectors-embeddings
 description: >-
   Recall vectors and embeddings expert. Signs @recall: plans from evidence
-  and pushes back on gaps. Use for EmbeddingGemma ONNX, MRL tiers, ZVec
+  and pushes back on gaps. Use for EmbeddingGemma through in-process llama.cpp, MRL tiers, ZVec
   collections, HNSW, RaBitQ, and RRF. Read the skill before acting.
 ---
 

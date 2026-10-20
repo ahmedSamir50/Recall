@@ -17,8 +17,8 @@ A critical path means every interface method and every branch that decides behav
 
 | Behavior | Project | Expert |
 |---|---|---|
-| Pure Core logic, fakes for ONNX and ZVec | `tests/Recall.UnitTests` | `unit-tests` |
-| Real ONNX + real ZVec, crash restart, egress | `tests/Recall.IntegrationTests` | `retrieval-qa` |
+| Pure Core logic, fakes for the llama.cpp embedder and ZVec | `tests/Recall.UnitTests` | `unit-tests` |
+| Real llama.cpp sessions + real ZVec, crash restart, egress | `tests/Recall.IntegrationTests` | `retrieval-qa` |
 | Golden recall@k | `tests/Recall.CorpusTests` | `retrieval-qa` |
 | Latency and memory gates | `src/Recall.Benchmarks` | `performance` |
 

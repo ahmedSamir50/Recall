@@ -2,6 +2,8 @@
 
 # Recall — Implementation Plan
 
+Historical seed. EmbeddingGemma sentences in this file that say ONNX are not the spec. The accepted embedder is in-process llama.cpp. PP-OCRv6 stays ONNX.
+
 > **On-device multimodal second brain.** EmbeddingGemma 2 (ONNX) + ZVec.NET (in-process) on a single .NET MAUI Blazor Hybrid codebase that ships natively to **Android, iOS, Windows, and macOS Catalyst**.
 > v1 = **local-only**; device-to-device sync and a web client are **explicitly deferred** (sync design is included; web is replaced by the MAUI desktop shell).
 
