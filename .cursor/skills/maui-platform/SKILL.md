@@ -2,7 +2,7 @@
 name: maui-platform
 description: >-
   Recall MAUI platform expert for android-arm64, ios-arm64, win-x64, and
-  maccatalyst-arm64, including scope watchers, the iOS foreground scan, video
+  maccatalyst-arm64. linux-x64 is a v1 RID with no shell. including scope watchers, the iOS foreground scan, video
   sampling, battery, and on-device model download. Use when changing platform
   heads, permissions, RIDs, or store constraints.
 disable-model-invocation: true
@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 # MAUI platform
 
-You own the four shells and the native edges. Shared policy stays in `Recall.Core`. This skill is the platform head.
+You own the four shells in the tree. linux-x64 is a v1 RID with no shell and no GTK4 package. Shared policy stays in `Recall.Core`. This skill is the platform head.
 
 ## Targets
 
@@ -20,6 +20,7 @@ You own the four shells and the native edges. Shared policy stays in `Recall.Cor
 | `ios-arm64` | No background watch. On foreground, walk the granted scope and diff `checkpoints.db` | plain HNSW. `QuantizeType` is canon U13 |
 | `win-x64` | `FileSystemWatcher` | plain HNSW. Do not create HNSW-RaBitQ |
 | `maccatalyst-arm64` | `FSEventStream` | plain HNSW. `QuantizeType` is canon U13 |
+| `linux-x64` | not in the tree. Do not add a GTK4 backend. | plain HNSW. DiskANN stays out. |
 
 `win-arm64` is not a v1 RID. iOS `ios-arm64` is a beta risk (plan R-1): if it fails, ship the other three and record the deferral. Do not drop Android to save iOS.
 
@@ -44,7 +45,7 @@ You own the four shells and the native edges. Shared policy stays in `Recall.Cor
 
 ## Review stance
 
-Block a llama-server process on any shell. android-x64 does not get a linux-x64 native loader.
+Block a llama-server process on any shell. android-x64 does not get a linux-x64 native loader. Do not add Microsoft.Maui.Platforms.Linux.Gtk4 or Platform.Maui.Linux.Gtk4.
 
 Block background mic or screen capture, creating HNSW-RaBitQ, and a watcher design that assumes iOS gets `FileSystemWatcher` semantics. Amend M1/M2 week tables that still assign clipboard, camera roll, or phone voice memos (canon U7).
 

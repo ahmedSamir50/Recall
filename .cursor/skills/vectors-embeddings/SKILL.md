@@ -23,7 +23,7 @@ You own representation, storage, and retrieval math. Read `.cursor/skills/recall
 ## Index
 
 - One width per collection. Text is one collection. Image, video, and audio may have a long collection and an old collection. Example: `items_image` and `items_image_old`. Do not leave both copies of the same item on disk.
-- All four RIDs use plain HNSW with `QuantizeType` left `Undefined`. When it is set, `segment.cc` builds a float index and a second quantized index. Leave it off unless a benchmark shows query time about 2× or 3× faster. Do not create `ZVecHnswRabitqIndexParam`. Read `D:\A_S\AdamSystems.ZVec.NET` before claiming an index feature. DiskANN and Vamana stay out of v1.
+- Every v1 RID, including linux-x64, uses plain HNSW with `QuantizeType` left `Undefined`. When it is set, `segment.cc` builds a float index and a second quantized index. Leave it off unless a benchmark shows query time about 2× or 3× faster. Do not create `ZVecHnswRabitqIndexParam`. Read `D:\A_S\AdamSystems.ZVec.NET` before claiming an index feature. DiskANN and Vamana stay out of v1, including on Linux.
 - Starting HNSW knobs from the plan, not eternal law: `M=16`, `efConstruction=200`, `efSearch=64`. Changing `efSearch` requires a golden-query recall check from `retrieval-qa`.
 - Hybrid query is dense + BM25 FTS + scalar filter + in-DB RRF with `k=60`. Merge the long and old collections with the same RRF. Do not add a learned ranker or an external reranker in v1. Weighted RRF is a later switch, not the default.
 - Scalar payload includes modality, source path, file mtime, mime, dim tier, pinned flag, and the content-addressable id: SHA-256 over modality, source-content hash, and dim tier.

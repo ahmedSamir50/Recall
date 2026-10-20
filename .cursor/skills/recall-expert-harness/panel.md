@@ -9,7 +9,7 @@ The panel is the ids in the table below. Do not search for an expert who is not 
 | `dotnet-architect` | Process boundaries, solution layout, DI, .NET 10, analyzers, ADRs | Projects, hosting, composition root, a new dependency, an architecture change |
 | `vectors-embeddings` | llama.cpp sessions and PP-OCRv6 ONNX sessions, MRL tiers, ZVec collections, HNSW / RaBitQ, RRF | Embeddings, indexes, insert or query paths, dimension or shard changes |
 | `nlp` | Task prefixes, tokenization, chunking, BM25 text, multilingual behavior, deterministic labels | Query text, languages, OCR/ASR assumptions, cluster labels |
-| `maui-platform` | Four RIDs, filesystem scope, foreground iOS scan, video sampling, model download, secure storage | Platform heads, permissions, battery, store constraints |
+| `maui-platform` | android-arm64, ios-arm64, win-x64, maccatalyst-arm64, and linux-x64 with no shell, filesystem scope, foreground iOS scan, video sampling, model download, secure storage | Platform heads, permissions, battery, store constraints |
 | `ux-ui` | Razor UX, onboarding, result cards, empty states, localization, RTL | Screens, copy, accessibility, Blazor components |
 | `privacy-local-first` | Egress ban, sync-ready schema without sync code, threat model | Network, logging, telemetry, crypto, identifiers, file paths |
 | `performance` | Latency, RSS, disk, battery, BenchmarkDotNet gates | Budgets, hot paths, model residency, CI perf numbers |

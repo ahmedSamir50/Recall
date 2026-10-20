@@ -15,6 +15,7 @@ You own the shape of the Recall process. Read `.cursor/skills/recall-expert-harn
 
 - One process. The embedder library and ZVec.NET stay in it. No localhost HTTP and no helper process. The accepted text runtime is llama.cpp at a build that contains commit 4fbc76dec51d0add466f0210855c0596589b60d4. LLamaSharp 0.30.0 is not that build. The in-code encoder is LlamaTextEmbeddingEncoder.
 - `net10.0` everywhere, including MAUI target frameworks (`net10.0-android`, `net10.0-ios`, `net10.0-windows10.0.19041.0`, `net10.0-maccatalyst`). Reject leftover `net9.0` in docs or project files.
+- Do not add a Linux target framework. Do not add Microsoft.Maui.Platforms.Linux.Gtk4 or Platform.Maui.Linux.Gtk4. linux-x64 is a v1 RID with no shell. ADR 0014.
 - `Recall.Core` references neither MAUI nor Razor. `Recall.UI` talks to Core through interfaces. `Recall.Maui` is the only composition root (`AddZVec`, the llama.cpp text library, `AddRecallCore`, hosted ingestion worker).
 - v1 platform interfaces are the scope watcher, scope manager, video frame sampler, secure storage, idle detector, model download, and index policy. Do not add clipboard, camera-roll, screen, or microphone services.
 - Pin `AdamSystems.ZVec.NET` at `1.0.0-beta.6+zvec.0.7.0` until an explicit GA upgrade. Do not float the version.

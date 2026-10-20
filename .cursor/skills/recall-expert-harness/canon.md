@@ -8,7 +8,7 @@ Narrative sections that currently carry v1.2 intent: Implementation Plan §1.1.1
 
 ## Product
 
-Recall is an on-device multimodal second brain. One .NET 10 MAUI Blazor Hybrid codebase ships to four native shells. v1 is local-only: no server, no accounts, no cloud embedder, no cloud vector database, no web client.
+Recall is an on-device multimodal second brain. One .NET 10 MAUI Blazor Hybrid codebase ships to android-arm64, ios-arm64, win-x64, and maccatalyst-arm64. linux-x64 is a v1 RID. The Linux shell is not in the tree. v1 is local-only: no server, no accounts, no cloud embedder, no cloud vector database, no web client.
 
 The moat is three constraints at once:
 
@@ -22,7 +22,7 @@ The moat is three constraints at once:
 |---|---|
 | TFM | `net10.0` (.NET 10 LTS). Not .NET 9. .NET 11 RC1 (8 Sep 2026, go-live) is not the target until the text embedder and ZVec search are measured faster on `net11.0`. |
 | UI host | MAUI Blazor Hybrid. Razor UI shared. Tailwind owns layout and screen chrome. MudBlazor is not a v1 dependency. One `ShellUiStore` snapshot in `Recall.UI` is the only UI state source for theme, locale, route, and grants. No Blazor WebAssembly. No second Native AOT desktop codebase in v1. No web client. |
-| RIDs | `android-arm64`, `ios-arm64`, `win-x64`, `maccatalyst-arm64` |
+| RIDs | `android-arm64`, `ios-arm64`, `win-x64`, `maccatalyst-arm64`, `linux-x64`. `linux-arm64` and `win-arm64` are not v1 RIDs. Recall.Maui does not target linux-x64. |
 | Vector DB | NuGet id ZVec.NET, version 1.0.0-beta.6. Source tree D:\A_S\AdamSystems.ZVec.NET has Version 1.0.0-beta.6+zvec.0.7.0. Do not restore a package named AdamSystems.ZVec.NET. |
 | Embedder | EmbeddingGemma 2 through in-process llama.cpp. File embeddinggemma-2-Q8_0.gguf from ggml-org/embeddinggemma-2-GGUF. The build must contain commit 4fbc76dec51d0add466f0210855c0596589b60d4. LLamaSharp 0.30.0 does not. No helper process. No listen port. No fine-tune. No cloud embedding API. The class in the tree is LlamaTextEmbeddingEncoder. The native file is native/recall_embed.c against llama.cpp tag b11455. PP-OCRv6 stays ONNX. The vision file is mmproj-embeddinggemma-2-Q8_0.gguf from that same repo. It is not an ONNX file. |
 | Checkpoints | SQLite `checkpoints.db` (ingestion cursors, job state, crash-recovery cursor) |
@@ -63,7 +63,7 @@ EmbeddingGemma 2 facts the panel must not invent past:
 - **Long documents.** A long PDF or document is searchable from its first slice while the rest is still unread. The slice size and the page cap are not set here.
 - **Keyword folding.** The BM25 key is NFKC-normalized. Drop U+0640, U+064B through U+065F, and U+0670. Map U+0622, U+0623, U+0625, and U+0671 to U+0627. Do not use Porter stemming as the only analyzer. Do not split Chinese on spaces. Each character in Unicode script Han is one token, not a bigram. Do not add Yeh, Alef Maqsura, Teh Marbuta, or a Hindi or French stemmer. The card shows the raw note.
 - **Broken Arabic text layer.** A PDF text layer that drops Arabic letters inside a word is OCR'd with the Arabic reader. The count that triggers this is not set here.
-- **Indexes.** Plain HNSW on all four RIDs. `QuantizeType` stays `Undefined` (one float32 index). Turning it on builds a second index beside the float one (`segment.cc` creates both). That does not shrink the file. Enable `Int8`, `Int4`, or `Fp16` only after a benchmark shows query time about 2× or 3× faster. Do not create `ZVecHnswRabitqIndexParam`. DiskANN is out of v1.
+- **Indexes.** Plain HNSW on every v1 RID, including linux-x64. `QuantizeType` stays `Undefined` (one float32 index). Turning it on builds a second index beside the float one (`segment.cc` creates both). That does not shrink the file. Enable `Int8`, `Int4`, or `Fp16` only after a benchmark shows query time about 2× or 3× faster. Do not create `ZVecHnswRabitqIndexParam`. DiskANN is out of v1, including on Linux.
 - **Zero LLM in v1.** No chat UI, no generative summary, and no helper process. The text embedder may be in-process llama.cpp used only to embed. Cluster labels stay deterministic. v1.5 generative download stays ADR 0011 and is not this embedder.
 - **Sync is design-only.** Schema stays sync-ready (content-addressable ids, append-only op-log, `ISyncAdapter` stub, feature flag off). Do not implement pairing, transport, or encryption in v1.
 - **Device identity from day 0.** First launch stores the public platform device id (random only when the read is empty, known-bad, or not ready) and the native OS device name. Both original values are kept forever. The person can edit a display name. Serial, IMEI, UDID, advertising id, and Mac `IOPlatformUUID` are not read. The id and both names stay on the device and are not sent with the model download.

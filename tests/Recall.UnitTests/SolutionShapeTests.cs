@@ -241,6 +241,47 @@ public sealed class SolutionShapeTests
     }
 
     [Fact]
+    public void MauiCsproj_LinuxHostAbsent_DoesNotReferenceGtkOrLinuxRid()
+    {
+        // Arrange
+        var csprojPath = Path.Combine(RepoRoot, "src", "Recall.Maui", "Recall.Maui.csproj");
+
+        // Act
+        var text = File.ReadAllText(csprojPath);
+
+        // Assert
+        text.Should().NotContain("linux-x64");
+        text.Should().NotContain("linux-arm64");
+        text.Should().NotContain("Microsoft.Maui.Platforms.Linux.Gtk4");
+        text.Should().NotContain("Platform.Maui.Linux.Gtk4");
+        text.Should().NotContain("net10.0-linux");
+    }
+
+    [Fact]
+    public void Readme_LogoAndLinuxRid_NamesUnbuiltShell()
+    {
+        // Arrange
+        var readmePath = Path.Combine(RepoRoot, "README.md");
+
+        // Act
+        var text = File.ReadAllText(readmePath);
+
+        // Assert
+        text.Should().Contain("src/Recall.UI/wwwroot/brand/infinity-icon-small-dark.svg");
+        text.Should().Contain("alt=\"Recall\"");
+        text.Should().Contain("width=\"96\"");
+        text.Should().Contain("## What it can do");
+        text.Should().Contain("## What v1 will do");
+        text.Should().Contain("## The future");
+        text.Should().Contain("Not all of this is in the tree yet.");
+        text.Should().Contain("A scored recall report is not in this tree yet.");
+        text.Should().Contain("v1 has no language model, no chat, and no generated summary.");
+        text.Should().Contain("linux-x64");
+        text.Should().Contain("The Linux shell is not in the tree.");
+        text.Should().Contain("`linux-arm64` and `win-arm64` are not v1 RIDs.");
+    }
+
+    [Fact]
     public void CoreCsproj_DoesNotReferenceMauiOnnxOrZVec()
     {
         // Arrange

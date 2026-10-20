@@ -2,7 +2,7 @@ Status: open
 
 DigUp keeps a tray icon on Windows and Linux and a menu-bar icon on Mac. Its shortcut is Ctrl+Shift+Space on Windows and Linux and Shift+Command+Space on Mac. Closing the window leaves the process running. Quit is in that menu. Recall does not copy that source.
 
-Recall v1 shells are `android-arm64`, `ios-arm64`, `win-x64`, and `maccatalyst-arm64`. A Linux tray, sign-in start, and search shortcut are open and are not in the tree. On Android and iOS a tray, sign-in start, and a global shortcut are decided-absent. On Windows and Mac Catalyst those three are not in the tree. No preferences key stores them. [App.xaml.cs](../../src/Recall.Maui/App.xaml.cs) calls `ScopeWatchCoordinator.Stop` from `OnWindowDestroying`.
+Recall v1 shells are `android-arm64`, `ios-arm64`, `win-x64`, and `maccatalyst-arm64`. linux-x64 is a v1 RID. The Linux shell is not in the tree. A Linux tray, sign-in start, and search shortcut are open and are not in the tree. On Android and iOS a tray, sign-in start, and a global shortcut are decided-absent. On Windows and Mac Catalyst those three are not in the tree. No preferences key stores them. [App.xaml.cs](../../src/Recall.Maui/App.xaml.cs) calls `ScopeWatchCoordinator.Stop` from `OnWindowDestroying`.
 
 A later plan may add, for Windows, Linux, and Mac Catalyst, and only in this process: a notification-area icon on Windows, a menu-bar icon on Mac, hide on window close, Quit as the menu item that stops the watcher, sign-in start defaulting off, and a shortcut defaulting on that shows the window and navigates to `/`. Whether hide keeps the watcher running is not picked. A helper process stays forbidden. A daily update check stays out.
 
