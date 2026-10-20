@@ -139,6 +139,9 @@ public interface IFolderPickerService
 public interface IGrantedFolderAccessService
 public interface IVideoFrameSamplerService
 public interface IIdleDetectorService
+public type IdleSignal
+IdleSignal
+public enum IdleSignal
     IReadOnlyList<ScopeFolderGrant> ListGrants();
     ScopeGrantAddResult TryAddGrant(ScopeFolderGrant grant);
     void RemoveGrant(string path);
@@ -201,3 +204,25 @@ public static class RecallCoreServiceCollectionExtensions
 ```
 
 No branch.
+
+
+## src/Recall.Core/Ports/IEncoderFileHash.cs
+
+```csharp
+namespace Recall.Core.Ports;
+public type IEncoderFileHash
+IEncoderFileHash
+No branch.
+``` 
+
+## src/Recall.Core/Ports/ILocalContentProbe.cs
+
+```csharp
+namespace Recall.Core.Ports;
+public type LocalContentState
+LocalContentState
+public type ILocalContentProbe
+ILocalContentProbe
+No branch.
+``` 
+

@@ -44,6 +44,12 @@ public static class ScopeGrantPolicy
 
     public static string Normalize(string path)
     {
-        return path.Trim().Replace('/', '\\').TrimEnd('\\');
+        var trimmed = path.Trim();
+        if (trimmed.StartsWith("content://", StringComparison.OrdinalIgnoreCase))
+        {
+            return trimmed.TrimEnd('/');
+        }
+
+        return trimmed.Replace('/', '\\').TrimEnd('\\');
     }
 }

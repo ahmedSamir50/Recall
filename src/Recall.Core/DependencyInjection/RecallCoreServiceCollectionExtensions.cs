@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Recall.Core.Device;
+using Recall.Core.Download;
 using Recall.Core.Ingest;
 using Recall.Core.Text;
 using Recall.Core.Indexing;
@@ -27,7 +28,12 @@ public static class RecallCoreServiceCollectionExtensions
         services.AddSingleton<LocalOpLogWriter>();
         services.AddSingleton<IRandomDeviceIdSource, GuidRandomDeviceIdSource>();
         services.AddSingleton<IDeviceRecordService, DeviceRecordService>();
+        services.AddSingleton<ILocalContentProbe, LocalOnlyContentProbe>();
         services.AddSingleton<IGrantedTextReader, DirectoryGrantedTextReader>();
+        services.AddSingleton<IEncoderFileHash, DefaultEncoderFileHash>();
+        services.AddSingleton<IRemoteFileSkipReport, RemoteFileSkipReport>();
+        services.AddSingleton<IDatasetSkipReport, DatasetSkipReport>();
+        services.AddSingleton<IIdleDetectorService, DisabledIdleDetectorService>();
         services.AddSingleton<ITextSearchService, TextSearchService>();
         services.AddSingleton<TextIngestEngine>();
         services.AddSingleton<IGrantedTextIngestService, GrantedTextIngestService>();

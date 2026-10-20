@@ -13,7 +13,13 @@ public enum IngestCursorDecision
     Skip = 1,
 }
 
-public sealed record IngestFileRow(string Path, string ContentHash, IngestCursorState State, string GrantPath);
+public sealed record IngestFileRow(string Path, string ContentHash, IngestCursorState State, string GrantPath, string EncoderHash);
+
+public sealed record IngestAliasRow(string ContentId, string Path, bool Missing, bool Retired);
+
+public sealed record Bm25OnlyRow(string ContentId, string Path, string RawText);
+
+public sealed record ChunkWrite(string ContentId, int Ordinal);
 
 public sealed record IngestChunkRow(string ContentId, string Path, int Ordinal, bool Missing, bool Retired);
 

@@ -4,6 +4,7 @@ A benchmark that did not run has no measured number on this page.
 
 ```csharp
 if (directory is null)
+if (string.Equals(label, "emulator", StringComparison.Ordinal))
 ```
 
 No public type.
@@ -18,7 +19,8 @@ public static class TextBenchmarkHost
     public static string LabelThisProcess()
         if (string.IsNullOrWhiteSpace(directory))
         if (!File.Exists(Path.Combine(directory, options.OnnxFileName))
-        if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
+        if (!androidOrIos)
+        if (string.Equals(benchHost, "phone", StringComparison.OrdinalIgnoreCase))
 ```
 
 

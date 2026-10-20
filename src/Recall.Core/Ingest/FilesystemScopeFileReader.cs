@@ -10,7 +10,9 @@ public static class FilesystemScopeFileReader
         ScopeFolderGrant grant,
         string path,
         IUserSkipStore skips,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ILocalContentProbe? probe = null,
+        IRemoteFileSkipReport? remoteSkip = null)
     {
         ArgumentNullException.ThrowIfNull(grant);
         ArgumentNullException.ThrowIfNull(skips);
@@ -21,6 +23,13 @@ public static class FilesystemScopeFileReader
 
         if (!File.Exists(path))
         {
+            return null;
+        }
+
+        var contentState = probe?.Probe(path) ?? LocalContentState.Local;
+        if (!LocalContentPolicy.MayReadBytes(contentState))
+        {
+            remoteSkip?.Add(path);
             return null;
         }
 

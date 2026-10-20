@@ -8,10 +8,16 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
     public IReadOnlyList<TextSearchHit> Search(TextSearchRequest request, CancellationToken cancellationToken = default)
     public void Dispose()
         if (Directory.Exists(rootPath))
+        if (!SchemaHasFtsKey(collection.Schema))
         if (knownIds.Contains(insert.ContentId))
         if (collection.Fetch(insert.ContentId, includeVector: false) is not null)
         if (!result.IsSuccess)
-            if (!IsUnderGrant(path, request.GrantedPaths))
+        if (collection.Fetch(contentId, includeVector: false) is null)
+        if (existing is null)
+        if (request.UseInDatabaseRrf)
+        if (request.QueryVector512.Length > 0)
+        if (schema is null)
+        if (doc.Fields.TryGetValue(field, out var value) && int.TryParse(value?.ToString(), out var parsed))
         if (doc.Fields.TryGetValue(ModifiedField, out var value)
 ```
 

@@ -12,7 +12,7 @@ public interface IIngestCursorStore
 
     void MarkReading(string path, string contentHash, string grantPath);
 
-    void MarkFinished(string path, string contentHash, string grantPath, IReadOnlyList<(string ContentId, int Ordinal)> chunks);
+    void MarkFinished(string path, string contentHash, string grantPath, string encoderHash);
 
     void RenamePath(string previousPath, string nextPath);
 
@@ -25,4 +25,30 @@ public interface IIngestCursorStore
     void MarkGrantFinished(string grantPath);
 
     bool IsGrantFinished(string grantPath);
+
+    bool AnyLivePath(string contentId);
+
+    void AddAlias(string contentId, string path);
+
+    void MoveLiveAliases(string fromContentId, string toContentId);
+
+    void PutBm25Only(string contentId, string path, string rawText);
+
+    IReadOnlyList<Bm25OnlyRow> ListBm25Only();
+
+    IReadOnlyList<IngestAliasRow> ListLiveAliases(string contentId);
+
+    IReadOnlyList<string> ListPending(int limit);
+
+    int PendingCount();
+
+    void RemovePending(IReadOnlyList<string> contentIds);
+
+    void EnqueuePending(string contentId);
+
+    bool TryEnterWrite(out CheckpointLease? lease);
+
+    CheckpointLease EnterWrite();
+
+    void FinishPath(string path, string contentHash, string grantPath, string encoderHash, IReadOnlyList<ChunkWrite> chunks);
 }

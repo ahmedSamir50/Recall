@@ -10,6 +10,8 @@ public sealed class TextIngestEngine
         ITextTokenCounter tokenCounter,
         LocalOpLogWriter opLog)
     public async Task IngestFileAsync(string filePath, string rawText, DateTimeOffset modifiedAt, CancellationToken cancellationToken)
+            if (!dense)
+            if (cursors.AnyLivePath(ContentIdBuilder.Build(Modality.Text, sourceHash, StoredWidth.W512, chunk.Ordinal)))
             if (index.TryInsert(insert))
 ```
 
@@ -126,7 +128,9 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
 
 ```csharp
 if (grant is null)
-if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
+if (EncoderRepair.NeedsRepair(row?.EncoderHash, encoderHash))
+if (index.TryDelete(chunk.ContentId))
+else if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
 ``` 
 ## src/Recall.Core/Ingest/GrantedTextDocument.cs
 
@@ -143,7 +147,11 @@ No branch.
 ```csharp
 namespace Recall.Core.Ingest;
 public sealed class DirectoryGrantedTextReader : IGrantedTextReader
-    public DirectoryGrantedTextReader(IUserSkipStore skips)
+    public DirectoryGrantedTextReader(
+        IUserSkipStore skips,
+        ILocalContentProbe probe,
+        IRemoteFileSkipReport remoteSkip,
+        IDatasetSkipReport datasetSkip)
     public async IAsyncEnumerable<GrantedTextDocument> ReadAsync(
         ScopeFolderGrant grant,
         [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -151,9 +159,11 @@ public sealed class DirectoryGrantedTextReader : IGrantedTextReader
         if (Directory.Exists(entry))
         if (FileAdmission.IsBlockedFolder(name, user))
         if (IsDirectoryIgnored(relativeDir, shared))
+        if (DatasetFolderSkip.ShouldSkip(entry, isGrantRoot, directChildNames))
         if (GitIgnoreMatcher.IsIgnored(relativeDir, shared))
         if (GitIgnoreMatcher.LastDecision(relativeDir, true, shared) == GitIgnoreDecision.Ignore
         if (FileAdmission.Decide(name, kinds, user, gitIgnored) != FileAdmissionResult.Read)
+        if (!LocalContentPolicy.MayReadBytes(probe.Probe(entry)))
         if (!safe)
         if (added > 0)
         if (relative == ".")
@@ -191,6 +201,7 @@ public static async Task<GrantedTextDocument?> TryReadAsync(
     if (!string.IsNullOrWhiteSpace(relativeCheck))
     if (ignored)
     if (FileAdmission.Decide(fileName, grant.EnabledKinds, user, ignored) != FileAdmissionResult.Read)
+    if (!LocalContentPolicy.MayReadBytes(contentState))
     if (!safe)
     catch (Exception ex)
 ``` 
@@ -292,6 +303,7 @@ public void Dispose()
     if (wake.CurrentCount == 0)
     catch (Exception ex)
     if (buffer.NeedsRescan)
+    if (!IdleIngestGate.ShouldRun(idle.Current))
     catch (OperationCanceledException)
     if (grant is null && change.Kind == ScopeChangeKind.Renamed && !string.IsNullOrWhiteSpace(change.PreviousPath))
     if (grant is not null && !string.IsNullOrWhiteSpace(change.Path))
@@ -302,4 +314,89 @@ public void Dispose()
     if (ScopeGrantPolicy.IsInsideGrant(grant.Path, path))
     if (IsRunning)
     if (disposed)
+```
+
+
+## src/Recall.Core/Ingest/DisabledIdleDetectorService.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public type DisabledIdleDetectorService
+DisabledIdleDetectorService
+public IdleSignal Current => IdleSignal.Idle;
+No branch.
 ``` 
+
+## src/Recall.Core/Ingest/IdleIngestGate.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public type IdleIngestGate
+IdleIngestGate
+public const int DesktopIdleAfterSeconds = 30;
+public static bool ShouldRun(IdleSignal signal) => signal == IdleSignal.Idle;
+public static IdleSignal FromLastInput(TimeSpan idleFor) =>
+public static IdleSignal ForForeground(bool applicationActive) =>
+No branch.
+``` 
+
+## src/Recall.Core/Ingest/LocalOnlyContentProbe.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public type LocalOnlyContentProbe
+LocalOnlyContentProbe
+public LocalContentState Probe(string path) => LocalContentState.Local;
+No branch.
+``` 
+
+## src/Recall.Core/Text/EncoderRepair.cs
+
+```csharp
+namespace Recall.Core.Text;
+public type EncoderRepair
+EncoderRepair
+public static bool NeedsRepair(string? storedHash, string? currentHash) =>
+No branch.
+``` 
+
+## src/Recall.Core/Text/KeywordFold.cs
+
+```csharp
+namespace Recall.Core.Text;
+public type KeywordFold
+KeywordFold
+public static string Fold(string raw)
+public static IReadOnlyList<string> Tokens(string folded)
+if (rune.Value is 0x0640 or (>= 0x064B and <= 0x065F) or 0x0670)
+if (rune.Value is 0x0622 or 0x0623 or 0x0625 or 0x0671)
+if (IsHan(rune))
+if (Rune.IsLetter(rune))
+if (buffer.Length == 0)
+``` 
+
+## src/Recall.Core/Text/NumericSpanPolicy.cs
+
+```csharp
+namespace Recall.Core.Text;
+public type NumericSpanPolicy
+NumericSpanPolicy
+public static bool IsDense(string raw, bool codeFile)
+if (codeFile)
+if (Rune.IsWhiteSpace(rune))
+if (Rune.IsLetter(rune))
+``` 
+
+## src/Recall.Core/Text/WidthOnEdit.cs
+
+```csharp
+namespace Recall.Core.Text;
+public type WidthOnEdit
+WidthOnEdit
+public static StoredWidth Choose(Modality modality, StoredWidth current, bool pinned, bool pastCutoff)
+if (modality == Modality.Text)
+if (current == StoredWidth.W512 && !pinned)
+if (current == StoredWidth.W512 && pinned)
+if (current == StoredWidth.W768 && !pastCutoff)
+``` 
+

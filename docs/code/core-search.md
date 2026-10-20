@@ -8,21 +8,36 @@ public sealed class TextSearchService : ITextSearchService
         string query,
         IReadOnlyList<ScopeFolderGrant> grants,
         CancellationToken cancellationToken = default)
+        if (string.IsNullOrWhiteSpace(query) || grants is null)
         if (grantedPaths.Count == 0)
 ```
 
 
 
 ```csharp
+if (cursors.PendingCount() > 0 && cursors.TryEnterWrite(out var lease) && lease is not null)
+if (pending.Count > 0)
+if (useInDbRrf)
+if (!grantedPaths.Contains(expanded.GrantPath))
+if (!byPath.TryGetValue(expanded.SourcePath, out var list))
 if (applied is not null)
 ``` 
 ## src/Recall.Core/Search/TextSearchModels.cs
 
 ```csharp
 namespace Recall.Core.Search;
+public type TextIndexInsert
+TextIndexInsert
+public type TextSearchRequest
+TextSearchRequest
+public type TextSearchHit
+TextSearchHit
+public type VectorLiveState
+VectorLiveState
 public sealed record TextIndexInsert(
 public sealed record TextSearchRequest(
 public sealed record TextSearchHit(
+public sealed record VectorLiveState(string ContentId, bool PathLive, string EncoderHash, string GrantPath);
 ```
 
 No branch.
@@ -57,6 +72,7 @@ public static class HybridFusion
     public static void RequireRankConstant(int rankConstant)
         if (rankConstant != RrfRankConstant)
             throw new RecallFaultException(RecallFault.RrfRankConstant);
+        if (scores.TryGetValue(hit.ContentId, out var existing))
 ```
 
 
@@ -102,9 +118,44 @@ public static class SearchHitMarks
 public static TextSearchHit? Apply(
     if (chunk is null)
     if (chunk.Retired)
-    if (grants is not null)
-    if (grant is null || string.IsNullOrWhiteSpace(grant.Path))
-    if (ScopeGrantPolicy.IsInsideGrant(grant.Path, effectivePath))
-    if (!inside)
+    if (!grantPaths.Contains(hit.GrantPath))
+    if (alias.Missing || alias.Retired)
+```
+
+
+## src/Recall.Core/Indexing/RecallIndexCaps.cs
+
+```csharp
+namespace Recall.Core.Indexing;
+public type RecallIndexCaps
+RecallIndexCaps
+public const int RawListCap = 64;
+public const int FileCap = 20;
+No branch.
+``` 
+
+## src/Recall.Core/Search/Collapse.cs
+
+```csharp
+namespace Recall.Core.Search;
+public type Collapse
+Collapse
+public static TextSearchHit MaxRrf(IReadOnlyList<TextSearchHit> hits)
+if (hits.Count == 0)
+if (candidate.Score > best.Score)
+if (Math.Abs(candidate.Score - best.Score) < 1e-12 && candidate.Ordinal < best.Ordinal)
+``` 
+
+## src/Recall.Core/Search/TextSearchFilter.cs
+
+```csharp
+namespace Recall.Core.Search;
+public type TextSearchFilter
+TextSearchFilter
+public const string PathLiveField = "path_live";
+public const string EncoderHashField = "encoder_hash";
+public const string GrantPathField = "grant_path";
+public static string Build(IReadOnlySet<string> grantPaths, string encoderHash)
+if (grantPaths.Count == 0)
 ``` 
 

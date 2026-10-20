@@ -29,17 +29,16 @@ public sealed class TextSearchIntegrationTests : IDisposable
         using var index = new ZVecTextVectorIndex(databaseRoot);
         var vector = new float[512];
         vector[0] = 1f;
-        var inserted = index.TryInsert(new TextIndexInsert(
+        var inserted = index.TryInsert(SampleInsert(
             ContentIdBuilder.Build(
                 Recall.Core.Vocabulary.Modality.Text,
                 ContentIdBuilder.HashSourceContent("pinned note"),
                 Recall.Core.Vocabulary.StoredWidth.W512,
                 0),
             Path.Combine(root, "note.txt"),
-            "note.txt",
             "pinned note about mars rovers",
             vector,
-            DateTimeOffset.UtcNow));
+            Path.Combine(root, "note.txt")));
         inserted.Should().BeTrue();
         Directory.GetDirectories(databaseRoot).Select(Path.GetFileName).Should().Equal("items_text");
     }
@@ -59,35 +58,39 @@ public sealed class TextSearchIntegrationTests : IDisposable
         outsideVector[0] = 1f;
         var insideVector = new float[512];
         insideVector[0] = 1f;
-        index.TryInsert(new TextIndexInsert(
+        index.TryInsert(SampleInsert(
             ContentIdBuilder.Build(
                 Recall.Core.Vocabulary.Modality.Text,
                 ContentIdBuilder.HashSourceContent("outside note"),
                 Recall.Core.Vocabulary.StoredWidth.W512,
                 0),
             outsidePath,
-            "note.txt",
             "outside note about mars",
             outsideVector,
-            DateTimeOffset.UtcNow));
-        index.TryInsert(new TextIndexInsert(
+            outsideDir));
+        index.TryInsert(SampleInsert(
             ContentIdBuilder.Build(
                 Recall.Core.Vocabulary.Modality.Text,
                 ContentIdBuilder.HashSourceContent("inside note"),
                 Recall.Core.Vocabulary.StoredWidth.W512,
                 0),
             insidePath,
-            "note.txt",
             "inside note about mars",
             insideVector,
-            DateTimeOffset.UtcNow));
+            insideDir));
         var query = new float[512];
         query[0] = 1f;
+        var grants = new HashSet<string>([insideDir], StringComparer.OrdinalIgnoreCase);
+        const string hash = "integration-test-hash";
+        var filter = TextSearchFilter.Build(grants, hash);
         var hits = index.Search(new TextSearchRequest(
             "mars",
             query,
-            new HashSet<string>([insideDir], StringComparer.OrdinalIgnoreCase),
-            TopK: 20), TestContext.Current.CancellationToken);
+            grants,
+            hash,
+            filter,
+            true,
+            20), TestContext.Current.CancellationToken);
         hits.Should().HaveCount(1);
         hits[0].SourcePath.Should().Contain("inside");
         hits.Should().OnlyContain(h => !h.SourcePath.Contains("outside", StringComparison.Ordinal));
@@ -129,6 +132,20 @@ public sealed class TextSearchIntegrationTests : IDisposable
         hits[0].SourcePath.Should().Contain("mars.txt");
         hits.Should().OnlyContain(h => h.SourcePath.StartsWith(grants[0].Path, StringComparison.OrdinalIgnoreCase));
     }
+
+    private static TextIndexInsert SampleInsert(string contentId, string path, string raw, float[] vector, string grantPath) =>
+        new(
+            contentId,
+            path,
+            Path.GetFileName(path),
+            raw,
+            vector,
+            DateTimeOffset.UtcNow,
+            "integration-test-hash",
+            true,
+            grantPath,
+            raw.ToLowerInvariant(),
+            0);
 
     public void Dispose()
     {

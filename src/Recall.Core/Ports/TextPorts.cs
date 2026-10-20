@@ -21,6 +21,10 @@ public interface ITextVectorIndex
 {
     bool TryInsert(TextIndexInsert insert);
 
+    bool TryDelete(string contentId);
+
+    void Reconcile(IReadOnlyList<VectorLiveState> states);
+
     IReadOnlyList<TextSearchHit> Search(TextSearchRequest request, CancellationToken cancellationToken = default);
 }
 

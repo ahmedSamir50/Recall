@@ -325,9 +325,20 @@ public sealed class FakeIndexPolicy : IIndexPolicy
 public sealed class FakeTextTokenCounter : ITextTokenCounter
 public sealed class FakeTextEmbeddingEncoder : ITextEmbeddingEncoder
 public sealed class FakeGrantedTextIngestService : IGrantedTextIngestService
+public type FakeEncoderFileHash
+FakeEncoderFileHash
+public sealed class FakeEncoderFileHash : IEncoderFileHash
+public type IngestTestKit
+IngestTestKit
+public static class IngestTestKit
+public type FakeLocalContentProbe
+FakeLocalContentProbe
+public sealed class FakeLocalContentProbe : ILocalContentProbe
 public sealed class FakeTextSearchService : ITextSearchService
 public sealed class FakeDeviceIdCandidateProviderPort : IDeviceIdCandidateProvider
 public sealed class FakeRandomDeviceIdSourcePort : IRandomDeviceIdSource
+if (!AllowWrite)
+if (chunkRows.ContainsKey(chunk.ContentId))
 public sealed class FakeTextVectorIndex : ITextVectorIndex
 public sealed class FakeSyncAdapter : ISyncAdapter
 public sealed class FakeThemePreferenceStorePort : IThemePreferenceStore
@@ -700,5 +711,44 @@ public Task IngestDocumentAsync(ScopeFolderGrant grant, GrantedTextDocument docu
     if (kinds.Contains(ScopeChangeKind.Created)
     catch (IOException ex)
     if (document.FileName.Contains("first", StringComparison.OrdinalIgnoreCase))
+```
+
+
+## tests/Recall.IntegrationTests/Infrastructure/TestEncoderFileHash.cs
+
+```csharp
+namespace Recall.IntegrationTests.Infrastructure;
+No public type.
+No branch.
+``` 
+
+## tests/Recall.UnitTests/PhaseAddendumTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public type PhaseAddendumTests
+PhaseAddendumTests
+public void Fold_AlefAndTatweel_Match()
+public void Fold_HanCharacter_IsOneToken()
+public void Card_ShowsRawNote()
+public void NumericSpan_DigitsOnly_Bm25Only()
+public void NumericSpan_CodeFile_StaysDense()
+public void DatasetFolder_32Hex_Skips()
+public void DatasetFolder_NumberedScans_NotSkipped()
+public void Idle_RunsIngest_BusyDefers()
+public void TwentyChunks_OneFile_ReturnsOneCard()
+public void TwentyChunks_OneFile_KeepsMaxRrfScore()
+public void Search_GrantFilter_DoesNotPromiseTwenty()
+public void ContentUri_EnumeratedDocument_IsInsideGrant()
+public void ContentUri_NotEnumerated_IsOutside()
+public void DeleteOnePath_SharedId_OtherPathStaysHit()
+public void Shrink_LastPath_DeletesVector()
+public void Shrink_OtherPathLive_KeepsVector()
+public async Task Find_WriteBusy_SkipsReconcile()
+public async Task TextModelReadyIngest_ReadGrantsAsync_CallsIngest()
+public void CloudFile_NotLocal_NotIndexed()
+public void VectorSchemaStale_Fault_IsTwenty()
+catch (IOException ex)
+catch (IOException ex)
 ``` 
 

@@ -1,6 +1,7 @@
 using Recall.Core.Checkpoints;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
+using Recall.Core.Sync;
 using Recall.Core.Text;
 
 namespace Recall.Core.Ingest;
@@ -11,13 +12,26 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
     private readonly IGrantedTextReader reader;
     private readonly TextIngestEngine engine;
     private readonly IIngestCursorStore cursors;
+    private readonly ITextVectorIndex index;
+    private readonly LocalOpLogWriter opLog;
+    private readonly IEncoderFileHash encoderFileHash;
 
-    public GrantedTextIngestService(IScopeManagerService scope, IGrantedTextReader reader, TextIngestEngine engine, IIngestCursorStore cursors)
+    public GrantedTextIngestService(
+        IScopeManagerService scope,
+        IGrantedTextReader reader,
+        TextIngestEngine engine,
+        IIngestCursorStore cursors,
+        ITextVectorIndex index,
+        LocalOpLogWriter opLog,
+        IEncoderFileHash encoderFileHash)
     {
         this.scope = scope;
         this.reader = reader;
         this.engine = engine;
         this.cursors = cursors;
+        this.index = index;
+        this.opLog = opLog;
+        this.encoderFileHash = encoderFileHash;
     }
 
     public async Task IngestGrantedTextAsync(CancellationToken cancellationToken = default)
@@ -57,17 +71,44 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
         ArgumentNullException.ThrowIfNull(document);
         var contentHash = ContentIdBuilder.HashSourceContent(document.Text);
         var row = cursors.GetFile(document.Path);
-        if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
+        var encoderHash = encoderFileHash.TextHash ?? string.Empty;
+        if (EncoderRepair.NeedsRepair(row?.EncoderHash, encoderHash))
+        {
+            cursors.MarkReading(document.Path, contentHash, grant.Path);
+#pragma warning disable S3267
+            foreach (var chunk in cursors.ListChunks(document.Path).Where(static c => !c.Retired))
+#pragma warning restore S3267
+            {
+                if (index.TryDelete(chunk.ContentId))
+                {
+                    opLog.AppendDelete(chunk.ContentId);
+                }
+            }
+        }
+        else if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
         {
             return;
         }
 
         cursors.MarkReading(document.Path, contentHash, grant.Path);
-        var result = await engine.IngestFileAsync(document.Path, document.Text, document.ModifiedAt, cancellationToken).ConfigureAwait(false);
-        cursors.MarkFinished(
+        var codeFile = FileAdmission.IsCodeFile(document.FileName);
+        var result = await engine.IngestFileAsync(
             document.Path,
-            result.ContentHash,
+            document.Text,
+            document.ModifiedAt,
             grant.Path,
-            result.Chunks.Select(c => (c.ContentId, c.Ordinal)).ToList());
+            encoderHash,
+            codeFile,
+            cancellationToken).ConfigureAwait(false);
+
+        var writes = result.Chunks
+            .Select(c => new ChunkWrite(c.ContentId, c.Ordinal))
+            .ToList();
+        foreach (var chunk in result.Chunks.Where(c => !c.Dense))
+        {
+            cursors.PutBm25Only(chunk.ContentId, document.Path, document.Text);
+        }
+
+        cursors.FinishPath(document.Path, result.ContentHash, grant.Path, encoderHash, writes);
     }
 }

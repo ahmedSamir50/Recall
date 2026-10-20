@@ -9,10 +9,20 @@ namespace Recall.Core.Ingest;
 public sealed class DirectoryGrantedTextReader : IGrantedTextReader
 {
     private readonly IUserSkipStore skips;
+    private readonly ILocalContentProbe probe;
+    private readonly IRemoteFileSkipReport remoteSkip;
+    private readonly IDatasetSkipReport datasetSkip;
 
-    public DirectoryGrantedTextReader(IUserSkipStore skips)
+    public DirectoryGrantedTextReader(
+        IUserSkipStore skips,
+        ILocalContentProbe probe,
+        IRemoteFileSkipReport remoteSkip,
+        IDatasetSkipReport datasetSkip)
     {
         this.skips = skips;
+        this.probe = probe;
+        this.remoteSkip = remoteSkip;
+        this.datasetSkip = datasetSkip;
     }
 
     public IUserSkipStore Store => skips;
@@ -28,7 +38,7 @@ public sealed class DirectoryGrantedTextReader : IGrantedTextReader
 
         var user = skips.Load();
         var shared = new List<GitIgnoreFile>();
-        await foreach (var document in WalkAsync(grant.Path, grant.Path, grant.EnabledKinds, user, shared, cancellationToken).ConfigureAwait(false))
+        await foreach (var document in WalkAsync(grant.Path, grant.Path, grant.EnabledKinds, user, shared, probe, remoteSkip, datasetSkip, cancellationToken).ConfigureAwait(false))
         {
             yield return document;
         }
@@ -40,6 +50,9 @@ public sealed class DirectoryGrantedTextReader : IGrantedTextReader
         GrantFileKinds kinds,
         UserSkipAdditions user,
         List<GitIgnoreFile> shared,
+        ILocalContentProbe probe,
+        IRemoteFileSkipReport remoteSkip,
+        IDatasetSkipReport datasetSkip,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -63,7 +76,19 @@ public sealed class DirectoryGrantedTextReader : IGrantedTextReader
                         continue;
                     }
 
-                    await foreach (var document in WalkAsync(grantRoot, entry, kinds, user, shared, cancellationToken).ConfigureAwait(false))
+                    var directChildNames = Directory.EnumerateFileSystemEntries(entry)
+                        .Select(Path.GetFileName)
+                        .Where(name => !string.IsNullOrWhiteSpace(name))
+                        .Select(name => name!)
+                        .ToList();
+                    var isGrantRoot = string.Equals(entry, grantRoot, StringComparison.OrdinalIgnoreCase);
+                    if (DatasetFolderSkip.ShouldSkip(entry, isGrantRoot, directChildNames))
+                    {
+                        datasetSkip.Add(entry);
+                        continue;
+                    }
+
+                    await foreach (var document in WalkAsync(grantRoot, entry, kinds, user, shared, probe, remoteSkip, datasetSkip, cancellationToken).ConfigureAwait(false))
                     {
                         yield return document;
                     }
@@ -75,6 +100,12 @@ public sealed class DirectoryGrantedTextReader : IGrantedTextReader
                 var gitIgnored = GitIgnoreMatcher.IsIgnored(relativeFile, shared);
                 if (FileAdmission.Decide(name, kinds, user, gitIgnored) != FileAdmissionResult.Read)
                 {
+                    continue;
+                }
+
+                if (!LocalContentPolicy.MayReadBytes(probe.Probe(entry)))
+                {
+                    remoteSkip.Add(entry);
                     continue;
                 }
 

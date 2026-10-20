@@ -14,6 +14,7 @@ public static class IntegrationTestServiceCollection
         services.AddSingleton<Recall.Core.Ports.IScopeGrantStore, InMemoryScopeGrantStore>();
         services.AddSingleton<IIngestCursorStore>(_ => new SqliteIngestCursorStore(Path.Combine(vectorRoot, CheckpointSql.FileName)));
         services.AddRecallAdapters(modelDirectory, vectorRoot);
+        services.AddSingleton<Recall.Core.Ports.IEncoderFileHash, TestEncoderFileHash>();
         return services.BuildServiceProvider();
     }
 }

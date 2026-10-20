@@ -24,6 +24,7 @@ public static class ScopeGrantPolicy
         if (!child.StartsWith(parent, StringComparison.OrdinalIgnoreCase))
         if (string.IsNullOrWhiteSpace(grantPath) || string.IsNullOrWhiteSpace(filePath))
         if (file.Equals(grant, StringComparison.OrdinalIgnoreCase))
+        if (trimmed.StartsWith("content://", StringComparison.OrdinalIgnoreCase))
 ```
 
 
@@ -257,6 +258,12 @@ public type IngestCursorDecision
 IngestCursorDecision
 public type IngestFileRow
 IngestFileRow
+public type IngestAliasRow
+IngestAliasRow
+public type Bm25OnlyRow
+Bm25OnlyRow
+public type ChunkWrite
+ChunkWrite
 public type IngestChunkRow
 IngestChunkRow
 public type GrantScanRow
@@ -265,7 +272,10 @@ public type IngestCursorPolicy
 IngestCursorPolicy
 public enum IngestCursorState
 public enum IngestCursorDecision
-public sealed record IngestFileRow(string Path, string ContentHash, IngestCursorState State, string GrantPath);
+public sealed record IngestFileRow(string Path, string ContentHash, IngestCursorState State, string GrantPath, string EncoderHash);
+public sealed record IngestAliasRow(string ContentId, string Path, bool Missing, bool Retired);
+public sealed record Bm25OnlyRow(string ContentId, string Path, string RawText);
+public sealed record ChunkWrite(string ContentId, int Ordinal);
 public sealed record IngestChunkRow(string ContentId, string Path, int Ordinal, bool Missing, bool Retired);
 public sealed record GrantScanRow(string GrantPath, IngestCursorState State);
 public static class IngestCursorPolicy
@@ -301,11 +311,19 @@ public void MarkGrantFinished(string grantPath)
 public bool IsGrantFinished(string grantPath)
     if (string.IsNullOrWhiteSpace(databasePath))
     if (reader.Read())
-    if (chunks is not null)
+    if (string.IsNullOrWhiteSpace(path))
+    if (string.IsNullOrWhiteSpace(chunk.ContentId))
+    if (!ChunkRowExists(connection, transaction, chunk.ContentId))
+    if (string.IsNullOrWhiteSpace(contentId) || string.IsNullOrWhiteSpace(path))
+    if (!writeLock.Wait(0))
     if (!reader.Read())
     if (value is null || value == DBNull.Value)
+    if (acquired)
     if (!string.IsNullOrWhiteSpace(directory))
-    DELETE FROM ingest_chunk WHERE path = @path AND retired = @retired
+    if (!HasColumn(connection, transaction, "ingest_file", "encoder_hash"))
+    if (!string.Equals(tableName, "ingest_file", StringComparison.Ordinal))
+    if (string.Equals(name, columnName, StringComparison.OrdinalIgnoreCase))
+    if (existing.Add(key))
 ``` 
 
 
@@ -469,5 +487,135 @@ public static bool TryMap(WindowsWatchKind kind, string path, string? previousPa
     if (kind == WindowsWatchKind.Deleted)
     if (kind == WindowsWatchKind.Changed)
     if (kind == WindowsWatchKind.Created)
+```
+
+
+## src/Recall.Core/Checkpoints/CheckpointLease.cs
+
+```csharp
+namespace Recall.Core.Checkpoints;
+public type CheckpointLease
+CheckpointLease
+public void Commit()
+public void Rollback()
+public void Dispose()
+if (disposed)
+if (disposed)
+if (disposed)
+if (!committed)
+``` 
+
+## src/Recall.Core/Scope/AndroidDocumentPresence.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type AndroidDocumentPresence
+AndroidDocumentPresence
+public static LocalContentState FromFlags(
+if (partial || virtualDocument)
+if (!api36)
+if (downloadProgress || downloadError)
+if (availableLocally == true)
+``` 
+
+## src/Recall.Core/Scope/AppleICloudPresence.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type AppleICloudPresence
+AppleICloudPresence
+public static bool IsStubName(string fileName) =>
+public static LocalContentState FromResource(bool stubName, bool? isUbiquitous, string? status)
+if (stubName)
+if (isUbiquitous is null)
+if (!isUbiquitous.Value)
+if (string.Equals(status, "Downloaded", StringComparison.Ordinal))
+if (string.Equals(status, "Current", StringComparison.Ordinal) || string.Equals(status, "NotDownloaded", StringComparison.Ordinal))
+``` 
+
+## src/Recall.Core/Scope/DatasetFolderSkip.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type DatasetFolderSkip
+DatasetFolderSkip
+public static bool ShouldSkip(string folderPath, bool isGrantRoot, IReadOnlyList<string> directChildNames)
+public static bool IsMachineMade(string nameWithoutExtension)
+if (isGrantRoot)
+if (!MediaExtensions.Contains(extension))
+if (IsMachineMade(Path.GetFileNameWithoutExtension(name)))
+if (nameWithoutExtension.Length == 32 && nameWithoutExtension.All(static c => c is >= '0' and <= '9' or >= 'a' and <= 'f' or >= 'A' and <= 'F') && !nameWithoutExtension.Contains('-', StringComparison.Ordinal))
+if (Guid.TryParse(nameWithoutExtension, out _))
+if (nameWithoutExtension.Length >= 12 && nameWithoutExtension.All(static c => c is >= '0' and <= '9'))
+``` 
+
+## src/Recall.Core/Scope/DatasetSkipReport.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type IDatasetSkipReport
+IDatasetSkipReport
+public type DatasetSkipReport
+DatasetSkipReport
+public IReadOnlyList<string> Paths => paths;
+public void Add(string folderPath)
+public void Clear() => paths.Clear();
+if (string.IsNullOrWhiteSpace(folderPath))
+if (!paths.Contains(folderPath, StringComparer.OrdinalIgnoreCase))
+``` 
+
+## src/Recall.Core/Scope/GrantMembership.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type GrantMembership
+GrantMembership
+public static string? GrantPathFor(
+if (documentPath.StartsWith("content://", StringComparison.OrdinalIgnoreCase))
+if (!documentPath.StartsWith(tree, StringComparison.OrdinalIgnoreCase))
+if (documentPath.Length <= tree.Length)
+``` 
+
+## src/Recall.Core/Scope/LocalContentPolicy.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type LocalContentPolicy
+LocalContentPolicy
+public static bool MayReadBytes(LocalContentState state) => state == LocalContentState.Local;
+No branch.
+``` 
+
+## src/Recall.Core/Scope/RemoteFileSkipReport.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type IRemoteFileSkipReport
+IRemoteFileSkipReport
+public type RemoteFileSkipReport
+RemoteFileSkipReport
+public const int ShownCap = 20;
+public int SkippedCount => skippedCount;
+public IReadOnlyList<string> Paths => shown;
+public void Add(string path)
+public void Clear()
+if (string.IsNullOrWhiteSpace(path))
+if (shown.Count < ShownCap && !shown.Contains(path, StringComparer.OrdinalIgnoreCase))
+``` 
+
+## src/Recall.Core/Scope/WindowsCloudAttributes.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public type WindowsCloudAttributes
+WindowsCloudAttributes
+public const int Offline = 0x1000;
+public const int RecallOnOpen = 0x00040000;
+public const int RecallOnDataAccess = 0x00400000;
+public const int Pinned = 0x00080000;
+public const int Unpinned = 0x00100000;
+public static LocalContentState FromFindData(bool found, int attributes)
+if (!found)
+if ((attributes & Offline) != 0 || (attributes & RecallOnOpen) != 0 || (attributes & RecallOnDataAccess) != 0)
 ``` 
 

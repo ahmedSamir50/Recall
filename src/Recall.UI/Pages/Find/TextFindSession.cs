@@ -40,7 +40,8 @@ public static class TextFindSession
                 "Kind_Document",
                 hit.ModifiedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
                 "Search_Match_MeaningAndWords",
-                unavailable);
+                unavailable,
+                hit.RawNote);
         }).ToList();
 
         var immediate = cards.Take(ImmediateCardCount).ToList();
@@ -49,7 +50,7 @@ public static class TextFindSession
     }
 }
 
-public sealed record TextFindCard(string SourcePath, string FileName, string KindKey, string LocalTime, string ReasonKey, bool Unavailable);
+public sealed record TextFindCard(string SourcePath, string FileName, string KindKey, string LocalTime, string ReasonKey, bool Unavailable, string RawNote = "");
 
 public sealed record TextFindView(IReadOnlyList<TextFindCard> Immediate, IReadOnlyList<TextFindCard> Deferred, bool HasHits)
 {

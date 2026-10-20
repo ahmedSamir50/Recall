@@ -110,3 +110,24 @@ public sealed record ModelCatalogEntry(Modality Modality, string ModelId);
 ```
 
 No branch.
+
+
+## src/Recall.Core/Download/DefaultEncoderFileHash.cs
+
+```csharp
+namespace Recall.Core.Download;
+public type DefaultEncoderFileHash
+DefaultEncoderFileHash
+No branch.
+``` 
+
+## src/Recall.Core/Download/TextModelReadyIngest.cs
+
+```csharp
+namespace Recall.Core.Download;
+public type TextModelReadyIngest
+TextModelReadyIngest
+public static async Task ReadGrantsAsync(
+if (phase != TextModelDownloadPhase.Ready)
+``` 
+

@@ -186,7 +186,7 @@ public sealed class Phase3WatchTests
     {
         var changes = ForegroundGrantDiff.Diff(
             [new WatchedFile("a.txt", "h1")],
-            [new IngestFileRow("a.txt", "h1", IngestCursorState.Finished, "g")]);
+            [new IngestFileRow("a.txt", "h1", IngestCursorState.Finished, "g", "")]);
         changes.Should().BeEmpty();
     }
 
@@ -195,7 +195,7 @@ public sealed class Phase3WatchTests
     {
         var changes = ForegroundGrantDiff.Diff(
             [new WatchedFile("a.txt", "h2")],
-            [new IngestFileRow("a.txt", "h1", IngestCursorState.Finished, "g")]);
+            [new IngestFileRow("a.txt", "h1", IngestCursorState.Finished, "g", "")]);
         changes.Should().ContainSingle().Which.Kind.Should().Be(ScopeChangeKind.Modified);
     }
 
@@ -204,7 +204,7 @@ public sealed class Phase3WatchTests
     {
         var changes = ForegroundGrantDiff.Diff(
             [],
-            [new IngestFileRow("a.txt", "h1", IngestCursorState.Finished, "g")]);
+            [new IngestFileRow("a.txt", "h1", IngestCursorState.Finished, "g", "")]);
         changes.Should().ContainSingle().Which.Kind.Should().Be(ScopeChangeKind.Deleted);
     }
 
@@ -213,7 +213,7 @@ public sealed class Phase3WatchTests
     {
         var changes = ForegroundGrantDiff.Diff(
             [],
-            [new IngestFileRow("a.txt", "h1", IngestCursorState.Missing, "g")]);
+            [new IngestFileRow("a.txt", "h1", IngestCursorState.Missing, "g", "")]);
         changes.Should().BeEmpty();
     }
 
@@ -222,7 +222,7 @@ public sealed class Phase3WatchTests
     {
         var changes = ForegroundGrantDiff.Diff(
             [new WatchedFile("new.txt", "h1")],
-            [new IngestFileRow("old.txt", "h1", IngestCursorState.Finished, "g")]);
+            [new IngestFileRow("old.txt", "h1", IngestCursorState.Finished, "g", "")]);
         changes.Should().ContainSingle().Which.Kind.Should().Be(ScopeChangeKind.Renamed);
     }
 
@@ -231,7 +231,7 @@ public sealed class Phase3WatchTests
     {
         var changes = ForegroundGrantDiff.Diff(
             [new WatchedFile("n1.txt", "h"), new WatchedFile("n2.txt", "h")],
-            [new IngestFileRow("o1.txt", "h", IngestCursorState.Finished, "g"), new IngestFileRow("o2.txt", "h", IngestCursorState.Finished, "g")]);
+            [new IngestFileRow("o1.txt", "h", IngestCursorState.Finished, "g", ""), new IngestFileRow("o2.txt", "h", IngestCursorState.Finished, "g", "")]);
         changes.Should().NotContain(c => c.Kind == ScopeChangeKind.Renamed);
     }
 
@@ -625,10 +625,10 @@ public sealed class Phase3WatchTests
             var opLog = new LocalOpLogWriter(null);
             var throwing = new ThrowFirstIngestService();
             var applier = new ScopeChangeApplier(cursors, throwing, opLog);
-            var reader = new DirectoryGrantedTextReader(skips);
+            var reader = IngestTestKit.CreateDirectoryReader(skips);
             var scan = new ForegroundScanService(scope, reader, cursors, applier);
             var watcher = new FakeFileScopeWatcherService();
-            var coordinator = new ScopeWatchCoordinator(watcher, scope, scan, applier, skips);
+            var coordinator = new ScopeWatchCoordinator(watcher, scope, scan, applier, skips, new FakeIdleDetectorService(), new FakeLocalContentProbe(), new RemoteFileSkipReport());
             try
             {
                 coordinator.Report(new ScopeChange(ScopeChangeKind.Created, first, null));
@@ -696,7 +696,7 @@ public sealed class Phase3WatchTests
         var applier = new ScopeChangeApplier(cursors, ingest, opLog);
         var reader = new EmptyReader();
         var scan = new ForegroundScanService(scope, reader, cursors, applier);
-        return new ScopeWatchCoordinator(watcher, scope, scan, applier, skips);
+        return new ScopeWatchCoordinator(watcher, scope, scan, applier, skips, new FakeIdleDetectorService(), new FakeLocalContentProbe(), new RemoteFileSkipReport());
     }
 
     private sealed class EmptyReader : IGrantedTextReader

@@ -1,4 +1,5 @@
 using System.Globalization;
+using Recall.Core.Faults;
 using Recall.Core.Indexing;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
@@ -12,10 +13,15 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
 {
     public const string CollectionName = "items_text";
     public const string EmbeddingField = "embedding";
+    public const string FtsKeyField = "fts_key";
     public const string RawTextField = "raw_text";
     public const string SourcePathField = "source_path";
     public const string FileNameField = "file_name";
     public const string ModifiedField = "modified_ms";
+    public const string PathLiveField = "path_live";
+    public const string EncoderHashField = "encoder_hash";
+    public const string GrantPathField = "grant_path";
+    public const string OrdinalField = "ordinal";
 
     private readonly string rootPath;
     private readonly IIndexPolicy indexPolicy;
@@ -38,6 +44,11 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
                 new ZVecFieldSchema { Name = SourcePathField, DataType = ZVecDataType.String },
                 new ZVecFieldSchema { Name = FileNameField, DataType = ZVecDataType.String },
                 new ZVecFieldSchema { Name = ModifiedField, DataType = ZVecDataType.String },
+                new ZVecFieldSchema { Name = PathLiveField, DataType = ZVecDataType.Int32 },
+                new ZVecFieldSchema { Name = EncoderHashField, DataType = ZVecDataType.String },
+                new ZVecFieldSchema { Name = GrantPathField, DataType = ZVecDataType.String },
+                new ZVecFieldSchema { Name = OrdinalField, DataType = ZVecDataType.Int32 },
+                new ZVecFieldSchema { Name = RawTextField, DataType = ZVecDataType.String },
             ],
             Vectors =
             [
@@ -56,7 +67,7 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
                 },
                 new ZVecVectorSchema
                 {
-                    Name = RawTextField,
+                    Name = FtsKeyField,
                     DataType = ZVecDataType.String,
                     Dimension = 0,
                     IndexParam = new ZVecFtsIndexParam
@@ -71,6 +82,10 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
         if (Directory.Exists(rootPath))
         {
             collection = factory.Open(rootPath);
+            if (!SchemaHasFtsKey(collection.Schema))
+            {
+                throw new RecallFaultException(RecallFault.VectorSchemaStale);
+            }
         }
         else
         {
@@ -98,12 +113,18 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
             {
                 [EmbeddingField] = insert.Vector512,
             },
+            sparseVectors: null,
             fields: new Dictionary<string, object>
             {
                 [SourcePathField] = insert.SourcePath,
                 [FileNameField] = insert.FileName,
+                [FtsKeyField] = insert.FoldedKey,
                 [RawTextField] = insert.RawNoteText,
                 [ModifiedField] = insert.ModifiedAt.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture),
+                [PathLiveField] = insert.PathLive ? 1 : 0,
+                [EncoderHashField] = insert.EncoderHash,
+                [GrantPathField] = insert.GrantPath,
+                [OrdinalField] = insert.Ordinal,
             });
 
         var result = collection.Insert(doc);
@@ -116,50 +137,129 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
         return true;
     }
 
+    public bool TryDelete(string contentId)
+    {
+        if (collection.Fetch(contentId, includeVector: false) is null)
+        {
+            return false;
+        }
+
+        var result = collection.Delete(contentId);
+        if (!result.IsSuccess)
+        {
+            return false;
+        }
+
+        knownIds.Remove(contentId);
+        return true;
+    }
+
+    public void Reconcile(IReadOnlyList<VectorLiveState> states)
+    {
+        foreach (var state in states)
+        {
+            var existing = collection.Fetch(state.ContentId, includeVector: false);
+            if (existing is null)
+            {
+                continue;
+            }
+
+            var fields = new Dictionary<string, object>(existing.Fields)
+            {
+                [PathLiveField] = state.PathLive ? 1 : 0,
+                [EncoderHashField] = state.EncoderHash,
+                [GrantPathField] = state.GrantPath,
+            };
+            var updated = ZVecDoc.Create(existing.Id, existing.DenseVectors, existing.SparseVectors, fields);
+            collection.Update(updated);
+        }
+    }
+
     public IReadOnlyList<TextSearchHit> Search(TextSearchRequest request, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var rankConstant = HybridFusion.RrfRankConstant;
         TextVectorIndexGuard.EnsureHybridQueryUsesRrf(rankConstant, indexPolicy);
-        var dense = new ZVecQuery
+        var topK = request.TopK;
+        var filter = string.IsNullOrWhiteSpace(request.Filter) ? null : request.Filter;
+        if (request.UseInDatabaseRrf)
         {
-            FieldName = EmbeddingField,
-            Vector = request.QueryVector512,
-            QueryParams = new ZVecHnswQueryParams { EfSearch = RecallIndexPolicy.TextHnswEfSearch },
-        };
-        var fts = new ZVecQuery
+            var dense = new ZVecQuery
+            {
+                FieldName = EmbeddingField,
+                Vector = request.QueryVector512,
+                QueryParams = new ZVecHnswQueryParams { EfSearch = RecallIndexPolicy.TextHnswEfSearch },
+            };
+            var fts = new ZVecQuery
+            {
+                FieldName = FtsKeyField,
+                Fts = new ZVecFtsQuery { QueryString = request.Query, DefaultOperator = ZVecFtsDefaultOperator.And },
+            };
+            var reranker = new ZVecRrfReranker { TopN = topK, RankConstant = rankConstant };
+            return MapDocsStatic(collection.Query([dense, fts], topk: topK, reranker: reranker, filter: filter, includeVector: false));
+        }
+
+        if (request.QueryVector512.Length > 0)
         {
-            FieldName = RawTextField,
+            var dense = new ZVecQuery
+            {
+                FieldName = EmbeddingField,
+                Vector = request.QueryVector512,
+                QueryParams = new ZVecHnswQueryParams { EfSearch = RecallIndexPolicy.TextHnswEfSearch },
+            };
+            return MapDocsStatic(collection.Query([dense], topk: topK, reranker: null, filter: filter, includeVector: false));
+        }
+
+        var ftsOnly = new ZVecQuery
+        {
+            FieldName = FtsKeyField,
             Fts = new ZVecFtsQuery { QueryString = request.Query, DefaultOperator = ZVecFtsDefaultOperator.And },
         };
+        return MapDocsStatic(collection.Query([ftsOnly], topk: topK, reranker: null, filter: filter, includeVector: false));
+    }
 
-        var reranker = new ZVecRrfReranker { TopN = request.TopK, RankConstant = rankConstant };
-        var docs = collection.Query([dense, fts], topk: request.TopK, reranker: reranker, filter: (string?)null, includeVector: false);
-
+    private static List<TextSearchHit> MapDocsStatic(IReadOnlyList<ZVecDoc> docs)
+    {
         var hits = new List<TextSearchHit>();
         foreach (var doc in docs)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var path = ReadField(doc, SourcePathField);
-            if (!IsUnderGrant(path, request.GrantedPaths))
-            {
-                continue;
-            }
-
             hits.Add(new TextSearchHit(
                 doc.Id,
-                path,
+                ReadField(doc, SourcePathField),
                 ReadField(doc, FileNameField),
                 ReadModified(doc),
                 TextMatchReason.DenseAndFullText,
-                doc.Score));
+                doc.Score,
+                ReadInt(doc, OrdinalField),
+                ReadField(doc, RawTextField),
+                ReadField(doc, GrantPathField)));
         }
 
         return hits;
     }
 
+    private static bool SchemaHasFtsKey(ZVecCollectionSchema? schema)
+    {
+        if (schema is null)
+        {
+            return false;
+        }
+
+        return schema.Vectors.Any(v => string.Equals(v.Name, FtsKeyField, StringComparison.Ordinal));
+    }
+
     private static string ReadField(ZVecDoc doc, string field) =>
         doc.Fields.TryGetValue(field, out var value) ? value?.ToString() ?? string.Empty : string.Empty;
+
+    private static int ReadInt(ZVecDoc doc, string field)
+    {
+        if (doc.Fields.TryGetValue(field, out var value) && int.TryParse(value?.ToString(), out var parsed))
+        {
+            return parsed;
+        }
+
+        return 0;
+    }
 
     private static DateTimeOffset ReadModified(ZVecDoc doc)
     {
@@ -170,11 +270,6 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
         }
 
         return DateTimeOffset.UnixEpoch;
-    }
-
-    private static bool IsUnderGrant(string path, IReadOnlySet<string> grantedPaths)
-    {
-        return grantedPaths.Any(grant => ScopeGrantPolicy.IsInsideGrant(grant, path));
     }
 
     public void Dispose()

@@ -7,6 +7,7 @@ namespace Recall.Benchmarks;
 public static class TextBenchmarkHost
 {
     public const string ModelDirectoryVariable = "RECALL_TEXT_MODEL_DIR";
+    public const string BenchHostVariable = "RECALL_BENCH_HOST";
 
     public static string? FindModelDirectory()
     {
@@ -26,13 +27,27 @@ public static class TextBenchmarkHost
         return directory;
     }
 
-    public static string LabelThisProcess()
+    public static string Label(bool androidOrIos, string? benchHost)
     {
-        if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
+        if (!androidOrIos)
+        {
+            return "desktop";
+        }
+
+        if (string.Equals(benchHost, "phone", StringComparison.OrdinalIgnoreCase))
         {
             return "phone";
         }
 
-        return "desktop";
+        return "emulator";
     }
+
+    public static string LabelThisProcess() =>
+        Label(OperatingSystem.IsAndroid() || OperatingSystem.IsIOS(), Environment.GetEnvironmentVariable(BenchHostVariable));
+
+    public static int PhoneLoadPassMilliseconds(double meanMilliseconds) =>
+        (int)Math.Round(meanMilliseconds * 1.1, 0, MidpointRounding.AwayFromZero);
+
+    public static bool PhoneHybridAndLoadMeetTheExit(string hostLabel, double hybridTop20Milliseconds, double loadMilliseconds) =>
+        string.Equals(hostLabel, "phone", StringComparison.OrdinalIgnoreCase) && hybridTop20Milliseconds <= 60;
 }

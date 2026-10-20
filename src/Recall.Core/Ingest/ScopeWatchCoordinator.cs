@@ -11,6 +11,9 @@ public sealed class ScopeWatchCoordinator : IScopeChangeSink, IDisposable
     private readonly ForegroundScanService scan;
     private readonly ScopeChangeApplier applier;
     private readonly IUserSkipStore skips;
+    private readonly IIdleDetectorService idle;
+    private readonly ILocalContentProbe contentProbe;
+    private readonly IRemoteFileSkipReport remoteSkip;
     private readonly ScopeChangeBuffer buffer = new();
     private readonly SemaphoreSlim wake = new(0, 1);
     private CancellationTokenSource? loopCts;
@@ -22,13 +25,19 @@ public sealed class ScopeWatchCoordinator : IScopeChangeSink, IDisposable
         IScopeManagerService scope,
         ForegroundScanService scan,
         ScopeChangeApplier applier,
-        IUserSkipStore skips)
+        IUserSkipStore skips,
+        IIdleDetectorService idle,
+        ILocalContentProbe contentProbe,
+        IRemoteFileSkipReport remoteSkip)
     {
         this.watcher = watcher;
         this.scope = scope;
         this.scan = scan;
         this.applier = applier;
         this.skips = skips;
+        this.idle = idle;
+        this.contentProbe = contentProbe;
+        this.remoteSkip = remoteSkip;
     }
 
     public ScopeChangeBuffer Buffer => buffer;
@@ -103,6 +112,11 @@ public sealed class ScopeWatchCoordinator : IScopeChangeSink, IDisposable
             buffer.AcknowledgeRescan();
         }
 
+        if (!IdleIngestGate.ShouldRun(idle.Current))
+        {
+            return;
+        }
+
         var changes = buffer.Drain();
         foreach (var change in changes)
         {
@@ -143,7 +157,7 @@ public sealed class ScopeWatchCoordinator : IScopeChangeSink, IDisposable
         GrantedTextDocument? document = null;
         if (grant is not null && !string.IsNullOrWhiteSpace(change.Path))
         {
-            document = await FilesystemScopeFileReader.TryReadAsync(grant, change.Path, skips, cancellationToken).ConfigureAwait(false);
+            document = await FilesystemScopeFileReader.TryReadAsync(grant, change.Path, skips, cancellationToken, contentProbe, remoteSkip).ConfigureAwait(false);
         }
 
         await applier.ApplyAsync(change, grant, document, cancellationToken).ConfigureAwait(false);

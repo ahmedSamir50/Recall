@@ -6,13 +6,21 @@ public sealed record TextIndexInsert(
     string FileName,
     string RawNoteText,
     ReadOnlyMemory<float> Vector512,
-    DateTimeOffset ModifiedAt);
+    DateTimeOffset ModifiedAt,
+    string EncoderHash,
+    bool PathLive,
+    string GrantPath,
+    string FoldedKey,
+    int Ordinal);
 
 public sealed record TextSearchRequest(
     string Query,
     ReadOnlyMemory<float> QueryVector512,
     IReadOnlySet<string> GrantedPaths,
-    int TopK = 20);
+    string EncoderHash,
+    string? Filter,
+    bool UseInDatabaseRrf,
+    int TopK = 64);
 
 public sealed record TextSearchHit(
     string ContentId,
@@ -21,4 +29,9 @@ public sealed record TextSearchHit(
     DateTimeOffset ModifiedAt,
     TextMatchReason MatchReason,
     double Score,
+    int Ordinal = 0,
+    string RawNote = "",
+    string GrantPath = "",
     bool SourceMissing = false);
+
+public sealed record VectorLiveState(string ContentId, bool PathLive, string EncoderHash, string GrantPath);

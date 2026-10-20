@@ -59,6 +59,13 @@ public interface IVideoFrameSamplerService
 {
 }
 
+public enum IdleSignal
+{
+    Idle = 0,
+    Busy = 1,
+}
+
 public interface IIdleDetectorService
 {
+    IdleSignal Current { get; }
 }

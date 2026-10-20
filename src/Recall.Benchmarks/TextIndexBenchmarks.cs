@@ -1,5 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using Recall.Adapters.Indexing;
+using Recall.Core.Indexing;
 using Recall.Core.Search;
 using Recall.Core.Text;
 using Recall.Core.Vocabulary;
@@ -25,13 +26,12 @@ public class TextIndexBenchmarks
         {
             var vector = new float[512];
             vector[0] = 1f;
-            index.TryInsert(new TextIndexInsert(
+            index.TryInsert(BenchInsert(
                 ContentIdBuilder.Build(Modality.Text, ContentIdBuilder.HashSourceContent("bench-" + i), StoredWidth.W512, 0),
                 Path.Combine(notesDirectory, "note-" + i + ".txt"),
-                "note-" + i + ".txt",
                 "benchmark note " + i,
                 vector,
-                DateTimeOffset.UtcNow));
+                notesDirectory));
         }
 
         nextId = 1000;
@@ -60,13 +60,12 @@ public class TextIndexBenchmarks
         var id = nextId++;
         var vector = new float[512];
         vector[0] = 1f;
-        return index.TryInsert(new TextIndexInsert(
+        return index.TryInsert(BenchInsert(
             ContentIdBuilder.Build(Modality.Text, ContentIdBuilder.HashSourceContent("bench-" + id), StoredWidth.W512, 0),
             Path.Combine(notesDirectory, "note-" + id + ".txt"),
-            "note-" + id + ".txt",
             "benchmark note " + id,
             vector,
-            DateTimeOffset.UtcNow));
+            notesDirectory));
     }
 
     [Benchmark]
@@ -74,11 +73,30 @@ public class TextIndexBenchmarks
     {
         var query = new float[512];
         query[0] = 1f;
+        var grants = new HashSet<string>([notesDirectory], StringComparer.OrdinalIgnoreCase);
+        const string hash = "bench-hash";
         var hits = index.Search(new TextSearchRequest(
             "benchmark note",
             query,
-            new HashSet<string>([notesDirectory], StringComparer.OrdinalIgnoreCase),
-            TopK: 20));
+            grants,
+            hash,
+            TextSearchFilter.Build(grants, hash),
+            true,
+            RecallIndexCaps.FileCap));
         return hits.Count;
     }
+
+    private static TextIndexInsert BenchInsert(string contentId, string path, string raw, float[] vector, string grantPath) =>
+        new(
+            contentId,
+            path,
+            Path.GetFileName(path),
+            raw,
+            vector,
+            DateTimeOffset.UtcNow,
+            "bench-hash",
+            true,
+            grantPath,
+            raw,
+            0);
 }

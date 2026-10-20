@@ -22,15 +22,15 @@ public sealed class Phase3CursorTests
     public void Decide_NullReadingMissingAndChangedHash_Read()
     {
         IngestCursorPolicy.Decide(null, "h1").Should().Be(IngestCursorDecision.Read);
-        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Reading, "g"), "h1").Should().Be(IngestCursorDecision.Read);
-        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Missing, "g"), "h1").Should().Be(IngestCursorDecision.Read);
-        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Finished, "g"), "h2").Should().Be(IngestCursorDecision.Read);
+        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Reading, "g", ""), "h1").Should().Be(IngestCursorDecision.Read);
+        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Missing, "g", ""), "h1").Should().Be(IngestCursorDecision.Read);
+        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Finished, "g", ""), "h2").Should().Be(IngestCursorDecision.Read);
     }
 
     [Fact]
     public void Decide_FinishedSameHash_Skip()
     {
-        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Finished, "g"), "h1").Should().Be(IngestCursorDecision.Skip);
+        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Finished, "g", ""), "h1").Should().Be(IngestCursorDecision.Skip);
     }
 
     [Fact]
@@ -65,18 +65,18 @@ public sealed class Phase3CursorTests
     }
 
     [Fact]
-    public void MarkFinished_DuplicateChunkId_RollsBackToReading()
+    public void SecondPath_SameBytes_FinishesAndBothPathsHit()
     {
         var db = NewTempDb();
         try
         {
             var store = new SqliteIngestCursorStore(db);
             store.MarkReading("a.txt", "h1", "g");
-            store.MarkFinished("a.txt", "h1", "g", [("id1", 0)]);
+            store.FinishPath("a.txt", "h1", "g", "enc", [new ChunkWrite("id1", 0)]);
             store.MarkReading("b.txt", "h2", "g");
-            Action act = () => store.MarkFinished("b.txt", "h2", "g", [("id1", 0)]);
-            act.Should().Throw<Exception>();
-            store.GetFile("b.txt")!.State.Should().Be(IngestCursorState.Reading);
+            store.FinishPath("b.txt", "h2", "g", "enc", [new ChunkWrite("id1", 0)]);
+            store.GetFile("b.txt")!.State.Should().Be(IngestCursorState.Finished);
+            store.ListLiveAliases("id1").Select(a => a.Path).Should().BeEquivalentTo("a.txt", "b.txt");
         }
         finally
         {
@@ -99,7 +99,7 @@ public sealed class Phase3CursorTests
         {
             var store = new SqliteIngestCursorStore(db);
             store.MarkReading("a.txt", "h1", "g");
-            store.MarkFinished("a.txt", "h1", "g", [("id1", 0)]);
+            store.FinishPath("a.txt", "h1", "g", "enc", [new ChunkWrite("id1", 0)]);
             var row = store.GetFile("a.txt");
             IngestCursorPolicy.Decide(row, "h1").Should().Be(IngestCursorDecision.Skip);
         }
@@ -124,8 +124,8 @@ public sealed class Phase3CursorTests
         {
             var store = new SqliteIngestCursorStore(db);
             store.MarkReading("a.txt", "h1", "g");
-            store.MarkFinished("a.txt", "h1", "g", [("id1", 0)]);
-            store.MarkFinished("a.txt", "h1", "g", [("id1", 2)]);
+            store.FinishPath("a.txt", "h1", "g", "enc", [new ChunkWrite("id1", 0)]);
+            store.FinishPath("a.txt", "h1", "g", "enc", [new ChunkWrite("id1", 2)]);
             var chunks = store.ListChunks("a.txt");
             chunks.Should().HaveCount(1);
             chunks[0].Retired.Should().BeFalse();
@@ -179,7 +179,7 @@ public sealed class Phase3CursorTests
         {
             var store = new SqliteIngestCursorStore(db);
             store.MarkReading("old.txt", "h1", "g");
-            store.MarkFinished("old.txt", "h1", "g", [("id1", 0), ("id2", 1)]);
+            store.FinishPath("old.txt", "h1", "g", "enc", [new ChunkWrite("id1", 0), new ChunkWrite("id2", 1)]);
             store.RenamePath("old.txt", "new.txt");
             store.GetFile("old.txt").Should().BeNull();
             store.GetFile("new.txt").Should().NotBeNull();
@@ -207,7 +207,7 @@ public sealed class Phase3CursorTests
         {
             var store = new SqliteIngestCursorStore(db);
             store.MarkReading("a.txt", "h1", "g");
-            store.MarkFinished("a.txt", "h1", "g", [("id1", 0)]);
+            store.FinishPath("a.txt", "h1", "g", "enc", [new ChunkWrite("id1", 0)]);
             store.MarkMissing("a.txt");
             store.GetFile("a.txt")!.State.Should().Be(IngestCursorState.Missing);
             var chunks = store.ListChunks("a.txt");
@@ -235,7 +235,7 @@ public sealed class Phase3CursorTests
         {
             var store = new SqliteIngestCursorStore(db);
             store.MarkReading("a.txt", "h1", "g");
-            store.MarkFinished("a.txt", "h1", "g", [("id1", 0)]);
+            store.FinishPath("a.txt", "h1", "g", "enc", [new ChunkWrite("id1", 0)]);
             store.RetirePath("a.txt");
             store.ListChunks("a.txt")[0].Retired.Should().BeTrue();
         }
@@ -320,10 +320,8 @@ public sealed class Phase3CursorTests
         var encoder = new FakeTextEmbeddingEncoder();
         var index = new FakeTextVectorIndex();
         var oplogDir = Path.Combine(Path.GetTempPath(), "recall-oplog-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(oplogDir);
-        var engine = new TextIngestEngine(encoder, index, new FakeIndexPolicy(), new FakeTextTokenCounter(), new LocalOpLogWriter(oplogDir));
-        var cursors = new FakeIngestCursorStore();
-        var service = new GrantedTextIngestService(scope, reader, engine, cursors);
+        var (engine, opLog, cursors) = IngestTestKit.CreateEngineParts(encoder, index, oplogDir);
+        var service = IngestTestKit.CreateGrantedService(scope, reader, engine, cursors, index, opLog);
         return (scope, reader, encoder, index, cursors, service, oplogDir);
     }
 
@@ -409,9 +407,8 @@ public sealed class Phase3CursorTests
         Directory.CreateDirectory(oplogDir);
         try
         {
-            var engine = new TextIngestEngine(throwingEncoder, index, new FakeIndexPolicy(), new FakeTextTokenCounter(), new LocalOpLogWriter(oplogDir));
-            var cursors = new FakeIngestCursorStore();
-            var service = new GrantedTextIngestService(scope, reader, engine, cursors);
+            var (engine, opLog, cursors) = IngestTestKit.CreateEngineParts(throwingEncoder, index, oplogDir);
+            var service = IngestTestKit.CreateGrantedService(scope, reader, engine, cursors, index, opLog);
             var grant = new ScopeFolderGrant(@"D:\Known", "grant", GrantFileKinds.All);
             var document = new GrantedTextDocument(@"D:\Known\a.txt", "a.txt", "hello", DateTimeOffset.UtcNow);
             Func<Task> act = () => service.IngestDocumentAsync(grant, document, TestContext.Current.CancellationToken);
@@ -437,9 +434,8 @@ public sealed class Phase3CursorTests
         Directory.CreateDirectory(oplogDir);
         try
         {
-            var engine = new TextIngestEngine(failOnce, index, new FakeIndexPolicy(), new FakeTextTokenCounter(), new LocalOpLogWriter(oplogDir));
-            var cursors = new FakeIngestCursorStore();
-            var service = new GrantedTextIngestService(scope, reader, engine, cursors);
+            var (engine, opLog, cursors) = IngestTestKit.CreateEngineParts(failOnce, index, oplogDir);
+            var service = IngestTestKit.CreateGrantedService(scope, reader, engine, cursors, index, opLog);
             var grant = new ScopeFolderGrant(@"D:\Known", "grant", GrantFileKinds.All);
             var document = new GrantedTextDocument(@"D:\Known\a.txt", "a.txt", "hello", DateTimeOffset.UtcNow);
             Func<Task> first = () => service.IngestDocumentAsync(grant, document, TestContext.Current.CancellationToken);
@@ -498,7 +494,7 @@ public sealed class Phase3CursorTests
     {
         var parts = CreateApplier();
         parts.Cursors.MarkReading("a.txt", "h1", "g");
-        parts.Cursors.MarkFinished("a.txt", "h1", "g", [("id1", 0)]);
+        parts.Cursors.FinishPath("a.txt", "h1", "g", "enc", [new ChunkWrite("id1", 0)]);
         await parts.Applier.ApplyAsync(new ScopeChange(ScopeChangeKind.Deleted, "a.txt", null), new ScopeFolderGrant("g", "g", GrantFileKinds.All), null, TestContext.Current.CancellationToken);
         parts.OpLog.Entries.Should().Contain(e => e.Operation == Recall.Core.Vocabulary.OpLogOperation.Delete && e.ContentId == "id1");
         parts.Ingest.IngestDocumentCalls.Should().Be(0);
@@ -510,7 +506,7 @@ public sealed class Phase3CursorTests
     {
         var parts = CreateApplier();
         parts.Cursors.MarkReading("a.txt", "h1", "g");
-        parts.Cursors.MarkFinished("a.txt", "h1", "g", [("id1", 0)]);
+        parts.Cursors.FinishPath("a.txt", "h1", "g", "enc", [new ChunkWrite("id1", 0)]);
         parts.Cursors.MarkMissing("a.txt");
         var before = parts.OpLog.Entries.Count;
         await parts.Applier.ApplyAsync(new ScopeChange(ScopeChangeKind.Deleted, "a.txt", null), new ScopeFolderGrant("g", "g", GrantFileKinds.All), null, TestContext.Current.CancellationToken);
@@ -534,7 +530,7 @@ public sealed class Phase3CursorTests
         var text = "hello";
         var hash = ContentIdBuilder.HashSourceContent(text);
         parts.Cursors.MarkReading("old.txt", hash, "g");
-        parts.Cursors.MarkFinished("old.txt", hash, "g", [("id1", 0)]);
+        parts.Cursors.FinishPath("old.txt", hash, "g", "enc", [new ChunkWrite("id1", 0)]);
         var grant = new ScopeFolderGrant("g", "g", GrantFileKinds.All);
         var document = new GrantedTextDocument("new.txt", "new.txt", text, DateTimeOffset.UtcNow);
         await parts.Applier.ApplyAsync(new ScopeChange(ScopeChangeKind.Renamed, "new.txt", "old.txt"), grant, document, TestContext.Current.CancellationToken);
@@ -548,7 +544,7 @@ public sealed class Phase3CursorTests
         var parts = CreateApplier();
         var oldHash = ContentIdBuilder.HashSourceContent("old");
         parts.Cursors.MarkReading("old.txt", oldHash, "g");
-        parts.Cursors.MarkFinished("old.txt", oldHash, "g", [("id1", 0)]);
+        parts.Cursors.FinishPath("old.txt", oldHash, "g", "enc", [new ChunkWrite("id1", 0)]);
         var grant = new ScopeFolderGrant("g", "g", GrantFileKinds.All);
         var document = new GrantedTextDocument("new.txt", "new.txt", "new text", DateTimeOffset.UtcNow);
         await parts.Applier.ApplyAsync(new ScopeChange(ScopeChangeKind.Renamed, "new.txt", "old.txt"), grant, document, TestContext.Current.CancellationToken);
@@ -572,7 +568,7 @@ public sealed class Phase3CursorTests
     {
         var parts = CreateApplier();
         parts.Cursors.MarkReading("old.txt", "h1", "g");
-        parts.Cursors.MarkFinished("old.txt", "h1", "g", [("id1", 0)]);
+        parts.Cursors.FinishPath("old.txt", "h1", "g", "enc", [new ChunkWrite("id1", 0)]);
         await parts.Applier.ApplyAsync(new ScopeChange(ScopeChangeKind.Renamed, "new.txt", "old.txt"), new ScopeFolderGrant("g", "g", GrantFileKinds.All), null, TestContext.Current.CancellationToken);
         parts.Cursors.GetFile("old.txt")!.State.Should().Be(IngestCursorState.Missing);
     }
@@ -658,13 +654,15 @@ public sealed class Phase3CursorTests
         }
     }
 
+    private static HashSet<string> GrantPathSet(params string[] paths) =>
+        paths.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
     [Fact]
     public void Apply_RetiredChunk_DropsHit()
     {
-        var hit = new TextSearchHit("id1", "old.txt", "old.txt", DateTimeOffset.UtcNow, TextMatchReason.DenseAndFullText, 1.0);
+        var hit = new TextSearchHit("id1", "old.txt", "old.txt", DateTimeOffset.UtcNow, TextMatchReason.DenseAndFullText, 1.0, GrantPath: "g");
         var chunk = new IngestChunkRow("id1", "old.txt", 0, false, true);
-        var grants = new List<ScopeFolderGrant> { new("g", "g", GrantFileKinds.All) };
-        SearchHitMarks.Apply(hit, chunk, grants).Should().BeNull();
+        SearchHitMarks.Apply(hit, chunk, GrantPathSet("g")).Should().BeNull();
     }
 
     [Fact]
@@ -676,10 +674,9 @@ public sealed class Phase3CursorTests
         {
             var file = Path.Combine(root, "a.txt");
             File.WriteAllText(file, "x");
-            var hit = new TextSearchHit("id1", "stored.txt", "a.txt", DateTimeOffset.UtcNow, TextMatchReason.DenseAndFullText, 1.0);
+            var hit = new TextSearchHit("id1", "stored.txt", "a.txt", DateTimeOffset.UtcNow, TextMatchReason.DenseAndFullText, 1.0, GrantPath: root);
             var chunk = new IngestChunkRow("id1", file, 0, true, false);
-            var grants = new List<ScopeFolderGrant> { new(root, "root", GrantFileKinds.All) };
-            var applied = SearchHitMarks.Apply(hit, chunk, grants);
+            var applied = SearchHitMarks.Apply(hit, chunk, GrantPathSet(root));
             applied.Should().NotBeNull();
             applied!.SourceMissing.Should().BeTrue();
             applied.SourcePath.Should().Be(file);
@@ -699,10 +696,9 @@ public sealed class Phase3CursorTests
         {
             var file = Path.Combine(root, "new.txt");
             File.WriteAllText(file, "x");
-            var hit = new TextSearchHit("id1", "old.txt", "old.txt", DateTimeOffset.UtcNow, TextMatchReason.DenseAndFullText, 1.0);
+            var hit = new TextSearchHit("id1", "old.txt", "old.txt", DateTimeOffset.UtcNow, TextMatchReason.DenseAndFullText, 1.0, GrantPath: root);
             var chunk = new IngestChunkRow("id1", file, 0, false, false);
-            var grants = new List<ScopeFolderGrant> { new(root, "root", GrantFileKinds.All) };
-            SearchHitMarks.Apply(hit, chunk, grants)!.SourcePath.Should().Be(file);
+            SearchHitMarks.Apply(hit, chunk, GrantPathSet(root))!.SourcePath.Should().Be(file);
         }
         finally
         {
@@ -713,20 +709,16 @@ public sealed class Phase3CursorTests
     [Fact]
     public void Apply_PathOutsideGrant_DropsHit()
     {
-        var hit = new TextSearchHit("id1", "old.txt", "old.txt", DateTimeOffset.UtcNow, TextMatchReason.DenseAndFullText, 1.0);
+        var hit = new TextSearchHit("id1", "old.txt", "old.txt", DateTimeOffset.UtcNow, TextMatchReason.DenseAndFullText, 1.0, GrantPath: "other");
         var chunk = new IngestChunkRow("id1", @"D:\Other\a.txt", 0, false, false);
-        var grants = new List<ScopeFolderGrant> { new(@"D:\Known", "known", GrantFileKinds.All) };
-        SearchHitMarks.Apply(hit, chunk, grants).Should().BeNull();
+        SearchHitMarks.Apply(hit, chunk, GrantPathSet(@"D:\Known")).Should().BeNull();
     }
 
     [Fact]
-    public void Apply_NoChunk_KeepsHit()
+    public void Apply_NoLiveAlias_DropsHit()
     {
-        var hit = new TextSearchHit("id1", "a.txt", "a.txt", DateTimeOffset.UtcNow, TextMatchReason.DenseAndFullText, 1.0);
-        var grants = new List<ScopeFolderGrant> { new("g", "g", GrantFileKinds.All) };
-        var applied = SearchHitMarks.Apply(hit, null, grants);
-        applied.Should().NotBeNull();
-        applied!.SourceMissing.Should().BeFalse();
+        var hit = new TextSearchHit("id1", "a.txt", "a.txt", DateTimeOffset.UtcNow, TextMatchReason.DenseAndFullText, 1.0, GrantPath: "g");
+        SearchHitMarks.Apply(hit, null, GrantPathSet("g")).Should().BeNull();
     }
 
     [Fact]

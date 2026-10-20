@@ -108,7 +108,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
                 snapshot = snapshot with { Phase = TextModelDownloadPhase.Ready, Fault = null };
             }
 
-            await ingest.IngestGrantedTextAsync(token).ConfigureAwait(false);
+            await TextModelReadyIngest.ReadGrantsAsync(TextModelDownloadPhase.Ready, ingest, token).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {

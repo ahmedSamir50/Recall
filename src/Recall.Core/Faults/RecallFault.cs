@@ -16,4 +16,5 @@ public enum RecallFault
     DownloadTransport = 12,
     TokenizerNativeUnsupported = 13,
     RrfRankConstant = 14,
+    VectorSchemaStale = 20,
 }

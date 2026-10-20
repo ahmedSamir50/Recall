@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Recall.Core.Ports;
+using Recall.Core.Scope;
 
 namespace Recall.UI.Pages;
 
@@ -14,6 +15,12 @@ public partial class Home
 
     [Inject]
     private IIndexNowService IndexNow { get; set; } = null!;
+
+    [Inject]
+    private IRemoteFileSkipReport RemoteSkips { get; set; } = null!;
+
+    [Inject]
+    private IDatasetSkipReport DatasetSkips { get; set; } = null!;
 
     private string? query;
 
@@ -52,6 +59,8 @@ public partial class Home
 
         try
         {
+            RemoteSkips.Clear();
+            DatasetSkips.Clear();
             var hits = await Search.FindAsync(query!.Trim(), Ui.Current.Grants);
             view = TextFindSession.Build(hits, Opener.Exists);
             faultKey = null;

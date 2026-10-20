@@ -53,6 +53,14 @@
         else
         {
             <section class="flex flex-col gap-2 max-w-640 mx-auto">
+                @if (RemoteSkips.SkippedCount > 0)
+                {
+                    <p class="ink2 text-13"><bdi class="ltr">@T("Search_SkipRemoteLine")</bdi></p>
+                }
+                @foreach (var folder in DatasetSkips.Paths)
+                {
+                    <p class="ink2 text-13"><bdi class="ltr">@T("Search_SkipDatasetLine") @folder</bdi></p>
+                }
                 @foreach (var card in view.Immediate)
                 {
                     <article class="g2 rounded-2xl p-4">
@@ -60,6 +68,10 @@
                         <h2 class="font-semibold text-16 mb-1">@card.FileName</h2>
                         <p class="ink2 text-13 mb-1"><bdi class="ltr">@card.LocalTime</bdi></p>
                         <p class="ink2 text-13 mb-2">@T(card.ReasonKey)</p>
+                        @if (!string.IsNullOrWhiteSpace(card.RawNote))
+                        {
+                            <p class="ink2 text-13 mb-2">@card.RawNote</p>
+                        }
                         @if (card.Unavailable)
                         {
                             <p class="font-medium text-14">@T("Home_UnavailTitle")</p>
@@ -77,6 +89,10 @@
                         <h2 class="font-semibold text-16 mb-1">@card.FileName</h2>
                         <p class="ink2 text-13 mb-1"><bdi class="ltr">@card.LocalTime</bdi></p>
                         <p class="ink2 text-13 mb-2">@T(card.ReasonKey)</p>
+                        @if (!string.IsNullOrWhiteSpace(card.RawNote))
+                        {
+                            <p class="ink2 text-13 mb-2">@card.RawNote</p>
+                        }
                         @if (card.Unavailable)
                         {
                             <p class="font-medium text-14">@T("Home_UnavailTitle")</p>

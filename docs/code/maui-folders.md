@@ -187,4 +187,51 @@ public sealed partial class MauiGrantedTextReader
 No branch.
 
 
+## src/Recall.Maui/Platform/Files/MauiIdleDetector.Default.cs
+
+```csharp
+namespace Recall.Maui.Platform.Files;
+public type MauiIdleDetector
+MauiIdleDetector
+No branch.
+``` 
+
+## src/Recall.Maui/Platform/Files/MauiIdleDetector.cs
+
+```csharp
+namespace Recall.Maui.Platform.Files;
+public type MauiIdleDetector
+MauiIdleDetector
+public IdleSignal Current => ReadCurrent();
+No branch.
+``` 
+
+## src/Recall.Maui/Platform/Files/MauiLocalContentProbe.Default.cs
+
+```csharp
+namespace Recall.Maui.Platform.Files;
+public type MauiLocalContentProbe
+MauiLocalContentProbe
+No branch.
+``` 
+
+## src/Recall.Maui/Platform/Files/MauiLocalContentProbe.Windows.cs
+
+```csharp
+namespace Recall.Maui.Platform.Files;
+public type MauiLocalContentProbe
+MauiLocalContentProbe
+if (string.IsNullOrWhiteSpace(path))
+if (!File.Exists(path) && !Directory.Exists(path))
+``` 
+
+## src/Recall.Maui/Platform/Files/MauiLocalContentProbe.cs
+
+```csharp
+namespace Recall.Maui.Platform.Files;
+public type MauiLocalContentProbe
+MauiLocalContentProbe
+public LocalContentState Probe(string path) => ProbePlatform(path);
+No branch.
+``` 
 

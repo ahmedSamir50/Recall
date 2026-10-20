@@ -220,13 +220,9 @@ public sealed class Phase3GrantTests
         var grantPath = store.List()[0].Path;
         var cursors = new FakeIngestCursorStore();
         var reader = new EmptyReader();
-        var engine = new Recall.Core.Text.TextIngestEngine(
-            new FakeTextEmbeddingEncoder(),
-            new FakeTextVectorIndex(),
-            new FakeIndexPolicy(),
-            new FakeTextTokenCounter(),
-            new Recall.Core.Sync.LocalOpLogWriter(null));
-        var ingest = new GrantedTextIngestService(scope, reader, engine, cursors);
+        var index = new FakeTextVectorIndex();
+        var (engine, opLog, _) = IngestTestKit.CreateEngineParts(new FakeTextEmbeddingEncoder(), index, null);
+        var ingest = IngestTestKit.CreateGrantedService(scope, reader, engine, cursors, index, opLog);
         var service = new IndexNowService(scope, cursors, ingest);
         service.ListOffers().Should().HaveCount(1);
         await service.IndexAsync(grantPath, TestContext.Current.CancellationToken);

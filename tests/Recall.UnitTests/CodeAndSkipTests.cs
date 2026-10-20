@@ -1097,7 +1097,7 @@ public sealed class CodeAndSkipTests
     {
         // Arrange
         var root = NewTempRoot();
-        var reader = new DirectoryGrantedTextReader(new FakeUserSkipStore());
+        var reader = IngestTestKit.CreateDirectoryReader();
         var grant = new ScopeFolderGrant(Path.Combine(root, "missing"), "missing", GrantFileKinds.All);
 
         // Act
@@ -1120,7 +1120,7 @@ public sealed class CodeAndSkipTests
         {
             Directory.CreateDirectory(root);
             await File.WriteAllTextAsync(Path.Combine(root, "notes.txt"), "hello", TestContext.Current.CancellationToken);
-            var reader = new DirectoryGrantedTextReader(new FakeUserSkipStore());
+            var reader = IngestTestKit.CreateDirectoryReader();
             var grant = new ScopeFolderGrant(root, "root", GrantFileKinds.All);
             using var cancelled = new CancellationTokenSource();
             await cancelled.CancelAsync();
@@ -1152,7 +1152,7 @@ public sealed class CodeAndSkipTests
         {
             Directory.CreateDirectory(root);
             await File.WriteAllTextAsync(Path.Combine(root, "Note.cs"), "class Note {}", TestContext.Current.CancellationToken);
-            var reader = new DirectoryGrantedTextReader(new FakeUserSkipStore());
+            var reader = IngestTestKit.CreateDirectoryReader();
             var grant = new ScopeFolderGrant(root, "root", GrantFileKinds.All);
 
             // Act
@@ -1181,7 +1181,7 @@ public sealed class CodeAndSkipTests
         {
             Directory.CreateDirectory(root);
             await File.WriteAllTextAsync(Path.Combine(root, "Note.cs"), "class Note {}", TestContext.Current.CancellationToken);
-            var reader = new DirectoryGrantedTextReader(new FakeUserSkipStore());
+            var reader = IngestTestKit.CreateDirectoryReader();
             var grant = new ScopeFolderGrant(root, "root", GrantFileKinds.Text);
 
             // Act
@@ -1209,7 +1209,7 @@ public sealed class CodeAndSkipTests
         {
             Directory.CreateDirectory(root);
             await File.WriteAllTextAsync(Path.Combine(root, "notes.txt"), "hello", TestContext.Current.CancellationToken);
-            var reader = new DirectoryGrantedTextReader(new FakeUserSkipStore());
+            var reader = IngestTestKit.CreateDirectoryReader();
             var grant = new ScopeFolderGrant(root, "root", GrantFileKinds.Code);
 
             // Act
@@ -1237,7 +1237,7 @@ public sealed class CodeAndSkipTests
         {
             Directory.CreateDirectory(root);
             await File.WriteAllTextAsync(Path.Combine(root, ".env"), "KEY=1", TestContext.Current.CancellationToken);
-            var reader = new DirectoryGrantedTextReader(new FakeUserSkipStore());
+            var reader = IngestTestKit.CreateDirectoryReader();
             var grant = new ScopeFolderGrant(root, "root", GrantFileKinds.All);
 
             // Act
@@ -1265,7 +1265,7 @@ public sealed class CodeAndSkipTests
         {
             Directory.CreateDirectory(root);
             await File.WriteAllTextAsync(Path.Combine(root, "data.db"), "x", TestContext.Current.CancellationToken);
-            var reader = new DirectoryGrantedTextReader(new FakeUserSkipStore());
+            var reader = IngestTestKit.CreateDirectoryReader();
             var grant = new ScopeFolderGrant(root, "root", GrantFileKinds.All);
 
             // Act
@@ -1294,7 +1294,7 @@ public sealed class CodeAndSkipTests
             Directory.CreateDirectory(root);
             await File.WriteAllTextAsync(Path.Combine(root, ".gitignore"), "*.txt\n", TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(Path.Combine(root, "notes.txt"), "hello", TestContext.Current.CancellationToken);
-            var reader = new DirectoryGrantedTextReader(new FakeUserSkipStore());
+            var reader = IngestTestKit.CreateDirectoryReader();
             var grant = new ScopeFolderGrant(root, "root", GrantFileKinds.All);
 
             // Act
@@ -1323,7 +1323,7 @@ public sealed class CodeAndSkipTests
             Directory.CreateDirectory(root);
             await File.WriteAllTextAsync(Path.Combine(root, ".gitignore"), "*.txt\n!keep.txt\n", TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(Path.Combine(root, "keep.txt"), "hello", TestContext.Current.CancellationToken);
-            var reader = new DirectoryGrantedTextReader(new FakeUserSkipStore());
+            var reader = IngestTestKit.CreateDirectoryReader();
             var grant = new ScopeFolderGrant(root, "root", GrantFileKinds.All);
 
             // Act
@@ -1353,7 +1353,7 @@ public sealed class CodeAndSkipTests
             Directory.CreateDirectory(root);
             await File.WriteAllTextAsync(Path.Combine(root, ".gitignore"), "!.env\n", TestContext.Current.CancellationToken);
             await File.WriteAllTextAsync(Path.Combine(root, ".env"), "KEY=1", TestContext.Current.CancellationToken);
-            var reader = new DirectoryGrantedTextReader(new FakeUserSkipStore());
+            var reader = IngestTestKit.CreateDirectoryReader();
             var grant = new ScopeFolderGrant(root, "root", GrantFileKinds.All);
 
             // Act
@@ -1382,7 +1382,7 @@ public sealed class CodeAndSkipTests
             var nested = Path.Combine(root, "node_modules");
             Directory.CreateDirectory(nested);
             await File.WriteAllTextAsync(Path.Combine(nested, "a.cs"), "class A {}", TestContext.Current.CancellationToken);
-            var reader = new DirectoryGrantedTextReader(new FakeUserSkipStore());
+            var reader = IngestTestKit.CreateDirectoryReader();
             var grant = new ScopeFolderGrant(root, "root", GrantFileKinds.All);
 
             // Act
@@ -1413,7 +1413,7 @@ public sealed class CodeAndSkipTests
             var store = new FakeUserSkipStore();
             var service = new UserSkipService(store);
             service.TryAdd(UserSkipKind.Extension, ".txt");
-            var reader = new DirectoryGrantedTextReader(store);
+            var reader = IngestTestKit.CreateDirectoryReader(store);
             var grant = new ScopeFolderGrant(root, "root", GrantFileKinds.All);
 
             // Act
@@ -1442,7 +1442,7 @@ public sealed class CodeAndSkipTests
             var nested = Path.Combine(root, ".github");
             Directory.CreateDirectory(nested);
             await File.WriteAllTextAsync(Path.Combine(nested, "a.cs"), "class A {}", TestContext.Current.CancellationToken);
-            var reader = new DirectoryGrantedTextReader(new FakeUserSkipStore());
+            var reader = IngestTestKit.CreateDirectoryReader();
             var grant = new ScopeFolderGrant(root, "root", GrantFileKinds.All);
 
             // Act
@@ -1468,17 +1468,21 @@ public sealed class CodeAndSkipTests
         // Arrange
         var encoder = new FakeTextEmbeddingEncoder();
         var index = new FakeTextVectorIndex();
-        var policy = new FakeIndexPolicy();
-        var counter = new FakeTextTokenCounter();
         var oplogDir = NewTempRoot();
         try
         {
             Directory.CreateDirectory(oplogDir);
-            var opLog = new LocalOpLogWriter(oplogDir);
-            var engine = new TextIngestEngine(encoder, index, policy, counter, opLog);
+            var (engine, _, _) = IngestTestKit.CreateEngineParts(encoder, index, oplogDir);
 
             // Act
-            await engine.IngestFileAsync(Path.Combine(oplogDir, "Note.cs"), "class Note {}", DateTimeOffset.UtcNow, TestContext.Current.CancellationToken);
+            await engine.IngestFileAsync(
+                Path.Combine(oplogDir, "Note.cs"),
+                "class Note {}",
+                DateTimeOffset.UtcNow,
+                oplogDir,
+                "enc",
+                codeFile: true,
+                TestContext.Current.CancellationToken);
 
             // Assert
             encoder.LastPrefixed.Should().Be("title: Note.cs | text: class Note {}");
@@ -1507,8 +1511,9 @@ public sealed class CodeAndSkipTests
         try
         {
             Directory.CreateDirectory(oplogDir);
-            var engine = new TextIngestEngine(encoder, index, new FakeIndexPolicy(), new FakeTextTokenCounter(), new LocalOpLogWriter(oplogDir));
-            var service = new GrantedTextIngestService(scope, reader, engine, new FakeIngestCursorStore());
+            var cursors = new FakeIngestCursorStore();
+            var (engine, opLog, _) = IngestTestKit.CreateEngineParts(encoder, index, oplogDir);
+            var service = IngestTestKit.CreateGrantedService(scope, reader, engine, cursors, index, opLog);
 
             // Act
             await service.IngestGrantedTextAsync(TestContext.Current.CancellationToken);
@@ -1528,7 +1533,7 @@ public sealed class CodeAndSkipTests
         // Arrange
         var encoder = new FakeTextEmbeddingEncoder();
         var index = new FakeTextVectorIndex();
-        var service = new TextSearchService(encoder, index, new FakeIndexPolicy(), new FakeIngestCursorStore());
+        var service = IngestTestKit.CreateSearchService(encoder, index);
         var grants = new List<ScopeFolderGrant>
         {
             new("D:\\Code", "Code", GrantFileKinds.Code),
@@ -1551,7 +1556,7 @@ public sealed class CodeAndSkipTests
         // Arrange
         var encoder = new FakeTextEmbeddingEncoder();
         var index = new FakeTextVectorIndex();
-        var service = new TextSearchService(encoder, index, new FakeIndexPolicy(), new FakeIngestCursorStore());
+        var service = IngestTestKit.CreateSearchService(encoder, index);
         var grants = new List<ScopeFolderGrant> { new("D:\\Code", "Code", GrantFileKinds.Code) };
 
         // Act

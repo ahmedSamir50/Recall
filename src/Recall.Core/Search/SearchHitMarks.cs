@@ -8,12 +8,12 @@ public static class SearchHitMarks
     public static TextSearchHit? Apply(
         TextSearchHit hit,
         IngestChunkRow? chunk,
-        IReadOnlyList<ScopeFolderGrant> grants)
+        IReadOnlySet<string> grantPaths)
     {
         ArgumentNullException.ThrowIfNull(hit);
         if (chunk is null)
         {
-            return hit with { SourceMissing = false };
+            return null;
         }
 
         if (chunk.Retired)
@@ -21,30 +21,29 @@ public static class SearchHitMarks
             return null;
         }
 
-        var effectivePath = chunk.Path;
-        var inside = false;
-        if (grants is not null)
-        {
-            foreach (var grant in grants)
-            {
-                if (grant is null || string.IsNullOrWhiteSpace(grant.Path))
-                {
-                    continue;
-                }
-
-                if (ScopeGrantPolicy.IsInsideGrant(grant.Path, effectivePath))
-                {
-                    inside = true;
-                    break;
-                }
-            }
-        }
-
-        if (!inside)
+        if (!grantPaths.Contains(hit.GrantPath))
         {
             return null;
         }
 
-        return hit with { SourcePath = effectivePath, SourceMissing = chunk.Missing };
+        return hit with { SourcePath = chunk.Path, SourceMissing = chunk.Missing };
+    }
+
+    public static IReadOnlyList<TextSearchHit> Expand(TextSearchHit hit, IReadOnlyList<IngestAliasRow> aliases)
+    {
+        ArgumentNullException.ThrowIfNull(hit);
+        ArgumentNullException.ThrowIfNull(aliases);
+        var expanded = new List<TextSearchHit>();
+        foreach (var alias in aliases)
+        {
+            if (alias.Missing || alias.Retired)
+            {
+                continue;
+            }
+
+            expanded.Add(hit with { SourcePath = alias.Path });
+        }
+
+        return expanded;
     }
 }
