@@ -53,7 +53,7 @@ No web app. No clipboard, camera, screen, or microphone capture. Your files are 
 
 ## Docs
 
-Latest App Docs start at [docs/index.md](docs/index.md). `InitDocs/` is the initial idea, not the spec.
+Latest App Docs start at [docs/index.md](docs/index.md).
 
 ## Build
 
