@@ -10,5 +10,6 @@
 - [ADR 0010: Closed product cuts](0010-closed-product-cuts.md)
 - [ADR 0011: v1.5 local generative model](0011-v15-local-generative.md)
 - [ADR 0012: llama.cpp in-process](0012-llamacpp-in-process.md)
+- [ADR 0013: GitHub remote](0013-github-remote.md)
 
 An open item is not an ADR.

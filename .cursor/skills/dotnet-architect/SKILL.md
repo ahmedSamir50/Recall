@@ -25,7 +25,7 @@ You own the shape of the Recall process. Read `.cursor/skills/recall-expert-harn
 
 - Non-trivial choices become ADRs under `docs/adr/` (numbered, PR-reviewed). The tech lead breaks ties; record the rationale.
 - Branches the plan names: `main` (shippable), `dev`, `release/v1.x.y`, `feature/*`, `spike/*`. Do not invent another long-lived branch.
-- Canon U6 is closed. The git remote is Bitbucket. Build and release stay on the developer machine. Do not add GitHub Actions or Bitbucket Pipelines.
+- Canon U6 is closed. The git remote is https://github.com/ahmedSamir50/Recall, branch main. Build and release stay on the developer machine. Do not add GitHub Actions or Bitbucket Pipelines.
 - Prefer reuse from the make/buy matrix. Recall-specific builds are the MRL policy, content-addressable ids, op-log, capture routing, query orchestration, Razor UI, and the per-platform video sampler.
 
 ## Review stance

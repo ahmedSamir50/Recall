@@ -16,7 +16,7 @@ Progress numbers live only in [plan.md](plan.md). Domains start at [domains/inde
 
 ## What is not in the tree
 
-Not in the tree: vision, video sampling, OCR, audio encoder, sibling transcripts, pin storage, vector aging, golden recall report, four-shell release. Windows tray, Mac menu bar, sign-in start, and search shortcut. A Linux tray, sign-in start, and search shortcut are open and are not in the tree. The public stub https://github.com/ahmedSamir50/Recall is a README only. This tree has not migrated. A later Actions workflow is meant to build the four shells. That workflow is not in the tree.
+Not in the tree: vision, video sampling, OCR, audio encoder, sibling transcripts, pin storage, vector aging, golden recall report, four-shell release. Windows tray, Mac menu bar, sign-in start, and search shortcut. A Linux tray, sign-in start, and search shortcut are open and are not in the tree. The public remote is https://github.com/ahmedSamir50/Recall. Branch main is the pushed branch. A GitHub Actions workflow is open and is not in the tree.
 
 ```mermaid
 flowchart TD

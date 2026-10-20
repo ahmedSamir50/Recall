@@ -22,7 +22,7 @@ Phase Three Addendum sits between Phase 3 and Phase 4. Its tasks are in that sam
 
 Will not be built: a web app, clipboard, camera, screen, or microphone capture, a chat UI, a generative summary, a helper process for the embedder, any speech-to-text model, browser history, sync transport, a cloud build, HNSW-RaBitQ, bundled model weights, and stored vectors at 128 numbers.
 
-Stack for every task: `net10.0`, MAUI Blazor Hybrid, Tailwind, four shells (`android-arm64`, `ios-arm64`, `win-x64`, `maccatalyst-arm64`), in-process llama.cpp once a build contains commit 4fbc76dec51d0add466f0210855c0596589b60d4; the class in the tree is LlamaTextEmbeddingEncoder, NuGet id `ZVec.NET` at `1.0.0-beta.6` from [Directory.Packages.props](../Directory.Packages.props) (local tree `D:\A_S\AdamSystems.ZVec.NET` reports `1.0.0-beta.6+zvec.0.7.0`; do not restore a package named `AdamSystems.ZVec.NET`). Git remote is Bitbucket. Build and release stay on the developer machine.
+Stack for every task: `net10.0`, MAUI Blazor Hybrid, Tailwind, four shells (`android-arm64`, `ios-arm64`, `win-x64`, `maccatalyst-arm64`), in-process llama.cpp once a build contains commit 4fbc76dec51d0add466f0210855c0596589b60d4; the class in the tree is LlamaTextEmbeddingEncoder, NuGet id `ZVec.NET` at `1.0.0-beta.6` from [Directory.Packages.props](../Directory.Packages.props) (local tree `D:\A_S\AdamSystems.ZVec.NET` reports `1.0.0-beta.6+zvec.0.7.0`; do not restore a package named `AdamSystems.ZVec.NET`). Git remote is https://github.com/ahmedSamir50/Recall. Branch main is the pushed branch. Build and release stay on the developer machine.
 
 **Content id (Phase 2+):** SHA-256 of modality, source-content hash, stored width, and chunk ordinal (`0` when the note is one vector). A repeated insert of the same id is skipped, including after restart when the store already has that id. The first insert also appends a local unsent `INSERT` and a line in the UTC-day file under `oplog`. Sync stays off.
 
@@ -199,7 +199,7 @@ Task 6.2.1 waits on A.2.11, A.2.14, and A.2.15. Task 6.1.2 does not.
 
 ### Epic 7.2 — Local release — `partial`
 
-- **7.2.1** — `not-started` — Produce the four shells on the developer machine from the Bitbucket repo. Done when each shell installs without a GGUF or an ONNX weight inside the package and downloads the text model on first run. Android is not done until tasks 7.2.3 and 7.2.4 pass. iOS is not done until task 7.2.3 passes.
+- **7.2.1** — `not-started` — Produce the four shells on the developer machine from https://github.com/ahmedSamir50/Recall. Done when each shell installs without a GGUF or an ONNX weight inside the package and downloads the text model on first run. Android is not done until tasks 7.2.3 and 7.2.4 pass. iOS is not done until task 7.2.3 passes.
 - **7.2.2** — `not-started` — Leave crash reports on the device. Done when no crash package is referenced.
 - **7.2.3** — `done` — Windows, Mac Catalyst, Android, and iOS tokenize and embed through recall_embed in-process. No Tokenizers.DotNet package and no GemmaTextTokenizer. `Embed_LocalGguf_Is768AndUnit` locks a 768-wide unit vector when the GGUF is present. Done when those four shells share that library.
 - **7.2.4** — `not-started` — `libzvec_c_api.so` is 16 KB page-aligned. Done when the alignment check passes. `Libzvec_Is16KbAligned` locks it. Android in task 7.2.1 stays open until this passes.
