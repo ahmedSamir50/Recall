@@ -76,7 +76,7 @@ The Pixel emulator in Device Manager is **x86_64**. An arm64-only APK is started
 - `open_from_update_dir: assembly file DOES NOT EXIST`
 - `Requested dump for pid`
 
-`Recall.Maui.csproj` therefore builds **both** `android-arm64` (phone) and `android-x64` (this emulator). Native tokenizer support for the emulator is `Tokenizers.DotNet.runtime.linux-x64`. `.so` files stay stored uncompressed (`AndroidStoreUncompressedFileExtensions`).
+`Recall.Maui.csproj` therefore builds **both** `android-arm64` (phone) and `android-x64` (this emulator). The emulator uses the same in-code GemmaTextTokenizer as the phone. It does not load Tokenizers.DotNet.runtime.linux-x64. `.so` files stay stored uncompressed (`AndroidStoreUncompressedFileExtensions`).
 
 After pulling this change:
 

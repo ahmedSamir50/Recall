@@ -25,6 +25,8 @@ You own budgets and the benchmark gate. You do not relax a privacy or tier rule 
 
 The desktop encoder-load cell is 800 ms because LoadTextEncoder on this machine measured 727.3 ms and the regression headroom is 10 percent. The mobile 600 ms cell is unmeasured. The desktop cold-start cell of 400 ms is not rewritten.
 
+The 35 ms and 8 ms cells are not llama.cpp measurements.
+
 iPhone 13 and M2 columns in the plan are additional targets, not a reason to drop Android or Windows. Desktop p95 under 20 ms is goal G3.
 
 ## Do not treat these table cells as v1 phone targets

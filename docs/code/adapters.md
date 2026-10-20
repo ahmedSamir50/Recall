@@ -113,7 +113,7 @@ public sealed class TextModelRuntime : IDisposable
 
 ## src/Recall.Adapters/Embedding/Tokenizers/TextTokenizerRuntime.cs
 
-`IsSupported` is true for Windows, Mac Catalyst, Android, iOS, and Unknown. Android and iOS no longer fail closed on a missing native tokenizer runtime.
+`IsSupported` is true for Windows, Mac Catalyst, Android, iOS, and Unknown. Android and iOS no longer fail closed on a missing native tokenizer runtime. That is the in-code reader. The accepted tokenizer is ADR 0012. Do not point a shell at Tokenizers.DotNet.
 
 ```csharp
 namespace Recall.Adapters.Embedding;

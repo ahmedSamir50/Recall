@@ -1,3 +1,5 @@
+> Historical seed. The accepted text-embedder direction is in-process llama.cpp (ADR 0012). This file is not the spec.
+
 # Recall — Implementation Plan
 
 > **On-device multimodal second brain.** EmbeddingGemma 2 (ONNX) + ZVec.NET (in-process) on a single .NET MAUI Blazor Hybrid codebase that ships natively to **Android, iOS, Windows, and macOS Catalyst**.

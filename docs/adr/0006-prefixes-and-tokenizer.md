@@ -2,6 +2,6 @@ Status: accepted, 15 Oct 2026.
 
 Context: prefix strings and the tokenizer package were easy to copy wrong.
 
-Decision: the four prefix strings in `EmbeddingTaskPrefixes`, applied once, text only. Loader is `Tokenizers.DotNet` 1.4.1. Budget 8192. Android and iOS fail closed.
+Decision: the four prefix strings in EmbeddingTaskPrefixes, applied once, text only. Budget 8192. The accepted tokenizer is the one inside embeddinggemma-2-Q8_0.gguf, called by in-process llama.cpp. The in-code reader is GemmaTextTokenizer. Tokenizers.DotNet is not the loader. Android and iOS do not fail closed.
 
-Consequences: `[semantic]` and `[search]` brackets are not prefixes. `Microsoft.ML.Tokenizers` is not the loader.
+Consequences: semantic and search brackets are not prefixes. Microsoft.ML.Tokenizers is not the loader. The two tokenizer plans are not executed.

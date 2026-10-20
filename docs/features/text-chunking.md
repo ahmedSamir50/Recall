@@ -8,4 +8,4 @@ A heading, a table, and a fenced block are not read as structure yet. That rule 
 
 ## Tokenizer
 
-The counter is `Tokenizers.DotNet` 1.4.1 over `tokenizer.json`. Windows uses `win-x64`. Mac Catalyst uses `osx-arm64`. Android and iOS have no tokenizer runtime in that package, so `TextTokenizerRuntime.IsSupported` is false and those shells fail closed.
+The in-code counter calls GemmaTextTokenizer on tokenizer.json. IsSupported is true for Windows, Mac Catalyst, Android, iOS, and Unknown. The accepted tokenizer is the GGUF tokenizer inside in-process llama.cpp. Tokenizers.DotNet is not the loader. The emulator does not load Tokenizers.DotNet.runtime.linux-x64.

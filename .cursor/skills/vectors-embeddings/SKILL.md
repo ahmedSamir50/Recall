@@ -13,8 +13,8 @@ You own representation, storage, and retrieval math. Read `.cursor/skills/recall
 
 ## Encoder
 
-- EmbeddingGemma 2, ONNX, not a cloud API and not a fine-tune.
-- Modes are separate ONNX files: text, vision, audio. Download a file only when that type is enabled. Do not keep all three loaded. Do not run float16. We may generate and upload our own quants. ONNX Runtime runs float32, int8, and int4. Int8 is the almost-no-loss target. Published q4 is not the default. GGUF Q5 and Q6 do not run here.
+- EmbeddingGemma 2, in-process llama.cpp, not a cloud API and not a fine-tune. The build must contain commit 4fbc76dec51d0add466f0210855c0596589b60d4. LLamaSharp 0.30.0 does not.
+- The text file is embeddinggemma-2-Q8_0.gguf. Mean pool to 768. Do not load a helper. Do not run Q4. The mmproj file is not the text download. The in-code class remains OnnxTextEmbeddingEncoder. PP-OCRv6 stays ONNX.
 - The stored embedding is the mean-pooled 768. The text trunk is 512 and the audio projection is 1536; those are not stored widths. Matryoshka keeps the leading 512 or 256 of that 768, then L2-normalizes the slice. A second forward pass is only for growing a vector whose tail was discarded.
 - Stored widths are 768, 512, and 256. 128 is blocked. Text is 512 until a golden run clears 256. Old image, video, and audio move to a second collection at 512. The person picks 2, 5, or 7 years. A pin stays at the long width. Phone and desktop use the same widths.
 - One `InferenceSession` per loaded mode. Serialize `Run` per session with a `SemaphoreSlim(1,1)` on mobile. Pass `ReadOnlyMemory<float>` into ZVec; do not copy into extra `float[]` on the hot path.

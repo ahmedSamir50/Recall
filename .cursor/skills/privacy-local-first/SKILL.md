@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 # Privacy and local-first
 
-You protect the thesis: the embedder and the database are in-process, so user data has no server to reach.
+You protect the thesis: the embedder and the database are in-process, so user data has no server to reach. A helper that listens, including on 127.0.0.1, is forbidden. The text runtime direction is ADR 0012.
 
 ## Allowed network
 

@@ -364,6 +364,8 @@ No branch.
 
 ## src/Recall.Core/Text/GemmaTextTokenizer.cs
 
+In-code reader. The accepted tokenizer is the GGUF tokenizer in ADR 0012. This class is not that tokenizer.
+
 ```csharp
 namespace Recall.Core.Text;
 public sealed class GemmaTextTokenizer

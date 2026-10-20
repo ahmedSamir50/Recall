@@ -1,3 +1,5 @@
+> Historical seed. The accepted text-embedder direction is in-process llama.cpp (ADR 0012). This file is not the spec.
+
 # IdeaTank — Building on `google/embeddinggemma-2` + `ZVec.NET`
 
 > A two-round brainstorm of super-applications, products, and POCs that become possible — and in some cases *only* possible — when you pair **Google's EmbeddingGemma 2** with **ZVec.NET** (the .NET SDK for Alibaba's in-process ZVec vector database).

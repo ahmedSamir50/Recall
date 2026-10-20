@@ -1,6 +1,6 @@
 ## What this repo is
 
-Recall is one .NET 10 MAUI Blazor Hybrid process. EmbeddingGemma 2 and ZVec.NET stay in that process. v1 does not send user content or vectors off the device.
+Recall is one .NET 10 MAUI Blazor Hybrid process. The accepted text runtime is in-process llama.cpp, and ZVec.NET stays in that same process. The class in the tree is still the ONNX text encoder. v1 does not send user content or vectors off the device.
 
 ## How to read
 

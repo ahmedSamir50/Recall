@@ -1,4 +1,5 @@
 Status: in-code
+Accepted runtime: open. ADR 0012. The running class remains OnnxTextEmbeddingEncoder.
 
 ## Policy
 

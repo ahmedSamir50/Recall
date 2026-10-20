@@ -23,6 +23,8 @@ If the user message contains `@recall:` or `@reacall:`, or asks for a project, m
 
 The execution manifest is the whole task. Edit only the paths it names. Write only the members, branches, literals, and tests it writes out. Do not invent a file, type, helper, refactor, or sentence. A missing path, signature, branch, or sentence is a stop: name the missing line and wait.
 
+The text embedder direction is in-process llama.cpp. Do not add LLamaSharp 0.30.0. Do not spawn llama-server. Do not execute keep_desktop_tokenizer or trusted_tokenizer_loader.
+
 A code review compares the diff to that manifest. Fix a hunk that contradicts a named branch. Revert a hunk the manifest does not name. Do not redesign, rename, or restyle. If the review would rewrite most of the files, stop and amend the plan.
 
 ## Docs end every plan

@@ -13,7 +13,7 @@ You own the shape of the Recall process. Read `.cursor/skills/recall-expert-harn
 
 ## Invariants
 
-- One process. ONNX Runtime and ZVec.NET are in-process singletons. No localhost HTTP, no sidecar process, no second desktop Native AOT app in v1.
+- One process. The embedder library and ZVec.NET stay in it. No localhost HTTP and no helper process. The accepted text runtime is llama.cpp at a build that contains commit 4fbc76dec51d0add466f0210855c0596589b60d4. LLamaSharp 0.30.0 is not that build. The in-code encoder remains OnnxTextEmbeddingEncoder.
 - `net10.0` everywhere, including MAUI target frameworks (`net10.0-android`, `net10.0-ios`, `net10.0-windows10.0.19041.0`, `net10.0-maccatalyst`). Reject leftover `net9.0` in docs or project files.
 - `Recall.Core` references neither MAUI nor Razor. `Recall.UI` talks to Core through interfaces. `Recall.Maui` is the only composition root (`AddZVec`, `AddOnnxRuntime`, `AddRecallCore`, hosted ingestion worker).
 - v1 platform interfaces are the scope watcher, scope manager, video frame sampler, secure storage, idle detector, model download, and index policy. Do not add clipboard, camera-roll, screen, or microphone services.

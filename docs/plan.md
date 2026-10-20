@@ -20,9 +20,9 @@ A parent is `done` only when every child is `done`. A parent is `not-started` on
 
 Phase Three Addendum sits between Phase 3 and Phase 4. Its tasks are in that same table. The all-epics row is the mean of every task in Phases 1–7 and that addendum.
 
-Will not be built: a web app, clipboard, camera, screen, or microphone capture, any language model, any speech-to-text model, browser history, sync transport, a cloud build, HNSW-RaBitQ, bundled model weights, and stored vectors at 128 numbers.
+Will not be built: a web app, clipboard, camera, screen, or microphone capture, a chat UI, a generative summary, a helper process for the embedder, any speech-to-text model, browser history, sync transport, a cloud build, HNSW-RaBitQ, bundled model weights, and stored vectors at 128 numbers.
 
-Stack for every task: `net10.0`, MAUI Blazor Hybrid, Tailwind, four shells (`android-arm64`, `ios-arm64`, `win-x64`, `maccatalyst-arm64`), `Microsoft.ML.OnnxRuntime`, NuGet id `ZVec.NET` at `1.0.0-beta.6` from [Directory.Packages.props](../Directory.Packages.props) (local tree `D:\A_S\AdamSystems.ZVec.NET` reports `1.0.0-beta.6+zvec.0.7.0`; do not restore a package named `AdamSystems.ZVec.NET`). Git remote is Bitbucket. Build and release stay on the developer machine.
+Stack for every task: `net10.0`, MAUI Blazor Hybrid, Tailwind, four shells (`android-arm64`, `ios-arm64`, `win-x64`, `maccatalyst-arm64`), in-process llama.cpp once a build contains commit 4fbc76dec51d0add466f0210855c0596589b60d4; the class in the tree is still Microsoft.ML.OnnxRuntime, NuGet id `ZVec.NET` at `1.0.0-beta.6` from [Directory.Packages.props](../Directory.Packages.props) (local tree `D:\A_S\AdamSystems.ZVec.NET` reports `1.0.0-beta.6+zvec.0.7.0`; do not restore a package named `AdamSystems.ZVec.NET`). Git remote is Bitbucket. Build and release stay on the developer machine.
 
 **Content id (Phase 2+):** SHA-256 of modality, source-content hash, stored width, and chunk ordinal (`0` when the note is one vector). A repeated insert of the same id is skipped, including after restart when the store already has that id. The first insert also appends a local unsent `INSERT` and a line in the UTC-day file under `oplog`. Sync stays off.
 

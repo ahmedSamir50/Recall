@@ -44,6 +44,8 @@ You own the four shells and the native edges. Shared policy stays in `Recall.Cor
 
 ## Review stance
 
+Block a llama-server process on any shell. android-x64 does not get a linux-x64 native loader.
+
 Block background mic or screen capture, creating HNSW-RaBitQ, and a watcher design that assumes iOS gets `FileSystemWatcher` semantics. Amend M1/M2 week tables that still assign clipboard, camera roll, or phone voice memos (canon U7).
 
 ## Panel duty

@@ -1,3 +1,5 @@
+> Historical seed. The accepted text-embedder direction is in-process llama.cpp (ADR 0012). This file is not the spec.
+
 # Recall — Technical Details
 
 > **Engineering and ML deep-dive** for the Recall on-device multimodal second-brain application.

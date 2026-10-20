@@ -4,6 +4,8 @@ Status: in-code
 
 Files from `TextModel` in [src/Recall.Maui/appsettings.json](../../src/Recall.Maui/appsettings.json): `model_quantized.onnx`, `model_quantized.onnx_data`, `tokenizer.json`, with the three SHA-256 values in that file, under `models/text`. Base URL is the Hugging Face `onnx-community/embeddinggemma-2-ONNX` resolve URL in that file.
 
+Accepted file: open. ADR 0012 names embeddinggemma-2-Q8_0.gguf. This page's ONNX names are the files the app still downloads.
+
 ## Placement
 
 `DownloadTransfer.Place`: existing bytes `<= 0` returns `Replace`; status 206 returns `Append`; status 416 returns `UseExistingPartial`; any other status returns `Replace`. `ExpectedTotalBytes`: 416 returns the existing length; 206 returns existing plus content length, or null when content length is null; otherwise the content length. `ReceivedFullBody` is true when expected is null and bytes on disk are `> 0`, or when bytes equal the expected total.
