@@ -129,8 +129,11 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
 ```csharp
 if (grant is null)
 if (EncoderRepair.NeedsRepair(row?.EncoderHash, encoderHash))
+if (cursors.AnyOtherLivePath(chunk.ContentId, document.Path))
 if (index.TryDelete(chunk.ContentId))
 else if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
+if (cursors.AnyLivePath(retiredId))
+if (index.TryDelete(retiredId))
 ``` 
 ## src/Recall.Core/Ingest/GrantedTextDocument.cs
 
@@ -266,7 +269,6 @@ public async Task ApplyAsync(
     if (string.IsNullOrWhiteSpace(change.Path))
     if (change.Kind == ScopeChangeKind.Deleted)
     if (row is not null && row.State == IngestCursorState.Missing)
-    if (live.Count > 0)
     if (change.Kind == ScopeChangeKind.Renamed)
     if (string.IsNullOrWhiteSpace(previous))
     if (grant is not null && document is not null)
@@ -359,6 +361,34 @@ EncoderRepair
 public static bool NeedsRepair(string? storedHash, string? currentHash) =>
 No branch.
 ``` 
+
+## src/Recall.Core/Text/GemmaTextTokenizer.cs
+
+```csharp
+namespace Recall.Core.Text;
+public sealed class GemmaTextTokenizer
+GemmaTextTokenizer
+public static GemmaTextTokenizer Load(Stream tokenizerJson)
+public int[] Encode(string text)
+if (!document.RootElement.TryGetProperty("model", out var model))
+if (!model.TryGetProperty("type", out var typeElement)
+if (!model.TryGetProperty("vocab", out var vocabElement))
+if (!model.TryGetProperty("merges", out var mergesElement))
+if (merge.GetArrayLength() != 2)
+if (left is null || right is null)
+if (text.Length == 0)
+if (!vocab.TryGetValue(symbols[i], out var id))
+if (bosId < 0 || eosId < 0 || ids.Length == 0)
+if (!root.TryGetProperty("added_tokens", out var addedTokens))
+if (!token.TryGetProperty("content", out var contentElement)
+if (content == "<bos>")
+else if (content == "<eos>")
+if (vocab.ContainsKey(piece))
+if (!vocab.ContainsKey(bytePiece))
+if (!TryMergeLeftmost(symbols, left, right, out var index))
+if (!merged)
+if (symbols[i] == left && symbols[i + 1] == right)
+```
 
 ## src/Recall.Core/Text/KeywordFold.cs
 

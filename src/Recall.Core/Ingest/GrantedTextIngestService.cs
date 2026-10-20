@@ -76,9 +76,19 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
         {
             cursors.MarkReading(document.Path, contentHash, grant.Path);
 #pragma warning disable S3267
-            foreach (var chunk in cursors.ListChunks(document.Path).Where(static c => !c.Retired))
+            var repairChunks = cursors.ListChunks(document.Path).Where(static c => !c.Retired).ToList();
+#pragma warning restore S3267
+            cursors.RetirePath(document.Path);
+#pragma warning disable S3267
+            foreach (var chunk in repairChunks)
 #pragma warning restore S3267
             {
+                if (cursors.AnyOtherLivePath(chunk.ContentId, document.Path))
+                {
+                    cursors.EnqueuePending(chunk.ContentId);
+                    continue;
+                }
+
                 if (index.TryDelete(chunk.ContentId))
                 {
                     opLog.AppendDelete(chunk.ContentId);
@@ -110,5 +120,18 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
         }
 
         cursors.FinishPath(document.Path, result.ContentHash, grant.Path, encoderHash, writes);
+        foreach (var retiredId in cursors.ListRetiredIds(document.Path))
+        {
+            if (cursors.AnyLivePath(retiredId))
+            {
+                continue;
+            }
+
+            if (index.TryDelete(retiredId))
+            {
+                opLog.AppendDelete(retiredId);
+                cursors.EnqueuePending(retiredId);
+            }
+        }
     }
 }

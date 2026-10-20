@@ -6,7 +6,7 @@ Plan task 2.2.5 names insert ≤5 ms, hybrid top-20 ≤60 ms mobile and ≤25 ms
 
 The recorded desktop run is `InsertOne` mean 30.66 us, `HybridTop20` mean 2,202.43 us, and `LoadTextEncoder` mean 727.3 ms.
 
-The mobile 600 ms cell is unmeasured.
+Task 2.2.5 is done on that desktop run. The mobile 60 ms and 600 ms cells were never measurable in Phase 2 and stay on task A.2.9. Recall.Benchmarks is a Windows net10.0 executable, and the phone tokenizer is task 7.2.3. An emulator label is not a phone number.
 
 The performance skill table names a different query p95, ≤50 ms mobile and ≤20 ms desktop at 100k items, and a different desktop insert, ≤2 ms.
 

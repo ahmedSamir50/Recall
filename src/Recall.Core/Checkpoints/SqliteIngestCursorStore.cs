@@ -182,6 +182,51 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
         return result is not null;
     }
 
+    public bool AnyOtherLivePath(string contentId, string path)
+    {
+        if (string.IsNullOrWhiteSpace(contentId) || string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Content id and path must not be blank.");
+        }
+
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT 1 FROM ingest_chunk_path WHERE content_id = @id AND path <> @path AND missing = 0 AND retired = 0 LIMIT 1";
+        command.Parameters.AddWithValue("@id", contentId);
+        command.Parameters.AddWithValue("@path", path);
+        var result = command.ExecuteScalar();
+        transaction.Commit();
+        return result is not null;
+    }
+
+    public IReadOnlyList<string> ListRetiredIds(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT content_id FROM ingest_chunk_path WHERE path = @path AND retired = 1";
+        command.Parameters.AddWithValue("@path", path);
+        var list = new List<string>();
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            list.Add(reader.GetString(0));
+        }
+
+        transaction.Commit();
+        return list;
+    }
+
     public void AddAlias(string contentId, string path)
     {
         if (string.IsNullOrWhiteSpace(contentId) || string.IsNullOrWhiteSpace(path))

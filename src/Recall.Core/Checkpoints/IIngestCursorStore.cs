@@ -28,6 +28,10 @@ public interface IIngestCursorStore
 
     bool AnyLivePath(string contentId);
 
+    bool AnyOtherLivePath(string contentId, string path);
+
+    IReadOnlyList<string> ListRetiredIds(string path);
+
     void AddAlias(string contentId, string path);
 
     void MoveLiveAliases(string fromContentId, string toContentId);

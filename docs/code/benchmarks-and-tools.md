@@ -17,10 +17,12 @@ namespace Recall.Benchmarks;
 public static class TextBenchmarkHost
     public static string? FindModelDirectory()
     public static string LabelThisProcess()
+    public static bool PhoneHybridAndLoadMeetTheExit(string hostLabel, double hybridTop20Milliseconds, double loadMilliseconds)
         if (string.IsNullOrWhiteSpace(directory))
         if (!File.Exists(Path.Combine(directory, options.OnnxFileName))
         if (!androidOrIos)
         if (string.Equals(benchHost, "phone", StringComparison.OrdinalIgnoreCase))
+        && loadMilliseconds <= 600d
 ```
 
 

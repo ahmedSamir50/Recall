@@ -42,18 +42,15 @@ public sealed class ScopeChangeApplier
 
             var chunks = cursors.ListChunks(change.Path);
             var live = chunks.Where(c => !c.Retired).ToList();
-            if (live.Count > 0)
+            cursors.MarkMissing(change.Path);
+#pragma warning disable S3267
+            foreach (var chunk in live.Where(chunk => !cursors.AnyLivePath(chunk.ContentId)))
+#pragma warning restore S3267
             {
-                foreach (var chunk in live)
-                {
-                    opLog.AppendDelete(chunk.ContentId);
-                }
-
-                cursors.MarkMissing(change.Path);
-                return;
+                opLog.AppendDelete(chunk.ContentId);
+                cursors.EnqueuePending(chunk.ContentId);
             }
 
-            cursors.MarkMissing(change.Path);
             return;
         }
 
@@ -94,12 +91,7 @@ public sealed class ScopeChangeApplier
                 return;
             }
 
-            var previousChunks = cursors.ListChunks(previous).Where(c => !c.Retired).ToList();
             cursors.RetirePath(previous);
-            foreach (var chunk in previousChunks)
-            {
-                opLog.AppendDelete(chunk.ContentId);
-            }
 
             if (grant is not null)
             {

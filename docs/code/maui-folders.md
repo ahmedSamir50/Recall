@@ -119,7 +119,7 @@ No branch.
 ```csharp
 namespace Recall.Maui.Platform;
 public sealed partial class MauiGrantedTextReader : IGrantedTextReader
-    public MauiGrantedTextReader(IGrantedFolderAccessService access, IUserSkipStore skips)
+    public MauiGrantedTextReader(IGrantedFolderAccessService access, IUserSkipStore skips, ILocalContentProbe probe, IRemoteFileSkipReport remoteSkip, IDatasetSkipReport datasetSkip)
     public IAsyncEnumerable<GrantedTextDocument> ReadAsync(ScopeFolderGrant grant, CancellationToken cancellationToken)
         public IAsyncEnumerator<GrantedTextDocument> GetAsyncEnumerator(CancellationToken cancellationToken = default)
             public ValueTask<bool> MoveNextAsync() => ValueTask.FromResult(false);

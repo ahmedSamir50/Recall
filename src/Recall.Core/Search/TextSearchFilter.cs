@@ -21,5 +21,5 @@ public static class TextSearchFilter
     }
 
     private static string Escape(string value) =>
-        value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
+        value.Replace("\"", "\\\"", StringComparison.Ordinal);
 }

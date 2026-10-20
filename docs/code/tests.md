@@ -338,7 +338,15 @@ public sealed class FakeTextSearchService : ITextSearchService
 public sealed class FakeDeviceIdCandidateProviderPort : IDeviceIdCandidateProvider
 public sealed class FakeRandomDeviceIdSourcePort : IRandomDeviceIdSource
 if (!AllowWrite)
+if (string.IsNullOrWhiteSpace(contentId) || string.IsNullOrWhiteSpace(path))
+if (string.IsNullOrWhiteSpace(path))
+if (string.Equals(alias.Path, path, StringComparison.OrdinalIgnoreCase))
+if (string.Equals(chunk.Path, path, StringComparison.OrdinalIgnoreCase) && !chunk.Retired && !newIds.Contains(id))
+if (string.Equals(alias.Path, path, StringComparison.OrdinalIgnoreCase) && !alias.Retired && !newIds.Contains(alias.ContentId))
+if (chunkRows.TryGetValue(chunk.ContentId, out var existing)
+else if (!chunkRows.ContainsKey(chunk.ContentId))
 if (chunkRows.ContainsKey(chunk.ContentId))
+if (removed)
 public sealed class FakeTextVectorIndex : ITextVectorIndex
 public sealed class FakeSyncAdapter : ISyncAdapter
 public sealed class FakeThemePreferenceStorePort : IThemePreferenceStore
@@ -530,6 +538,13 @@ public static class IntegrationTextModelPaths
 ```csharp
 namespace Recall.BenchTests;
 public sealed class TextBenchmarkHostTests
+    public void Label_NotAndroid_IsDesktop()
+    public void Label_AndroidMissingHost_IsEmulator()
+    public void Label_AndroidBlankHost_IsEmulator()
+    public void Label_AndroidPhoneHost_IsPhone()
+    public void Label_AndroidPhoneHostMixedCase_IsPhone()
+    public void DesktopIdenticalVectors_AreNotThePhoneGate()
+    public void PhoneHybridAndLoad_MeetTheExit()
     public void LabelThisProcess_MatchesOperatingSystem()
 ```
 
@@ -582,6 +597,8 @@ public int Calls { get; private set; }
 public bool FailNext { get; set; } = true;
 public ValueTask<ReadOnlyMemory<float>> EmbedPrefixedTextAsync(string prefixedText, CancellationToken cancellationToken = default)
 public async Task Apply_Deleted_AppendsDeleteAndDoesNotEmbed()
+public async Task Delete_OnePath_SharedId_DoesNotAppendDelete()
+public async Task Delete_LastPath_AppendsDeleteOnce()
 public async Task Apply_DeletedWhenAlreadyMissing_DoesNotAppendAgain()
 public async Task Apply_DeletedWithNoChunks_MarksMissingOnly()
 public async Task Apply_RenamedSameHash_DoesNotEmbed()
@@ -622,6 +639,7 @@ public sealed class Phase3GrantTests
 public void TryAddGrant_NullGrant_Throws()
 public void TryAddGrant_BlankPath_ThrowsAndDoesNotSave()
 public void TryAddGrant_ChildOfGrantedParent_ReturnsOverlap()
+public void TryAddGrant_ParentTextOnly_KeepsText()
 public void TryAddGrant_ParentReplacesChild_KeepsDriveRoot()
 public void TryAddGrant_ParentReplacesTwoChildren_KeepsDriveRoot()
 public void TryAddGrant_PhotosExtra_IsNotAChild()
@@ -700,6 +718,7 @@ public void WindowsFileScopeWatcher_NestedGrants_OpensOneWatcher()
 public void WindowsFileScopeWatcher_ContentUri_OpensZeroAndRescans()
 public async Task PumpOnce_WaitsUntilReport()
 public void TryAdd_ConcurrentWithDrain_DoesNotThrow()
+public async Task Idle_Coordinator_BusyKeepsChange_IdleDrains()
 public async Task PumpOnce_ExceptionOnFirstChange_AppliesSecond()
 public async Task PumpOnce_Cancel_Stops()
 public void Stop_StopsWatcher()
@@ -722,18 +741,57 @@ No public type.
 No branch.
 ``` 
 
+## tests/Recall.UnitTests/GemmaTextTokenizerTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class GemmaTextTokenizerTests
+GemmaTextTokenizerTests
+public void Load_NotBpe_Throws()
+public void Encode_Null_Throws()
+public void Encode_Empty_IsEmpty()
+public void Encode_Space_BecomesOnePiece()
+public void Encode_WrapsBosAndEos()
+public void Encode_RescansMerges()
+public void Encode_ByteFallback_UsesHexPiece()
+public void IsSupported_AndroidAndIos_AreTrue()
+public void IsSupported_DesktopShells_StayTrue()
+```
+
+No branch.
+
+
+## tests/Recall.IntegrationTests/GemmaTextTokenizerIntegrationTests.cs
+
+```csharp
+namespace Recall.IntegrationTests;
+public sealed class GemmaTextTokenizerIntegrationTests
+GemmaTextTokenizerIntegrationTests
+public void Encode_LocalTokenizerJson_MatchesNativeIds()
+if (!File.Exists(tokenizerPath))
+```
+
+
 ## tests/Recall.UnitTests/PhaseAddendumTests.cs
 
 ```csharp
 namespace Recall.UnitTests;
 public type PhaseAddendumTests
 PhaseAddendumTests
+public void Fold_Yeh_StaysYeh()
+public void Fold_Null_Throws()
+public void Tokens_LowercasesNonHan()
 public void Fold_AlefAndTatweel_Match()
 public void Fold_HanCharacter_IsOneToken()
 public void Card_ShowsRawNote()
 public void NumericSpan_DigitsOnly_Bm25Only()
 public void NumericSpan_CodeFile_StaysDense()
 public void DatasetFolder_32Hex_Skips()
+public void DatasetFolder_GrantRoot_NotSkipped()
+public void DatasetFolder_Below300_NotSkipped()
+public void DatasetFolder_Uuid_IsMachineMade()
+public void DatasetFolder_TwelveDigits_IsMachineMade()
+public void DatasetFolder_Cafe1234_IsNotMachineMade()
 public void DatasetFolder_NumberedScans_NotSkipped()
 public void Idle_RunsIngest_BusyDefers()
 public void TwentyChunks_OneFile_ReturnsOneCard()
@@ -741,13 +799,27 @@ public void TwentyChunks_OneFile_KeepsMaxRrfScore()
 public void Search_GrantFilter_DoesNotPromiseTwenty()
 public void ContentUri_EnumeratedDocument_IsInsideGrant()
 public void ContentUri_NotEnumerated_IsOutside()
+public void ContentUri_PhotosExtra_IsOutside()
+public void GrantPathFor_NullDocument_Throws()
 public void DeleteOnePath_SharedId_OtherPathStaysHit()
-public void Shrink_LastPath_DeletesVector()
-public void Shrink_OtherPathLive_KeepsVector()
+public async Task Shrink_LastPath_DeletesVector()
+public async Task Shrink_OtherPathLive_KeepsVector()
+public async Task SecondHash_DeletesOldRow_ReembedsSameId()
+public async Task Repair_KillAfterDelete_ResumesFromReading()
+public async Task Repair_OtherPathLive_DoesNotDelete()
+public async Task SecondPath_SameBytes_DoesNotAppendInsert()
+public void Open_CopiesChunkPairIntoAlias()
+public async Task Find_PendingOver64_ReconcilesSixtyFour()
+public async Task Find_NoPending_DoesNotReconcile()
+public async Task Find_TwentyChunks_ReturnsOneCard()
+public async Task ChangedBytes_DeletesOldZvecRow()
+public async Task ChangedBytes_SharedId_KeepsVector()
+public void ShortRow_Edit_StaysShortUnlessPinned()
 public async Task Find_WriteBusy_SkipsReconcile()
 public async Task TextModelReadyIngest_ReadGrantsAsync_CallsIngest()
 public void CloudFile_NotLocal_NotIndexed()
 public void VectorSchemaStale_Fault_IsTwenty()
+if (parts.Index.Inserts.Count > 1)
 catch (IOException ex)
 catch (IOException ex)
 ``` 

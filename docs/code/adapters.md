@@ -41,10 +41,9 @@ No branch.
 ```csharp
 namespace Recall.Adapters.Embedding;
 public sealed class OnnxTextEmbeddingEncoder : ITextEmbeddingEncoder, IDisposable
-    public OnnxTextEmbeddingEncoder(string modelPath, Tokenizer tokenizer, bool ownsTokenizer)
+    public OnnxTextEmbeddingEncoder(string modelPath, GemmaTextTokenizer tokenizer, bool ownsTokenizer)
     public async ValueTask<ReadOnlyMemory<float>> EmbedPrefixedTextAsync(string prefixedText, CancellationToken cancellationToken = default)
     public void Dispose()
-        if (ownsTokenizer)
 ```
 
 
@@ -114,13 +113,20 @@ public sealed class TextModelRuntime : IDisposable
 
 ## src/Recall.Adapters/Embedding/Tokenizers/TextTokenizerRuntime.cs
 
+`IsSupported` is true for Windows, Mac Catalyst, Android, iOS, and Unknown. Android and iOS no longer fail closed on a missing native tokenizer runtime.
+
 ```csharp
 namespace Recall.Adapters.Embedding;
 public static class TextTokenizerRuntime
-    public static bool IsSupported(RecallShellKind kind) => kind is RecallShellKind.Windows or RecallShellKind.MacCatalyst or RecallShellKind.Unknown;
+    public static bool IsSupported(RecallShellKind kind) => kind is RecallShellKind.Windows or RecallShellKind.MacCatalyst or RecallShellKind.Android or RecallShellKind.Ios or RecallShellKind.Unknown;
 ```
 
 No branch.
+
+
+## Text tokenizer
+
+`HuggingFaceTokenizerFactory` loads `tokenizer.json` into `Recall.Core.Text.GemmaTextTokenizer`, a managed BPE reader with no native library. `OnnxTextEmbeddingEncoder` and `HuggingFaceTextTokenCounter` call `GemmaTextTokenizer.Encode`. The MAUI project does not reference `Tokenizers.DotNet.runtime.*` packages. `Recall.Adapters` keeps `Tokenizers.DotNet` only for the Windows id-check in `Recall.IntegrationTests`.
 
 
 ## src/Recall.Adapters/Embedding/Tokenizers/HuggingFaceTextTokenCounter.cs
@@ -128,10 +134,9 @@ No branch.
 ```csharp
 namespace Recall.Adapters.Embedding;
 public sealed class HuggingFaceTextTokenCounter : ITextTokenCounter, IDisposable
-    public HuggingFaceTextTokenCounter(Tokenizer tokenizer, bool ownsTokenizer)
+    public HuggingFaceTextTokenCounter(GemmaTextTokenizer tokenizer, bool ownsTokenizer)
     public int CountTokens(string text)
     public void Dispose()
-        if (ownsTokenizer)
 ```
 
 
@@ -139,6 +144,8 @@ public sealed class HuggingFaceTextTokenCounter : ITextTokenCounter, IDisposable
 
 ```csharp
 namespace Recall.Adapters.Embedding;
+internal static class HuggingFaceTokenizerFactory
+    internal static GemmaTextTokenizer Create(string tokenizerJsonPath)
 ```
 
 No public type.

@@ -17,6 +17,7 @@ If the user message contains `@recall:` or `@reacall:`, or asks for a project, m
 4. Do not hide dissent, and do not treat agreement as valid without a checked list.
 5. Do not start implementation in that turn.
 6. A plan with no execution manifest is not executable. Do not approve it. The manifest names every file path, type and method signature, branch including the failure, literal, Arabic and English sentence, and test assertion. A heading with an empty list does not count.
+7. A missing loop order, exception type, or assertion value is a missing line. The implementing agent stops and names that line. It does not choose the loop, the exception, or the assertion. "Match the existing tokenizer", "use the right merge order", and "stop if the ids disagree" are not lines.
 
 ## Executing an accepted plan
 
@@ -38,9 +39,9 @@ Write the YAML once, in the plan. Confidence is an honest account of the check. 
 
 The first line under `## Expert sign-offs` is `Direct:` and one or more ids from `panel.md`. An id not on that line is advisory. Do not write an advisory list. Do not search for an expert who is not in that table.
 
-Check each row once. When that check finds a gap the loaded files can close, close the gap in the plan, then score again once. That second score is final. A third pass is a loop: do not re-read the harness, do not re-list the experts, and do not think the check through again.
+Check each row once. When that check finds a gap the loaded files can close, close the gap in the plan, then score the closed check once. That second score is final and stays honest. A third pass is a loop: do not re-read the harness, do not re-list the experts, and do not think the check through again.
 
-If a direct expert's final score is under 96, `mitigation` names the gap and `recommendation` names the action. Say the plan is not ready and stop. An advisory expert is not held to 96. Record an advisory push-back or block once.
+The user is the approval gate. A low score does not reject the plan and does not stop the turn. `mitigation` names the gap. `recommendation` names the action. The synthesis names an alternative. Hand the plan to the user with those three. A rejection keeps the honest scores. The next turn closes the named gaps and scores that check. Do not raise a score so the plan looks ready. Record a `push-back` or `block` once, direct or advisory.
 
 ## Otherwise
 

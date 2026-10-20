@@ -49,5 +49,7 @@ public static class TextBenchmarkHost
         (int)Math.Round(meanMilliseconds * 1.1, 0, MidpointRounding.AwayFromZero);
 
     public static bool PhoneHybridAndLoadMeetTheExit(string hostLabel, double hybridTop20Milliseconds, double loadMilliseconds) =>
-        string.Equals(hostLabel, "phone", StringComparison.OrdinalIgnoreCase) && hybridTop20Milliseconds <= 60;
+        string.Equals(hostLabel, "phone", StringComparison.OrdinalIgnoreCase)
+        && hybridTop20Milliseconds <= 60d
+        && loadMilliseconds <= 600d;
 }

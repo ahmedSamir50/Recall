@@ -1,3 +1,4 @@
+#if WINDOWS
 using Recall.Core.Ports;
 using Recall.Core.Scope;
 
@@ -29,3 +30,4 @@ public sealed partial class MauiLocalContentProbe
         }
     }
 }
+#endif
