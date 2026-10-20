@@ -38,6 +38,9 @@ corpus/**/*.wav
 corpus/**/*.mp3
 corpus/**/*.m4a
 
+# Local personal notes. Kept on this machine only.
+/InitDocs/
+
 # Secrets and signing
 *.pfx
 *.p12
