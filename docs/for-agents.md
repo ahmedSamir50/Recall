@@ -3,7 +3,7 @@
 - Which routes exist, and when does the text model row start a download? [docs/features/screens.md](features/screens.md). Source: `src/Recall.UI/Components/Models/ModelRow.razor.cs`.
 - When does adding a folder save, and when does it refuse? [docs/features/folder-grants.md](features/folder-grants.md). Source: `src/Recall.Core/Scope/ScopeGrantService.cs`.
 - Which text weight files download, and how is a partial body placed? [docs/features/model-download.md](features/model-download.md). Source: `src/Recall.Maui/appsettings.json`.
-- How is one text embedding cut to 512, and which prefixes wrap a query? [docs/features/text-embed.md](features/text-embed.md). Source: `src/Recall.Adapters/Embedding/Onnx/OnnxTextEmbeddingEncoder.cs`.
+- How is one text embedding cut to 512, and which prefixes wrap a query? [docs/features/text-embed.md](features/text-embed.md). Source: `src/Recall.Adapters/Embedding/Llama/LlamaTextEmbeddingEncoder.cs`.
 - How does the 8192 token split work, and which package loads the tokenizer? [docs/features/text-chunking.md](features/text-chunking.md). Source: `src/Recall.Core/Text/TextChunkPlanner.cs`.
 - How does granted text become rows? [docs/features/text-ingest.md](features/text-ingest.md). Source: `src/Recall.Core/Text/TextIngestEngine.cs`.
 - How does Find fuse a query, and when is a path dropped? [docs/features/text-search.md](features/text-search.md). Source: `src/Recall.Core/Search/TextSearchService.cs`.
@@ -18,6 +18,7 @@
 - Is a person name stored? [docs/features/people.md](features/people.md). No people type is in src/.
 - Does Recall keep a place from a file? [docs/features/file-details.md](features/file-details.md). No file-detail reader is in src/.
 - Is a notes model downloaded? [docs/features/local-notes.md](features/local-notes.md). v1 has no language model.
+- Is a tray, a sign-in start, or a search shortcut in the tree? [docs/features/desktop-presence.md](features/desktop-presence.md). No type for those is in src/.
 - Which desktop benchmark means are recorded? [docs/features/proof.md](features/proof.md). Source: `docs/plan.md`.
 - Which keys and folders are on the device? [docs/data/stores.md](data/stores.md).
 - What does each preference key store? [docs/data/preferences.md](data/preferences.md). Source: `src/Recall.Core/Preferences/AgeCutoffPreferenceService.cs`.

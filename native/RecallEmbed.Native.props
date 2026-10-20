@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <RecallEmbedNativeDir Condition="'$(RecallEmbedNativeDir)' == '' and Exists('$(MSBuildThisFileDirectory)out\win-x64\recall_embed.dll')">$(MSBuildThisFileDirectory)out\win-x64</RecallEmbedNativeDir>
+    <RecallEmbedNativeDir Condition="'$(RecallEmbedNativeDir)' == '' and Exists('$(MSBuildThisFileDirectory)out\win-x64\Release\recall_embed.dll')">$(MSBuildThisFileDirectory)out\win-x64\Release</RecallEmbedNativeDir>
+  </PropertyGroup>
+  <Target Name="RecallEmbedRequireNativeDll" BeforeTargets="Build" Condition="'$(RecallEmbedRequireNative)' == 'true' and '$(RecallEmbedNativeDir)' == ''">
+    <Error Text="recall_embed.dll was not produced." />
+  </Target>
+  <ItemGroup Condition="'$(RecallEmbedNativeDir)' != ''">
+    <RecallEmbedNativeDlls Include="$(RecallEmbedNativeDir)\*.dll" />
+  </ItemGroup>
+</Project>

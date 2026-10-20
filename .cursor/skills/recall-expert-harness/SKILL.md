@@ -10,7 +10,7 @@ disable-model-invocation: true
 
 # Recall expert harness
 
-Recall is a local-only .NET 10 MAUI Blazor Hybrid app: EmbeddingGemma 2 through in-process llama.cpp, ZVec.NET in the same process. The class in the tree is still the ONNX text encoder. `InitDocs/` is the initial idea, not the final spec.
+Recall is a local-only .NET 10 MAUI Blazor Hybrid app: EmbeddingGemma 2 through in-process llama.cpp, ZVec.NET in the same process. The class in the tree is LlamaTextEmbeddingEncoder. `InitDocs/` is the initial idea, not the final spec.
 
 ## Planning trigger
 

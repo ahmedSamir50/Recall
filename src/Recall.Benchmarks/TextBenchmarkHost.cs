@@ -1,4 +1,3 @@
-using Recall.Adapters.Embedding;
 using Recall.Core.Download;
 using Recall.Core.Text;
 
@@ -18,8 +17,7 @@ public static class TextBenchmarkHost
         }
 
         var options = new TextModelDownloadOptions();
-        if (!File.Exists(Path.Combine(directory, options.OnnxFileName))
-            || !File.Exists(Path.Combine(directory, options.TokenizerFileName)))
+        if (!File.Exists(Path.Combine(directory, options.ModelFileName)))
         {
             return null;
         }

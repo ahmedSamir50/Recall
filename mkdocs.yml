@@ -78,6 +78,7 @@ nav:
       - People: features/people.md
       - File details: features/file-details.md
       - Local notes: features/local-notes.md
+      - Desktop presence: features/desktop-presence.md
       - Proof: features/proof.md
   - Code:
       - Map: code/map.md

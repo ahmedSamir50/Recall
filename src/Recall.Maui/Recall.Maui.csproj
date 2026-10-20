@@ -37,26 +37,12 @@
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
     <RuntimeIdentifiers>maccatalyst-arm64</RuntimeIdentifiers>
   </PropertyGroup>
-  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
-    <PackageReference Include="Tokenizers.DotNet.runtime.win-x64" />
-  </ItemGroup>
-  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-    <PackageReference Include="Tokenizers.DotNet.runtime.linux-arm64" />
-    <PackageReference Include="Tokenizers.DotNet.runtime.linux-x64" />
-  </ItemGroup>
-  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
-    <PackageReference Include="Tokenizers.DotNet.runtime.osx-arm64" />
-  </ItemGroup>
-  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
-    <PackageReference Include="Tokenizers.DotNet.runtime.osx-arm64" />
-  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="Microsoft.Maui.Controls" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
-    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
     <AdditionalFiles Include="BannedSymbols.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -85,8 +71,14 @@
     <MauiFont Include="Resources\Fonts\OpenSans-Regular.ttf" />
     <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
+  <Import Project="..\..\native\RecallEmbed.Native.props" />
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
     <Content Include="Platforms\Windows\appicon.ico" Link="appicon.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="@(RecallEmbedNativeDlls)" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <AndroidNativeLibrary Include="..\..\native\out\android-arm64\librecall_embed.so" Abi="arm64-v8a" />
+    <AndroidNativeLibrary Include="..\..\native\out\android-x64\librecall_embed.so" Abi="x86_64" />
   </ItemGroup>
   <Target Name="RecallClearMismatchedRuntimeIdentifier" BeforeTargets="ProcessFrameworkReferences">
     <PropertyGroup>

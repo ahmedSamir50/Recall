@@ -16,6 +16,7 @@
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <ProjectReference Include="..\..\src\Recall.Adapters\Recall.Adapters.csproj" />
     <ProjectReference Include="..\..\src\Recall.Core\Recall.Core.csproj" />
     <ProjectReference Include="..\..\src\Recall.UI\Recall.UI.csproj" />
   </ItemGroup>

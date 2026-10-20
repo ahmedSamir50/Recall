@@ -362,36 +362,6 @@ public static bool NeedsRepair(string? storedHash, string? currentHash) =>
 No branch.
 ``` 
 
-## src/Recall.Core/Text/GemmaTextTokenizer.cs
-
-In-code reader. The accepted tokenizer is the GGUF tokenizer in ADR 0012. This class is not that tokenizer.
-
-```csharp
-namespace Recall.Core.Text;
-public sealed class GemmaTextTokenizer
-GemmaTextTokenizer
-public static GemmaTextTokenizer Load(Stream tokenizerJson)
-public int[] Encode(string text)
-if (!document.RootElement.TryGetProperty("model", out var model))
-if (!model.TryGetProperty("type", out var typeElement)
-if (!model.TryGetProperty("vocab", out var vocabElement))
-if (!model.TryGetProperty("merges", out var mergesElement))
-if (merge.GetArrayLength() != 2)
-if (left is null || right is null)
-if (text.Length == 0)
-if (!vocab.TryGetValue(symbols[i], out var id))
-if (bosId < 0 || eosId < 0 || ids.Length == 0)
-if (!root.TryGetProperty("added_tokens", out var addedTokens))
-if (!token.TryGetProperty("content", out var contentElement)
-if (content == "<bos>")
-else if (content == "<eos>")
-if (vocab.ContainsKey(piece))
-if (!vocab.ContainsKey(bytePiece))
-if (!TryMergeLeftmost(symbols, left, right, out var index))
-if (!merged)
-if (symbols[i] == left && symbols[i + 1] == right)
-```
-
 ## src/Recall.Core/Text/KeywordFold.cs
 
 ```csharp

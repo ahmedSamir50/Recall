@@ -2,9 +2,7 @@ Status: in-code
 
 ## Files
 
-Files from `TextModel` in [src/Recall.Maui/appsettings.json](../../src/Recall.Maui/appsettings.json): `model_quantized.onnx`, `model_quantized.onnx_data`, `tokenizer.json`, with the three SHA-256 values in that file, under `models/text`. Base URL is the Hugging Face `onnx-community/embeddinggemma-2-ONNX` resolve URL in that file.
-
-Accepted file: open. ADR 0012 names embeddinggemma-2-Q8_0.gguf. This page's ONNX names are the files the app still downloads.
+The text download is embeddinggemma-2-Q8_0.gguf from ggml-org/embeddinggemma-2-GGUF. ModelSha256 is the lowercase SHA-256 in appsettings.json. tokenizer.json and the ONNX pair are not downloaded.
 
 ## Placement
 

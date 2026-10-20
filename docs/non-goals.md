@@ -26,4 +26,6 @@ No Blazor WebAssembly.
 
 No second desktop codebase.
 
+No helper process.
+
 Source: the will-not-be-built paragraph in [plan.md](plan.md) and the non-negotiables in canon.

@@ -607,6 +607,52 @@ public sealed class Phase3WatchTests
     }
 
     [Fact]
+    public async Task Idle_Coordinator_BusyKeepsChange_IdleDrains()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "recall-idle-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        var filePath = Path.Combine(root, "a.txt");
+        await File.WriteAllTextAsync(filePath, "hello", TestContext.Current.CancellationToken);
+        try
+        {
+            var store = new FakeScopeGrantStore();
+            var scope = new ScopeGrantService(store);
+            scope.TryAddGrant(new ScopeFolderGrant(root, "temp", GrantFileKinds.Text));
+            var cursors = new FakeIngestCursorStore();
+            var skips = new FakeUserSkipStore();
+            var opLog = new LocalOpLogWriter(null);
+            var ingest = new FakeGrantedTextIngestService();
+            var applier = new ScopeChangeApplier(cursors, ingest, opLog);
+            var reader = IngestTestKit.CreateDirectoryReader(skips);
+            var scan = new ForegroundScanService(scope, reader, cursors, applier);
+            var watcher = new FakeFileScopeWatcherService();
+            var idle = new FakeIdleDetectorService { Current = IdleSignal.Busy };
+            var coordinator = new ScopeWatchCoordinator(watcher, scope, scan, applier, skips, idle, new FakeLocalContentProbe(), new RemoteFileSkipReport());
+            try
+            {
+                coordinator.Report(new ScopeChange(ScopeChangeKind.Created, filePath, null));
+                coordinator.Buffer.Count.Should().Be(1);
+                await coordinator.PumpOnceAsync(TestContext.Current.CancellationToken);
+                coordinator.Buffer.Count.Should().Be(1);
+                ingest.IngestDocumentCalls.Should().Be(0);
+                idle.Current = IdleSignal.Idle;
+                await coordinator.PumpOnceAsync(TestContext.Current.CancellationToken);
+                ingest.IngestDocumentCalls.Should().Be(1);
+                coordinator.Buffer.Count.Should().Be(0);
+            }
+            finally
+            {
+                coordinator.Stop();
+                coordinator.Dispose();
+            }
+        }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
+    }
+
+    [Fact]
     public async Task PumpOnce_ExceptionOnFirstChange_AppliesSecond()
     {
         var root = Path.Combine(Path.GetTempPath(), "recall-pump-" + Guid.NewGuid().ToString("N"));

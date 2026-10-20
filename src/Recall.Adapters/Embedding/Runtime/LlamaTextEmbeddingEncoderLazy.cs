@@ -2,11 +2,11 @@ using Recall.Core.Ports;
 
 namespace Recall.Adapters.Embedding;
 
-public sealed class LazyOnnxTextEmbeddingEncoder : ITextEmbeddingEncoder
+public sealed class LlamaTextEmbeddingEncoderLazy : ITextEmbeddingEncoder
 {
     private readonly TextModelRuntime runtime;
 
-    public LazyOnnxTextEmbeddingEncoder(TextModelRuntime runtime)
+    public LlamaTextEmbeddingEncoderLazy(TextModelRuntime runtime)
     {
         this.runtime = runtime;
     }

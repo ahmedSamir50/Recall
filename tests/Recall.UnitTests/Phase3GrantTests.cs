@@ -41,6 +41,18 @@ public sealed class Phase3GrantTests
     }
 
     [Fact]
+    public void TryAddGrant_ParentTextOnly_KeepsText()
+    {
+        var store = new FakeScopeGrantStore();
+        var service = new ScopeGrantService(store);
+        service.TryAddGrant(new ScopeFolderGrant(@"D:\Photos", "photos", GrantFileKinds.Image));
+        service.TryAddGrant(new ScopeFolderGrant(@"D:\", "drive", GrantFileKinds.Text));
+        var grants = store.List();
+        grants.Should().HaveCount(1);
+        grants[0].EnabledKinds.Should().Be(GrantFileKinds.Text);
+    }
+
+    [Fact]
     public void TryAddGrant_ParentReplacesChild_KeepsDriveRoot()
     {
         var store = new FakeScopeGrantStore();

@@ -66,8 +66,12 @@ public sealed class Phase2CloseTests
             .Where(path => !path.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar, StringComparison.Ordinal))
             .Where(path => !path.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar, StringComparison.Ordinal))
             .ToList();
-        files.Should().OnlyContain(path => !path.EndsWith(".onnx", StringComparison.OrdinalIgnoreCase));
-        File.ReadAllText(Path.Combine(mauiRoot, "Recall.Maui.csproj")).Should().NotContain(".onnx");
+        files.Should().OnlyContain(path =>
+            !path.EndsWith(".onnx", StringComparison.OrdinalIgnoreCase)
+            && !path.EndsWith(".gguf", StringComparison.OrdinalIgnoreCase));
+        var csproj = File.ReadAllText(Path.Combine(mauiRoot, "Recall.Maui.csproj"));
+        csproj.Should().NotContain(".onnx");
+        csproj.Should().NotContain(".gguf");
     }
 
     [Fact]

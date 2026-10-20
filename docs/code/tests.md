@@ -458,22 +458,13 @@ public sealed class FakeFolderPickerService : IFolderPickerService
 No branch.
 
 
-## tests/Recall.IntegrationTests/OnnxTextGraphTests.cs
+## tests/Recall.IntegrationTests/LlamaEmbedIntegrationTests.cs
 
 ```csharp
 namespace Recall.IntegrationTests;
-public sealed class OnnxTextGraphTests
-    public void EmptyFeatureDimensions_Null_Throws()
-    public void EmptyFeatureDimensions_Empty_Throws()
-    public void EmptyFeatureDimensions_Symbolic_BecomesZero() =>
-    public void EmptyFeatureDimensions_FixedLeading_BecomesZero() =>
-    public void EmptyFeatureDimensions_AlreadyEmpty_Stays() =>
-    public void RequireTextInputs_Null_Throws()
-    public void RequireTextInputs_AllFive_Returns()
-    public void RequireTextInputs_MissingVideoFeatures_Throws()
-    public void RequireFloat_Null_Throws()
-    public void RequireFloat_Float_Returns()
-    public void RequireFloat_Int64_Throws()
+public sealed class LlamaEmbedIntegrationTests
+    public async Task Embed_LocalGguf_Is768AndUnit()
+        catch (InvalidOperationException ex)
 ```
 
 No branch.
@@ -741,35 +732,31 @@ No public type.
 No branch.
 ``` 
 
-## tests/Recall.UnitTests/GemmaTextTokenizerTests.cs
+## tests/Recall.UnitTests/LlamaEmbedTests.cs
 
 ```csharp
 namespace Recall.UnitTests;
-public sealed class GemmaTextTokenizerTests
-GemmaTextTokenizerTests
-public void Load_NotBpe_Throws()
-public void Encode_Null_Throws()
-public void Encode_Empty_IsEmpty()
-public void Encode_Space_BecomesOnePiece()
-public void Encode_WrapsBosAndEos()
-public void Encode_RescansMerges()
-public void Encode_ByteFallback_UsesHexPiece()
-public void IsSupported_AndroidAndIos_AreTrue()
-public void IsSupported_DesktopShells_StayTrue()
+public sealed class LlamaEmbedTests
+    public void Embed_Blank_Throws()
+    public Task Embed_Cancelled_Throws()
+    public Task Embed_NativeCode_Throws()
+    public Task Embed_Success_IsUnit768()
+    public void Count_Blank_Throws()
+    public void Count_ReturnsValue()
+    public void RequireCount_Code_Throws()
+    public void RequireCount_Zero_ReturnsCount()
+    public void Ensure_MissingFile_Throws()
+    public void Ensure_OpenFails_Throws()
+    public void Ensure_SecondCall_OpensOnce()
+    public void Count_Cancelled_Throws()
+    public Task LazyEncoder_Forwards()
+    public Task Dispose_ClosesOnce()
+    public void Defaults_AreGguF()
+    public void AppSettings_TextModel_IsGguF()
+            if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
 ```
 
 No branch.
-
-
-## tests/Recall.IntegrationTests/GemmaTextTokenizerIntegrationTests.cs
-
-```csharp
-namespace Recall.IntegrationTests;
-public sealed class GemmaTextTokenizerIntegrationTests
-GemmaTextTokenizerIntegrationTests
-public void Encode_LocalTokenizerJson_MatchesNativeIds()
-if (!File.Exists(tokenizerPath))
-```
 
 
 ## tests/Recall.UnitTests/PhaseAddendumTests.cs

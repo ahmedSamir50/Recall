@@ -8,18 +8,19 @@
     <IsTestProject>true</IsTestProject>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+    <RecallEmbedRequireNative>true</RecallEmbedRequireNative>
   </PropertyGroup>
+  <Import Project="..\..\native\RecallEmbed.Native.props" />
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="TestAssets\embeddinggemma-2-text\model_quantized.onnx" CopyToOutputDirectory="PreserveNewest" Link="TestAssets\embeddinggemma-2-text\model_quantized.onnx" />
-    <Content Include="TestAssets\embeddinggemma-2-text\model_quantized.onnx_data" CopyToOutputDirectory="PreserveNewest" Link="TestAssets\embeddinggemma-2-text\model_quantized.onnx_data" />
-    <Content Include="TestAssets\embeddinggemma-2-text\tokenizer.json" CopyToOutputDirectory="PreserveNewest" Link="TestAssets\embeddinggemma-2-text\tokenizer.json" />
+    <Content Include="TestAssets\embeddinggemma-2-text\embeddinggemma-2-Q8_0.gguf" CopyToOutputDirectory="PreserveNewest" Link="TestAssets\embeddinggemma-2-text\embeddinggemma-2-Q8_0.gguf" Condition="Exists('TestAssets\embeddinggemma-2-text\embeddinggemma-2-Q8_0.gguf')" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
-    <PackageReference Include="Tokenizers.DotNet.runtime.win-x64" />
+    <Content Include="@(RecallEmbedNativeDlls)" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="ZVec.NET" />
     <PackageReference Include="FluentAssertions" />

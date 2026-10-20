@@ -1,3 +1,4 @@
+using Recall.Adapters.Embedding.Llama;
 using Recall.Core.Download;
 using Recall.Core.Faults;
 using Recall.Core.Ports;
@@ -7,48 +8,77 @@ namespace Recall.Adapters.Embedding;
 public sealed class TextModelRuntime : IDisposable
 {
     private readonly string modelDirectory;
-    private readonly RecallShellKind shellKind;
     private readonly TextModelDownloadOptions options;
-    private readonly object gate = new();
-    private OnnxTextEmbeddingEncoder? encoder;
-    private HuggingFaceTextTokenCounter? counter;
-    private Tokenizers.DotNet.Tokenizer? tokenizer;
+    private readonly IRecallEmbedLibrary library;
+    private readonly SemaphoreSlim embedGate = new(1, 1);
+    private readonly object loadGate = new();
+    private LlamaTextEmbeddingEncoder? encoder;
+    private LlamaTextTokenCounter? counter;
+    private bool opened;
+    private int disposed;
 
     public TextModelRuntime(
         string modelDirectory,
         RecallShellKind shellKind = RecallShellKind.Unknown,
         TextModelDownloadOptions? options = null)
+        : this(modelDirectory, shellKind, options, null)
     {
-        this.modelDirectory = modelDirectory;
-        this.shellKind = shellKind;
-        this.options = options ?? new TextModelDownloadOptions();
     }
 
-    public bool IsModelReady =>
-        File.Exists(Path.Combine(modelDirectory, options.OnnxFileName))
-        && File.Exists(Path.Combine(modelDirectory, options.TokenizerFileName))
-        && File.Exists(Path.Combine(modelDirectory, options.OnnxDataFileName));
-
-    public OnnxTextEmbeddingEncoder GetEncoder()
+    internal TextModelRuntime(
+        string modelDirectory,
+        IRecallEmbedLibrary library,
+        TextModelDownloadOptions? options = null)
+        : this(modelDirectory, RecallShellKind.Unknown, options, library)
     {
+    }
+
+    private TextModelRuntime(
+        string modelDirectory,
+        RecallShellKind shellKind,
+        TextModelDownloadOptions? options,
+        IRecallEmbedLibrary? library)
+    {
+        this.modelDirectory = modelDirectory;
+        _ = shellKind;
+        this.options = options ?? new TextModelDownloadOptions();
+        this.library = library ?? new RecallEmbedNative();
+    }
+
+    public bool IsModelReady => File.Exists(Path.Combine(modelDirectory, options.ModelFileName));
+
+    public LlamaTextEmbeddingEncoder GetEncoder()
+    {
+        ObjectDisposedException.ThrowIf(disposed != 0, this);
         EnsureLoaded();
         return encoder!;
     }
 
-    public HuggingFaceTextTokenCounter GetCounter()
+    public LlamaTextTokenCounter GetCounter()
     {
+        ObjectDisposedException.ThrowIf(disposed != 0, this);
         EnsureLoaded();
         return counter!;
     }
 
     public void Dispose()
     {
+        if (disposed != 0)
+        {
+            return;
+        }
+
+        disposed = 1;
         encoder?.Dispose();
-        counter?.Dispose();
-        tokenizer?.Dispose();
         encoder = null;
         counter = null;
-        tokenizer = null;
+        if (opened)
+        {
+            library.Close();
+            opened = false;
+        }
+
+        embedGate.Dispose();
     }
 
     private void EnsureLoaded()
@@ -58,7 +88,7 @@ public sealed class TextModelRuntime : IDisposable
             return;
         }
 
-        lock (gate)
+        lock (loadGate)
         {
             if (encoder is not null)
             {
@@ -70,14 +100,20 @@ public sealed class TextModelRuntime : IDisposable
                 throw new RecallFaultException(RecallFault.TextModelNotReady);
             }
 
-            if (!TextTokenizerRuntime.IsSupported(shellKind))
+            if (!opened)
             {
-                throw new RecallFaultException(RecallFault.TokenizerNativeUnsupported);
+                var modelPath = Path.Combine(modelDirectory, options.ModelFileName);
+                var code = library.Open(modelPath);
+                if (code != 0)
+                {
+                    throw new InvalidOperationException($"recall_embed open failed with code {code}.");
+                }
+
+                opened = true;
             }
 
-            tokenizer = HuggingFaceTokenizerFactory.Create(Path.Combine(modelDirectory, options.TokenizerFileName));
-            encoder = new OnnxTextEmbeddingEncoder(Path.Combine(modelDirectory, options.OnnxFileName), tokenizer, ownsTokenizer: false);
-            counter = new HuggingFaceTextTokenCounter(tokenizer, ownsTokenizer: false);
+            encoder = new LlamaTextEmbeddingEncoder(library, embedGate);
+            counter = new LlamaTextTokenCounter(library, embedGate);
         }
     }
 }

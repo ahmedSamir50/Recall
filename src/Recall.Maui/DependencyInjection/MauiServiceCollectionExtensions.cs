@@ -16,7 +16,7 @@ public static class MauiServiceCollectionExtensions
     public static IServiceCollection AddRecallMauiPlatform(this IServiceCollection services, TextModelDownloadOptions textModel)
     {
         services.AddSingleton(textModel);
-        services.AddSingleton<IEncoderFileHash>(_ => new DefaultEncoderFileHash { TextHash = textModel.OnnxSha256 });
+        services.AddSingleton<IEncoderFileHash>(_ => new DefaultEncoderFileHash { TextHash = textModel.ModelSha256 });
         services.AddHttpClient();
         services.AddSingleton<IThemePreferenceStore, MauiThemePreferenceStore>();
         services.AddSingleton<IUiLocaleStore, MauiUiLocaleStore>();

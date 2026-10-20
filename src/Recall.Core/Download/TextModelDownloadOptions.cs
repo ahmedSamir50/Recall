@@ -4,21 +4,11 @@ public sealed class TextModelDownloadOptions
 {
     public const string SectionName = "TextModel";
 
-    public string OnnxBaseUrl { get; set; } = "https://huggingface.co/onnx-community/embeddinggemma-2-ONNX/resolve/main/onnx/";
+    public string ModelBaseUrl { get; set; } = "https://huggingface.co/ggml-org/embeddinggemma-2-GGUF/resolve/main/";
 
-    public string RepositoryBaseUrl { get; set; } = "https://huggingface.co/onnx-community/embeddinggemma-2-ONNX/resolve/main/";
+    public string ModelFileName { get; set; } = "embeddinggemma-2-Q8_0.gguf";
 
-    public string OnnxFileName { get; set; } = "model_quantized.onnx";
-
-    public string OnnxDataFileName { get; set; } = "model_quantized.onnx_data";
-
-    public string TokenizerFileName { get; set; } = "tokenizer.json";
-
-    public string OnnxSha256 { get; set; } = string.Empty;
-
-    public string OnnxDataSha256 { get; set; } = string.Empty;
-
-    public string TokenizerSha256 { get; set; } = string.Empty;
+    public string ModelSha256 { get; set; } = "2188ac1deca4b77dffefd603c2776a9d76d9d74ec01841392982ebb840b09135";
 
     public string UserAgentProduct { get; set; } = "Recall";
 
@@ -28,7 +18,5 @@ public sealed class TextModelDownloadOptions
 
     public string RelativeVectorDirectory { get; set; } = "zvec";
 
-    public Uri OnnxBaseUri => new(OnnxBaseUrl);
-
-    public Uri RepositoryBaseUri => new(RepositoryBaseUrl);
+    public Uri ModelBaseUri => new(ModelBaseUrl);
 }

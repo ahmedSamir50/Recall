@@ -2,6 +2,8 @@
 
 Recall is one .NET 10 MAUI Blazor Hybrid process. The accepted text runtime is in-process llama.cpp, and ZVec.NET stays in that same process. The class in the tree is still the ONNX text encoder. v1 does not send user content or vectors off the device.
 
+The license file is a source-available grant, copyright 2026 Adam Systems EG. A commercial use is not granted. An organization whose counted gross revenue is 100,000 USD or more is not granted use of the software or a version made from it. Those requests go to ahmed.samir.abdelaal@gmail.com. It is not an OSI-approved open source license. The app does not ask for revenue.
+
 ## How to read
 
 Read this page, then [for-agents.md](for-agents.md), then the domain page or the use-case page for the question. A page marked `in-code` names types that exist. A page marked `decided-absent` is an accepted rule with no implementing class. A page marked `open` must not be implemented by guessing. A page marked `forbidden` must not be built.
@@ -14,7 +16,7 @@ Progress numbers live only in [plan.md](plan.md). Domains start at [domains/inde
 
 ## What is not in the tree
 
-Not in the tree: vision, video sampling, OCR, audio encoder, sibling transcripts, pin storage, vector aging, golden recall report, four-shell release.
+Not in the tree: vision, video sampling, OCR, audio encoder, sibling transcripts, pin storage, vector aging, golden recall report, four-shell release. Windows tray, Mac menu bar, sign-in start, and search shortcut. A Linux tray, sign-in start, and search shortcut are open and are not in the tree. The public stub https://github.com/ahmedSamir50/Recall is a README only. This tree has not migrated. A later Actions workflow is meant to build the four shells. That workflow is not in the tree.
 
 ```mermaid
 flowchart TD

@@ -6,7 +6,7 @@ Preferences owns the age cutoff of 2, 5, or 7 years. Type: `AgeCutoffPreferenceS
 
 ## Does not own
 
-It does not move a vector.
+It does not move a vector. It does not store sign-in start or a search shortcut.
 
 ## Use cases
 

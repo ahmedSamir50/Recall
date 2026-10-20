@@ -36,42 +36,25 @@ public static class AdapterServiceCollectionExtensions
 No branch.
 
 
-## src/Recall.Adapters/Embedding/Onnx/OnnxTextEmbeddingEncoder.cs
+## src/Recall.Adapters/Embedding/Llama/LlamaTextEmbeddingEncoder.cs
 
 ```csharp
-namespace Recall.Adapters.Embedding;
-public sealed class OnnxTextEmbeddingEncoder : ITextEmbeddingEncoder, IDisposable
-    public OnnxTextEmbeddingEncoder(string modelPath, GemmaTextTokenizer tokenizer, bool ownsTokenizer)
+namespace Recall.Adapters.Embedding.Llama;
+public sealed class LlamaTextEmbeddingEncoder : ITextEmbeddingEncoder, IDisposable
     public async ValueTask<ReadOnlyMemory<float>> EmbedPrefixedTextAsync(string prefixedText, CancellationToken cancellationToken = default)
     public void Dispose()
+            if (code != 0)
 ```
 
+`recall_embed_embed` return 0 copies 768 floats and L2-normalizes in C#. Any other code throws `InvalidOperationException` with message `recall_embed embed failed with code CODE.` Blank text throws `ArgumentException`. A cancelled token throws `OperationCanceledException` before the native call.
 
-## src/Recall.Adapters/Embedding/Onnx/OnnxTextGraph.cs
+
+## src/Recall.Adapters/Embedding/Runtime/LlamaTextEmbeddingEncoderLazy.cs
 
 ```csharp
 namespace Recall.Adapters.Embedding;
-public static class OnnxTextGraph
-    public static int[] EmptyFeatureDimensions(int[] metadataDimensions)
-    public static void RequireTextInputs(IEnumerable<string> inputNames)
-    public static void RequireFloat(Type elementType)
-        if (metadataDimensions.Length == 0)
-            throw new ArgumentException("Dimensions must not be empty.", nameof(metadataDimensions));
-            if (value == 0)
-        if (!hasZero)
-        if (!names.Contains(InputIds)
-            throw new InvalidOperationException("Text model inputs are missing.");
-        if (elementType != typeof(float))
-            throw new InvalidOperationException("Feature input must be float.");
-```
-
-
-## src/Recall.Adapters/Embedding/Runtime/LazyOnnxTextEmbeddingEncoder.cs
-
-```csharp
-namespace Recall.Adapters.Embedding;
-public sealed class LazyOnnxTextEmbeddingEncoder : ITextEmbeddingEncoder
-    public LazyOnnxTextEmbeddingEncoder(TextModelRuntime runtime)
+public sealed class LlamaTextEmbeddingEncoderLazy : ITextEmbeddingEncoder
+    public LlamaTextEmbeddingEncoderLazy(TextModelRuntime runtime)
     public ValueTask<ReadOnlyMemory<float>> EmbedPrefixedTextAsync(string prefixedText, CancellationToken cancellationToken = default)
 ```
 
@@ -99,55 +82,56 @@ public sealed class TextModelRuntime : IDisposable
         string modelDirectory,
         RecallShellKind shellKind = RecallShellKind.Unknown,
         TextModelDownloadOptions? options = null)
-    public OnnxTextEmbeddingEncoder GetEncoder()
-    public HuggingFaceTextTokenCounter GetCounter()
+    public LlamaTextEmbeddingEncoder GetEncoder()
+    public LlamaTextTokenCounter GetCounter()
     public void Dispose()
+        if (disposed != 0)
+        if (opened)
         if (encoder is not null)
             if (encoder is not null)
             if (!IsModelReady)
-                throw new RecallFaultException(RecallFault.TextModelNotReady);
-            if (!TextTokenizerRuntime.IsSupported(shellKind))
-                throw new RecallFaultException(RecallFault.TokenizerNativeUnsupported);
+            if (!opened)
+                if (code != 0)
 ```
 
+`IsModelReady` is `File.Exists` of `options.ModelFileName` only. `EnsureLoaded` throws `RecallFaultException(RecallFault.TextModelNotReady)` when the GGUF is missing. `Open` runs once; a non-zero code throws `InvalidOperationException` with message `recall_embed open failed with code CODE.` `Dispose` disposes the encoder, calls `Close` once, then disposes the gate.
 
-## src/Recall.Adapters/Embedding/Tokenizers/TextTokenizerRuntime.cs
+`recall_embed_open` return codes used from C#: 0 success; 1 null argument; 2 model load failed; 3 tokenize failed; 4 more than 8192 tokens; 5 encode or decode failed; 6 null embedding pointer from native; 7 output width is not 768; 8 already open; 9 not open. `recall_embed_count_tokens` writes the token count and returns 0; a non-zero count code throws through `RecallEmbedResults.RequireCount`.
 
-`IsSupported` is true for Windows, Mac Catalyst, Android, iOS, and Unknown. Android and iOS no longer fail closed on a missing native tokenizer runtime. That is the in-code reader. The accepted tokenizer is ADR 0012. Do not point a shell at Tokenizers.DotNet.
+
+## src/Recall.Adapters/Embedding/Llama/LlamaTextTokenCounter.cs
 
 ```csharp
-namespace Recall.Adapters.Embedding;
-public static class TextTokenizerRuntime
-    public static bool IsSupported(RecallShellKind kind) => kind is RecallShellKind.Windows or RecallShellKind.MacCatalyst or RecallShellKind.Android or RecallShellKind.Ios or RecallShellKind.Unknown;
+namespace Recall.Adapters.Embedding.Llama;
+public sealed class LlamaTextTokenCounter : ITextTokenCounter
+    public LlamaTextTokenCounter(IRecallEmbedLibrary library, SemaphoreSlim gate)
+    public int CountTokens(string text)
 ```
+
+Blank text throws `ArgumentException`. Embed and count share one `SemaphoreSlim(1, 1)`.
 
 No branch.
 
 
-## Text tokenizer
-
-`HuggingFaceTokenizerFactory` loads `tokenizer.json` into `Recall.Core.Text.GemmaTextTokenizer`, a managed BPE reader with no native library. `OnnxTextEmbeddingEncoder` and `HuggingFaceTextTokenCounter` call `GemmaTextTokenizer.Encode`. The MAUI project does not reference `Tokenizers.DotNet.runtime.*` packages. `Recall.Adapters` keeps `Tokenizers.DotNet` only for the Windows id-check in `Recall.IntegrationTests`.
-
-
-## src/Recall.Adapters/Embedding/Tokenizers/HuggingFaceTextTokenCounter.cs
-
-```csharp
-namespace Recall.Adapters.Embedding;
-public sealed class HuggingFaceTextTokenCounter : ITextTokenCounter, IDisposable
-    public HuggingFaceTextTokenCounter(GemmaTextTokenizer tokenizer, bool ownsTokenizer)
-    public int CountTokens(string text)
-    public void Dispose()
-```
-
-
-## src/Recall.Adapters/Embedding/Tokenizers/HuggingFaceTokenizerFactory.cs
-
-```csharp
-namespace Recall.Adapters.Embedding;
-internal static class HuggingFaceTokenizerFactory
-    internal static GemmaTextTokenizer Create(string tokenizerJsonPath)
-```
+## src/Recall.Adapters/InternalsVisibleTo.cs
 
 No public type.
 
 No branch.
+
+
+## src/Recall.Adapters/Embedding/Llama/RecallEmbedNative.cs
+
+```csharp
+namespace Recall.Adapters.Embedding.Llama;
+RecallEmbedResults
+RequireCount
+RecallEmbedNative
+        if (code != 0)
+        catch (DllNotFoundException)
+        catch (EntryPointNotFoundException)
+```
+
+P/Invokes `recall_embed_open`, `recall_embed_close`, `recall_embed_count_tokens`, and `recall_embed_embed` with UTF-8 paths and a trailing null. `RecallEmbedResults.RequireCount` throws `InvalidOperationException` with message `recall_embed count failed with code CODE.` when the native count call is non-zero.
+
+No public type.

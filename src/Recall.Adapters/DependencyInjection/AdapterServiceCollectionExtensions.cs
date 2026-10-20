@@ -20,7 +20,7 @@ public static class AdapterServiceCollectionExtensions
             modelDirectory,
             sp.GetService<IRecallShellKind>()?.Kind ?? RecallShellKind.Unknown,
             sp.GetService<TextModelDownloadOptions>()));
-        services.AddSingleton<ITextEmbeddingEncoder, LazyOnnxTextEmbeddingEncoder>();
+        services.AddSingleton<ITextEmbeddingEncoder, LlamaTextEmbeddingEncoderLazy>();
         services.AddSingleton<ITextTokenCounter, LazyTextTokenCounter>();
         services.AddSingleton<ITextVectorIndex>(sp => new ZVecTextVectorIndex(
             vectorDatabaseRoot,

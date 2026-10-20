@@ -79,9 +79,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
     {
         var files = new (string Name, Uri BaseUri, string Sha256)[]
         {
-            (options.OnnxFileName, options.OnnxBaseUri, options.OnnxSha256),
-            (options.OnnxDataFileName, options.OnnxBaseUri, options.OnnxDataSha256),
-            (options.TokenizerFileName, options.RepositoryBaseUri, options.TokenizerSha256),
+            (options.ModelFileName, options.ModelBaseUri, options.ModelSha256),
         };
         CancellationTokenSource cts;
         lock (gate)

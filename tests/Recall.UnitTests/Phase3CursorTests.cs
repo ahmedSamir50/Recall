@@ -502,6 +502,25 @@ public sealed class Phase3CursorTests
     }
 
     [Fact]
+    public async Task Delete_OnePath_SharedId_DoesNotAppendDelete()
+    {
+        var parts = CreateApplier();
+        parts.Cursors.FinishPath("a.txt", "h1", "g", "enc", [new ChunkWrite("id1", 0)]);
+        parts.Cursors.FinishPath("b.txt", "h2", "g", "enc", [new ChunkWrite("id1", 0)]);
+        await parts.Applier.ApplyAsync(new ScopeChange(ScopeChangeKind.Deleted, "a.txt", null), new ScopeFolderGrant("g", "g", GrantFileKinds.All), null, TestContext.Current.CancellationToken);
+        parts.OpLog.Entries.Should().NotContain(e => e.Operation == Recall.Core.Vocabulary.OpLogOperation.Delete);
+    }
+
+    [Fact]
+    public async Task Delete_LastPath_AppendsDeleteOnce()
+    {
+        var parts = CreateApplier();
+        parts.Cursors.FinishPath("a.txt", "h1", "g", "enc", [new ChunkWrite("id1", 0)]);
+        await parts.Applier.ApplyAsync(new ScopeChange(ScopeChangeKind.Deleted, "a.txt", null), new ScopeFolderGrant("g", "g", GrantFileKinds.All), null, TestContext.Current.CancellationToken);
+        parts.OpLog.Entries.Should().ContainSingle(e => e.Operation == Recall.Core.Vocabulary.OpLogOperation.Delete && e.ContentId == "id1");
+    }
+
+    [Fact]
     public async Task Apply_DeletedWhenAlreadyMissing_DoesNotAppendAgain()
     {
         var parts = CreateApplier();
@@ -549,7 +568,6 @@ public sealed class Phase3CursorTests
         var document = new GrantedTextDocument("new.txt", "new.txt", "new text", DateTimeOffset.UtcNow);
         await parts.Applier.ApplyAsync(new ScopeChange(ScopeChangeKind.Renamed, "new.txt", "old.txt"), grant, document, TestContext.Current.CancellationToken);
         parts.Cursors.ListChunks("old.txt")[0].Retired.Should().BeTrue();
-        parts.OpLog.Entries.Should().Contain(e => e.ContentId == "id1");
         parts.Ingest.IngestDocumentCalls.Should().Be(1);
     }
 

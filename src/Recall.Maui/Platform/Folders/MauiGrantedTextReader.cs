@@ -10,10 +10,15 @@ public sealed partial class MauiGrantedTextReader : IGrantedTextReader
     private readonly IGrantedFolderAccessService access;
     private int restored;
 
-    public MauiGrantedTextReader(IGrantedFolderAccessService access, IUserSkipStore skips)
+    public MauiGrantedTextReader(
+        IGrantedFolderAccessService access,
+        IUserSkipStore skips,
+        ILocalContentProbe probe,
+        IRemoteFileSkipReport remoteSkip,
+        IDatasetSkipReport datasetSkip)
     {
         this.access = access;
-        files = new DirectoryGrantedTextReader(skips);
+        files = new DirectoryGrantedTextReader(skips, probe, remoteSkip, datasetSkip);
     }
 
     public IAsyncEnumerable<GrantedTextDocument> ReadAsync(ScopeFolderGrant grant, CancellationToken cancellationToken)

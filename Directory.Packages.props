@@ -1,14 +1,6 @@
 <Project>
   <ItemGroup>
     <!-- ZVec.NET 1.0.0-beta.6 is the NuGet id. It is not on nuget.org. This machine restores it from the local feed in the user NuGet config. -->
-    <PackageVersion Include="Microsoft.ML.OnnxRuntime" Version="1.31.0" />
-    <PackageVersion Include="Tokenizers.DotNet" Version="1.4.1" />
-    <PackageVersion Include="Tokenizers.DotNet.runtime.win-x64" Version="1.4.1" />
-    <PackageVersion Include="Tokenizers.DotNet.runtime.win-arm64" Version="1.4.1" />
-    <PackageVersion Include="Tokenizers.DotNet.runtime.linux-x64" Version="1.4.1" />
-    <PackageVersion Include="Tokenizers.DotNet.runtime.linux-arm64" Version="1.4.1" />
-    <PackageVersion Include="Tokenizers.DotNet.runtime.osx-x64" Version="1.4.1" />
-    <PackageVersion Include="Tokenizers.DotNet.runtime.osx-arm64" Version="1.4.1" />
     <PackageVersion Include="ZVec.NET" Version="1.0.0-beta.6" />
     <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.110" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.110" />

@@ -1,11 +1,7 @@
-Status: in-code
+# Text chunking
 
-## Budget
+The counter is LlamaTextTokenCounter. It calls recall_embed_count_tokens on the loaded GGUF. Blank text throws ArgumentException.
 
-`TextChunkPlanner.MaxTokenBudget` is 8192, including the prefix. `PlanChunks` throws on blank content or a null counter. When the whole titled document is within budget it returns one piece, ordinal 0. Past the budget it splits, each piece keeps the title prefix, ordinals increase from 0, and the split snaps to a rune boundary. Chunks are not averaged.
+The 8192 budget includes the prefix. One vector when the note fits. Split only past that. Do not average chunks. Later chunks keep the title prefix and do not split a surrogate pair.
 
-A heading, a table, and a fenced block are not read as structure yet. That rule is open in structure-chunks.md.
-
-## Tokenizer
-
-The in-code counter calls GemmaTextTokenizer on tokenizer.json. IsSupported is true for Windows, Mac Catalyst, Android, iOS, and Unknown. The accepted tokenizer is the GGUF tokenizer inside in-process llama.cpp. Tokenizers.DotNet is not the loader. The emulator does not load Tokenizers.DotNet.runtime.linux-x64.
+`TextChunkPlanner.PlanChunks` takes a delegate that returns token counts. Unit tests use a fake counter.

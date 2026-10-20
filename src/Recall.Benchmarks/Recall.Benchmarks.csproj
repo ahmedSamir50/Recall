@@ -5,10 +5,14 @@
     <RootNamespace>Recall.Benchmarks</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RecallEmbedRequireNative>true</RecallEmbedRequireNative>
   </PropertyGroup>
+  <Import Project="..\..\native\RecallEmbed.Native.props" />
+  <ItemGroup>
+    <Content Include="@(RecallEmbedNativeDlls)" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" />
-    <PackageReference Include="Tokenizers.DotNet.runtime.win-x64" />
     <ProjectReference Include="..\Recall.Core\Recall.Core.csproj" />
     <ProjectReference Include="..\Recall.Adapters\Recall.Adapters.csproj" />
   </ItemGroup>

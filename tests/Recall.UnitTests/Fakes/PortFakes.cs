@@ -138,6 +138,15 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
                 chunkRows[id] = chunk with { Missing = true };
             }
         }
+
+        foreach (var key in aliases.Keys.ToList())
+        {
+            var alias = aliases[key];
+            if (string.Equals(alias.Path, path, StringComparison.OrdinalIgnoreCase))
+            {
+                aliases[key] = alias with { Missing = true };
+            }
+        }
     }
 
     public void RetirePath(string path)
@@ -148,6 +157,15 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
             if (string.Equals(chunk.Path, path, StringComparison.OrdinalIgnoreCase))
             {
                 chunkRows[id] = chunk with { Retired = true };
+            }
+        }
+
+        foreach (var key in aliases.Keys.ToList())
+        {
+            var alias = aliases[key];
+            if (string.Equals(alias.Path, path, StringComparison.OrdinalIgnoreCase))
+            {
+                aliases[key] = alias with { Retired = true };
             }
         }
     }
@@ -178,6 +196,32 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
     {
         return aliases.Values.Any(a => string.Equals(a.ContentId, contentId, StringComparison.Ordinal)
             && !a.Missing && !a.Retired);
+    }
+
+    public bool AnyOtherLivePath(string contentId, string path)
+    {
+        if (string.IsNullOrWhiteSpace(contentId) || string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Content id and path must not be blank.");
+        }
+
+        return aliases.Values.Any(a => string.Equals(a.ContentId, contentId, StringComparison.Ordinal)
+            && !string.Equals(a.Path, path, StringComparison.OrdinalIgnoreCase)
+            && !a.Missing && !a.Retired);
+    }
+
+    public IReadOnlyList<string> ListRetiredIds(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        return aliases.Values
+            .Where(a => string.Equals(a.Path, path, StringComparison.OrdinalIgnoreCase) && a.Retired)
+            .Select(a => a.ContentId)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
     }
 
     public void AddAlias(string contentId, string path)
@@ -258,14 +302,38 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
     public void FinishPath(string path, string contentHash, string grantPath, string encoderHash, IReadOnlyList<ChunkWrite> chunks)
     {
         files[path] = new IngestFileRow(path, contentHash, IngestCursorState.Finished, grantPath, encoderHash);
+        var newIds = chunks.Select(c => c.ContentId).ToHashSet(StringComparer.Ordinal);
+        foreach (var id in chunkRows.Keys.ToList())
+        {
+            var chunk = chunkRows[id];
+            if (string.Equals(chunk.Path, path, StringComparison.OrdinalIgnoreCase) && !chunk.Retired && !newIds.Contains(id))
+            {
+                chunkRows[id] = chunk with { Retired = true };
+            }
+        }
+
+        foreach (var key in aliases.Keys.ToList())
+        {
+            var alias = aliases[key];
+            if (string.Equals(alias.Path, path, StringComparison.OrdinalIgnoreCase) && !alias.Retired && !newIds.Contains(alias.ContentId))
+            {
+                aliases[key] = alias with { Retired = true };
+            }
+        }
+
         foreach (var chunk in chunks)
         {
-            if (chunkRows.ContainsKey(chunk.ContentId))
+            if (chunkRows.TryGetValue(chunk.ContentId, out var existing)
+                && string.Equals(existing.Path, path, StringComparison.OrdinalIgnoreCase)
+                && !existing.Retired)
             {
-                throw new InvalidOperationException("Duplicate content id.");
+                chunkRows[chunk.ContentId] = existing with { Ordinal = chunk.Ordinal, Missing = false };
+            }
+            else if (!chunkRows.ContainsKey(chunk.ContentId))
+            {
+                chunkRows[chunk.ContentId] = new IngestChunkRow(chunk.ContentId, path, chunk.Ordinal, false, false);
             }
 
-            chunkRows[chunk.ContentId] = new IngestChunkRow(chunk.ContentId, path, chunk.Ordinal, false, false);
             AddAlias(chunk.ContentId, path);
         }
     }
@@ -449,14 +517,21 @@ public sealed class FakeTextVectorIndex : ITextVectorIndex
 
     public bool TryDelete(string contentId)
     {
-        DeleteCalls++;
         var removed = Inserts.RemoveAll(i => i.ContentId == contentId) > 0;
+        if (removed)
+        {
+            DeleteCalls++;
+        }
+
         return removed;
     }
+
+    public int LastReconcileStateCount { get; private set; }
 
     public void Reconcile(IReadOnlyList<VectorLiveState> states)
     {
         ReconcileCalls++;
+        LastReconcileStateCount = states.Count;
         LastFilter = states.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
     }
 
@@ -501,12 +576,13 @@ public static class IngestTestKit
         TextIngestEngine engine,
         FakeIngestCursorStore cursors,
         FakeTextVectorIndex index,
-        LocalOpLogWriter opLog) =>
-        new(scope, reader, engine, cursors, index, opLog, new FakeEncoderFileHash());
+        LocalOpLogWriter opLog,
+        IEncoderFileHash? encoderFileHash = null) =>
+        new(scope, reader, engine, cursors, index, opLog, encoderFileHash ?? new FakeEncoderFileHash());
 
     public static TextSearchService CreateSearchService(
         FakeTextEmbeddingEncoder encoder,
-        FakeTextVectorIndex index,
+        ITextVectorIndex index,
         FakeIngestCursorStore? cursors = null) =>
         new(encoder, index, new FakeIndexPolicy(), cursors ?? new FakeIngestCursorStore(), new FakeEncoderFileHash());
 }

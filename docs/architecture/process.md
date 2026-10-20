@@ -2,7 +2,7 @@ Status: in-code
 
 ## Process
 
-One process hosts the MAUI shell, Razor UI, Core, ONNX Runtime, and ZVec. `MauiProgram` does not call `AddMudServices`.
+One process hosts the MAUI shell, Razor UI, Core, ONNX Runtime, and ZVec. `MauiProgram` does not call `AddMudServices`. A tray or a hotkey does not add a process. None is in the tree.
 
 ## Network
 
