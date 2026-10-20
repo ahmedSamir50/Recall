@@ -5,7 +5,6 @@ using Recall.Core.Ingest;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
 using Recall.Core.Sync;
-using Recall.Core.Text;
 using Recall.UnitTests.Fakes;
 
 namespace Recall.UnitTests;

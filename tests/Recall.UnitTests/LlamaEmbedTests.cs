@@ -3,7 +3,6 @@ using Recall.Adapters.Embedding;
 using Recall.Adapters.Embedding.Llama;
 using Recall.Core.Download;
 using Recall.Core.Faults;
-using Recall.Core.Vectors;
 
 namespace Recall.UnitTests;
 

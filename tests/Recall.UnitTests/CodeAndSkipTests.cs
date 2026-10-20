@@ -2,13 +2,9 @@ using System.Text;
 using System.Xml.Linq;
 using FluentAssertions;
 using Recall.Core.Ingest;
-using Recall.Core.Ports;
 using Recall.Core.Preferences;
 using Recall.Core.Scope;
-using Recall.Core.Search;
-using Recall.Core.Sync;
 using Recall.Core.Text;
-using Recall.Core.Vocabulary;
 using Recall.UnitTests.Fakes;
 
 namespace Recall.UnitTests;

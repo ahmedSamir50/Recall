@@ -1,4 +1,3 @@
-using Recall.Core.Checkpoints;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
 

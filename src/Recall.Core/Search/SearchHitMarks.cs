@@ -1,5 +1,4 @@
 using Recall.Core.Checkpoints;
-using Recall.Core.Scope;
 
 namespace Recall.Core.Search;
 

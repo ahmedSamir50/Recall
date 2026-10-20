@@ -1,5 +1,4 @@
 using Recall.Core.Download;
-using Recall.Core.Text;
 
 namespace Recall.Benchmarks;
 

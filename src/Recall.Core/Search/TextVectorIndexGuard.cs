@@ -1,4 +1,3 @@
-using Recall.Core.Indexing;
 using Recall.Core.Ports;
 using Recall.Core.Vocabulary;
 

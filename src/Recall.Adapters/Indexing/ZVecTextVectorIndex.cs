@@ -2,10 +2,8 @@ using System.Globalization;
 using Recall.Core.Faults;
 using Recall.Core.Indexing;
 using Recall.Core.Ports;
-using Recall.Core.Scope;
 using Recall.Core.Search;
 using ZVec.NET;
-using ZVec.NET.Query;
 
 namespace Recall.Adapters.Indexing;
 

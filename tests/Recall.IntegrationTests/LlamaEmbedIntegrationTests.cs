@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using FluentAssertions;
 using Recall.Adapters.Embedding;
 using Recall.Core.Download;
-using Recall.Core.Vectors;
 using Recall.IntegrationTests.Infrastructure;
 
 namespace Recall.IntegrationTests;

@@ -1,5 +1,3 @@
-using Recall.Core.Scope;
-
 namespace Recall.Core.Scope;
 
 public sealed record GitIgnoreFile(string DirectoryRelative, IReadOnlyList<string> Lines);

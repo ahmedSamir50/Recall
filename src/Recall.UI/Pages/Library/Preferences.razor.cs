@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Components;
 using Recall.Core.Ports;
 using Recall.Core.Preferences;
 using Recall.Core.Vocabulary;
-using Recall.UI;
 
 namespace Recall.UI.Pages;
 

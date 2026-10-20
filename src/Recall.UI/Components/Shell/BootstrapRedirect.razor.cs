@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Components;
 using Recall.Core.Ports;
-using Recall.UI;
 
 namespace Recall.UI.Components;
 

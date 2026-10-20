@@ -6,7 +6,6 @@ using Recall.Core.Ingest;
 using Recall.Core.Scope;
 using Recall.Core.Sync;
 using Recall.Maui.Platform;
-using Recall.Maui.Platform.Debug;
 using Recall.Maui.Platform.Files;
 
 namespace Recall.Maui.DependencyInjection;
