@@ -409,9 +409,13 @@ Version 1.5 is the separate board after the progress table. It is not part of Ph
 
 Browser history is not in v1.
 
-The English PP-OCRv6 small ONNX reader and the separate Arabic ONNX reader are not used until `appsettings.json` names each file and its SHA-256. Task 4.3.3 stays as written. Done when both names and both hashes are in that file and a missing hash does not load a reader. `OcrReaders_MissingHash_DoesNotLoad` locks the missing-hash branch.
+The English PP-OCRv6 small ONNX reader and the separate Arabic ONNX reader are not used until `appsettings.json` names each file and its SHA-256 and its catalog id. The English id is embeddinggemma-2-ocr-en. The Arabic id is embeddinggemma-2-ocr-ar. Task 4.3.3 stays as written. Done when both names, both hashes, and both catalog ids are in that file and a missing hash does not load a reader. `OcrReaders_MissingHash_DoesNotLoad` locks the missing-hash branch.
 
 A picture or video Find drops a hit whose `grant_path` is outside the grant, inside the query, before the 64 cap, using `TextSearchFilter.Build` from task A.2.15. This waits on A.2.15 and on task 4.1.3. Those tasks stay as written. Done when a nearer out-of-grant picture does not take a slot. `PictureFind_OutOfGrant_DoesNotTakeASlot` locks it.
+
+A frame card and a window card carry a start and an end, in seconds. A tie on an equal score keeps the earlier start. Text search keeps `TextSearchHit` and `Collapse.MaxRrf`. Tasks 4.2.2 and 5.1.3 stay as written. Signature: `MediaSearchHit Collapse.EarliestStart(IReadOnlyList<MediaSearchHit> hits)` where `MediaSearchHit` is `string ContentId`, `string SourcePath`, `double StartSeconds`, `double EndSeconds`, `double Score`. Done when two frames with the same score keep the smaller start, and the card has both seconds. `FrameTie_KeepsEarlierStart` locks it.
+
+A desktop llama.cpp run of `InsertOne`, `HybridTop20`, and `LoadTextEncoder` is not the 727.3 ms ONNX record in task 2.2.5. That task stays. The 800 ms cell stays that ONNX record. This stays `not-started` until those three means are written in this paragraph. A missing model directory is not a pass. `LlamaDesktopRun_MissingModel_ExitsWithNoNumber` locks the missing-directory branch.
 
 A compressed ZVec index stays off until a measured search is about two or three times faster. That switch builds a second index beside the float one and does not shrink the file.
 
