@@ -6,7 +6,7 @@ MAUI Preferences keys `recall.onboarding.complete`, `recall.scope.grants`, `reca
 
 ## Checkpoints
 
-`checkpoints.db` is on device. It stores paths, hashes, and states, not file text. No copied source archive.
+`checkpoints.db` is on device. It stores paths, hashes, and states, not file text. No copied source archive. `ResetTextIngest` deletes those rows when a stale `items_text` collection is replaced.
 
 ## Not on device
 

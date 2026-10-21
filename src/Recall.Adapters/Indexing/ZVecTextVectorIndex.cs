@@ -1,5 +1,5 @@
 using System.Globalization;
-using Recall.Core.Faults;
+using Recall.Core.Checkpoints;
 using Recall.Core.Indexing;
 using Recall.Core.Ports;
 using Recall.Core.Search;
@@ -27,7 +27,7 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
     private readonly IZvecCollection collection;
     private readonly HashSet<string> knownIds = new(StringComparer.Ordinal);
 
-    public ZVecTextVectorIndex(string databaseRoot, IIndexPolicy? indexPolicy = null)
+    public ZVecTextVectorIndex(string databaseRoot, IIndexPolicy? indexPolicy = null, IIngestCursorStore? cursors = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(databaseRoot);
         this.indexPolicy = indexPolicy ?? new RecallIndexPolicy();
@@ -77,19 +77,31 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
             ],
         };
 
-        if (Directory.Exists(rootPath))
+        IZvecCollection opened;
+        // A missing directory is Create before the flag is read. Passing true makes an existing directory Open so its schema can be checked.
+        if (TextIndexOpenPolicy.Decide(Directory.Exists(rootPath), hasFtsKeyVector: true) == TextIndexOpenKind.Create)
         {
-            collection = factory.Open(rootPath);
-            if (!SchemaHasFtsKey(collection.Schema))
-            {
-                throw new RecallFaultException(RecallFault.VectorSchemaStale);
-            }
+            Directory.CreateDirectory(Path.GetDirectoryName(rootPath)!);
+            opened = factory.CreateAndOpen(rootPath, schema);
         }
         else
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(rootPath)!);
-            collection = factory.CreateAndOpen(rootPath, schema);
+            opened = factory.Open(rootPath);
+            if (TextIndexOpenPolicy.Decide(true, SchemaHasFtsKey(opened.Schema)) == TextIndexOpenKind.Replace)
+            {
+                opened.Destroy();
+                if (Directory.Exists(rootPath))
+                {
+                    Directory.Delete(rootPath, recursive: true);
+                }
+
+                cursors?.ResetTextIngest();
+                Directory.CreateDirectory(Path.GetDirectoryName(rootPath)!);
+                opened = factory.CreateAndOpen(rootPath, schema);
+            }
         }
+
+        collection = opened;
     }
 
     public bool TryInsert(TextIndexInsert insert)

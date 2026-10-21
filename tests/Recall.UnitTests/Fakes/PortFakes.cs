@@ -338,6 +338,16 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
             AddAlias(chunk.ContentId, path);
         }
     }
+
+    public void ResetTextIngest()
+    {
+        files.Clear();
+        chunkRows.Clear();
+        grants.Clear();
+        aliases.Clear();
+        bm25Only.Clear();
+        pending.Clear();
+    }
 }
 
 public sealed class FakeScopeManagerService : IScopeManagerService

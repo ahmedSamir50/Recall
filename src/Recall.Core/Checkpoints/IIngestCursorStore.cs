@@ -50,6 +50,8 @@ public interface IIngestCursorStore
 
     void EnqueuePending(string contentId);
 
+    void ResetTextIngest();
+
     bool TryEnterWrite(out CheckpointLease? lease);
 
     CheckpointLease EnterWrite();

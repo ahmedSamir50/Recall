@@ -71,6 +71,21 @@ public sealed class RecallIndexPolicy : IIndexPolicy
 ```
 
 
+## src/Recall.Core/Indexing/TextIndexOpenPolicy.cs
+
+```csharp
+namespace Recall.Core.Indexing;
+public enum TextIndexOpenKind
+public static class TextIndexOpenPolicy
+    public static TextIndexOpenKind Decide(bool collectionDirectoryExists, bool hasFtsKeyVector)
+        if (!collectionDirectoryExists)
+            return TextIndexOpenKind.Create;
+        if (!hasFtsKeyVector)
+            return TextIndexOpenKind.Replace;
+        return TextIndexOpenKind.Open;
+```
+
+
 ## src/Recall.Core/Vectors/MatryoshkaVectorMath.cs
 
 ```csharp

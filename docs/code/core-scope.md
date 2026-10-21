@@ -242,6 +242,7 @@ namespace Recall.Core.Checkpoints;
 public type IIngestCursorStore
 IIngestCursorStore
 public interface IIngestCursorStore
+public void ResetTextIngest()
 
 No branch.
 ``` 
@@ -308,6 +309,7 @@ public void MarkMissing(string path)
 public void RetirePath(string path)
 public void MarkGrantReading(string grantPath)
 public void MarkGrantFinished(string grantPath)
+public void ResetTextIngest()
 public bool IsGrantFinished(string grantPath)
     if (string.IsNullOrWhiteSpace(databasePath))
     if (reader.Read())

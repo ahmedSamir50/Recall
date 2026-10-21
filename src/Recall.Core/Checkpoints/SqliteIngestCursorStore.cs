@@ -413,6 +413,30 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
         transaction.Commit();
     }
 
+    public void ResetTextIngest()
+    {
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        foreach (var sql in new[]
+        {
+            "DELETE FROM ingest_file",
+            "DELETE FROM ingest_chunk",
+            "DELETE FROM ingest_chunk_path",
+            "DELETE FROM bm25_only",
+            "DELETE FROM pending_reconcile",
+            "DELETE FROM grant_scan",
+        })
+        {
+            using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = sql;
+            command.ExecuteNonQuery();
+        }
+
+        transaction.Commit();
+    }
+
     public bool TryEnterWrite(out CheckpointLease? lease)
     {
         if (!writeLock.Wait(0))

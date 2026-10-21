@@ -41,6 +41,44 @@ public sealed class Phase3CursorTests
     }
 
     [Fact]
+    public void ResetTextIngest_ClearsFilesChunksAliasesBm25PendingAndGrants()
+    {
+        // Arrange
+        var db = NewTempDb();
+        try
+        {
+            var store = new SqliteIngestCursorStore(db);
+            store.MarkReading("a.txt", "h1", "g");
+            store.FinishPath("a.txt", "h1", "g", "enc", [new ChunkWrite("id1", 0)]);
+            store.PutBm25Only("bm25", "a.txt", "123");
+            store.EnqueuePending("id1");
+            store.MarkGrantFinished("g");
+
+            // Act
+            store.ResetTextIngest();
+
+            // Assert
+            store.GetFile("a.txt").Should().BeNull();
+            store.ListChunks("a.txt").Should().BeEmpty();
+            store.AnyLivePath("id1").Should().BeFalse();
+            store.ListBm25Only().Should().BeEmpty();
+            store.PendingCount().Should().Be(0);
+            store.IsGrantFinished("g").Should().BeFalse();
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(Path.GetDirectoryName(db)!, true);
+            }
+            catch (IOException ex)
+            {
+                GC.KeepAlive(ex);
+            }
+        }
+    }
+
+    [Fact]
     public void MarkReading_Committed_SurvivesNewStore()
     {
         var db = NewTempDb();

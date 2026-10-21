@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Recall.Adapters.Indexing;
+using Recall.Core.Checkpoints;
+using Recall.Core.Indexing;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
 using Recall.Core.Search;
@@ -131,6 +133,139 @@ public sealed class TextSearchIntegrationTests : IDisposable
         hits.Should().NotBeEmpty();
         hits[0].SourcePath.Should().Contain("mars.txt");
         hits.Should().OnlyContain(h => h.SourcePath.StartsWith(grants[0].Path, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Open_StaleTextCollection_ReplacesAndClearsCursors()
+    {
+        var databaseRoot = Path.Combine(root, "zvec_stale");
+        CreateStaleTextCollection(databaseRoot);
+        var store = new SqliteIngestCursorStore(Path.Combine(root, "stale-checkpoints", CheckpointSql.FileName));
+        const string grant = "g";
+        store.MarkReading("a.txt", "h1", grant);
+        store.FinishPath("a.txt", "h1", grant, "enc", [new ChunkWrite("id1", 0)]);
+        store.PutBm25Only("bm25", "a.txt", "123");
+        store.EnqueuePending("id1");
+        store.MarkGrantFinished(grant);
+
+        using var index = new ZVecTextVectorIndex(databaseRoot, cursors: store);
+        var vector = new float[512];
+        vector[0] = 1f;
+        var inserted = index.TryInsert(SampleInsert(
+            ContentIdBuilder.Build(
+                Recall.Core.Vocabulary.Modality.Text,
+                ContentIdBuilder.HashSourceContent("fresh note"),
+                Recall.Core.Vocabulary.StoredWidth.W512,
+                0),
+            Path.Combine(root, "fresh.txt"),
+            "fresh note about mars",
+            vector,
+            Path.Combine(root, "fresh.txt")));
+
+        inserted.Should().BeTrue();
+        store.GetFile("a.txt").Should().BeNull();
+        store.ListChunks("a.txt").Should().BeEmpty();
+        store.AnyLivePath("id1").Should().BeFalse();
+        store.ListBm25Only().Should().BeEmpty();
+        store.PendingCount().Should().Be(0);
+        store.IsGrantFinished(grant).Should().BeFalse();
+        var query = new float[512];
+        query[0] = 1f;
+        var hits = index.Search(new TextSearchRequest(
+            "mars",
+            query,
+            new HashSet<string>([Path.Combine(root, "fresh.txt")], StringComparer.OrdinalIgnoreCase),
+            "integration-test-hash",
+            TextSearchFilter.Build(new HashSet<string>([Path.Combine(root, "fresh.txt")], StringComparer.OrdinalIgnoreCase), "integration-test-hash"),
+            true,
+            20), TestContext.Current.CancellationToken);
+        hits.Should().ContainSingle(h => h.SourcePath.EndsWith("fresh.txt", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Open_CurrentTextCollection_KeepsRowsAndCursors()
+    {
+        var databaseRoot = Path.Combine(root, "zvec_keep");
+        var vector = new float[512];
+        vector[0] = 1f;
+        var contentId = ContentIdBuilder.Build(
+            Recall.Core.Vocabulary.Modality.Text,
+            ContentIdBuilder.HashSourceContent("kept note"),
+            Recall.Core.Vocabulary.StoredWidth.W512,
+            0);
+        using (var created = new ZVecTextVectorIndex(databaseRoot))
+        {
+            created.TryInsert(SampleInsert(
+                contentId,
+                Path.Combine(root, "kept.txt"),
+                "kept note about mars",
+                vector,
+                Path.Combine(root, "kept.txt"))).Should().BeTrue();
+        }
+
+        var store = new SqliteIngestCursorStore(Path.Combine(root, "keep-checkpoints", CheckpointSql.FileName));
+        store.MarkReading("kept.txt", "h1", "g");
+        store.FinishPath("kept.txt", "h1", "g", "enc", [new ChunkWrite(contentId, 0)]);
+        using var reopened = new ZVecTextVectorIndex(databaseRoot, cursors: store);
+        store.GetFile("kept.txt").Should().NotBeNull();
+        var query = new float[512];
+        query[0] = 1f;
+        var hits = reopened.Search(new TextSearchRequest(
+            "mars",
+            query,
+            new HashSet<string>([Path.Combine(root, "kept.txt")], StringComparer.OrdinalIgnoreCase),
+            "integration-test-hash",
+            TextSearchFilter.Build(new HashSet<string>([Path.Combine(root, "kept.txt")], StringComparer.OrdinalIgnoreCase), "integration-test-hash"),
+            true,
+            20), TestContext.Current.CancellationToken);
+        hits.Should().ContainSingle(h => h.SourcePath.EndsWith("kept.txt", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static void CreateStaleTextCollection(string databaseRoot)
+    {
+        Directory.CreateDirectory(databaseRoot);
+        var schema = new ZVecCollectionSchema
+        {
+            Name = ZVecTextVectorIndex.CollectionName,
+            Fields =
+            [
+                new ZVecFieldSchema { Name = ZVecTextVectorIndex.SourcePathField, DataType = ZVecDataType.String },
+                new ZVecFieldSchema { Name = ZVecTextVectorIndex.FileNameField, DataType = ZVecDataType.String },
+                new ZVecFieldSchema { Name = ZVecTextVectorIndex.ModifiedField, DataType = ZVecDataType.String },
+            ],
+            Vectors =
+            [
+                new ZVecVectorSchema
+                {
+                    Name = ZVecTextVectorIndex.EmbeddingField,
+                    DataType = ZVecDataType.VectorFp32,
+                    Dimension = 512,
+                    IndexParam = new ZVecHnswIndexParam
+                    {
+                        MetricType = ZVecMetricType.Cosine,
+                        M = RecallIndexPolicy.TextHnswM,
+                        EfConstruction = RecallIndexPolicy.TextHnswEfConstruction,
+                        QuantizeType = ZVecQuantizeType.Undefined,
+                    },
+                },
+                new ZVecVectorSchema
+                {
+                    Name = ZVecTextVectorIndex.RawTextField,
+                    DataType = ZVecDataType.String,
+                    Dimension = 0,
+                    IndexParam = new ZVecFtsIndexParam
+                    {
+                        Tokenizer = ZVecFtsTokenizer.Standard,
+                        Filters = [ZVecFtsTokenFilter.Lowercase],
+                    },
+                },
+            ],
+        };
+        var factory = new ZVecFactory();
+        factory.Initialize();
+        var collection = factory.CreateAndOpen(Path.Combine(databaseRoot, ZVecTextVectorIndex.CollectionName), schema);
+        collection.Dispose();
+        factory.Dispose();
     }
 
     private static TextIndexInsert SampleInsert(string contentId, string path, string raw, float[] vector, string grantPath) =>
