@@ -18,7 +18,7 @@ A parent is `done` only when every child is `done`. A parent is `not-started` on
 
 **Progress percentage.** A task is 100 when `done`, 50 when `partial`, and 0 when `not-started`. An epic's percentage is the mean of its tasks, rounded to the nearest whole number. A phase's percentage is the mean of its tasks, the same way. The only place those figures are written is the one table at the end of this plan. Do not invent a finer score.
 
-Phase Three Addendum sits between Phase 3 and Phase 4. Its tasks are in that same table. The all-epics row is the mean of every task in Phases 1–7 and that addendum.
+Phase Three Addendum sits between Phase 3 and Phase 4. Its tasks are in that same table. The Launch Addendum sits after Phase 7. Its tasks are in that same table. The all-epics row is the mean of every task in Phases 1–7 and both addenda.
 
 Will not be built: a web app, clipboard, camera, screen, or microphone capture, a chat UI, a generative summary, a helper process for the embedder, any speech-to-text model, browser history, sync transport, a cloud build, HNSW-RaBitQ, bundled model weights, and stored vectors at 128 numbers.
 
@@ -206,9 +206,46 @@ Task 6.2.1 waits on A.2.11, A.2.14, and A.2.15. Task 6.1.2 does not.
 
 ---
 
+## Launch Addendum — Public proof and growth — `partial`
+
+This addendum is written after Phases 1–7 and does not edit any of them. No sentence above is rewritten, no status above moves, and the progress table gains rows only. It takes the public repository from a pushed source tree to a distribution surface: a story, installable artifacts, reach, and stated trust rules.
+
+Rules for every task:
+
+- Builds stay on the developer machine, per the stack paragraph at the top of this plan. No GitHub Actions workflow is added. Distribution is a published artifact, not a cloud build.
+- The app adds no network path. The model download stays the only one, so there is no self-updater, no update check, and no telemetry. Updates are new downloads the person chooses; package managers surface them.
+- No task is done by a star count. A star number measures how reach went after execution and is never a check.
+- Comparison tables that name a competing product are not written anywhere in this repository. The text states the differentiators themselves: phones, Arabic end to end, in-process embedding, the single network path, and the public per-task plan.
+- Every sentence a person reads in tree copy is true on the day it is published. A README row for capability that is not in the tree, or an installer that is not in a release, fails this addendum.
+
+### Epic P.1 — Story — `partial`
+
+- **P.1.1** — `done` — README rewrite. The first line under the title is the value proposition: **Find what's in your files by meaning. Entirely on your device, in Arabic and English.** Keep "What it can do" and "What v1 will do" as the honest split. Add "Why Recall": Arabic and English end to end with right-to-left layout and an Arabic OCR reader; embedding runs inside the app's process with no helper process and no extra daemon; the model download is the only network call and carries no document, no vector, and no device id; one public plan shows per-task status. Add "Install and updates": it names only artifacts that exist in a release on the day of the sentence, states which task of this plan publishes the next artifact, and ends with the sentence **Updates are new downloads. Recall checks for nothing.** No benchmark number appears unless its source run and its machine label are written next to it; the Phase 2 desktop runs stay labeled the way task 2.2.5 labels them or stay out. Done when a number without a named source, or an installer row without a published release, fails a manual audit of the file.
+- **P.1.2** — `not-started` — Demo recording. One continuous screen recording of a real Find against a real granted folder, no staged result and no editor cut that changes a query, 30 seconds or less, exported as `docs/media/demo-text-search.gif` and embedded at the top of the README. A second recording with a picture or video Find is added when Phase 4 lands. Done when the GIF exists in the tree, is 30 seconds or less, and the README embeds it.
+- **P.1.3** — `not-started` — The repo face off the tree: the About line reads as the value proposition, not as a spec, the topic list names the search neighborhoods a reader looks in (`semantic-search`, `on-device`, `local-first`, `embeddings`, `embeddinggemma`, `llama-cpp`, `maui`, `dotnet`, `arabic`, `rtl`, `android`, `ios`), and one pinned Discussion holds the story so it is not buried in commit noise. Done when those three are set on the repository site.
+
+### Epic P.2 — Installable proof — `not-started`
+
+- **P.2.1** — `not-started` — First release, `v0.1.0`: one Windows artifact `Recall-v0.1.0-win-x64.zip`, a self-contained win-x64 build that contains no `.gguf` and no `.onnx` weight, and downloads the text model on first run. The release notes follow the template: **What this does** (grant folders, text and code search, open a hit, watch while running, crash-cursor resume), **What this does not yet do** (pictures, OCR, video, audio, pins, Mac and iOS installers), **Checksums** (SHA-256 per artifact), **Updates are new downloads. Recall checks for nothing.** Done when the release is public and its notes contain those four headings verbatim.
+- **P.2.2** — `not-started` — Android artifact added to releases once 7.2.4 passes: `Recall-vX.Y.Z-android-arm64.apk`, width first-run download as 2.1.1. Done when the apk installs on a device from a release page and the notes row exists.
+- **P.2.3** — `not-started` — Mac artifact once 7.2.1 passes: an unsigned Mac Catalyst `.app` inside a `.zip`. An Apple-signed installer and any iOS distribution are separate decisions a later plan takes; they are not here. Done when the zip is attached to a release.
+- **P.2.4** — `not-started` — Package-manager upgrade path, after P.2.1: a manifest submitted once to the Windows community package repository for identity `Recall.read`, pointing at the published asset and its SHA-256, updated one manifest per release; and `.github/homebrew/recall.rb` written only when a Mac artifact exists. Upgrades are commands the person runs; nothing checks automatically. Done when `winget upgrade Recall.read` shows a published version, or, for Homebrew, `brew upgrade --cask recall` installs the published artifact.
+
+### Epic P.3 — Reach — `partial`
+
+- **P.3.1** — `partial` — Launch posts live in the tree: `docs/launch-posts.md` holds a Show HN draft, a r/LocalLLaMA-style forum draft, and two short posts in English and Arabic for an X thread. Each draft leads with what the product is, states the limits in the same breath as the claims, names no other product, and quotes no number that the tree cannot source. The P.2.1 release notes take their first sentence from the Show HN draft's opening. Done when P.2.1 exists with that first sentence and the drafts match the published text.
+- **P.3.2** — `done` — Contribution surface: `CONTRIBUTING.md` and `.github/ISSUE_TEMPLATE/bug_report.yml` / `feature_request.yml`. A bug report asks for platform and version; a feature request is accepted only when it names a task id of `docs/plan.md` or argues for a new task in that plan; a pull request carries the task id and the honest test rule from `docs/testing.md`. Done when those templates exist, a contribution flow names the plan as the task list, and no issue template links a behavior the tree does not have.
+- **P.3.3** — `done` — README Roadmap section links `docs/plan.md` directly at the progress table so status is readable per task without opening the repo. Done when the link is on the README.
+
+### Epic P.4 — Trust — `done`
+
+- **P.4.1** — `done` — No growth machinery inside the app: this addendum adds no updater, no counter, no crash reporter, and modifies no `csproj` or `BannedSymbols.txt` list. The README privacy sentences are no stronger and no weaker than `docs/privacy.md`. The egress guarantee is still task 7.1.2's, and this addendum claims none of it. Done when the diff adds only Markdown, YAML, and one navigation line, and no byte of app code changes.
+
+---
+
 ## Progress
 
-Counted 20 Oct 2026. This is the only progress table.
+Counted 21 Oct 2026. This is the only progress table.
 
 | | Status | Progress |
 |---|---|---|
@@ -310,7 +347,23 @@ Counted 20 Oct 2026. This is the only progress table.
 | 7.2.2 | `not-started` | 0% |
 | 7.2.3 | `done` | 100% |
 | 7.2.4 | `not-started` | 0% |
-| **All epics** | `partial` | 58% |
+| **Launch Addendum — Public proof and growth** | `partial` | 41% |
+| **Epic P.1 — Story** | `partial` | 33% |
+| P.1.1 | `done` | 100% |
+| P.1.2 | `not-started` | 0% |
+| P.1.3 | `not-started` | 0% |
+| **Epic P.2 — Installable proof** | `not-started` | 0% |
+| P.2.1 | `not-started` | 0% |
+| P.2.2 | `not-started` | 0% |
+| P.2.3 | `not-started` | 0% |
+| P.2.4 | `not-started` | 0% |
+| **Epic P.3 — Reach** | `partial` | 83% |
+| P.3.1 | `partial` | 50% |
+| P.3.2 | `done` | 100% |
+| P.3.3 | `done` | 100% |
+| **Epic P.4 — Trust** | `done` | 100% |
+| P.4.1 | `done` | 100% |
+| **All epics** | `partial` | 55% |
 
 ## Behavior matrix
 
@@ -416,6 +469,8 @@ A picture or video Find drops a hit whose `grant_path` is outside the grant, ins
 A frame card and a window card carry a start and an end, in seconds. A tie on an equal score keeps the earlier start. Text search keeps `TextSearchHit` and `Collapse.MaxRrf`. Tasks 4.2.2 and 5.1.3 stay as written. Signature: `MediaSearchHit Collapse.EarliestStart(IReadOnlyList<MediaSearchHit> hits)` where `MediaSearchHit` is `string ContentId`, `string SourcePath`, `double StartSeconds`, `double EndSeconds`, `double Score`. Done when two frames with the same score keep the smaller start, and the card has both seconds. `FrameTie_KeepsEarlierStart` locks it.
 
 The 800 ms cell is the recorded llama.cpp desktop load of 727.3 ms plus 10 percent. This stays `not-started` until those three means are written in this paragraph. A missing model directory is not a pass. `LlamaDesktopRun_MissingModel_ExitsWithNoNumber` locks the missing-directory branch.
+
+Distribution for the Launch Addendum: builds stay on the developer machine, and a release is an artifact upload, not a cloud build. There is no self-updater and no update check, because the model download stays the app's only network path. Signed installers, store listings (Play, Microsoft Store, App Store), and any Linux GUI shell are later decisions a later accepted plan must take; they are not in the Launch Addendum. Package-manager manifests, the Windows community repository for identity `Recall.read` and a Homebrew cask once a Mac artifact exists, describe published releases only. No task of this plan is done by a star count.
 
 A compressed ZVec index stays off until a measured search is about two or three times faster. That switch builds a second index beside the float one and does not shrink the file.
 
