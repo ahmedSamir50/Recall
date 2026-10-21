@@ -9,14 +9,14 @@ public enum TextIndexOpenKind
 
 public static class TextIndexOpenPolicy
 {
-    public static TextIndexOpenKind Decide(bool collectionDirectoryExists, bool hasFtsKeyVector)
+    public static TextIndexOpenKind Decide(bool collectionDirectoryExists, bool hasFtsKey)
     {
         if (!collectionDirectoryExists)
         {
             return TextIndexOpenKind.Create;
         }
 
-        if (!hasFtsKeyVector)
+        if (!hasFtsKey)
         {
             return TextIndexOpenKind.Replace;
         }

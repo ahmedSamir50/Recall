@@ -79,7 +79,7 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
 
         IZvecCollection opened;
         // A missing directory is Create before the flag is read. Passing true makes an existing directory Open so its schema can be checked.
-        if (TextIndexOpenPolicy.Decide(Directory.Exists(rootPath), hasFtsKeyVector: true) == TextIndexOpenKind.Create)
+        if (TextIndexOpenPolicy.Decide(Directory.Exists(rootPath), hasFtsKey: true) == TextIndexOpenKind.Create)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(rootPath)!);
             opened = factory.CreateAndOpen(rootPath, schema);
@@ -255,7 +255,12 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
             return false;
         }
 
-        return schema.Vectors.Any(v => string.Equals(v.Name, FtsKeyField, StringComparison.Ordinal));
+        if (schema.Fields is not null && schema.Fields.Any(field => string.Equals(field.Name, FtsKeyField, StringComparison.Ordinal)))
+        {
+            return true;
+        }
+
+        return schema.Vectors is not null && schema.Vectors.Any(vector => string.Equals(vector.Name, FtsKeyField, StringComparison.Ordinal));
     }
 
     private static string ReadField(ZVecDoc doc, string field) =>

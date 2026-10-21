@@ -7,7 +7,7 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
     public bool TryInsert(TextIndexInsert insert)
     public IReadOnlyList<TextSearchHit> Search(TextSearchRequest request, CancellationToken cancellationToken = default)
     public void Dispose()
-        if (TextIndexOpenPolicy.Decide(Directory.Exists(rootPath), hasFtsKeyVector: true) == TextIndexOpenKind.Create)
+        if (TextIndexOpenPolicy.Decide(Directory.Exists(rootPath), hasFtsKey: true) == TextIndexOpenKind.Create)
         if (TextIndexOpenPolicy.Decide(true, SchemaHasFtsKey(opened.Schema)) == TextIndexOpenKind.Replace)
         if (Directory.Exists(rootPath))
         if (knownIds.Contains(insert.ContentId))
