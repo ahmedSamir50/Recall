@@ -103,6 +103,7 @@ nav:
   - Testing: testing.md
   - Glossary: glossary.md
   - Plan: plan.md
+  - Launch posts: launch-posts.md
   - Debug local reset: debug-local-reset.md
   - Retired:
       - Technical notes: technical-details.md

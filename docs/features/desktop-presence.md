@@ -1,6 +1,6 @@
 Status: open
 
-DigUp keeps a tray icon on Windows and Linux and a menu-bar icon on Mac. Its shortcut is Ctrl+Shift+Space on Windows and Linux and Shift+Command+Space on Mac. Closing the window leaves the process running. Quit is in that menu. Recall does not copy that source.
+A comparable local file search keeps a tray icon on Windows and Linux and a menu-bar icon on Mac, opens its search panel with a global shortcut, keeps the process alive when the window closes, and puts Quit in that menu. Recall does not copy that design's source, and the tray itself is not in the tree.
 
 Recall v1 shells are `android-arm64`, `ios-arm64`, `win-x64`, and `maccatalyst-arm64`. linux-x64 is a v1 RID. The Linux shell is not in the tree. A Linux tray, sign-in start, and search shortcut are open and are not in the tree. On Android and iOS a tray, sign-in start, and a global shortcut are decided-absent. On Windows and Mac Catalyst those three are not in the tree. No preferences key stores them. [App.xaml.cs](../../src/Recall.Maui/App.xaml.cs) calls `ScopeWatchCoordinator.Stop` from `OnWindowDestroying`.
 

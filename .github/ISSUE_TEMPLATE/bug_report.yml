@@ -1,0 +1,51 @@
+name: Bug report
+description: Something in Recall does not do what the plan says it does.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: the plan is the specification. Find the task in [docs/plan.md](docs/plan.md) and check that what you saw is not already the written behavior.
+  - type: input
+    id: task-id
+    attributes:
+      label: Related task id
+      description: The task id in docs/plan.md this bug belongs to, for example `A.2.6`. Optional, but it routes the report faster.
+      placeholder: A.2.6
+    validations:
+      required: false
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows (win-x64)
+        - Android (android-arm64)
+        - iOS (ios-arm64)
+        - Mac Catalyst (maccatalyst-arm64)
+        - Not platform specific
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: The release tag or the commit hash you ran.
+      placeholder: v0.1.0 or main @ 1234abcd
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: The steps you took, what you saw, and what you expected instead.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy-check
+    attributes:
+      label: Privacy check
+      description: Never paste real file contents, paths of private folders, or model names of your own data. A fake folder tree with the same shape is enough.
+      options:
+        - label: The report contains no real personal file content or private paths.
+          required: true
