@@ -448,9 +448,10 @@ The detector and English reader are PP-OCRv6 small. Arabic is the PP-OCRv5 mobil
 namespace Recall.Core.Ocr;
 public static class OcrReaderGate
 public static bool CanLoad(string? sha256) => !string.IsNullOrWhiteSpace(sha256);
+if (string.IsNullOrWhiteSpace(sha256))
 ```
 
-A reader with a missing or blank SHA-256 is not loaded. The gate never constructs an inference session. No branch.
+A blank SHA-256 returns false. Any other value loads only when it equals the detector, English reader, or Arabic reader hash. The gate never constructs an inference session.
 
 ## src/Recall.Core/Ocr/OcrSessionSet.cs
 
@@ -473,8 +474,9 @@ namespace Recall.Core.Ocr;
 public static class OcrLineChoice
 public static string Choose(string? englishText, double englishScore, string? arabicText, double arabicScore)
 if (english.Length == 0 && arabic.Length == 0)
-if (english.Length == 0)
-if (arabic.Length == 0)
+if (englishText is null)
+if (arabicText is null)
+if (arabicScore > englishScore + 1e-6)
 ```
 
 Null text becomes an empty string. Two empty lines return empty. One empty line returns the other reader's text. Otherwise Arabic wins only when its score exceeds English by more than `1e-6`; a tie keeps English.
@@ -487,7 +489,8 @@ public static class BrokenArabic
 public static bool NeedsOcr(string? word)
 if (string.IsNullOrEmpty(word))
 if (rune.Value == Replacement)
-if (run >= ReplacementRun && hasArabicLetter)
+if (run >= ReplacementRun)
+if (hasArabicLetter && hasReplacementRun)
 if (IsArabicLetter(rune))
 ```
 

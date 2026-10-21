@@ -231,6 +231,7 @@ public sealed class PictureSearchService : IPictureSearchService
 public Task<IReadOnlyList<MediaSearchHit>> FindAsync(
 if (jpeg.IsEmpty || grants is null)
 if (grantedPaths.Count == 0)
+if (filter.Length == 0)
 ```
 
 Empty bytes and a null grant list return no hits. No image- or video-enabled grant returns no hits without embedding. Otherwise the JPEG is embedded once, the image and video collections are searched with a text-filter build, and rows outside the enabled grants are dropped. Rows collapse per path with `Collapse.EarliestStart`, then take the file cap. No text collection is queried.

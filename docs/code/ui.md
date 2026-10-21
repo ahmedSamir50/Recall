@@ -314,7 +314,7 @@ public partial class Home
         if (card.Unavailable)
         if (result == Recall.Core.Search.LocalFileOpenResult.Failed)
         else if (result == Recall.Core.Search.LocalFileOpenResult.Missing)
-        if (file is null || !PictureExtensions.Contains(Path.GetExtension(file.Name)))
+        if (file is null || !DatasetFolderSkip.ImageExtensions.Contains(Path.GetExtension(file.Name), StringComparer.OrdinalIgnoreCase))
         if (pickedPicture is null)
         if (decision == PictureQueryDecision.Wait)
         if (!pictureDownloadStarted)

@@ -488,6 +488,8 @@ public sealed class TextSearchIntegrationTests : IDisposable
     public async Task HybridQuery_ReturnsGrantedHit_FromPinnedNote()
     public void Dispose()
         if (Directory.Exists(root))
+    public void Open_StaleTextCollection_ReplacesAndClearsCursors()
+    public void Open_CurrentTextCollection_KeepsRowsAndCursors()
 ```
 
 
@@ -570,6 +572,7 @@ public sealed class Phase3CursorTests
 public void Decide_NullReadingMissingAndChangedHash_Read()
 public void Decide_FinishedSameHash_Skip()
 public void Decide_BlankHash_Throws()
+public void ResetTextIngest_ClearsFilesChunksAliasesBm25PendingAndGrants()
 public void MarkReading_Committed_SurvivesNewStore()
 public void MarkFinished_DuplicateChunkId_RollsBackToReading()
 public void MarkFinished_ThenDecide_SkipsSameHash()
@@ -760,6 +763,7 @@ public sealed class LlamaEmbedTests
     public void Defaults_AreGguF()
     public void AppSettings_TextModel_IsGguF()
             if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+            if (mmprojPath is null)
 ```
 
 No branch.
@@ -812,12 +816,6 @@ public async Task Find_WriteBusy_SkipsReconcile()
 public async Task TextModelReadyIngest_ReadGrantsAsync_CallsIngest()
 public void CloudFile_NotLocal_NotIndexed()
 public void VectorSchemaStale_Fault_IsTwenty()
-public void Decide_MissingDirectory_Creates()
-public void Decide_MissingFtsKey_Replaces()
-public void Decide_CurrentFtsKey_Opens()
-public void ResetTextIngest_ClearsFilesChunksAliasesBm25PendingAndGrants()
-public void Open_StaleTextCollection_ReplacesAndClearsCursors()
-public void Open_CurrentTextCollection_KeepsRowsAndCursors()
 if (parts.Index.Inserts.Count > 1)
 catch (IOException ex)
 catch (IOException ex)
@@ -843,8 +841,22 @@ public void EndsSlice_At10Pages_IsTrue()
 public void NeedsOcr_ThreeReplacementChars_IsTrue()
 catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
 if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+if (start < 0)
 ```
 
 Covers the Phase 4 surface with fakes and the native source contract: mmproj open codes 1, 6, 8, embed-when-closed 4, width-not-768 5, vision unload on success and throw, the 768 media schema with `QuantizeType.Undefined`, picture rows outside `items_text`, frame collapse to one card per file with the max score, grant filtering, OCR hashes and line choice, the provisional PDF caps, broken-Arabic detection, and both-locale picture waiting copy.
+
+
+## tests/Recall.UnitTests/TextIndexOpenPolicyTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class TextIndexOpenPolicyTests
+    public void Decide_MissingDirectory_Creates()
+    public void Decide_MissingFtsKey_Replaces()
+    public void Decide_CurrentFtsKey_Opens()
+```
+
+No branch.
 
 

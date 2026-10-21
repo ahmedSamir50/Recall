@@ -18,6 +18,7 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
         if (request.UseInDatabaseRrf)
         if (request.QueryVector512.Length > 0)
         if (schema is null)
+        if (schema.Fields is not null && schema.Fields.Any(field => string.Equals(field.Name, FtsKeyField, StringComparison.Ordinal)))
         if (doc.Fields.TryGetValue(field, out var value) && int.TryParse(value?.ToString(), out var parsed))
         if (doc.Fields.TryGetValue(ModifiedField, out var value)
 ```
@@ -197,3 +198,13 @@ if (disposed)
 ```
 
 Only `items_image` and `items_video` at width 768. The schema uses HNSW cosine with the text index policy's `M` and `EfConstruction`, `QuantizeType` stays `Undefined`, and the `words` field uses the standard tokenizer with the lowercase filter. Inserts are idempotent by `ContentId`; `TryDelete` scans both open collections. Search uses the single-query overload (a one-element multi-query is rejected by the native library), maps dense hits, and parses the second fields with invariant culture. A missing collection is created on first use. `Dispose` closes collections and shuts the factory down.
+
+
+## src/Recall.Adapters/Media/WindowsVideoFrameSampler.cs
+
+```csharp
+namespace Recall.Adapters.Media;
+public sealed class WindowsVideoFrameSampler : IVideoFrameSamplerService
+```
+
+No video sampling package exists for Windows. A null stream throws `ArgumentNullException`; any other call throws `NotSupportedException` with exactly `Windows video sampling has no package.` No branch.
