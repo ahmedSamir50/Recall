@@ -135,3 +135,64 @@ RecallEmbedNative
 P/Invokes `recall_embed_open`, `recall_embed_close`, `recall_embed_count_tokens`, and `recall_embed_embed` with UTF-8 paths and a trailing null. `RecallEmbedResults.RequireCount` throws `InvalidOperationException` with message `recall_embed count failed with code CODE.` when the native count call is non-zero.
 
 No public type.
+
+## src/Recall.Adapters/Embedding/Runtime/VisionModelRuntime.cs
+
+```csharp
+namespace Recall.Adapters.Embedding;
+public sealed class VisionModelRuntime : IVisionEmbeddingEncoder, IDisposable
+public VisionModelRuntime(
+    string modelDirectory,
+    TextModelRuntime textRuntime,
+    VisionModelDownloadOptions? options = null)
+internal VisionModelRuntime(
+    string modelDirectory,
+    IRecallEmbedLibrary library,
+    VisionModelDownloadOptions? options = null)
+public bool IsLoaded { get; private set; }
+public bool IsModelReady => File.Exists(Path.Combine(modelDirectory, options.ModelFileName));
+public void EmbedJpeg(ReadOnlyMemory<byte> jpeg, float[] destination768)
+public void Dispose()
+if (!opened)
+if (code != 0)
+if (opened)
+if (disposed != 0)
+if (opened)
+```
+
+One JPEG at a time. The first call opens the mmproj after ensuring the text runtime is open, then every call embeds and unloads in `finally`. A non-zero open code throws `InvalidOperationException` with `recall_embed vision open failed with code CODE.` An embed throw still closes the vision handle. `IsModelReady` checks the mmproj file only.
+
+## src/Recall.Adapters/Indexing/ZVecMediaVectorIndex.cs
+
+```csharp
+namespace Recall.Adapters.Indexing;
+public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
+public const string EmbeddingField = "embedding";
+public const string WordsField = "words";
+public const string SourcePathField = "source_path";
+public const string FileNameField = "file_name";
+public const string PathLiveField = "path_live";
+public const string EncoderHashField = "encoder_hash";
+public const string GrantPathField = "grant_path";
+public const string StartSecondsField = "start_seconds";
+public const string EndSecondsField = "end_seconds";
+public ZVecMediaVectorIndex(string databaseRoot)
+public void Create(string collectionName, int width)
+internal static ZVecCollectionSchema BuildSchema(string collectionName, int width)
+public bool TryInsert(string collectionName, MediaIndexInsert insert)
+public bool TryDelete(string contentId)
+public IReadOnlyList<MediaSearchHit> Search(MediaSearchRequest request, CancellationToken cancellationToken = default)
+public void Dispose()
+if (width != MediaCollections.Width)
+if (!MediaCollections.IsMedia(collectionName))
+if (collections.ContainsKey(collectionName))
+if (Directory.Exists(rootPath))
+if (collection.Fetch(insert.ContentId, includeVector: false) is not null)
+if (collection.Fetch(contentId, includeVector: false) is null)
+if (collection.Delete(contentId).IsSuccess)
+if (!MediaCollections.IsMedia(collectionName))
+if (!collections.ContainsKey(collectionName))
+if (disposed)
+```
+
+Only `items_image` and `items_video` at width 768. The schema uses HNSW cosine with the text index policy's `M` and `EfConstruction`, `QuantizeType` stays `Undefined`, and the `words` field uses the standard tokenizer with the lowercase filter. Inserts are idempotent by `ContentId`; `TryDelete` scans both open collections. Search uses the single-query overload (a one-element multi-query is rejected by the native library), maps dense hits, and parses the second fields with invariant culture. A missing collection is created on first use. `Dispose` closes collections and shuts the factory down.

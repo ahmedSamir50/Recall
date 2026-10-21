@@ -215,4 +215,7 @@
   <data name="Search_Match_MeaningAndWords" xml:space="preserve"><value>المعنى والكلمات</value></data>
   <data name="Search_OpenFailed" xml:space="preserve"><value>تعذر فتح الملف.</value></data>
   <data name="Search_Fault" xml:space="preserve"><value>تعذّر البحث. قد لا يزال تحميل ملفات البحث قيد التنفيذ.</value></data>
+  <data name="Search_WithPicture" xml:space="preserve"><value>ابحث بصورة</value></data>
+  <data name="Search_PictureWaiting" xml:space="preserve"><value>نموذج الصور ما زال يُنزَّل.</value></data>
+  <data name="Search_PictureFailed" xml:space="preserve"><value>لم يكتمل تنزيل نموذج الصور.</value></data>
 </root>

@@ -1,18 +1,28 @@
 #include "llama.h"
+#include "mtmd.h"
+#include "mtmd-helper.h"
 
+#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_WIN32)
-#define RECALL_EMBED_EXPORT __declspec(dllexport)
+#if defined(__cplusplus)
+#define RECALL_EMBED_LINKAGE extern "C"
 #else
-#define RECALL_EMBED_EXPORT __attribute__((visibility("default")))
+#define RECALL_EMBED_LINKAGE
+#endif
+
+#if defined(_WIN32)
+#define RECALL_EMBED_EXPORT RECALL_EMBED_LINKAGE __declspec(dllexport)
+#else
+#define RECALL_EMBED_EXPORT RECALL_EMBED_LINKAGE __attribute__((visibility("default")))
 #endif
 
 static struct llama_model * g_model = NULL;
 static struct llama_context * g_ctx = NULL;
+static mtmd_context * g_vision = NULL;
 static bool g_backend_initialized = false;
 
 #define RECALL_EMBED_DIM 768
@@ -217,5 +227,174 @@ RECALL_EMBED_EXPORT int recall_embed_embed(const char * text, float * destinatio
     }
 
     memcpy(destination_768, embedding, (size_t) RECALL_EMBED_DIM * sizeof(float));
+    return 0;
+}
+
+RECALL_EMBED_EXPORT int recall_embed_vision_open(const char * mmproj_path)
+{
+    if (mmproj_path == NULL)
+    {
+        return 1;
+    }
+
+    if (g_vision != NULL)
+    {
+        return 8;
+    }
+
+    if (g_model == NULL)
+    {
+        return 6;
+    }
+
+    struct mtmd_context_params params = mtmd_context_params_default();
+    params.warmup = false;
+    g_vision = mtmd_init_from_file(mmproj_path, g_model, params);
+    if (g_vision == NULL)
+    {
+        return 2;
+    }
+
+    return 0;
+}
+
+RECALL_EMBED_EXPORT int recall_embed_vision_close(void)
+{
+    if (g_vision != NULL)
+    {
+        mtmd_free(g_vision);
+        g_vision = NULL;
+    }
+
+    return 0;
+}
+
+RECALL_EMBED_EXPORT int recall_embed_vision_embed(const unsigned char * jpeg, int32_t jpeg_len, float * out768)
+{
+    if (jpeg == NULL || jpeg_len <= 0 || out768 == NULL)
+    {
+        return 1;
+    }
+
+    if (g_vision == NULL)
+    {
+        return 4;
+    }
+
+    if (llama_model_n_embd_inp(g_model) != RECALL_EMBED_DIM)
+    {
+        return 5;
+    }
+
+    struct mtmd_helper_init_opt opt = mtmd_helper_init_opt_default();
+    struct mtmd_helper_bitmap_wrapper wrapper = mtmd_helper_bitmap_init_from_buf(g_vision, jpeg, (size_t) jpeg_len, false, opt);
+    if (wrapper.bitmap == NULL)
+    {
+        return 2;
+    }
+
+    mtmd_bitmap * bitmap = wrapper.bitmap;
+    mtmd_input_chunks * chunks = mtmd_input_chunks_init();
+    if (chunks == NULL)
+    {
+        mtmd_bitmap_free(bitmap);
+        return 2;
+    }
+
+    const char * marker = mtmd_get_marker(g_vision);
+    if (marker == NULL)
+    {
+        mtmd_input_chunks_free(chunks);
+        mtmd_bitmap_free(bitmap);
+        return 2;
+    }
+
+    struct mtmd_input_text text;
+    text.text = marker;
+    text.text_len = strlen(marker);
+    text.add_special = true;
+    text.parse_special = true;
+
+    const mtmd_bitmap * bitmaps[1] = { bitmap };
+    if (mtmd_tokenize(g_vision, chunks, &text, bitmaps, 1) != 0)
+    {
+        mtmd_input_chunks_free(chunks);
+        mtmd_bitmap_free(bitmap);
+        return 2;
+    }
+
+    const mtmd_input_chunk * image_chunk = NULL;
+    const size_t chunk_count = mtmd_input_chunks_size(chunks);
+    for (size_t i = 0; i < chunk_count; i++)
+    {
+        const mtmd_input_chunk * chunk = mtmd_input_chunks_get(chunks, i);
+        if (chunk != NULL && mtmd_input_chunk_get_type(chunk) == MTMD_INPUT_CHUNK_TYPE_IMAGE)
+        {
+            image_chunk = chunk;
+            break;
+        }
+    }
+
+    if (image_chunk == NULL)
+    {
+        mtmd_input_chunks_free(chunks);
+        mtmd_bitmap_free(bitmap);
+        return 2;
+    }
+
+    if (mtmd_encode_chunk(g_vision, image_chunk) != 0)
+    {
+        mtmd_input_chunks_free(chunks);
+        mtmd_bitmap_free(bitmap);
+        return 2;
+    }
+
+    const float * embedding = mtmd_get_output_embd(g_vision);
+    if (embedding == NULL)
+    {
+        mtmd_input_chunks_free(chunks);
+        mtmd_bitmap_free(bitmap);
+        return 2;
+    }
+
+    const size_t n_tokens = mtmd_input_chunk_get_n_tokens(image_chunk);
+    if (n_tokens == 0)
+    {
+        mtmd_input_chunks_free(chunks);
+        mtmd_bitmap_free(bitmap);
+        return 2;
+    }
+
+    for (int32_t column = 0; column < RECALL_EMBED_DIM; column++)
+    {
+        double sum = 0.0;
+        for (size_t token = 0; token < n_tokens; token++)
+        {
+            sum += (double) embedding[token * (size_t) RECALL_EMBED_DIM + (size_t) column];
+        }
+
+        out768[column] = (float) (sum / (double) n_tokens);
+    }
+
+    double norm = 0.0;
+    for (int32_t column = 0; column < RECALL_EMBED_DIM; column++)
+    {
+        norm += (double) out768[column] * (double) out768[column];
+    }
+
+    mtmd_input_chunks_free(chunks);
+    mtmd_bitmap_free(bitmap);
+
+    if (norm <= 0.0)
+    {
+        return 2;
+    }
+
+    const double length = sqrt(norm);
+    for (int32_t column = 0; column < RECALL_EMBED_DIM; column++)
+    {
+        out768[column] = (float) ((double) out768[column] / length);
+    }
+
     return 0;
 }

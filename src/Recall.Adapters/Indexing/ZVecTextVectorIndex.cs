@@ -205,7 +205,7 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
                 Vector = request.QueryVector512,
                 QueryParams = new ZVecHnswQueryParams { EfSearch = RecallIndexPolicy.TextHnswEfSearch },
             };
-            return MapDocsStatic(collection.Query([dense], topk: topK, reranker: null, filter: filter, includeVector: false));
+            return MapDocsStatic(collection.Query(dense, topk: topK, filter: filter, includeVector: false));
         }
 
         var ftsOnly = new ZVecQuery
@@ -213,7 +213,7 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
             FieldName = FtsKeyField,
             Fts = new ZVecFtsQuery { QueryString = request.Query, DefaultOperator = ZVecFtsDefaultOperator.And },
         };
-        return MapDocsStatic(collection.Query([ftsOnly], topk: topK, reranker: null, filter: filter, includeVector: false));
+            return MapDocsStatic(collection.Query(ftsOnly, topk: topK, filter: filter, includeVector: false));
     }
 
     private static List<TextSearchHit> MapDocsStatic(IReadOnlyList<ZVecDoc> docs)

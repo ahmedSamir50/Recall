@@ -111,6 +111,9 @@ public sealed class SolutionShapeTests
             typeof(IOnboardingCompletionStore),
             typeof(IDebugAppReset),
             typeof(IUserSkipStore),
+            typeof(IMediaVectorIndex),
+            typeof(IVisionEmbeddingEncoder),
+            typeof(IPictureSearchService),
         };
 
         // Act

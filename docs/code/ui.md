@@ -314,7 +314,19 @@ public partial class Home
         if (card.Unavailable)
         if (result == Recall.Core.Search.LocalFileOpenResult.Failed)
         else if (result == Recall.Core.Search.LocalFileOpenResult.Missing)
+        if (file is null || !PictureExtensions.Contains(Path.GetExtension(file.Name)))
+        if (pickedPicture is null)
+        if (decision == PictureQueryDecision.Wait)
+        if (!pictureDownloadStarted)
+        catch (Exception)
+        if (decision == PictureQueryDecision.Wait)
+        if (decision == PictureQueryDecision.Fail)
+        if (hits.Count == 0)
+        catch (Exception)
+        if (result == LocalFileOpenResult.Failed)
 ```
+
+Picture input accepts only the allowlisted image extensions, reads at most 32 MiB into memory, and runs `PictureQueryGate` before embedding. Wait starts the vision download once; Fail shows `Search_PictureFailed`; Search queries both media collections and renders path, invariant start-to-end seconds, and an open button. A null pick is ignored.
 
 
 ## src/Recall.UI/Pages/Find/Lattice.razor.cs

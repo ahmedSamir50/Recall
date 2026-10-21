@@ -152,9 +152,12 @@ public sealed class MauiModelDownloadService : IModelDownloadService
     public MauiModelDownloadService(
         IHttpClientFactory httpClientFactory,
         IGrantedTextIngestService ingest,
-        TextModelDownloadOptions options)
+        TextModelDownloadOptions options,
+        VisionModelDownloadOptions? visionOptions = null)
     public TextModelDownloadSnapshot GetTextDownloadSnapshot()
+    public TextModelDownloadSnapshot GetVisionDownloadSnapshot()
     public Task DownloadTextModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
+    public Task DownloadVisionModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
     public void CancelTextDownload()
     public void ClearLocalDownloadState()
     public Task RetryTextDownloadAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
@@ -163,6 +166,8 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         catch (RecallFaultException fault) when (fault.Fault == RecallFault.DownloadHashMismatch)
         catch (RecallFaultException fault) when (fault.Fault == RecallFault.DownloadIncomplete)
         catch (Exception ex) when (ex is HttpRequestException or IOException)
+        if (vision)
+        if (ingestAfter)
         if (await ModelHashVerifier.MatchesExpectedHashAsync(targetPath, expectedSha256, cancellationToken).ConfigureAwait(false))
         if (!allowRange)
         if (client.DefaultRequestHeaders.UserAgent.Count == 0)
@@ -179,9 +184,16 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         if (!await ModelHashVerifier.MatchesExpectedHashAsync(partialPath, expectedSha256, cancellationToken).ConfigureAwait(false))
             throw new RecallFaultException(RecallFault.DownloadHashMismatch);
         if (!TextModelDownloadUiPolicy.ShouldPublishProgress(lastPublishedPercent, percent))
+        if (vision)
+        if (shouldPublish)
+        if (!shouldPublish)
+        if (!Directory.Exists(directory))
+        if (vision)
         if (File.Exists(targetPath))
         if (File.Exists(path))
 ```
+
+Text download and vision download share `RunDownloadAsync`. Vision progress and phase live in a second snapshot; `GetVisionDownloadSnapshot` is what the picture query gate reads. Vision is downloaded after text is open and does not ingest on completion. Text download and vision download each keep a cancellation token. `CancelTextDownload` cancels the text token only. `ClearLocalDownloadState` cancels both tokens and deletes both model directories. The partial file is hash-checked before it is moved into place.
 
 
 ## src/Recall.Maui/Platform/Download/TextModelConfiguration.cs
@@ -368,4 +380,39 @@ public sealed class MauiUserSkipStore : IUserSkipStore
 ```
 
 No branch.
+
+## src/Recall.Maui/Platform/Media/WindowsVideoFrameSampler.cs
+
+```csharp
+namespace Recall.Maui.Platform;
+public sealed class WindowsVideoFrameSampler : IVideoFrameSamplerService
+```
+
+No video sampling package exists for Windows. A null stream throws `ArgumentNullException`; any other call throws `NotSupportedException` with exactly `Windows video sampling has no package.` No branch.
+
+## src/Recall.Maui/Platform/Media/AndroidVideoFrameSampler.cs
+
+```csharp
+namespace Recall.Maui.Platform;
+public sealed class AndroidVideoFrameSampler : IVideoFrameSamplerService
+if (durationMilliseconds <= 0)
+if (bitmap is null)
+if (!bitmap.Compress(Bitmap.CompressFormat.Jpeg!, 90, jpeg))
+catch (IOException)
+```
+
+Reads the duration with `MediaMetadataRetriever`, walks `FrameCadence.Starts`, and writes each JPEG at quality 90 to a cache temp file. A frame that is null or fails to compress is skipped. A file I/O error on one frame skips that frame. No frame is kept above the cadence count.
+
+## src/Recall.Maui/Platform/Media/AppleVideoFrameSampler.cs
+
+```csharp
+namespace Recall.Maui.Platform;
+public sealed class AppleVideoFrameSampler : IVideoFrameSamplerService
+if (duration <= 0)
+if (image is null)
+if (data is null)
+catch (IOException)
+```
+
+Uses `AVAssetImageGenerator` with the preferred track transform and `FrameCadence.Starts`. A null image or failed JPEG encode skips the frame. A cache-write `IOException` skips that frame. No branch beyond those guards.
 

@@ -1,6 +1,7 @@
 @namespace Recall.UI.Pages
 @page "/"
 @inherits RecallComponentBase
+@using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 
 <div class="px-3 md:px-6 pt-4 md:pt-6 max-w-1500 mx-auto">
@@ -14,6 +15,25 @@
             <input @bind="query" @bind:event="oninput" aria-label="@T("Search_Placeholder")" placeholder="@T("Search_Placeholder")" @onkeydown="OnKeyDownAsync" class="w-full search-input" />
         </div>
     </div>
+    @if (ShowPictureControl)
+    {
+    <section class="g2 rounded-2xl p-4 max-w-640 mx-auto mb-4">
+        <InputFile id="picture-input" class="hidden" OnChange="OnPictureSelectedAsync" accept="@PictureAccept" />
+        <label class="btn btn-g inline-flex" for="picture-input">@T("Search_WithPicture")</label>
+        @if (pictureKey is not null)
+        {
+            <p class="ink2 text-13 mt-2">@T(pictureKey)</p>
+        }
+        @foreach (var hit in pictureHits)
+        {
+            <div class="flex items-center gap-2 mt-2">
+                <span class="ltr flex-1 min-w-0 truncate"><bdi class="ltr">@hit.SourcePath</bdi></span>
+                <span class="ink2 text-13"><bdi class="ltr">@FormatSeconds(hit.StartSeconds)–@FormatSeconds(hit.EndSeconds)</bdi></span>
+                <button type="button" class="btn btn-g" @onclick="() => OpenPictureAsync(hit)">@T("Home_OpenFile")</button>
+            </div>
+        }
+    </section>
+    }
     @if (IndexNowPanel.ShouldShow(offers))
     {
         <section class="g2 rounded-2xl p-4 max-w-640 mx-auto mb-4">

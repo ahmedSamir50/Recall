@@ -4,6 +4,8 @@ using Recall.Adapters.Embedding;
 using Recall.Core.Download;
 using Recall.IntegrationTests.Infrastructure;
 
+[assembly: Xunit.v3.Parallelization(Mode = Xunit.Sdk.ParallelMode.None)]
+
 namespace Recall.IntegrationTests;
 
 public sealed class LlamaEmbedIntegrationTests

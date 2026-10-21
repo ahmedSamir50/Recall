@@ -23,6 +23,19 @@ public static class TextModelConfiguration
         };
     }
 
+    public static VisionModelDownloadOptions ReadVision(IConfiguration configuration)
+    {
+        var section = configuration.GetSection(VisionModelDownloadOptions.SectionName);
+        var defaults = new VisionModelDownloadOptions();
+        return new VisionModelDownloadOptions
+        {
+            ModelBaseUrl = Value(section, nameof(VisionModelDownloadOptions.ModelBaseUrl), defaults.ModelBaseUrl),
+            ModelFileName = Value(section, nameof(VisionModelDownloadOptions.ModelFileName), defaults.ModelFileName),
+            ModelSha256 = Value(section, nameof(VisionModelDownloadOptions.ModelSha256), defaults.ModelSha256),
+            RelativeModelDirectory = Value(section, nameof(VisionModelDownloadOptions.RelativeModelDirectory), defaults.RelativeModelDirectory),
+        };
+    }
+
     public static ModelCatalogOptions ReadCatalog(IConfiguration configuration)
     {
         var section = configuration.GetSection(ModelCatalogOptions.SectionName);

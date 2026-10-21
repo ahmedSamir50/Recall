@@ -211,7 +211,7 @@ public sealed class LlamaEmbedTests
         throw new InvalidOperationException("Recall.slnx was not found.");
     }
 
-    private sealed class FakeRecallEmbedLibrary : IRecallEmbedLibrary
+    internal sealed class FakeRecallEmbedLibrary : IRecallEmbedLibrary
     {
         public int OpenCode { get; set; }
 
@@ -229,13 +229,33 @@ public sealed class LlamaEmbedTests
 
         public int CountCalls { get; private set; }
 
+        public int OpenVisionCode { get; set; }
+
+        public int EmbedVisionCode { get; set; }
+
+        public Action? OnEmbedVision { get; set; }
+
+        public int OpenVisionCalls { get; private set; }
+
+        public int EmbedVisionCalls { get; private set; }
+
+        public int CloseVisionCalls { get; private set; }
+
+        public string? LastMmprojPath { get; private set; }
+
+        public bool TextModelOpen { get; private set; } = true;
+
         public int Open(string modelPath)
         {
             OpenCalls++;
             return OpenCode;
         }
 
-        public void Close() => CloseCalls++;
+        public void Close()
+        {
+            CloseCalls++;
+            TextModelOpen = false;
+        }
 
         public int CountTokens(string text)
         {
@@ -253,5 +273,31 @@ public sealed class LlamaEmbedTests
 
             return EmbedCode;
         }
+
+        public int OpenVision(string mmprojPath)
+        {
+            OpenVisionCalls++;
+            LastMmprojPath = mmprojPath;
+            if (mmprojPath is null)
+            {
+                return 1;
+            }
+
+            return OpenVisionCode;
+        }
+
+        public int EmbedVision(byte[] jpeg, float[] destination768)
+        {
+            EmbedVisionCalls++;
+            OnEmbedVision?.Invoke();
+            for (var i = 0; i < destination768.Length; i++)
+            {
+                destination768[i] = EmbedFill;
+            }
+
+            return EmbedVisionCode;
+        }
+
+        public void CloseVision() => CloseVisionCalls++;
     }
 }

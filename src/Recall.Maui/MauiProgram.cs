@@ -71,11 +71,12 @@ public static class MauiProgram
         }
 
         var textModel = TextModelConfiguration.Read(builder.Configuration);
+        var visionModel = TextModelConfiguration.ReadVision(builder.Configuration);
         ModelCatalog.Use(TextModelConfiguration.ReadCatalog(builder.Configuration));
         GrantTextFiles.Use(TextModelConfiguration.ReadIngest(builder.Configuration));
         builder.Services.AddRecallCore();
         builder.Services.AddRecallUi();
-        builder.Services.AddRecallMauiPlatform(textModel);
+        builder.Services.AddRecallMauiPlatform(textModel, visionModel);
 #if DEBUG
         builder.Services.AddSingleton<IDebugAppReset, MauiDebugAppReset>();
 #else

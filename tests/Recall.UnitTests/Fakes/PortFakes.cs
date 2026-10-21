@@ -1,6 +1,7 @@
 using Recall.Core.Checkpoints;
 using Recall.Core.Device;
 using Recall.Core.Download;
+using Recall.Core.Indexing;
 using Recall.Core.Ingest;
 using Recall.Core.Ports;
 using Recall.Core.Preferences;
@@ -363,6 +364,16 @@ public sealed class FakeScopeManagerService : IScopeManagerService
 
 public sealed class FakeVideoFrameSamplerService : IVideoFrameSamplerService
 {
+    public int Calls { get; private set; }
+
+    public Func<Stream, IReadOnlyList<VideoFrame>>? Handler { get; set; }
+
+    public IReadOnlyList<VideoFrame> SampleEveryTwoSeconds(Stream media)
+    {
+        ArgumentNullException.ThrowIfNull(media);
+        Calls++;
+        return Handler?.Invoke(media) ?? [];
+    }
 }
 
 public sealed class FakeSecureStorageService : ISecureStorageService
@@ -417,6 +428,23 @@ public sealed class FakeModelDownloadService : IModelDownloadService
 
     public Task RetryTextDownloadAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default) =>
         Task.CompletedTask;
+
+    public TextModelDownloadSnapshot VisionSnapshot { get; set; } = new(TextModelDownloadPhase.NotStarted, 0, null);
+
+    public int VisionDownloadCalls { get; private set; }
+
+    public TextModelDownloadSnapshot GetVisionDownloadSnapshot() => VisionSnapshot;
+
+    public Task DownloadVisionModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
+    {
+        VisionDownloadCalls++;
+        if (VisionSnapshot.Phase == TextModelDownloadPhase.NotStarted)
+        {
+            VisionSnapshot = VisionSnapshot with { Phase = TextModelDownloadPhase.Downloading };
+        }
+
+        return Task.CompletedTask;
+    }
 }
 
 public sealed class FakeIndexPolicy : IIndexPolicy
@@ -583,8 +611,9 @@ public static class IngestTestKit
     public static TextSearchService CreateSearchService(
         FakeTextEmbeddingEncoder encoder,
         ITextVectorIndex index,
-        FakeIngestCursorStore? cursors = null) =>
-        new(encoder, index, new FakeIndexPolicy(), cursors ?? new FakeIngestCursorStore(), new FakeEncoderFileHash());
+        FakeIngestCursorStore? cursors = null,
+        IVisionEmbeddingEncoder? vision = null) =>
+        new(encoder, index, new FakeIndexPolicy(), cursors ?? new FakeIngestCursorStore(), new FakeEncoderFileHash(), vision);
 }
 
 public sealed class FakeLocalContentProbe : ILocalContentProbe
@@ -693,4 +722,84 @@ public sealed class FakeUserSkipStore : IUserSkipStore
     public UserSkipAdditions Load() => Stored;
 
     public void Save(UserSkipAdditions additions) => Stored = additions;
+}
+
+public sealed class FakeVisionEmbeddingEncoder : IVisionEmbeddingEncoder
+{
+    public int Calls { get; private set; }
+
+    public ReadOnlyMemory<byte> LastJpeg { get; private set; }
+
+    public Action<ReadOnlyMemory<byte>, float[]>? OnEmbed { get; set; }
+
+    public void EmbedJpeg(ReadOnlyMemory<byte> jpeg, float[] destination768)
+    {
+        Calls++;
+        LastJpeg = jpeg;
+        if (OnEmbed is not null)
+        {
+            OnEmbed(jpeg, destination768);
+            return;
+        }
+
+        destination768[0] = 1;
+    }
+}
+
+public sealed class FakeMediaVectorIndex : IMediaVectorIndex
+{
+    public List<string> CreatedCollections { get; } = [];
+
+    public List<MediaIndexInsert> Inserts { get; } = [];
+
+    public List<string> QueriedCollections { get; } = [];
+
+    public List<MediaSearchRequest> Requests { get; } = [];
+
+    public Func<MediaSearchRequest, IReadOnlyList<MediaSearchHit>>? OnSearch { get; set; }
+
+    public void Create(string collectionName, int width)
+    {
+        CreatedCollections.Add(collectionName);
+    }
+
+    public bool TryInsert(string collectionName, MediaIndexInsert insert)
+    {
+        if (Inserts.Any(i => string.Equals(i.ContentId, insert.ContentId, StringComparison.Ordinal)))
+        {
+            return false;
+        }
+
+        Inserts.Add(insert);
+        return true;
+    }
+
+    public bool TryDelete(string contentId) =>
+        Inserts.RemoveAll(i => string.Equals(i.ContentId, contentId, StringComparison.Ordinal)) > 0;
+
+    public IReadOnlyList<MediaSearchHit> Search(MediaSearchRequest request, CancellationToken cancellationToken = default)
+    {
+        Requests.Add(request);
+        QueriedCollections.Add(request.CollectionName);
+        return OnSearch?.Invoke(request) ?? [];
+    }
+}
+
+public sealed class FakePictureSearchService : IPictureSearchService
+{
+    public IReadOnlyList<MediaSearchHit> Result { get; set; } = [];
+
+    public int Calls { get; private set; }
+
+    public IReadOnlyList<ScopeFolderGrant> LastGrants { get; private set; } = [];
+
+    public Task<IReadOnlyList<MediaSearchHit>> FindAsync(
+        ReadOnlyMemory<byte> jpeg,
+        IReadOnlyList<ScopeFolderGrant> grants,
+        CancellationToken cancellationToken = default)
+    {
+        Calls++;
+        LastGrants = grants;
+        return Task.FromResult(Result);
+    }
 }

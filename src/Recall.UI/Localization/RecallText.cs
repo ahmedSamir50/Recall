@@ -14,6 +14,11 @@ public static class RecallText
         return Manager.GetString(key, culture ?? CultureInfo.CurrentUICulture) ?? key;
     }
 
+    public static bool HasValue(string key, CultureInfo culture)
+    {
+        return !string.IsNullOrWhiteSpace(Manager.GetString(key, culture));
+    }
+
     public static IReadOnlyList<string> AllKeys()
     {
         var set = Manager.GetResourceSet(CultureInfo.InvariantCulture, createIfNotExists: true, tryParents: true);

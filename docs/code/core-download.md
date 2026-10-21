@@ -131,3 +131,17 @@ public static async Task ReadGrantsAsync(
 if (phase != TextModelDownloadPhase.Ready)
 ``` 
 
+## src/Recall.Core/Download/VisionModelDownloadOptions.cs
+
+```csharp
+namespace Recall.Core.Download;
+public sealed class VisionModelDownloadOptions
+public const string SectionName = "VisionModel";
+public string ModelBaseUrl { get; init; }
+public string ModelFileName { get; init; }
+public string ModelSha256 { get; init; }
+public string RelativeModelDirectory { get; init; }
+```
+
+Defaults pin the mmproj file `mmproj-embeddinggemma-2-Q8_0.gguf`, its Hub SHA-256, the `ggml-org/embeddinggemma-2-GGUF` resolve base, and `models/vision`. No branch.
+

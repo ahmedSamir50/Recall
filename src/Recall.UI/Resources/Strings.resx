@@ -215,4 +215,7 @@
   <data name="Search_Match_MeaningAndWords" xml:space="preserve"><value>Meaning and words</value></data>
   <data name="Search_OpenFailed" xml:space="preserve"><value>The file could not be opened.</value></data>
   <data name="Search_Fault" xml:space="preserve"><value>Search couldn't run. The offline search files may still be downloading.</value></data>
+  <data name="Search_WithPicture" xml:space="preserve"><value>Search with a picture</value></data>
+  <data name="Search_PictureWaiting" xml:space="preserve"><value>The picture model is still downloading.</value></data>
+  <data name="Search_PictureFailed" xml:space="preserve"><value>The picture model did not download.</value></data>
 </root>

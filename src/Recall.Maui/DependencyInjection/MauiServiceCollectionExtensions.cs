@@ -1,4 +1,5 @@
 using Recall.Adapters.DependencyInjection;
+using Recall.Adapters.Media;
 using Recall.Core.Checkpoints;
 using Recall.Core.Download;
 using Recall.Core.Ports;
@@ -12,9 +13,13 @@ namespace Recall.Maui.DependencyInjection;
 
 public static class MauiServiceCollectionExtensions
 {
-    public static IServiceCollection AddRecallMauiPlatform(this IServiceCollection services, TextModelDownloadOptions textModel)
+    public static IServiceCollection AddRecallMauiPlatform(
+        this IServiceCollection services,
+        TextModelDownloadOptions textModel,
+        VisionModelDownloadOptions? visionModel = null)
     {
         services.AddSingleton(textModel);
+        services.AddSingleton(visionModel ?? new VisionModelDownloadOptions());
         services.AddSingleton<IEncoderFileHash>(_ => new DefaultEncoderFileHash { TextHash = textModel.ModelSha256 });
         services.AddHttpClient();
         services.AddSingleton<IThemePreferenceStore, MauiThemePreferenceStore>();
@@ -49,9 +54,18 @@ public static class MauiServiceCollectionExtensions
             return sp.GetRequiredService<DisabledScopeWatcher>();
         });
 
+#if WINDOWS
+        services.AddSingleton<IVideoFrameSamplerService, WindowsVideoFrameSampler>();
+#elif ANDROID
+        services.AddSingleton<IVideoFrameSamplerService, AndroidVideoFrameSampler>();
+#elif IOS || MACCATALYST
+        services.AddSingleton<IVideoFrameSamplerService, AppleVideoFrameSampler>();
+#endif
+
         var modelDir = Path.Combine(FileSystem.AppDataDirectory, textModel.RelativeModelDirectory);
         var vectorRoot = Path.Combine(FileSystem.AppDataDirectory, textModel.RelativeVectorDirectory);
-        services.AddRecallAdapters(modelDir, vectorRoot);
+        var visionDir = Path.Combine(FileSystem.AppDataDirectory, (visionModel ?? new VisionModelDownloadOptions()).RelativeModelDirectory);
+        services.AddRecallAdapters(modelDir, vectorRoot, visionDir);
         return services;
     }
 }

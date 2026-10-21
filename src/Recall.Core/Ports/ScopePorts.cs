@@ -57,7 +57,10 @@ public interface IGrantedFolderAccessService
 
 public interface IVideoFrameSamplerService
 {
+    IReadOnlyList<VideoFrame> SampleEveryTwoSeconds(Stream media);
 }
+
+public readonly record struct VideoFrame(byte[] Jpeg, double StartSeconds, double EndSeconds);
 
 public enum IdleSignal
 {

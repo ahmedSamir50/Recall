@@ -141,9 +141,11 @@ namespace Recall.Core.Search;
 public type Collapse
 Collapse
 public static TextSearchHit MaxRrf(IReadOnlyList<TextSearchHit> hits)
+public static MediaSearchHit EarliestStart(IReadOnlyList<MediaSearchHit> hits)
 if (hits.Count == 0)
 if (candidate.Score > best.Score)
 if (Math.Abs(candidate.Score - best.Score) < 1e-12 && candidate.Ordinal < best.Ordinal)
+if (Math.Abs(candidate.Score - best.Score) < 1e-12 && candidate.StartSeconds < best.StartSeconds)
 ``` 
 
 ## src/Recall.Core/Search/TextSearchFilter.cs
@@ -158,4 +160,78 @@ public const string GrantPathField = "grant_path";
 public static string Build(IReadOnlySet<string> grantPaths, string encoderHash)
 if (grantPaths.Count == 0)
 ``` 
+
+## src/Recall.Core/Indexing/MediaCollections.cs
+
+```csharp
+namespace Recall.Core.Indexing;
+public static class MediaCollections
+public const string Image = "items_image";
+public const string Video = "items_video";
+public const int Width = 768;
+public static bool IsMedia(string collectionName) =>
+```
+
+Picture rows live in `items_image` and video frame rows live in `items_video`. Both are 768 wide. A text collection name is rejected. No branch.
+
+## src/Recall.Core/Indexing/MediaIndexInsert.cs
+
+```csharp
+namespace Recall.Core.Indexing;
+public sealed record MediaIndexInsert(
+    string ContentId,
+    string SourcePath,
+    string FileName,
+    string Words,
+    ReadOnlyMemory<float> Vector768,
+    string EncoderHash,
+    bool PathLive,
+    string GrantPath,
+    string StartSeconds,
+    string EndSeconds);
+```
+
+Seconds are stored as invariant strings so a picture row can leave them unset and parse back to zero. No branch.
+
+## src/Recall.Core/Search/MediaSearchHit.cs
+
+```csharp
+namespace Recall.Core.Search;
+public sealed record MediaSearchHit(
+    string ContentId,
+    string SourcePath,
+    double StartSeconds,
+    double EndSeconds,
+    double Score);
+public sealed record MediaSearchRequest(
+    string CollectionName,
+    ReadOnlyMemory<float> QueryVector768,
+    string Filter,
+    int TopK);
+```
+
+`MediaSearchHit` is the picture or frame card. `MediaSearchRequest` names one media collection, one 768-wide query vector, a grant filter, and a top-k. No branch.
+
+## src/Recall.Core/Search/PictureQueryGate.cs
+
+```csharp
+namespace Recall.Core.Search;
+public enum PictureQueryDecision
+public static class PictureQueryGate
+public static PictureQueryDecision Decide(TextModelDownloadPhase phase) => phase switch
+```
+
+Not started, downloading, and verifying all map to `Wait`. Ready maps to `Search`. Every other phase maps to `Fail`. No branch statement is used; the switch expression is exhaustive over the four phases plus a fallback.
+
+## src/Recall.Core/Search/PictureSearchService.cs
+
+```csharp
+namespace Recall.Core.Search;
+public sealed class PictureSearchService : IPictureSearchService
+public Task<IReadOnlyList<MediaSearchHit>> FindAsync(
+if (jpeg.IsEmpty || grants is null)
+if (grantedPaths.Count == 0)
+```
+
+Empty bytes and a null grant list return no hits. No image- or video-enabled grant returns no hits without embedding. Otherwise the JPEG is embedded once, the image and video collections are searched with a text-filter build, and rows outside the enabled grants are dropped. Rows collapse per path with `Collapse.EarliestStart`, then take the file cap. No text collection is queried.
 

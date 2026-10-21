@@ -335,6 +335,12 @@ public type FakeLocalContentProbe
 FakeLocalContentProbe
 public sealed class FakeLocalContentProbe : ILocalContentProbe
 public sealed class FakeTextSearchService : ITextSearchService
+public sealed class FakeVisionEmbeddingEncoder : IVisionEmbeddingEncoder
+public sealed class FakeMediaVectorIndex : IMediaVectorIndex
+public sealed class FakePictureSearchService : IPictureSearchService
+if (VisionSnapshot.Phase == TextModelDownloadPhase.NotStarted)
+if (OnEmbed is not null)
+if (Inserts.Any(i => string.Equals(i.ContentId, insert.ContentId, StringComparison.Ordinal)))
 public sealed class FakeDeviceIdCandidateProviderPort : IDeviceIdCandidateProvider
 public sealed class FakeRandomDeviceIdSourcePort : IRandomDeviceIdSource
 if (!AllowWrite)
@@ -810,4 +816,29 @@ if (parts.Index.Inserts.Count > 1)
 catch (IOException ex)
 catch (IOException ex)
 ``` 
+
+## tests/Recall.UnitTests/Phase4VisionTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class Phase4VisionTests : IDisposable
+public void Vision_UnloadedAfterJob()
+public void Vision_Throw_StillUnloads()
+public void Create_QuantizeType_StaysUndefined()
+public void PictureRow_NotInTextCollection()
+public void Frames_OneVideo_OneFileInTop20()
+public void Frames_OneVideo_KeepsMaxRrfScore()
+public async Task PictureQuery_GrantedImage_HitsPictureCollection()
+public async Task PictureFind_OutOfGrant_DoesNotTakeASlot()
+public async Task PictureFind_NoGrants_ReturnsEmpty()
+public void OcrReaders_MissingHash_DoesNotLoad()
+public void EndsSlice_At8192Tokens_IsTrue()
+public void EndsSlice_At10Pages_IsTrue()
+public void NeedsOcr_ThreeReplacementChars_IsTrue()
+catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+```
+
+Covers the Phase 4 surface with fakes and the native source contract: mmproj open codes 1, 6, 8, embed-when-closed 4, width-not-768 5, vision unload on success and throw, the 768 media schema with `QuantizeType.Undefined`, picture rows outside `items_text`, frame collapse to one card per file with the max score, grant filtering, OCR hashes and line choice, the provisional PDF caps, broken-Arabic detection, and both-locale picture waiting copy.
+
 

@@ -15,19 +15,25 @@ public sealed class TextSearchService : ITextSearchService
     private readonly IIngestCursorStore cursors;
     private readonly IEncoderFileHash encoderHash;
 
+    private readonly IVisionEmbeddingEncoder? visionEncoder;
+
     public TextSearchService(
         ITextEmbeddingEncoder encoder,
         ITextVectorIndex index,
         IIndexPolicy indexPolicy,
         IIngestCursorStore cursors,
-        IEncoderFileHash encoderHash)
+        IEncoderFileHash encoderHash,
+        IVisionEmbeddingEncoder? visionEncoder = null)
     {
         this.encoder = encoder;
         this.index = index;
         this.indexPolicy = indexPolicy;
         this.cursors = cursors;
         this.encoderHash = encoderHash;
+        this.visionEncoder = visionEncoder;
     }
+
+    internal IVisionEmbeddingEncoder? VisionEncoder => visionEncoder;
 
     public async Task<IReadOnlyList<TextSearchHit>> FindAsync(
         string query,

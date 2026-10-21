@@ -10,22 +10,31 @@ public sealed class MauiModelDownloadService : IModelDownloadService
     private readonly IHttpClientFactory httpClientFactory;
     private readonly IGrantedTextIngestService ingest;
     private readonly TextModelDownloadOptions options;
+    private readonly VisionModelDownloadOptions visionOptions;
     private readonly string modelDirectory;
+    private readonly string visionDirectory;
     private readonly object gate = new();
     private CancellationTokenSource? downloadCts;
+    private CancellationTokenSource? visionDownloadCts;
     private int lastPublishedPercent = -1;
+    private int lastPublishedVisionPercent = -1;
     private TextModelDownloadSnapshot snapshot = new(TextModelDownloadPhase.NotStarted, 0, null);
+    private TextModelDownloadSnapshot visionSnapshot = new(TextModelDownloadPhase.NotStarted, 0, null);
 
     public MauiModelDownloadService(
         IHttpClientFactory httpClientFactory,
         IGrantedTextIngestService ingest,
-        TextModelDownloadOptions options)
+        TextModelDownloadOptions options,
+        VisionModelDownloadOptions visionOptions)
     {
         this.httpClientFactory = httpClientFactory;
         this.ingest = ingest;
         this.options = options;
+        this.visionOptions = visionOptions;
         modelDirectory = Path.Combine(FileSystem.AppDataDirectory, options.RelativeModelDirectory);
+        visionDirectory = Path.Combine(FileSystem.AppDataDirectory, visionOptions.RelativeModelDirectory);
         Directory.CreateDirectory(modelDirectory);
+        Directory.CreateDirectory(visionDirectory);
     }
 
     public TextModelDownloadSnapshot GetTextDownloadSnapshot()
@@ -36,9 +45,34 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         }
     }
 
+    public TextModelDownloadSnapshot GetVisionDownloadSnapshot()
+    {
+        lock (gate)
+        {
+            return visionSnapshot;
+        }
+    }
+
     public Task DownloadTextModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
     {
-        return RunDownloadAsync(progress, cancellationToken);
+        return RunDownloadAsync(
+            [(options.ModelFileName, options.ModelBaseUri, options.ModelSha256)],
+            modelDirectory,
+            vision: false,
+            ingestAfter: true,
+            progress,
+            cancellationToken);
+    }
+
+    public Task DownloadVisionModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
+    {
+        return RunDownloadAsync(
+            [(visionOptions.ModelFileName, visionOptions.ModelBaseUri, visionOptions.ModelSha256)],
+            visionDirectory,
+            vision: true,
+            ingestAfter: false,
+            progress,
+            cancellationToken);
     }
 
     public void CancelTextDownload()
@@ -57,39 +91,59 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             downloadCts?.Cancel();
             downloadCts?.Dispose();
             downloadCts = null;
+            visionDownloadCts?.Cancel();
+            visionDownloadCts?.Dispose();
+            visionDownloadCts = null;
             lastPublishedPercent = -1;
+            lastPublishedVisionPercent = -1;
             snapshot = new TextModelDownloadSnapshot(TextModelDownloadPhase.NotStarted, 0, null);
+            visionSnapshot = new TextModelDownloadSnapshot(TextModelDownloadPhase.NotStarted, 0, null);
         }
 
-        if (Directory.Exists(modelDirectory))
-        {
-            foreach (var file in Directory.EnumerateFiles(modelDirectory))
-            {
-                TryDelete(file);
-            }
-        }
+        ClearDirectory(modelDirectory);
+        ClearDirectory(visionDirectory);
     }
 
     public Task RetryTextDownloadAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
     {
-        return RunDownloadAsync(progress, cancellationToken);
+        return RunDownloadAsync(
+            [(options.ModelFileName, options.ModelBaseUri, options.ModelSha256)],
+            modelDirectory,
+            vision: false,
+            ingestAfter: true,
+            progress,
+            cancellationToken);
     }
 
-    private async Task RunDownloadAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken)
+    private async Task RunDownloadAsync(
+        (string Name, Uri BaseUri, string Sha256)[] files,
+        string directory,
+        bool vision,
+        bool ingestAfter,
+        IProgress<ModelDownloadProgress>? progress,
+        CancellationToken cancellationToken)
     {
-        var files = new (string Name, Uri BaseUri, string Sha256)[]
-        {
-            (options.ModelFileName, options.ModelBaseUri, options.ModelSha256),
-        };
         CancellationTokenSource cts;
         lock (gate)
         {
-            downloadCts?.Cancel();
-            downloadCts?.Dispose();
-            cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            downloadCts = cts;
-            lastPublishedPercent = -1;
-            snapshot = snapshot with { Phase = TextModelDownloadPhase.Downloading, Fault = null, CompletedFiles = 0, FileCount = files.Length };
+            if (vision)
+            {
+                visionDownloadCts?.Cancel();
+                visionDownloadCts?.Dispose();
+                cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                visionDownloadCts = cts;
+                lastPublishedVisionPercent = -1;
+                visionSnapshot = visionSnapshot with { Phase = TextModelDownloadPhase.Downloading, Fault = null, CompletedFiles = 0, FileCount = files.Length };
+            }
+            else
+            {
+                downloadCts?.Cancel();
+                downloadCts?.Dispose();
+                cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                downloadCts = cts;
+                lastPublishedPercent = -1;
+                snapshot = snapshot with { Phase = TextModelDownloadPhase.Downloading, Fault = null, CompletedFiles = 0, FileCount = files.Length };
+            }
         }
 
         var token = cts.Token;
@@ -98,43 +152,30 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             for (var index = 0; index < files.Length; index++)
             {
                 var file = files[index];
-                await DownloadFileAsync(file.Name, file.BaseUri, file.Sha256, progress, token, index, files.Length).ConfigureAwait(false);
+                await DownloadFileAsync(file.Name, file.BaseUri, file.Sha256, directory, vision, progress, token, index, files.Length).ConfigureAwait(false);
             }
 
-            lock (gate)
+            SetSnapshot(vision, current => current with { Phase = TextModelDownloadPhase.Ready, Fault = null });
+            if (ingestAfter)
             {
-                snapshot = snapshot with { Phase = TextModelDownloadPhase.Ready, Fault = null };
+                await TextModelReadyIngest.ReadGrantsAsync(TextModelDownloadPhase.Ready, ingest, token).ConfigureAwait(false);
             }
-
-            await TextModelReadyIngest.ReadGrantsAsync(TextModelDownloadPhase.Ready, ingest, token).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            lock (gate)
-            {
-                snapshot = snapshot with { Phase = TextModelDownloadPhase.Cancelled };
-            }
+            SetSnapshot(vision, current => current with { Phase = TextModelDownloadPhase.Cancelled });
         }
         catch (RecallFaultException fault) when (fault.Fault == RecallFault.DownloadHashMismatch)
         {
-            lock (gate)
-            {
-                snapshot = snapshot with { Phase = TextModelDownloadPhase.HashFailed, Fault = TextModelDownloadFault.HashMismatch };
-            }
+            SetSnapshot(vision, current => current with { Phase = TextModelDownloadPhase.HashFailed, Fault = TextModelDownloadFault.HashMismatch });
         }
         catch (RecallFaultException fault) when (fault.Fault == RecallFault.DownloadIncomplete)
         {
-            lock (gate)
-            {
-                snapshot = snapshot with { Phase = TextModelDownloadPhase.Interrupted, Fault = TextModelDownloadFault.Incomplete };
-            }
+            SetSnapshot(vision, current => current with { Phase = TextModelDownloadPhase.Interrupted, Fault = TextModelDownloadFault.Incomplete });
         }
         catch (Exception ex) when (ex is HttpRequestException or IOException)
         {
-            lock (gate)
-            {
-                snapshot = snapshot with { Phase = TextModelDownloadPhase.Interrupted, Fault = TextModelDownloadFault.Transport };
-            }
+            SetSnapshot(vision, current => current with { Phase = TextModelDownloadPhase.Interrupted, Fault = TextModelDownloadFault.Transport });
         }
     }
 
@@ -142,33 +183,37 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         string fileName,
         Uri baseUri,
         string expectedSha256,
+        string directory,
+        bool vision,
         IProgress<ModelDownloadProgress>? progress,
         CancellationToken cancellationToken,
         int completedFiles,
         int fileCount)
     {
-        var targetPath = Path.Combine(modelDirectory, fileName);
+        var targetPath = Path.Combine(directory, fileName);
         if (await ModelHashVerifier.MatchesExpectedHashAsync(targetPath, expectedSha256, cancellationToken).ConfigureAwait(false))
         {
-            PublishProgress(progress, completedFiles + 1, fileCount, 0, null);
+            PublishProgress(progress, vision, completedFiles + 1, fileCount, 0, null);
             return;
         }
 
-        await DownloadBodyAsync(fileName, baseUri, expectedSha256, progress, cancellationToken, allowRange: true, completedFiles, fileCount).ConfigureAwait(false);
-        PublishProgress(progress, completedFiles + 1, fileCount, 0, null);
+        await DownloadBodyAsync(fileName, baseUri, expectedSha256, directory, vision, progress, cancellationToken, allowRange: true, completedFiles, fileCount).ConfigureAwait(false);
+        PublishProgress(progress, vision, completedFiles + 1, fileCount, 0, null);
     }
 
     private async Task DownloadBodyAsync(
         string fileName,
         Uri baseUri,
         string expectedSha256,
+        string directory,
+        bool vision,
         IProgress<ModelDownloadProgress>? progress,
         CancellationToken cancellationToken,
         bool allowRange,
         int completedFiles,
         int fileCount)
     {
-        var targetPath = Path.Combine(modelDirectory, fileName);
+        var targetPath = Path.Combine(directory, fileName);
         var partialPath = targetPath + ".partial";
         var uri = ModelWeightDownloadRequestBuilder.BuildRequestUri(fileName, baseUri);
         var existing = allowRange && File.Exists(partialPath) ? new FileInfo(partialPath).Length : 0L;
@@ -194,10 +239,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         var status = (int)response.StatusCode;
         if (status == DownloadTransfer.StatusRangeNotSatisfiable)
         {
-            lock (gate)
-            {
-                snapshot = TextModelDownloadUiPolicy.MarkVerifying(snapshot);
-            }
+            SetSnapshot(vision, TextModelDownloadUiPolicy.MarkVerifying);
 
             if (await ModelHashVerifier.MatchesExpectedHashAsync(partialPath, expectedSha256, cancellationToken).ConfigureAwait(false))
             {
@@ -208,7 +250,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             TryDelete(partialPath);
             if (allowRange)
             {
-                await DownloadBodyAsync(fileName, baseUri, expectedSha256, progress, cancellationToken, allowRange: false, completedFiles, fileCount).ConfigureAwait(false);
+                await DownloadBodyAsync(fileName, baseUri, expectedSha256, directory, vision, progress, cancellationToken, allowRange: false, completedFiles, fileCount).ConfigureAwait(false);
                 return;
             }
 
@@ -242,7 +284,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             {
                 await file.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
                 totalRead += read;
-                PublishProgress(progress, completedFiles, fileCount, totalRead, expectedTotal);
+                PublishProgress(progress, vision, completedFiles, fileCount, totalRead, expectedTotal);
             }
 
             await file.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -252,10 +294,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             }
         }
 
-        lock (gate)
-        {
-            snapshot = TextModelDownloadUiPolicy.MarkVerifying(snapshot);
-        }
+        SetSnapshot(vision, TextModelDownloadUiPolicy.MarkVerifying);
 
         if (!await ModelHashVerifier.MatchesExpectedHashAsync(partialPath, expectedSha256, cancellationToken).ConfigureAwait(false))
         {
@@ -268,32 +307,86 @@ public sealed class MauiModelDownloadService : IModelDownloadService
 
     private void PublishProgress(
         IProgress<ModelDownloadProgress>? progress,
+        bool vision,
         int completedFiles,
         int fileCount,
         long bytesReceived,
         long? totalBytes)
     {
         var percent = TextModelDownloadUiPolicy.ComputeOverallPercent(completedFiles, fileCount, bytesReceived, totalBytes);
+        var shouldPublish = false;
         lock (gate)
         {
-            snapshot = snapshot with
+            if (vision)
             {
-                Phase = TextModelDownloadPhase.Downloading,
-                BytesReceived = bytesReceived,
-                CompletedFiles = completedFiles,
-                FileCount = fileCount,
-                CurrentFileTotal = totalBytes,
-                Fault = null,
-            };
+                visionSnapshot = visionSnapshot with
+                {
+                    Phase = TextModelDownloadPhase.Downloading,
+                    BytesReceived = bytesReceived,
+                    CompletedFiles = completedFiles,
+                    FileCount = fileCount,
+                    CurrentFileTotal = totalBytes,
+                    Fault = null,
+                };
+                shouldPublish = TextModelDownloadUiPolicy.ShouldPublishProgress(lastPublishedVisionPercent, percent);
+                if (shouldPublish)
+                {
+                    lastPublishedVisionPercent = percent;
+                }
+            }
+            else
+            {
+                snapshot = snapshot with
+                {
+                    Phase = TextModelDownloadPhase.Downloading,
+                    BytesReceived = bytesReceived,
+                    CompletedFiles = completedFiles,
+                    FileCount = fileCount,
+                    CurrentFileTotal = totalBytes,
+                    Fault = null,
+                };
+                shouldPublish = TextModelDownloadUiPolicy.ShouldPublishProgress(lastPublishedPercent, percent);
+                if (shouldPublish)
+                {
+                    lastPublishedPercent = percent;
+                }
+            }
         }
 
-        if (!TextModelDownloadUiPolicy.ShouldPublishProgress(lastPublishedPercent, percent))
+        if (!shouldPublish)
         {
             return;
         }
 
-        lastPublishedPercent = percent;
         progress?.Report(new ModelDownloadProgress(bytesReceived, totalBytes, completedFiles, fileCount));
+    }
+
+    private void SetSnapshot(bool vision, Func<TextModelDownloadSnapshot, TextModelDownloadSnapshot> update)
+    {
+        lock (gate)
+        {
+            if (vision)
+            {
+                visionSnapshot = update(visionSnapshot);
+            }
+            else
+            {
+                snapshot = update(snapshot);
+            }
+        }
+    }
+
+    private static void ClearDirectory(string directory)
+    {
+        if (!Directory.Exists(directory))
+        {
+            return;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(directory))
+        {
+            TryDelete(file);
+        }
     }
 
     private static void MovePartial(string partialPath, string targetPath)

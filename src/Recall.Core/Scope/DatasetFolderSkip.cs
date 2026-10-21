@@ -2,12 +2,19 @@ namespace Recall.Core.Scope;
 
 public static class DatasetFolderSkip
 {
-    private static readonly HashSet<string> MediaExtensions = new(StringComparer.OrdinalIgnoreCase)
-    {
+    public static IReadOnlyList<string> ImageExtensions { get; } =
+    [
         ".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".tif", ".tiff", ".bmp",
-        ".mp4", ".mov", ".mkv", ".webm", ".avi",
-        ".mp3", ".m4a", ".wav", ".flac", ".ogg", ".aac",
-    };
+    ];
+
+    private static readonly HashSet<string> MediaExtensions = CreateMediaExtensions();
+
+    private static HashSet<string> CreateMediaExtensions()
+    {
+        var extensions = new HashSet<string>(ImageExtensions, StringComparer.OrdinalIgnoreCase);
+        extensions.UnionWith([".mp4", ".mov", ".mkv", ".webm", ".avi", ".mp3", ".m4a", ".wav", ".flac", ".ogg", ".aac"]);
+        return extensions;
+    }
 
     public static bool ShouldSkip(string folderPath, bool isGrantRoot, IReadOnlyList<string> directChildNames)
     {

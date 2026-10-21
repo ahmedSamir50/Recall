@@ -402,3 +402,94 @@ if (current == StoredWidth.W512 && pinned)
 if (current == StoredWidth.W768 && !pastCutoff)
 ``` 
 
+## src/Recall.Core/Ingest/FrameCadence.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public static class FrameCadence
+public const double PeriodSeconds = 2;
+public static IReadOnlyList<double> Starts(double durationSeconds)
+public static double End(double startSeconds, double durationSeconds)
+if (durationSeconds <= 0)
+```
+
+A two-second cadence yields starts at 0, 2, 4, and so on while the start is below the duration. Zero or negative duration yields no starts. The end is clamped to the duration. No OCR or audio path is involved.
+
+## src/Recall.Core/Text/PdfSlicePolicy.cs
+
+```csharp
+namespace Recall.Core.Text;
+public static class PdfSlicePolicy
+public const int TokenCap = 8192;
+public const int PageCap = 10;
+public static bool EndsSlice(int tokens, int pages) => tokens >= TokenCap || pages >= PageCap;
+```
+
+Both caps are provisional. A slice ends when either the token cap or the page cap is reached. No branch.
+
+## src/Recall.Core/Ocr/OcrModelFiles.cs
+
+```csharp
+namespace Recall.Core.Ocr;
+public static class OcrModelFiles
+public static class Detector
+public static class EnglishReader
+public static class ArabicReader
+public const string LocalName = "ppocrv6-small-det.onnx";
+public const string LocalName = "ppocrv6-small-rec.onnx";
+public const string LocalName = "arabic-ppocrv5-mobile-rec.onnx";
+```
+
+The detector and English reader are PP-OCRv6 small. Arabic is the PP-OCRv5 mobile recognizer. Each `Url` is a pinned Hugging Face resolve base and carries an `S1075` suppression. `LocalNames` is exactly these three files; there is no fourth model. No branch.
+
+## src/Recall.Core/Ocr/OcrReaderGate.cs
+
+```csharp
+namespace Recall.Core.Ocr;
+public static class OcrReaderGate
+public static bool CanLoad(string? sha256) => !string.IsNullOrWhiteSpace(sha256);
+```
+
+A reader with a missing or blank SHA-256 is not loaded. The gate never constructs an inference session. No branch.
+
+## src/Recall.Core/Ocr/OcrSessionSet.cs
+
+```csharp
+namespace Recall.Core.Ocr;
+public sealed class OcrSessionSet : IDisposable
+public bool DetectorLoaded { get; private set; }
+public bool EnglishReaderLoaded { get; private set; }
+public bool ArabicReaderLoaded { get; private set; }
+public void Load()
+public void Dispose()
+```
+
+`Load` marks the detector, English reader, and Arabic reader as loaded. `Dispose` clears all three. No branch.
+
+## src/Recall.Core/Ocr/OcrLineChoice.cs
+
+```csharp
+namespace Recall.Core.Ocr;
+public static class OcrLineChoice
+public static string Choose(string? englishText, double englishScore, string? arabicText, double arabicScore)
+if (english.Length == 0 && arabic.Length == 0)
+if (english.Length == 0)
+if (arabic.Length == 0)
+```
+
+Null text becomes an empty string. Two empty lines return empty. One empty line returns the other reader's text. Otherwise Arabic wins only when its score exceeds English by more than `1e-6`; a tie keeps English.
+
+## src/Recall.Core/Ocr/BrokenArabic.cs
+
+```csharp
+namespace Recall.Core.Ocr;
+public static class BrokenArabic
+public static bool NeedsOcr(string? word)
+if (string.IsNullOrEmpty(word))
+if (rune.Value == Replacement)
+if (run >= ReplacementRun && hasArabicLetter)
+if (IsArabicLetter(rune))
+```
+
+A null or empty word is not broken. A run of three or more U+FFFD replacement characters triggers OCR only after an Arabic letter has already appeared. Arabic is tested with `Rune.IsLetter` plus `UnicodeRanges.Arabic`; `Rune.GetUnicodeScript` is not used. A run shorter than three does not trigger.
+

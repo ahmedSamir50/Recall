@@ -1,0 +1,232 @@
+using System.Globalization;
+using Recall.Core.Indexing;
+using Recall.Core.Ports;
+using Recall.Core.Search;
+using ZVec.NET;
+
+namespace Recall.Adapters.Indexing;
+
+public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
+{
+    public const string EmbeddingField = "embedding";
+    public const string WordsField = "words";
+    public const string SourcePathField = "source_path";
+    public const string FileNameField = "file_name";
+    public const string PathLiveField = "path_live";
+    public const string EncoderHashField = "encoder_hash";
+    public const string GrantPathField = "grant_path";
+    public const string StartSecondsField = "start_seconds";
+    public const string EndSecondsField = "end_seconds";
+
+    private readonly string databaseRoot;
+    private readonly ZVecFactory factory;
+    private readonly Dictionary<string, IZvecCollection> collections = new(StringComparer.Ordinal);
+    private bool disposed;
+
+    public ZVecMediaVectorIndex(string databaseRoot)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(databaseRoot);
+        this.databaseRoot = databaseRoot;
+        factory = new ZVecFactory();
+        factory.Initialize();
+    }
+
+    public void Create(string collectionName, int width)
+    {
+        if (width != MediaCollections.Width)
+        {
+            throw new ArgumentOutOfRangeException(nameof(width));
+        }
+
+        if (!MediaCollections.IsMedia(collectionName))
+        {
+            throw new ArgumentException("Only picture and video collections are media collections.", nameof(collectionName));
+        }
+
+        if (collections.ContainsKey(collectionName))
+        {
+            return;
+        }
+
+        var rootPath = Path.Combine(databaseRoot, collectionName);
+        if (Directory.Exists(rootPath))
+        {
+            collections[collectionName] = factory.Open(rootPath);
+            return;
+        }
+
+        Directory.CreateDirectory(Path.GetDirectoryName(rootPath)!);
+        collections[collectionName] = factory.CreateAndOpen(rootPath, BuildSchema(collectionName, width));
+    }
+
+    internal static ZVecCollectionSchema BuildSchema(string collectionName, int width)
+    {
+        var schema = new ZVecCollectionSchema
+        {
+            Name = collectionName,
+            Fields =
+            [
+                new ZVecFieldSchema { Name = SourcePathField, DataType = ZVecDataType.String },
+                new ZVecFieldSchema { Name = FileNameField, DataType = ZVecDataType.String },
+                new ZVecFieldSchema { Name = PathLiveField, DataType = ZVecDataType.Int32 },
+                new ZVecFieldSchema { Name = EncoderHashField, DataType = ZVecDataType.String },
+                new ZVecFieldSchema { Name = GrantPathField, DataType = ZVecDataType.String },
+                new ZVecFieldSchema { Name = StartSecondsField, DataType = ZVecDataType.String },
+                new ZVecFieldSchema { Name = EndSecondsField, DataType = ZVecDataType.String },
+            ],
+            Vectors =
+            [
+                new ZVecVectorSchema
+                {
+                    Name = EmbeddingField,
+                    DataType = ZVecDataType.VectorFp32,
+                    Dimension = MediaCollections.Width,
+                    IndexParam = new ZVecHnswIndexParam
+                    {
+                        MetricType = ZVecMetricType.Cosine,
+                        M = RecallIndexPolicy.TextHnswM,
+                        EfConstruction = RecallIndexPolicy.TextHnswEfConstruction,
+                        QuantizeType = ZVecQuantizeType.Undefined,
+                    },
+                },
+                new ZVecVectorSchema
+                {
+                    Name = WordsField,
+                    DataType = ZVecDataType.String,
+                    Dimension = 0,
+                    IndexParam = new ZVecFtsIndexParam
+                    {
+                        Tokenizer = ZVecFtsTokenizer.Standard,
+                        Filters = [ZVecFtsTokenFilter.Lowercase],
+                    },
+                },
+            ],
+        };
+
+        return schema;
+    }
+
+    public bool TryInsert(string collectionName, MediaIndexInsert insert)
+    {
+        var collection = RequireCollection(collectionName);
+        if (collection.Fetch(insert.ContentId, includeVector: false) is not null)
+        {
+            return false;
+        }
+
+        var doc = ZVecDoc.Create(
+            insert.ContentId,
+            denseVectors: new Dictionary<string, ReadOnlyMemory<float>>
+            {
+                [EmbeddingField] = insert.Vector768,
+            },
+            sparseVectors: null,
+            fields: new Dictionary<string, object>
+            {
+                [WordsField] = insert.Words,
+                [SourcePathField] = insert.SourcePath,
+                [FileNameField] = insert.FileName,
+                [PathLiveField] = insert.PathLive ? 1 : 0,
+                [EncoderHashField] = insert.EncoderHash,
+                [GrantPathField] = insert.GrantPath,
+                [StartSecondsField] = insert.StartSeconds,
+                [EndSecondsField] = insert.EndSeconds,
+            });
+
+        return collection.Insert(doc).IsSuccess;
+    }
+
+    public bool TryDelete(string contentId)
+    {
+        var deleted = false;
+        foreach (var collection in collections.Values)
+        {
+            if (collection.Fetch(contentId, includeVector: false) is null)
+            {
+                continue;
+            }
+
+            if (collection.Delete(contentId).IsSuccess)
+            {
+                deleted = true;
+            }
+        }
+
+        return deleted;
+    }
+
+    public IReadOnlyList<MediaSearchHit> Search(MediaSearchRequest request, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var collection = RequireCollection(request.CollectionName);
+        var dense = new ZVecQuery
+        {
+            FieldName = EmbeddingField,
+            Vector = request.QueryVector768,
+            QueryParams = new ZVecHnswQueryParams { EfSearch = RecallIndexPolicy.TextHnswEfSearch },
+        };
+        var filter = string.IsNullOrWhiteSpace(request.Filter) ? null : request.Filter;
+        var docs = collection.Query(dense, topk: request.TopK, filter: filter, includeVector: false);
+        var hits = new List<MediaSearchHit>(docs.Count);
+        foreach (var doc in docs)
+        {
+            hits.Add(new MediaSearchHit(
+                doc.Id,
+                ReadField(doc, SourcePathField),
+                ReadSeconds(doc, StartSecondsField),
+                ReadSeconds(doc, EndSecondsField),
+                doc.Score));
+        }
+
+        return hits;
+    }
+
+    public string StoredField(string collectionName, string contentId, string fieldName)
+    {
+        var collection = RequireCollection(collectionName);
+        var doc = collection.Fetch(contentId, includeVector: false);
+        return doc is null ? string.Empty : ReadField(doc, fieldName);
+    }
+
+    private IZvecCollection RequireCollection(string collectionName)
+    {
+        if (!MediaCollections.IsMedia(collectionName))
+        {
+            throw new ArgumentException("Only picture and video collections are media collections.", nameof(collectionName));
+        }
+
+        if (!collections.ContainsKey(collectionName))
+        {
+            Create(collectionName, MediaCollections.Width);
+        }
+
+        return collections[collectionName];
+    }
+
+    private static string ReadField(ZVecDoc doc, string field) =>
+        doc.Fields.TryGetValue(field, out var value) ? value?.ToString() ?? string.Empty : string.Empty;
+
+    private static double ReadSeconds(ZVecDoc doc, string field)
+    {
+        var text = ReadField(doc, field);
+        return double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds) ? seconds : 0d;
+    }
+
+    public void Dispose()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
+        foreach (var collection in collections.Values)
+        {
+            collection.Dispose();
+        }
+
+        collections.Clear();
+        factory.Shutdown();
+        factory.Dispose();
+    }
+}

@@ -226,3 +226,14 @@ ILocalContentProbe
 No branch.
 ``` 
 
+## src/Recall.Core/Ports/MediaPorts.cs
+
+```csharp
+namespace Recall.Core.Ports;
+public interface IMediaVectorIndex
+public interface IVisionEmbeddingEncoder
+public interface IPictureSearchService
+```
+
+`IMediaVectorIndex` has create, insert, delete, and search over a media collection; search takes `MediaSearchRequest`. `IVisionEmbeddingEncoder` fills a caller-owned 768-wide destination from JPEG bytes. `IPictureSearchService` takes JPEG bytes and the grant list. No branch.
+

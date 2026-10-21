@@ -11,6 +11,10 @@ public interface IModelDownloadService
     void CancelTextDownload();
 
     Task RetryTextDownloadAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default);
+
+    Task DownloadVisionModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default);
+
+    TextModelDownloadSnapshot GetVisionDownloadSnapshot();
 }
 
 public interface ISecureStorageService
