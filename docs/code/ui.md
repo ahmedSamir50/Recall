@@ -324,6 +324,9 @@ public partial class Home
         if (hits.Count == 0)
         catch (Exception)
         if (result == LocalFileOpenResult.Failed)
+        if (file is null || !AudioAcceptExtensions.Contains(Path.GetExtension(file.Name), StringComparer.OrdinalIgnoreCase))
+        if (pickedAudio is null)
+        if (!audioDownloadStarted)
 ```
 
 Picture input accepts only the allowlisted image extensions, reads at most 32 MiB into memory, and runs `PictureQueryGate` before embedding. Wait starts the vision download once; Fail shows `Search_PictureFailed`; Search queries both media collections and renders path, invariant start-to-end seconds, and an open button. A null pick is ignored.

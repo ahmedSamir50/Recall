@@ -545,7 +545,7 @@ DatasetFolderSkip
 public static bool ShouldSkip(string folderPath, bool isGrantRoot, IReadOnlyList<string> directChildNames)
 public static bool IsMachineMade(string nameWithoutExtension)
 if (isGrantRoot)
-if (!MediaExtensions.Contains(extension))
+if (!isMedia)
 if (IsMachineMade(Path.GetFileNameWithoutExtension(name)))
 if (nameWithoutExtension.Length == 32 && nameWithoutExtension.All(static c => c is >= '0' and <= '9' or >= 'a' and <= 'f' or >= 'A' and <= 'F') && !nameWithoutExtension.Contains('-', StringComparison.Ordinal))
 if (Guid.TryParse(nameWithoutExtension, out _))
@@ -620,5 +620,20 @@ public const int Unpinned = 0x00100000;
 public static LocalContentState FromFindData(bool found, int attributes)
 if (!found)
 if ((attributes & Offline) != 0 || (attributes & RecallOnOpen) != 0 || (attributes & RecallOnDataAccess) != 0)
-``` 
+```
+
+## src/Recall.Core/Scope/MediaFileKinds.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public static class MediaFileKinds
+public const string AudioAccept = ".mp3,.m4a,.wav,.flac,.ogg,.aac";
+public static bool IsAudio(string fileName) => HasExtension(fileName, AudioExtensions);
+public static bool IsVideo(string fileName) => HasExtension(fileName, VideoExtensions);
+public static bool IsImage(string fileName) => HasExtension(fileName, ImageExtensions);
+if (string.IsNullOrEmpty(fileName))
+if (extension.Length == 0)
+```
+
+Holds the audio, video, and image extension sets plus the shared AudioAccept filter string. Null and blank names are not media.
 

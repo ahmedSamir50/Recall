@@ -6,26 +6,26 @@ The license file is a source-available grant, copyright 2026 Adam Systems EG. A 
 
 ## How to read
 
-Read this page, then [for-agents.md](for-agents.md), then the domain page or the use-case page for the question. A page marked `in-code` names types that exist. A page marked `decided-absent` is an accepted rule with no implementing class. A page marked `open` must not be implemented by guessing. A page marked `forbidden` must not be built.
+Start with [How Recall is put together](architecture/design.md). That page explains the projects, why they are split, and how a granted file becomes a search hit. [What each piece is for](architecture/pieces.md) names each area in words. Then use a domain page or a use-case page for one question. [for-agents.md](for-agents.md) is the index of those questions.
+
+A page marked `in-code` names behavior the tree actually runs. A page marked `decided-absent` is an accepted rule with no implementing class. A page marked `open` must not be implemented by guessing. A page marked `forbidden` must not be built. The [file catalog](code/map.md) quotes source lines. It is a checklist, not the explanation.
 
 ## What exists now
 
-In the tree now: shell, Arabic and English chrome, device record, folder grants, text model download, text embed at stored width 512, one `items_text` collection, hybrid Find, local file open, age cutoff stored as 2, 5, or 7, sync flag off, local op-log insert and delete lines, scope watchers, `checkpoints.db`, Code grant flag, skip-folder and secret filters.
+In the tree now: shell, Arabic and English chrome, device record, folder grants, text model download, text embed at stored width 512, one `items_text` collection, hybrid Find, picture search against `items_image` and `items_video`, vision-weight download when that search is waiting, local file open, age cutoff stored as 2, 5, or 7, sync flag off, local op-log insert and delete lines, scope watchers, `checkpoints.db`, Code grant flag, skip-folder and secret filters. When a grant has audio turned on, the MAUI host indexes that audio, and a video soundtrack on the same grant, as windows in `items_audio`. Home can search that collection with a picked clip. The audio download phase follows the vision file. It does not fetch a separate weight.
 
-Progress numbers live only in [plan.md](plan.md). Domains start at [domains/index.md](domains/index.md). Use cases start at [use-cases/index.md](use-cases/index.md). The file catalog is [code/map.md](code/map.md).
+Progress numbers live only in [plan.md](plan.md). The design is [architecture/design.md](architecture/design.md). Domains start at [domains/index.md](domains/index.md). Use cases start at [use-cases/index.md](use-cases/index.md). The file catalog is [code/map.md](code/map.md).
 
 ## What is not in the tree
 
-Not in the tree: vision, video sampling, OCR, audio encoder, sibling transcripts, pin storage, vector aging, golden recall report, four-shell release. linux-x64 is a v1 RID. The Linux shell is open and is not in the tree. Windows tray, Mac menu bar, sign-in start, and search shortcut. A Linux tray, sign-in start, and search shortcut are open and are not in the tree. The public remote is https://github.com/ahmedSamir50/Recall. Branch main is the pushed branch. A GitHub Actions workflow is open and is not in the tree.
+Not in the tree: an ingest job that writes `items_image` or `items_video` from a grant, an ONNX OCR reader, pin storage, vector aging, a golden recall report, a four-shell release. linux-x64 is a v1 RID. The Linux shell is open and is not in the tree. Windows tray, Mac menu bar, sign-in start, and search shortcut. A Linux tray, sign-in start, and search shortcut are open and are not in the tree. The public remote is https://github.com/ahmedSamir50/Recall. Branch main is the pushed branch. A GitHub Actions workflow is open and is not in the tree. Speech-to-text is forbidden.
 
 ```mermaid
 flowchart TD
+  Index --> Design
+  Design --> Pieces
   Index --> ForAgents
   Index --> Domains
   Index --> UseCases
-  Index --> InCode
-  Index --> DecidedAbsent
-  Index --> Open
-  Index --> Forbidden
   Index --> Catalog
 ```

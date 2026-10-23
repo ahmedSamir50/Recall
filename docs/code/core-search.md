@@ -21,6 +21,14 @@ if (useInDbRrf)
 if (!grantedPaths.Contains(expanded.GrantPath))
 if (!byPath.TryGetValue(expanded.SourcePath, out var list))
 if (applied is not null)
+if (grantedPaths.Count == 0 && mediaGrantPaths.Count == 0)
+if (grantedPaths.Count > 0)
+if (tryMedia)
+if (!present.Add(hit.SourcePath))
+if (mediaFilter.Length == 0)
+if (info.Exists)
+catch (UnauthorizedAccessException)
+catch (IOException)
 ``` 
 ## src/Recall.Core/Search/TextSearchModels.cs
 

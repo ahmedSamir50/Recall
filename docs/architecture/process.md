@@ -1,23 +1,26 @@
 Status: in-code
 
-## Process
+## One process
 
-One process hosts the MAUI shell, Razor UI, Core, in-process llama.cpp, and ZVec. PP-OCRv6 uses ONNX Runtime only while an OCR reader is loaded. `MauiProgram` does not call `AddMudServices`. A tray or a hotkey does not add a process. None is in the tree.
+One process hosts the MAUI shell, the Razor UI, Core, in-process llama.cpp, and ZVec. The vision embed loads the mmproj for one JPEG and closes it before returning. The audio embed can open a native audio context and leaves closing it to `CloseAudio`. A tray or a hotkey would not add a process. Neither is in the tree.
+
+`MauiProgram` reads the embedded settings, registers Core, the UI store, and the platform services. The platform services register the adapters. `MauiProgram` does not call `AddMudServices`.
 
 ## Network
 
-`Recall.Core` has no `HttpClient`, `Socket`, `TcpListener`, or `UdpClient`. The only HTTP client is `MauiModelDownloadService` via `IHttpClientFactory`. The request names the public weight file. It does not send a document name, document text, vector, device id, or device name.
+`Recall.Core` has no `HttpClient`, `Socket`, `TcpListener`, or `UdpClient`. The HTTP client is `MauiModelDownloadService`, created through `IHttpClientFactory`. The request names a public weight file. Text uses `embeddinggemma-2-Q8_0.gguf`. Vision uses `mmproj-embeddinggemma-2-Q8_0.gguf`. The audio download method does not name a third file. It follows the vision download, as [the design page](design.md) describes. The request does not send a document name, document text, a vector, a device id, or a device name.
 
-## Failure
+## Failure at startup
 
-Missing embedded `Recall.Maui.appsettings.json` throws `InvalidOperationException` with message `Recall.Maui.appsettings.json is not embedded.`
+A missing embedded `Recall.Maui.appsettings.json` throws `InvalidOperationException` with the message `Recall.Maui.appsettings.json is not embedded.`
 
 ```mermaid
 flowchart LR
   MauiProgram --> RecallCore
   MauiProgram --> RecallUi
-  MauiProgram --> Adapters
-  Adapters --> Onnx
+  MauiProgram --> MauiPlatform
+  MauiPlatform --> Adapters
+  Adapters --> LlamaCpp
   Adapters --> ZVec
-  MauiProgram --> ModelDownload
+  MauiPlatform --> ModelDownload
 ```

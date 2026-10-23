@@ -20,10 +20,12 @@ nav:
   - For agents: for-agents.md
   - Non-goals: non-goals.md
   - Architecture:
-      - Process: architecture/process.md
+      - How it is put together: architecture/design.md
+      - What each piece is for: architecture/pieces.md
       - Projects: architecture/projects.md
       - Composition: architecture/composition.md
       - Relations: architecture/relations.md
+      - Process: architecture/process.md
   - Domains:
       - Index: domains/index.md
       - Scope: domains/scope.md
@@ -90,6 +92,7 @@ nav:
       - Core locale and theme: code/core-locale-theme.md
       - Core sync and ports: code/core-sync-ports.md
       - Adapters: code/adapters.md
+      - Audio: code/audio.md
       - Maui folders: code/maui-folders.md
       - Maui device: code/maui-device.md
       - Maui host: code/maui-host.md

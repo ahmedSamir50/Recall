@@ -248,7 +248,11 @@ namespace Recall.Core.Ports;
 public interface IMediaVectorIndex
 public interface IVisionEmbeddingEncoder
 public interface IPictureSearchService
+public interface IAudioSearchService
+public interface IAudioEmbeddingEncoder
+public bool IsLoaded { get; }
+public void EmbedPcm(ReadOnlyMemory<float> mono16k, float[] destination768)
+public IReadOnlyList<MediaSearchHit> SearchWords(string collectionName, string query, string filter, int topK, CancellationToken cancellationToken = default)
 ```
 
-`IMediaVectorIndex` has create, insert, delete, and search over a media collection; search takes `MediaSearchRequest`. `IVisionEmbeddingEncoder` fills a caller-owned 768-wide destination from JPEG bytes. `IPictureSearchService` takes JPEG bytes and the grant list. No branch.
-
+`IMediaVectorIndex` has create, insert, delete, word search, and search over a media collection; search takes `MediaSearchRequest`; `SearchWords` returns an empty list on a blank query and narrows word matches with the grant filter. `IVisionEmbeddingEncoder` fills a caller-owned 768-wide destination from JPEG bytes. `IPictureSearchService` takes JPEG bytes and the grant list. `IAudioSearchService` takes 16 kHz mono PCM and the grant list and searches `items_audio`. `IAudioEmbeddingEncoder` embeds 16 kHz mono PCM into a 768-wide destination and exposes `IsLoaded` so the unload step can skip a closed session. No branch.

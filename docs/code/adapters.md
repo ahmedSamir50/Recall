@@ -184,6 +184,7 @@ internal static ZVecCollectionSchema BuildSchema(string collectionName, int widt
 public bool TryInsert(string collectionName, MediaIndexInsert insert)
 public bool TryDelete(string contentId)
 public IReadOnlyList<MediaSearchHit> Search(MediaSearchRequest request, CancellationToken cancellationToken = default)
+if (string.IsNullOrWhiteSpace(query))
 public void Dispose()
 if (width != MediaCollections.Width)
 if (!MediaCollections.IsMedia(collectionName))
@@ -208,3 +209,32 @@ public sealed class WindowsVideoFrameSampler : IVideoFrameSamplerService
 ```
 
 No video sampling package exists for Windows. A null stream throws `ArgumentNullException`; any other call throws `NotSupportedException` with exactly `Windows video sampling has no package.` No branch.
+
+## src/Recall.Adapters/Embedding/Runtime/AudioModelRuntime.cs
+
+```csharp
+namespace Recall.Adapters.Embedding;
+public sealed class AudioModelRuntime : IAudioEmbeddingEncoder, IDisposable
+public const string OpenAudioFailedFormat = "recall_embed audio open failed with code {0}.";
+public const string EmbedAudioFailedFormat = "recall_embed audio embed failed with code {0}.";
+public AudioModelRuntime(
+public bool IsModelReady => File.Exists(Path.Combine(modelDirectory, options.ModelFileName));
+public bool IsLoaded { get; private set; }
+public void EmbedPcm(ReadOnlyMemory<float> mono16k, float[] destination768)
+if (!opened && !MediaContextPolicy.OneContext)
+if (code != 0)
+if (embedCode != 0)
+public void CloseAudio()
+if (opened)
+public void Dispose()
+if (disposed != 0)
+if (opened)
+```
+
+## src/Recall.Adapters/Embedding/MediaContextPolicy.cs
+
+```csharp
+namespace Recall.Adapters.Embedding;
+public static class MediaContextPolicy
+public static bool OneContext { get; set; }
+```

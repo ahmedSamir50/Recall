@@ -134,6 +134,9 @@ if (index.TryDelete(chunk.ContentId))
 else if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
 if (cursors.AnyLivePath(retiredId))
 if (index.TryDelete(retiredId))
+if (!textOrCode && !media)
+if (textOrCode)
+if (media && audio is not null)
 ``` 
 ## src/Recall.Core/Ingest/GrantedTextDocument.cs
 
@@ -173,6 +176,8 @@ public sealed class DirectoryGrantedTextReader : IGrantedTextReader
         if (File.Exists(ignorePath))
         if (File.Exists(excludePath))
         if (string.IsNullOrEmpty(relativeDir) || relativeDir == ".")
+        if (!MediaFileKinds.IsAudio(name) && !MediaFileKinds.IsVideo(name))
+        if (gitIgnored)
 ```
 
 
@@ -278,6 +283,7 @@ public async Task ApplyAsync(
     if (grant is not null)
     if (change.Kind == ScopeChangeKind.Created || change.Kind == ScopeChangeKind.Modified)
     if (grant is null)
+    if (grant is not null && audio is not null
 ``` 
 
 
@@ -495,4 +501,95 @@ if (IsArabicLetter(rune))
 ```
 
 A null or empty word is not broken. A run of three or more U+FFFD replacement characters triggers OCR only after an Arabic letter has already appeared. Arabic is tested with `Rune.IsLetter` plus `UnicodeRanges.Arabic`; `Rune.GetUnicodeScript` is not used. A run shorter than three does not trigger.
+
+## src/Recall.Core/Ingest/WavPcm.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public static class WavPcm
+public static bool IsWav(ReadOnlyMemory<byte> file)
+if (file.Length < 12)
+public static float[] Read(ReadOnlyMemory<byte> file)
+if (data.Length < 12)
+if (!data[..4].SequenceEqual(Riff) || !data[8..12].SequenceEqual(Wave))
+if (!TryFindChunk(data, DataId, out var payload))
+if (channels == 2)
+if (size < 0)
+if (chunkId.SequenceEqual(id))
+if (fmt.Length < 16)
+if ((format != PcmTag && format != ExtensibleTag)
+if (format == ExtensibleTag)
+if (fmt.Length < 40)
+if (cbSize < 22 || !fmt[24..40].SequenceEqual(PcmSubFormat))
+```
+
+RIFF/WAVE walk from offset 12 with fmt validation for tag 1 and the 0xFFFE PCM subformat, stereo to mono averaging, and scaled floats that continue through the 16 kHz resampler.
+
+## src/Recall.Core/Ingest/AudioResample.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public static class AudioResample
+public static float[] To16k(float[] source, int sourceRate)
+if (source.Length == 0)
+if (sourceRate <= 0)
+if (sourceRate == AudioWindows.SampleRate)
+```
+
+Linear blend resampling to the 16 kHz audio window rate with long integer position math, a same-rate pass-through, and range guards.
+
+## src/Recall.Core/Ingest/AudioWindows.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public readonly record struct AudioWindow(int StartMilliseconds, int EndMilliseconds);
+public static class AudioWindows
+public const int NativeLengthMilliseconds = 11200;
+public const int SampleRate = 16000;
+public static int HopMilliseconds(int nativeLengthMilliseconds)
+if (nativeLengthMilliseconds < 2)
+public static IReadOnlyList<AudioWindow> Plan(int durationMilliseconds)
+if (durationMilliseconds <= 0)
+if (durationMilliseconds <= NativeLengthMilliseconds)
+if (durationMilliseconds - start >= NativeLengthMilliseconds)
+if (windows.Count > 0)
+public static string Seconds(int milliseconds) =>
+```
+
+Windows of 11200 ms native length, a 5600 ms hop that is half the native length, a short-tail extension of the last window, and the invariant-culture seconds text.
+
+## src/Recall.Core/Ingest/SiblingTranscript.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public static class SiblingTranscript
+public const bool ReadsEmbeddedTrack = false;
+public static bool IsCaptionFile(string fileName)
+if (string.IsNullOrEmpty(fileName))
+public static bool Matches(string mediaFileName, string candidateFileName)
+if (string.IsNullOrEmpty(mediaFileName) || string.IsNullOrEmpty(candidateFileName))
+if (!IsCaptionFile(candidateFileName))
+if (string.Equals(candidateStem, mediaStem, StringComparison.OrdinalIgnoreCase))
+if (tagDot < 0)
+if (!string.Equals(baseStem, mediaStem, StringComparison.OrdinalIgnoreCase))
+public static IReadOnlyList<string> Order(IReadOnlyList<string> fileNames)
+if (fileNames is null)
+public static string Join(IReadOnlyList<string> orderedTexts)
+if (orderedTexts is null)
+public static string ExtractCues(string extension, string raw)
+if (raw is null)
+if (trimmed.Length == 0 || IsAllDigits(trimmed) || trimmed.Contains("-->", StringComparison.Ordinal))
+if (line.TrimStart().StartsWith("WEBVTT", StringComparison.OrdinalIgnoreCase))
+if (line.TrimStart().StartsWith("NOTE", StringComparison.OrdinalIgnoreCase)
+if (skipBlock)
+if (line.Trim().Length == 0)
+if (line.Trim().Length == 0 || line.Contains("-->", StringComparison.Ordinal))
+if (line.Trim().Length == 0 || SbvTimestamp.IsMatch(line.Trim()))
+if (!line.TrimStart().StartsWith("Dialogue:", StringComparison.OrdinalIgnoreCase))
+if (fields.Length <= 9)
+catch (XmlException)
+if (first[index] != second[index])
+```
+
+Caption file matching by stem and language tag, UTF-8 byte ordering, and cue extraction for srt, vtt, sbv, ass, ssa, and ttml sidecars with no embedded track.
 

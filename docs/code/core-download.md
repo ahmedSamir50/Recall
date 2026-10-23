@@ -145,3 +145,26 @@ public string RelativeModelDirectory { get; init; }
 
 Defaults pin the mmproj file `mmproj-embeddinggemma-2-Q8_0.gguf`, its Hub SHA-256, the `ggml-org/embeddinggemma-2-GGUF` resolve base, and `models/vision`. No branch.
 
+## src/Recall.Core/Download/AudioModelDownloadOptions.cs
+
+```csharp
+namespace Recall.Core.Download;
+public sealed class AudioModelDownloadOptions
+public const string SectionName = "AudioModel";
+public string ModelBaseUrl { get; set; } = "https://huggingface.co/ggml-org/embeddinggemma-2-GGUF/resolve/main/";
+public string ModelFileName { get; set; } = "mmproj-embeddinggemma-2-Q8_0.gguf";
+public string ModelSha256 { get; set; } = "c4a8a52691ecef40618438928bdf9e68379b854e24166f292592353db0aab64f";
+public string RelativeModelDirectory { get; set; } = "models/vision";
+public Uri ModelBaseUri => new(ModelBaseUrl);
+```
+
+## src/Recall.Core/Download/AudioDownloadJoin.cs
+
+```csharp
+namespace Recall.Core.Download;
+public enum AudioDownloadJoin
+public static class AudioDownloadJoinPolicy
+public static AudioDownloadJoin Decide(TextModelDownloadPhase visionPhase, bool fileReady)
+if (fileReady || visionPhase == TextModelDownloadPhase.Ready)
+if (visionPhase is TextModelDownloadPhase.Downloading or TextModelDownloadPhase.Verifying)
+```

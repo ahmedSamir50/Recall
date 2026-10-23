@@ -1,0 +1,134 @@
+Status: in-code
+
+These headings exist so the catalog stays complete. The explanation is [What each piece is for](../architecture/pieces.md) and [Audio and transcripts](../features/audio-and-transcripts.md).
+
+## src/Recall.Core/Ingest/AudioDecoders.cs
+
+`AudioDecoders` is the shared failure sentence the platform decoders use when a compressed file cannot become PCM.
+
+```csharp
+public static class AudioDecoders
+```
+
+No branch.
+
+## src/Recall.Core/Ingest/AudioOffReport.cs
+
+`AudioOffReport` remembers that a media file was skipped because the grant did not have the audio kind on. Home can read `Shown`.
+
+```csharp
+public sealed class AudioOffReport
+```
+
+No branch.
+
+## src/Recall.Core/Ingest/AudioFileIngest.cs
+
+`AudioFileIngest` is the real audio walk. A caption file is ignored. Audio off is reported and the file is not embedded. A WAV is decoded in process. Other containers use the platform source. Each window is stored in `items_audio`, and the native audio context is closed after the file.
+
+```csharp
+public sealed class AudioFileIngest
+if (SiblingTranscript.IsCaptionFile(fileName))
+if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Audio))
+if (fileBytes is null)
+if (WavPcm.IsWav(fileBytes))
+catch (InvalidDataException)
+catch (NotSupportedException)
+if (windows.Count == 0)
+if (startSample >= pcm.LongLength)
+```
+
+## src/Recall.Core/Ports/AudioPorts.cs
+
+These are the promises the MAUI host keeps. `DisabledAudioFileIngest` is the headless registration and does not read. `SiblingFile` is one caption found next to a media file.
+
+```csharp
+public interface IAudioSource
+public interface ISiblingFiles
+public interface IAudioOffReport
+public interface IAudioFileIngest
+public sealed class DisabledAudioFileIngest
+public readonly record struct SiblingFile
+```
+
+No branch.
+
+## src/Recall.Core/Search/AudioQueryGate.cs
+
+`AudioQueryGate` reuses the picture download decision for the audio snapshot, so Home waits, fails, or searches with the same three outcomes.
+
+```csharp
+public static class AudioQueryGate
+```
+
+No branch.
+
+## src/Recall.Core/Search/AudioSearchService.cs
+
+`AudioSearchService` embeds one PCM clip and searches `items_audio` inside grants that have audio turned on. Windows of one file collapse to the earliest start. At most 20 files return.
+
+```csharp
+public sealed class AudioSearchService
+if (mono16k.IsEmpty || grants is null)
+if (grantedPaths.Count == 0)
+if (filter.Length == 0)
+if (ScopeGrantPolicy.IsInsideGrant(grantPath, path))
+```
+
+## src/Recall.Maui/Platform/Media/WindowsAudioSource.cs
+
+`WindowsAudioSource` reads the file bytes and transcodes a compressed container to WAV, then to PCM. A transcode that fails for a reason other than the shared decoder sentence is wrapped as `Audio decode failed.`
+
+```csharp
+public sealed class WindowsAudioSource
+catch (InvalidOperationException ex) when (ex.Message != AudioDecoders.FailureMessage)
+if (!WavPcm.IsWav(wav))
+catch (IOException)
+```
+
+## src/Recall.Maui/Platform/Media/AndroidAudioSource.cs
+
+`AndroidAudioSource` finds an audio track and decodes it with `MediaCodec` to 16 kHz mono PCM.
+
+```csharp
+public sealed class AndroidAudioSource
+catch (IOException)
+if (trackIndex < 0)
+if (candidateMime.StartsWith("audio/", StringComparison.Ordinal))
+if (!inputDone)
+if (inputIndex >= 0)
+if (size < 0)
+if (status < 0)
+if ((bufferInfo.Flags & MediaCodec.BufferFlagsEndOfStream) != 0)
+```
+
+## src/Recall.Maui/Platform/Media/AppleAudioSource.cs
+
+`AppleAudioSource` opens the file with `AVAudioFile` and converts it to 16 kHz mono PCM.
+
+```csharp
+public sealed class AppleAudioSource
+if (openError is not null)
+if (channels == 0 || channels > 2)
+if (rate <= 0)
+if (readError is not null)
+if (converter.ConvertToBuffer(input, output, out var convertError) == false
+if (convertError is not null)
+if (output.FrameLength > 0)
+if (wantsFlush)
+if (channel == IntPtr.Zero)
+catch (IOException)
+```
+
+## src/Recall.Maui/Platform/Media/MauiSiblingFiles.cs
+
+`MauiSiblingFiles` lists caption files in the same folder whose names match the media file, and reads them as UTF-8. A file that cannot be read is skipped.
+
+```csharp
+public sealed class MauiSiblingFiles
+if (string.IsNullOrWhiteSpace(mediaPath))
+if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
+if (string.Equals(candidateName, mediaName, StringComparison.OrdinalIgnoreCase) ||
+catch (IOException)
+catch (UnauthorizedAccessException)
+```

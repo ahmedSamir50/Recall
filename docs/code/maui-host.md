@@ -159,6 +159,8 @@ public sealed class MauiModelDownloadService : IModelDownloadService
     public Task DownloadTextModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
     public Task DownloadVisionModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
     public void CancelTextDownload()
+if (inFlight is not null)
+if (visionDownloadInFlight == downloadTask)
     public void ClearLocalDownloadState()
     public Task RetryTextDownloadAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
         if (Directory.Exists(modelDirectory))
@@ -388,7 +390,14 @@ namespace Recall.Maui.Platform;
 public sealed class WindowsVideoFrameSampler : IVideoFrameSamplerService
 ```
 
-No video sampling package exists for Windows. A null stream throws `ArgumentNullException`; any other call throws `NotSupportedException` with exactly `Windows video sampling has no package.` No branch.
+On Windows 11 (build 22000 or newer) this builds a `MediaComposition` and asks for a 640 by 360 thumbnail at each `FrameCadence` start. An older build throws `NotSupportedException` with `Windows frame thumbnails need Windows 11.` A zero duration returns no frames. A null thumbnail is skipped.
+
+```csharp
+if (Environment.OSVersion.Version.Build < FrameCadence.WindowsMinimumBuild)
+if (duration <= TimeSpan.Zero)
+if (snapshot is null)
+catch (IOException)
+```
 
 ## src/Recall.Maui/Platform/Media/AndroidVideoFrameSampler.cs
 

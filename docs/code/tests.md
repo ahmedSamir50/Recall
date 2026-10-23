@@ -337,6 +337,14 @@ public sealed class FakeLocalContentProbe : ILocalContentProbe
 public sealed class FakeTextSearchService : ITextSearchService
 public sealed class FakeVisionEmbeddingEncoder : IVisionEmbeddingEncoder
 public sealed class FakeMediaVectorIndex : IMediaVectorIndex
+if (string.IsNullOrWhiteSpace(query))
+if (decision == AudioDownloadJoin.WaitForCurrent)
+if (decision == AudioDownloadJoin.StartVision)
+public IReadOnlyList<MediaSearchHit> SearchWords(string collectionName, string query, string filter, int topK, CancellationToken cancellationToken = default)
+public TextModelDownloadSnapshot GetAudioDownloadSnapshot()
+public sealed class FakeAudioEmbeddingEncoder : IAudioEmbeddingEncoder
+public bool IsLoaded { get; private set; }
+public void CloseAudio()
 public sealed class FakePictureSearchService : IPictureSearchService
 if (VisionSnapshot.Phase == TextModelDownloadPhase.NotStarted)
 if (OnEmbed is not null)
@@ -441,7 +449,15 @@ if (string.Equals(row.Path, path, StringComparison.OrdinalIgnoreCase) && !row.Re
 
 ```csharp
 if (string.Equals(this.chunks[id].Path, path, StringComparison.OrdinalIgnoreCase))
-``` 
+if (OnReadCompressed is not null)
+if (OnFind is not null)
+public sealed class FakeAudioSource
+public sealed class FakeSiblingFiles
+public sealed class FakeAudioOffReport
+public sealed class FakeAudioFileIngest
+public sealed class FakeAudioSearchService
+```
+
 ## tests/Recall.UnitTests/Fakes/PreferenceFakes.cs
 
 ```csharp
@@ -859,4 +875,75 @@ public sealed class TextIndexOpenPolicyTests
 
 No branch.
 
+## tests/Recall.UnitTests/Phase5AudioTests.cs
 
+```csharp
+namespace Recall.UnitTests;
+public sealed class Phase5AudioTests
+public void AudioModelOptions_NamesMmprojAndHash()
+public void AudioDownload_ReadyFile_DoesNotStart()
+public void AudioDownload_InFlight_Waits()
+public void AudioDownload_Absent_StartsVision()
+public void FakeAudioDownload_Ready_DoesNotTouchVision()
+public void FakeAudioDownload_InFlight_CopiesVisionSnapshot()
+public void FakeAudioDownload_Absent_StartsVisionAndCopies()
+public void AudioWindow_SameBytes_MatchesRawSha()
+public void Create_Audio_Accepts768()
+public void Create_Width128_Throws()
+public void Create_TextName_Throws()
+public void SearchWords_EmptyQuery_DoesNotQuery()
+public void AudioNative_RefusesWhileVisionOpen()
+public void IsAudio_M4a_IsTrue()
+public void IsAudio_Mp4_IsFalse()
+public void IsAudio_Null_IsFalse()
+public void IsVideo_Mp4_IsTrue()
+public void IsImage_Jpg_IsTrue()
+public void MediaFileKinds_Blank_IsFalse()
+public void Hop_Native11200_Is5600()
+public void Hop_NativeOne_IsOne()
+public void Windows_HopIsHalfNative_SecondStartsAtHalf()
+public void Windows_ShortTail_ExtendsLastWindow()
+public void Windows_ZeroDuration_IsEmpty()
+public void Windows_ShorterThanNative_IsOneWindow()
+public void Windows_OneFile_KeepsMaxRrfScore()
+public void Seconds_5600_IsFivePointSix()
+public void Wav_HeaderShort_Throws()
+public void Wav_NotRiff_Throws()
+public void Wav_NotPcm_Throws()
+public void Wav_NoData_Throws()
+public void Wav_Mono16_IsUnitRange()
+public void Wav_ExtensiblePcm_IsAccepted()
+public void Wav_ExtensibleNonPcm_Throws()
+public void Wav_NotWav_IsWavFalse()
+public void Resample_SameRate_ReturnsSameReference()
+public void Resample_Null_Throws()
+public void Resample_ZeroRate_Throws()
+public void Resample_Empty_IsEmpty()
+public void Resample_Long44100_MappedSample_Is0625()
+public void Extract_Srt_DropsTimestamp()
+public void Extract_Vtt_DropsHeader()
+public void Extract_Sbv_DropsTimestamp()
+public void Extract_Ass_KeepsDialogueText()
+public void Extract_Ttml_UsesParagraph()
+public void Extract_Ttml_BadXml_IsEmpty()
+public void Extract_Null_Throws()
+public void Extract_UnknownExtension_Throws()
+public void Matches_LanguageTag_IsTrue()
+public void Matches_TwoExtraDots_IsFalse()
+public void Matches_Null_IsFalse()
+public void EmbeddedCaption_NotRead()
+public void Caption_EnumsSortByUtf8()
+public void Join_Empty_IsEmpty()
+public void AudioEmbed_OpensSessionOnce()
+public void AudioEmbed_Throw_LeavesSessionOpen()
+public void AudioEmbed_ClosesVisionFirst()
+public void AudioEmbed_NullDestination_Throws()
+public void AudioEmbed_Disposed_Throws()
+if (format == 0xFFFEu)
+if (includeData)
+if (includeData)
+if (start < 0)
+if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+```
+
+Phase 5 close locks for media kinds, audio windows, resampling, WAV reading, sibling transcripts, the mmproj download join policy, items_audio creation, the native audio session contract, and the AudioModelRuntime open/embed/close ownership.

@@ -1,5 +1,9 @@
 Status: in-code
 
+## In words
+
+Scope is the permission boundary. Recall reads a file only when it sits inside a folder the person granted and the file kind on that grant is on. Adding a folder that is already inside a grant fails. Adding a folder that contains smaller grants replaces those smaller grants. Skip lists, gitignore, secret names, and cloud-only files are applied before any bytes are embedded. Watching and the foreground rescan live next to this domain because they exist to notice changes inside a grant. They do not decide a new grant.
+
 ## Owns
 
 Scope owns which folders and file kinds Recall may read. Types: `ScopeGrantService`, `ScopeGrantPolicy`, `ScopeFolderGrant`, `GrantFileKinds`. The flags in code are `None` 0, `Text` 1, `Image` 2, `Video` 4, `Audio` 8, `Code` 16, and `All` includes Code.

@@ -1,5 +1,9 @@
 Status: in-code
 
+## In words
+
+A domain is one reason to change. Scope decides which folders may be read. Text turns a file into chunk ids. The vector index stores those ids. Search asks the index. Download fetches weights. The shell starts those jobs and does not invent their rules. The pages below say what each domain owns. The story of how they work together is [How Recall is put together](../architecture/design.md).
+
 ## Rule
 
 A domain owns one reason to change.

@@ -1,5 +1,7 @@
 ## Question to page
 
+The design in words is [docs/architecture/design.md](architecture/design.md). What each area of the tree is for is [docs/architecture/pieces.md](architecture/pieces.md).
+
 - Which routes exist, and when does the text model row start a download? [docs/features/screens.md](features/screens.md). Source: `src/Recall.UI/Components/Models/ModelRow.razor.cs`.
 - When does adding a folder save, and when does it refuse? [docs/features/folder-grants.md](features/folder-grants.md). Source: `src/Recall.Core/Scope/ScopeGrantService.cs`.
 - Which text weight files download, and how is a partial body placed? [docs/features/model-download.md](features/model-download.md). Source: `src/Recall.Maui/appsettings.json`.
