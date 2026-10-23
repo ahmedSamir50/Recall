@@ -59,3 +59,4 @@ Desktop.ini
 BenchmarkDotNet.Artifacts/**/*
 # src/Recall.Maui/Platform and src/Recall.Maui/Platforms are custom platform source. Do not ignore them.
 .codegraph/
+docs/**/*.bak*
