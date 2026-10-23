@@ -29,7 +29,7 @@ A code review compares the diff to that manifest. Fix a hunk that contradicts a 
 
 ## Docs end every plan
 
-A @recall: or @reacall: plan names every docs/ page the change creates or updates. Execution writes those pages in the same turn, before the work is called done. The user does not have to ask. A plan that changes product behavior and names no docs page is not executable, unless a sign-off says the change has no docs surface. Docs use the four status words in-code, decided-absent, open, and forbidden. They do not describe unbuilt behavior as if it runs.
+A @recall: or @reacall: plan names every docs/ page the change creates or updates. Execution writes those pages in the same turn, before the work is called done. A catalog quote is not that page. The user does not have to ask. A plan that changes product behavior and names no docs page is not executable, unless a sign-off says the change has no docs surface. Docs use the four status words in-code, decided-absent, open, and forbidden. They do not describe unbuilt behavior as if it runs.
 
 ## Closing a task, epic, or phase
 

@@ -38,7 +38,7 @@ The parent writes every block. Push back when the plan is inconsistent, incomple
 
 ## How detailed the plan must be
 
-The implementing agent is less capable than the planner. It invents every choice the plan leaves open, and the code review invents a second time. One gate implemented 47 files and the review rewrote more than 40. Another implemented 28 and the review rewrote more than 20. The Phase 1 and Phase 2 plan was a short task list, and its review changed more than 58 files the plan had not named. A short task list fails this chain.
+The implementing agent is less capable than the planner. The docs sentences are prose about the problem and the owning project, and they are not the branch text copied into docs/code. It invents every choice the plan leaves open, and the code review invents a second time. One gate implemented 47 files and the review rewrote more than 40. Another implemented 28 and the review rewrote more than 20. The Phase 1 and Phase 2 plan was a short task list, and its review changed more than 58 files the plan had not named. A short task list fails this chain.
 
 A plan is not executable until the synthesis contains an execution manifest whose four lists are filled with concrete lines. A heading with nothing under it does not count. `approve` without that manifest is a failed sign-off. `dotnet-architect` blocks it.
 

@@ -257,6 +257,34 @@ public sealed class DocsSiteTests
     }
 
     [Fact]
+    public void DocsContract_ExplanationIsSentences_NotABranchQuote()
+    {
+        // Arrange
+        var repo = FindRepoRoot();
+        var skill = File.ReadAllText(Path.Combine(repo, ".cursor", "skills", "docs-mkdocs", "SKILL.md"));
+        var rules = File.ReadAllText(Path.Combine(repo, ".cursor", "skills", "recall-expert-harness", "development-rules.md"));
+        var design = File.ReadAllText(Path.Combine(repo, "docs", "architecture", "design.md"));
+
+        // Act
+        var fences = design.Split('\n').Count(line => line.Trim() == "```mermaid");
+        var hasExecutable = design.Contains("Maui[Recall.Maui executable]", StringComparison.Ordinal);
+        var hasPerson = design.Contains("Person[Person picks a folder]", StringComparison.Ordinal);
+        var hasMauiRead = design.Contains("MauiRead[Recall.Maui reads the file]", StringComparison.Ordinal);
+        var hasHome = design.Contains("Home[Person types on Home]", StringComparison.Ordinal);
+        var hasNoRows = design.Contains("NoRows[Picture and video rows are not written]", StringComparison.Ordinal);
+
+        // Assert
+        skill.Should().Contain("A diagram of type names does not count.");
+        rules.Should().Contain("A new heading under docs/code that quotes the branch is not that page.");
+        fences.Should().Be(5);
+        hasExecutable.Should().BeTrue();
+        hasPerson.Should().BeTrue();
+        hasMauiRead.Should().BeTrue();
+        hasHome.Should().BeTrue();
+        hasNoRows.Should().BeTrue();
+    }
+
+    [Fact]
     public void Plan_Version15_FollowsTheV1Shape_AndStaysOutOfTheV1Total()
     {
         // Arrange

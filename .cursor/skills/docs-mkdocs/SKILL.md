@@ -43,6 +43,18 @@ Create an ADR when a canon unresolved item is closed or when an expert review ch
 
 On a doc pass, you run last. Check: every block from another expert is either applied or explicitly deferred; no page states both "80 MB" and "150 MB" as if both were the ship target; IdeaTank sibling products are not in the v1 nav; code samples match `net10.0` and do not show clipboard services.
 
+## What a page is for
+
+Quoting the branch does not update the explanation.
+
+A page names the problem, the project that owns the rule, the project that performs the step, and what the person gets when the step fails.
+
+docs/code may quote a branch so a review can find it.
+
+A plan that changes what the app does and only edits docs/code is not done.
+
+A journey that crosses more than one project includes a mermaid flowchart. The nodes are the projects or the person's steps. A diagram of type names does not count. The plan writes the fence. The implementing agent pastes that fence.
+
 ## Panel duty
 
 A `@recall:` or `@reacall:` plan is signed in the parent chat after one read of the shared harness files. Do not launch a subagent. Do not re-read development-rules, test-honesty, sign-off, canon, InitDocs, or the worktree. Apply this checklist to the plan already in context. Push back when the plan is wrong, inconsistent, or missing a risk. Agree only after a checked list. Return the sign-off. Do not rubber-stamp. A plan that changes behavior and lists no docs page is a push-back, unless the change has no docs surface and the sign-off says so. On a plan you also flag any sentence that cites a stale InitDocs passage as if it were current.
