@@ -176,9 +176,9 @@ Vision waits on tasks A.2.2, A.2.3, A.2.4, A.2.7, A.2.8, A.2.10, A.2.11, A.2.12,
 
 ---
 
-## Phase 6 — Age and pins — `partial`
+## Phase 6 — Age, pins, and OCR — `partial`
 
-Task 6.2.1 waits on A.2.11, A.2.14, and A.2.15. Task 6.1.2 does not.
+Task 6.2.1 waits on A.2.11, A.2.14, and A.2.15. Task 6.1.2 does not. Epic 6.3 waits on nothing in this phase.
 
 ### Epic 6.1 — Move old pictures, video, and audio — `partial`
 
@@ -190,6 +190,14 @@ Task 6.2.1 waits on A.2.11, A.2.14, and A.2.15. Task 6.1.2 does not.
 
 - **6.2.1** — `not-started` — This task waits on A.2.11, A.2.14, and A.2.15. Dense search stays per encoder. Inside one encoder, embed once and cut to the long width and the old width. A text vector is not a picture vector or an audio vector. A text query’s dense search stays in text. Its hit in a picture, video, or audio row is BM25 only. A picture or audio file with no matching words is absent from that text query. A picture query is task 4.1.3 and stays in picture and video. An audio query is task 5.1.4 and stays in audio. Those dense lists are not fused with the text dense list. OCR words, the sibling transcript, and keywords stay on that media row, in that order, joined by a newline. They are not copied into `items_text`. There is no per-source weight. Long and old lists use the same unweighted RRF. That equal weight is the age trade once the task 6.1.2 gate has passed. There is no weighted RRF in this plan. Search order is the task A.2.11 pipeline: filters inside the query, at most 64 on each raw list, one RRF at `k=60`, one hit per file, at most 20 files. A row whose encoder-file hash differs stays out until task A.2.4 has finished the repair. Done when both ages of one encoder return one list, a text query misses a wordless picture, and the words on a scanned page or on `talk.srt` open that media file. `TextQuery_WordlessPicture_IsAbsent` and `LongAndOld_SameRrfWeight` lock it.
 
+### Epic 6.3 — OCR runtime and ingest order — `not-started`
+
+This epic delivers tasks 4.3.2 through 4.3.5 with real sessions. The Epic 4.3 text is not changed. When 6.3.1 and 6.3.3 are `done`, tasks 4.3.2, 4.3.3, and 4.3.5 are set `done`. Task 4.3.4 is met because no Chinese, Korean, Japanese, or Indic reader is shipped. OCR scripts are Arabic, English, and European Latin only. Epic 6.3 does not wait on Epic 6.1 or Epic 6.2.
+
+- **6.3.1** — `not-started` — Real OCR. Add NuGet `Microsoft.ML.OnnxRuntime` 1.31.0. Replace the bool-only `OcrSessionSet` with three `InferenceSession`s: the pinned PP-OCRv6 small detector, the pinned PP-OCRv6 small reader for English and European Latin, and the pinned Arabic PP-OCRv5 mobile reader. All three load together at the start of one OCR pass and are disposed once in `finally` at its end. No reader is loaded or unloaded per page or per line. Inputs: pages in `ocr_page`, image-only PDF pages rendered at 300 DPI by the OS renderer (Windows.Data.Pdf, Android PdfRenderer, Apple PDFKit), and images in which the detector finds words. Routing: for each page, read the first 3 detected lines with both readers and keep the reader with the higher mean confidence as the page reader. Every other line goes to the page reader. A line below 0.6 confidence is also read by the other reader, and the higher confidence wins. Reading order: Arabic lines right to left, Latin lines left to right, and a mixed line by box x within the line direction. The OCR text goes through `DocumentPatchPlanner` like any text and is stored on that file's rows with page spans. If French, German, or Spanish accents fail task 6.3.3, the Latin reader is replaced by the pinned `latin_PP-OCRv5_mobile_rec` and this task stays open. Done when a real scanned Arabic page, a real scanned English page, and a mixed Arabic and English page are each found by their words. `OcrPass_LoadsOnce_ForManyPages`, `OcrRoute_ArabicPage_UsesArabicReader`, `OcrRoute_LowConfidenceLine_TriesOtherReader`, and `OcrOrder_MixedLine_ArabicRightToLeft` lock it.
+- **6.3.2** — `not-started` — Ingest by model. One ingest scheduler groups pending files by the model they need and runs passes in this order: text model (notes, code, text-layer PDFs), media context (pictures, video frames, audio windows), then OCR. Each model opens once per pass, drains its queue, and closes in `finally`. Watcher events go to the queue, not straight to a model. A pass opens when its queue reaches 20 files or 30 seconds after the last event. A model is never opened twice inside one pass. Done when a mixed grant of text, pictures, audio, and scanned pages opens each model once, and a burst of 50 watcher events opens one pass. `Scheduler_SwitchesModelOncePerPass` and `Scheduler_BurstOf50Events_OneOpen` lock it.
+- **6.3.3** — `not-started` — OCR quality gate on real pages. Golden set: 30 Arabic, 30 English, and 20 French, German, and Spanish pages, including phone photos and mixed Arabic and English pages, each with a ground-truth text file outside the indexed folders. Character error rate (CER) is at most 5% on clean scans and at most 10% on phone photos for each script, and Arabic word order is right on every mixed line. These limits are starting values and may be tuned once from the first run, with the change written here. Stores: the OCR golden report. Done when the report passes. `OcrGolden_OverLimit_Fails` locks the fail.
+
 ---
 
 ## Phase 7 — Proof and a local build — `partial`
@@ -198,7 +206,7 @@ Task 6.2.1 waits on A.2.11, A.2.14, and A.2.15. Task 6.1.2 does not.
 
 - **7.1.1** — `partial` — Unit-test every method and every branch that decides behavior for the ports and policies above, with fakes for the text embedder and ZVec. Done when deleting a branch makes a test go red. A coverage percent of 60% then 70% is a floor, not the exit. Unit tests cover the text prefix, chunk split, download resume rules, grant boundary, width 128, age cutoff, and device id. Phase 3 branches now have tests; later phases still do not.
 - **7.1.2** — `not-started` — Integration-test the llama.cpp text encoder plus real ZVec: crash restart from `checkpoints.db`, and zero non-local bytes after the model download has finished. The unit cursor locks stay task 3.3.1. This task is the kill-and-restart run, not a second copy of those locks. Stores: the local proxy log. Signature: `Task<bool> IEgressProbe.HasNonLocalByteAsync(CancellationToken cancellationToken)`. The probe watches for 60 minutes after the download has finished. A missing proxy fails the run. Done when crash restart resumes and the probe returns false. A text-search integration test is in the tree. Crash restart and the egress check are not. `CrashRestart_ResumesFromCheckpoint` and `Egress_AfterDownload_ZeroNonLocalBytes` lock them.
-- **7.1.3** — `not-started` — Golden retrieval in English, Arabic, Chinese, Hindi, and French. The spread is text queries against text. Recall@10 for the same query stays within 5 points across those five. A spread wider than 5 points fails the task. A Hindi or French miss inside those 5 points is a result of that run. This task does not add a stemmer for either language. BM25 uses the folding in task A.2.14. A Chinese OCR pack is not required. A wordless photo is not in this text gate. Text stays at 512 unless this run clears 256. Clearing 256 is not required for this task to pass. Stores: the golden report. Signature: the report’s Recall@10 for each of the five languages on the same query. A missing language fails the run. Done when the report shows the spread within 5 points. UI languages stay Arabic and English either way. `GoldenSpread_OverFivePoints_Fails` locks the fail.
+- **7.1.3** — `not-started` — Golden retrieval in English, Arabic, French, German, and Spanish. The spread is text queries against text. Recall@10 for the same query stays within 5 points across those five. A spread wider than 5 points fails the task. A French, German, or Spanish miss inside those 5 points is a result of that run. No Chinese, Korean, Japanese, or Indic language is in this gate. This task does not add a stemmer for any language. BM25 uses the folding in task A.2.14. The set also has one OCR'd Arabic page and one OCR'd English page, and each must be in the top 10 for a query of its words. A wordless photo is not in this text gate. Text stays at 512 unless this run clears 256. Clearing 256 is not required for this task to pass. Stores: the golden report. Signature: the report's Recall@10 for each of the five languages on the same query, plus the two OCR page ranks. A missing language fails the run. Done when the report shows the spread within 5 points and both OCR pages in the top 10. UI languages stay Arabic and English either way. `GoldenSpread_OverFivePoints_Fails` and `GoldenOcrPage_NotInTop10_Fails` lock the fail.
 
 ### Epic 7.2 — Local release — `partial`
 
@@ -233,6 +241,7 @@ Rules for every task:
 - **P.2.2** — `not-started` — Android artifact added to releases once 7.2.4 passes: `Recall-vX.Y.Z-android-arm64.apk`, width first-run download as 2.1.1. Done when the apk installs on a device from a release page and the notes row exists.
 - **P.2.3** — `not-started` — Mac artifact once 7.2.1 passes: an unsigned Mac Catalyst `.app` inside a `.zip`. An Apple-signed installer and any iOS distribution are separate decisions a later plan takes; they are not here. Done when the zip is attached to a release.
 - **P.2.4** — `not-started` — Package-manager upgrade path, after P.2.1: a manifest submitted once to the Windows community package repository for identity `Recall.read`, pointing at the published asset and its SHA-256, updated one manifest per release; and `.github/homebrew/recall.rb` written only when a Mac artifact exists. Upgrades are commands the person runs; nothing checks automatically. Done when `winget upgrade Recall.read` shows a published version, or, for Homebrew, `brew upgrade --cask recall` installs the published artifact.
+- **P.2.5** — `not-started` — Version 1.0.0 release gate. `v1.0.0` is not published until tasks 6.3.1, 6.3.2, and 6.3.3 are `done` and no production type in the tree is a fake or a bool-only stand-in. `v0.1.0` in task P.2.1 may ship without OCR when its notes say OCR is not in that build. Done when the `v1.0.0` notes link the OCR golden report.
 
 ### Epic P.3 — Reach — `partial`
 
@@ -248,7 +257,7 @@ Rules for every task:
 
 ## Progress
 
-Counted 21 Oct 2026. This is the only progress table.
+Counted 23 Oct 2026. This is the only progress table.
 
 | | Status | Progress |
 |---|---|---|
@@ -334,13 +343,17 @@ Counted 21 Oct 2026. This is the only progress table.
 | 5.2.4 | `not-started` | 0% |
 | **Epic 5.3 — PDF text layer** | `not-started` | 0% |
 | 5.3.1 | `not-started` | 0% |
-| **Phase 6 — Age and pins** | `partial` | 25% |
+| **Phase 6 — Age, pins, and OCR** | `partial` | 14% |
 | **Epic 6.1 — Move old pictures, video, and audio** | `partial` | 33% |
 | 6.1.1 | `done` | 100% |
 | 6.1.2 | `not-started` | 0% |
 | 6.1.3 | `not-started` | 0% |
 | **Epic 6.2 — Search across both ages** | `not-started` | 0% |
 | 6.2.1 | `not-started` | 0% |
+| **Epic 6.3 — OCR runtime and ingest order** | `not-started` | 0% |
+| 6.3.1 | `not-started` | 0% |
+| 6.3.2 | `not-started` | 0% |
+| 6.3.3 | `not-started` | 0% |
 | **Phase 7 — Proof and a local build** | `partial` | 21% |
 | **Epic 7.1 — Tests that can fail** | `partial` | 17% |
 | 7.1.1 | `partial` | 50% |
@@ -351,7 +364,7 @@ Counted 21 Oct 2026. This is the only progress table.
 | 7.2.2 | `not-started` | 0% |
 | 7.2.3 | `done` | 100% |
 | 7.2.4 | `not-started` | 0% |
-| **Launch Addendum — Public proof and growth** | `partial` | 41% |
+| **Launch Addendum — Public proof and growth** | `partial` | 38% |
 | **Epic P.1 — Story** | `partial` | 33% |
 | P.1.1 | `done` | 100% |
 | P.1.2 | `not-started` | 0% |
@@ -361,13 +374,14 @@ Counted 21 Oct 2026. This is the only progress table.
 | P.2.2 | `not-started` | 0% |
 | P.2.3 | `not-started` | 0% |
 | P.2.4 | `not-started` | 0% |
+| P.2.5 | `not-started` | 0% |
 | **Epic P.3 — Reach** | `partial` | 83% |
 | P.3.1 | `partial` | 50% |
 | P.3.2 | `done` | 100% |
 | P.3.3 | `done` | 100% |
 | **Epic P.4 — Trust** | `done` | 100% |
 | P.4.1 | `done` | 100% |
-| **All epics** | `partial` | 62% |
+| **All epics** | `partial` | 59% |
 
 ## Behavior matrix
 
