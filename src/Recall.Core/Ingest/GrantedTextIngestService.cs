@@ -131,12 +131,11 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
         var writes = result.Chunks
             .Select(c => new ChunkWrite(c.ContentId, c.Ordinal, c.PageStart, c.PageEnd, c.CharStart, c.CharEnd))
             .ToList();
-        foreach (var chunk in result.Chunks.Where(c => !c.Dense))
-        {
-            cursors.PutBm25Only(chunk.ContentId, document.Path, document.Text);
-        }
-
-        cursors.FinishPath(document.Path, result.ContentHash, grant.Path, encoderHash, writes);
+        var bm25Only = result.Chunks
+            .Where(c => !c.Dense)
+            .Select(c => new Bm25OnlyRow(c.ContentId, document.Path, c.Bm25Raw))
+            .ToList();
+        cursors.FinishPath(document.Path, result.ContentHash, grant.Path, encoderHash, writes, bm25Only);
         if (result.OcrPageNumbers.Count > 0)
         {
             OcrPageWaitlist.Apply(document.Path, result.OcrPageNumbers, cursors, scheduler);

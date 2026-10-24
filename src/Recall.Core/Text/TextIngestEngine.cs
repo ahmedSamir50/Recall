@@ -7,7 +7,7 @@ using Recall.Core.Vocabulary;
 
 namespace Recall.Core.Text;
 
-public sealed record TextIngestChunk(string ContentId, int Ordinal, bool Dense = true, int PageStart = 0, int PageEnd = 0, int CharStart = 0, int CharEnd = 0);
+public sealed record TextIngestChunk(string ContentId, int Ordinal, bool Dense = true, int PageStart = 0, int PageEnd = 0, int CharStart = 0, int CharEnd = 0, string Bm25Raw = "");
 
 public sealed record TextIngestResult(
     string ContentHash,
@@ -94,7 +94,8 @@ public sealed class TextIngestEngine
                     patch.PageStart,
                     patch.PageEnd,
                     patch.CharStart,
-                    patch.CharEnd));
+                    patch.CharEnd,
+                    patch.Raw));
                 continue;
             }
 

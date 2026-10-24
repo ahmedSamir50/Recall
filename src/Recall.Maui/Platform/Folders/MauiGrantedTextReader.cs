@@ -8,6 +8,9 @@ public sealed partial class MauiGrantedTextReader : IGrantedTextReader
 {
     private readonly DirectoryGrantedTextReader files;
     private readonly IGrantedFolderAccessService access;
+#if ANDROID
+    private readonly IRemoteFileSkipReport remoteSkip;
+#endif
     private int restored;
 
     public MauiGrantedTextReader(
@@ -18,6 +21,9 @@ public sealed partial class MauiGrantedTextReader : IGrantedTextReader
         IDatasetSkipReport datasetSkip)
     {
         this.access = access;
+#if ANDROID
+        this.remoteSkip = remoteSkip;
+#endif
         files = new DirectoryGrantedTextReader(skips, probe, remoteSkip, datasetSkip);
     }
 

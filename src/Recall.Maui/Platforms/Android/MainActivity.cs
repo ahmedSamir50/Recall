@@ -6,6 +6,7 @@ using AndroidX.Activity.Result;
 using AndroidX.Activity.Result.Contract;
 using AndroidX.Core.View;
 using Recall.Maui.Platform;
+using Recall.Maui.Platform.Bench;
 
 namespace Recall.Maui;
 
@@ -22,6 +23,8 @@ public partial class MainActivity : MauiAppCompatActivity
     {
         DropRestoredNavigationFragment(savedInstanceState);
         base.OnCreate(savedInstanceState);
+        var benchFiles = FilesDir?.AbsolutePath ?? string.Empty;
+        new Thread(() => AndroidTextBenchSession.RunIfReady(benchFiles)) { IsBackground = true }.Start();
         AndroidFolderPickerCoordinator.BindLauncher(
             RegisterForActivityResult(new ActivityResultContracts.OpenDocumentTree(), new TreeResultCallback()));
     }

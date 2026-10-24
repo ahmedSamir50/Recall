@@ -2,7 +2,7 @@ Status: in-code
 
 ## In words
 
-Scope is the permission boundary. Recall reads a file only when it sits inside a folder the person granted and the file kind on that grant is on. Adding a folder that is already inside a grant fails. Adding a folder that contains smaller grants replaces those smaller grants. Skip lists, gitignore, secret names, and cloud-only files are applied before any bytes are embedded. Watching and the foreground rescan live next to this domain because they exist to notice changes inside a grant. They do not decide a new grant.
+Scope is the permission boundary. Recall reads a file only when it sits inside a folder the person granted and the file kind on that grant is on. Adding a folder that is already inside a grant fails. Adding a folder that contains smaller grants replaces those smaller grants. Skip lists, gitignore, secret names, and cloud-only files are applied before any bytes are embedded. `ILocalContentProbe.Probe` reports whether the bytes are on this device. Windows uses cloud attributes. Apple reads ubiquitous-item status and does not start a download. Android skips `OpenInputStream` when `FromFlags` returns `Remote`. A SAF file without those flags is still read. Watching and the foreground rescan live next to this domain because they exist to notice changes inside a grant. They do not decide a new grant.
 
 ## Owns
 

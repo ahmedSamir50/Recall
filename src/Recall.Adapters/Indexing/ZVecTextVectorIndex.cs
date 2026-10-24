@@ -27,14 +27,9 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
     private readonly IZvecCollection collection;
     private readonly HashSet<string> knownIds = new(StringComparer.Ordinal);
 
-    public ZVecTextVectorIndex(string databaseRoot, IIndexPolicy? indexPolicy = null, IIngestCursorStore? cursors = null)
+    public static ZVecCollectionSchema CreateSchema()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(databaseRoot);
-        this.indexPolicy = indexPolicy ?? new RecallIndexPolicy();
-        rootPath = Path.Combine(databaseRoot, CollectionName);
-        factory = new ZVecFactory();
-        factory.Initialize();
-        var schema = new ZVecCollectionSchema
+        return new ZVecCollectionSchema
         {
             Name = CollectionName,
             Fields =
@@ -76,6 +71,16 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
                 },
             ],
         };
+    }
+
+    public ZVecTextVectorIndex(string databaseRoot, IIndexPolicy? indexPolicy = null, IIngestCursorStore? cursors = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(databaseRoot);
+        this.indexPolicy = indexPolicy ?? new RecallIndexPolicy();
+        rootPath = Path.Combine(databaseRoot, CollectionName);
+        factory = new ZVecFactory();
+        factory.Initialize();
+        var schema = CreateSchema();
 
         IZvecCollection opened;
         // A missing directory is Create before the flag is read. Passing true makes an existing directory Open so its schema can be checked.

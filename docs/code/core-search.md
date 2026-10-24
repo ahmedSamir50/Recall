@@ -99,6 +99,29 @@ public static class HybridFusion
 ```
 
 
+## src/Recall.Core/Search/Bm25OnlyRank.cs
+
+```csharp
+namespace Recall.Core.Search;
+public static class Bm25OnlyRank
+    public static int Count(string rawText, string query)
+    public static IReadOnlyList<TextSearchHit> Merge(
+        IReadOnlyList<TextSearchHit> ftsHits,
+        IReadOnlyList<Bm25OnlyRow> rows,
+        string query,
+        IReadOnlyList<ScopeFolderGrant> grants)
+        if (overlap == 0)
+        if (grantPath is null)
+        if (tokens.Count > 0)
+        if (Rune.IsWhiteSpace(rune))
+        if (builder.Length > 0)
+        if (used[i])
+        if (string.Equals(rawPieces[i], piece, StringComparison.Ordinal))
+        if (byScore != 0)
+        if (byId != 0)
+```
+
+
 ## src/Recall.Core/Search/LocalFileOpenPolicy.cs
 
 ```csharp

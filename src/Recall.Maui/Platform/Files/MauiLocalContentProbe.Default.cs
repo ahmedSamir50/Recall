@@ -1,4 +1,4 @@
-#if !WINDOWS
+#if !WINDOWS && !ANDROID && !IOS && !MACCATALYST
 using Recall.Core.Ports;
 
 namespace Recall.Maui.Platform.Files;

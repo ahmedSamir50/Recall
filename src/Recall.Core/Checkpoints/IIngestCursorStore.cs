@@ -64,7 +64,7 @@ public interface IIngestCursorStore
 
     CheckpointLease EnterWrite();
 
-    void FinishPath(string path, string contentHash, string grantPath, string encoderHash, IReadOnlyList<ChunkWrite> chunks);
+    void FinishPath(string path, string contentHash, string grantPath, string encoderHash, IReadOnlyList<ChunkWrite> chunks, IReadOnlyList<Bm25OnlyRow>? bm25Only = null);
 
     void ReplaceDocumentPatches(string path, IReadOnlyList<ChunkWrite> patches);
 

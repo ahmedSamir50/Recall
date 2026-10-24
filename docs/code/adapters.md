@@ -3,6 +3,7 @@
 ```csharp
 namespace Recall.Adapters.Indexing;
 public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
+    public static ZVecCollectionSchema CreateSchema()
     public ZVecTextVectorIndex(string databaseRoot, IIndexPolicy? indexPolicy = null, IIngestCursorStore? cursors = null)
     public bool TryInsert(TextIndexInsert insert)
     public IReadOnlyList<TextSearchHit> Search(TextSearchRequest request, CancellationToken cancellationToken = default)

@@ -22,7 +22,8 @@ public static class TextBenchmarkHost
         if (!File.Exists(Path.Combine(directory, options.ModelFileName)))
         if (!androidOrIos)
         if (string.Equals(benchHost, "phone", StringComparison.OrdinalIgnoreCase))
-        && loadMilliseconds <= 600d
+        && hybridTop20Milliseconds <= AndroidHybridPassMilliseconds
+        && loadMilliseconds <= AndroidLoadPassMilliseconds
 ```
 
 

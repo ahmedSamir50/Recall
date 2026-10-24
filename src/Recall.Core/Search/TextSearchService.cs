@@ -92,7 +92,7 @@ public sealed class TextSearchService : ITextSearchService
         var textHits = new List<TextSearchHit>();
         if (grantedPaths.Count > 0)
         {
-            textHits.AddRange(await FindTextAsync(query, grantedPaths, cancellationToken).ConfigureAwait(false));
+            textHits.AddRange(await FindTextAsync(query, grantedPaths, grants, cancellationToken).ConfigureAwait(false));
         }
 
         var tryMedia = mediaGrantPaths.Count > 0 && textHits.Count < RecallIndexCaps.FileCap;
@@ -117,6 +117,7 @@ public sealed class TextSearchService : ITextSearchService
     private async Task<IReadOnlyList<TextSearchHit>> FindTextAsync(
         string query,
         HashSet<string> grantedPaths,
+        IReadOnlyList<ScopeFolderGrant> grants,
         CancellationToken cancellationToken = default)
     {
         var hash = encoderHash.TextHash ?? string.Empty;
@@ -139,7 +140,7 @@ public sealed class TextSearchService : ITextSearchService
             var dense = index.Search(denseRequest, cancellationToken);
             var ftsRequest = denseRequest with { QueryVector512 = ReadOnlyMemory<float>.Empty };
             var bm25Hits = index.Search(ftsRequest, cancellationToken);
-            var mergedBm25 = MergeBm25Only(bm25Only, query, bm25Hits);
+            var mergedBm25 = Bm25OnlyRank.Merge(bm25Hits, bm25Only, query, grants);
             ranked = HybridFusion.Fuse(dense, mergedBm25);
         }
 
@@ -275,37 +276,4 @@ public sealed class TextSearchService : ITextSearchService
     private static string ResolveGrantPath(IReadOnlyList<ScopeFolderGrant> grants) =>
         grants.FirstOrDefault()?.Path ?? string.Empty;
 
-    private static IReadOnlyList<TextSearchHit> MergeBm25Only(
-        IReadOnlyList<Bm25OnlyRow> rows,
-        string query,
-        IReadOnlyList<TextSearchHit> ftsHits)
-    {
-        var foldedQuery = KeywordFold.Tokens(KeywordFold.Fold(query));
-        var querySet = new HashSet<string>(foldedQuery, StringComparer.Ordinal);
-        var fromTable = rows
-            .Select(row =>
-            {
-                var tokens = KeywordFold.Tokens(KeywordFold.Fold(row.RawText));
-                var overlap = tokens.Count(t => querySet.Contains(t));
-                return new TextSearchHit(
-                    row.ContentId,
-                    row.Path,
-                    Path.GetFileName(row.Path),
-                    DateTimeOffset.UnixEpoch,
-                    TextMatchReason.DenseAndFullText,
-                    overlap,
-                    RawNote: row.RawText,
-                    GrantPath: string.Empty);
-            })
-            .OrderByDescending(h => h.Score)
-            .Take(RecallIndexCaps.RawListCap)
-            .ToList();
-
-        var merged = new List<TextSearchHit>(ftsHits);
-        merged.AddRange(fromTable);
-        return merged
-            .OrderByDescending(h => h.Score)
-            .Take(RecallIndexCaps.RawListCap)
-            .ToList();
-    }
 }

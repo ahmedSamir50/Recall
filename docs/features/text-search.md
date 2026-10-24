@@ -8,7 +8,7 @@ When text hits do not fill the file cap, Find appends BM25 hits from `MediaColle
 
 ## Fusion
 
-`HybridFusion.RrfRankConstant` is 60. Dense and FTS use in-database RRF when there are no `bm25_only` rows; otherwise `HybridFusion.Fuse` merges dense and merged BM25 lists. `KeywordFold` drives FTS keys; the card shows the raw note. Picture and audio queries embed once, query long and `_old` collections with the matching cut width, and fuse with `AgeRrf.Fuse`.
+`HybridFusion.RrfRankConstant` is 60. Dense and FTS use in-database RRF when there are no `bm25_only` rows; otherwise `HybridFusion.Fuse` merges dense and merged BM25 lists. `Bm25OnlyRank.Merge` appends `bm25_only` hits after the ZVec BM25 ranks, highest `Bm25OnlyRank.Count` first, drops a count of 0, and caps that merged list at 64. Digit pieces are the whitespace fallback because `KeywordFold.Tokens` drops digits. `GrantPath` comes from `GrantMembership.GrantPathFor`. `KeywordFold` drives FTS keys; the card shows the raw note. Picture and audio queries embed once, query long and `_old` collections with the matching cut width, and fuse with `AgeRrf.Fuse`.
 
 ## Drop
 

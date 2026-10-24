@@ -1,6 +1,7 @@
 #if ANDROID
 using Android.Provider;
 using Recall.Core.Ingest;
+using Recall.Core.Ports;
 using Recall.Core.Preferences;
 using Recall.Core.Scope;
 using Recall.Core.Text;
@@ -24,7 +25,19 @@ public sealed partial class MauiGrantedTextReader
         return true;
     }
 
-    private static async IAsyncEnumerable<GrantedTextDocument> ReadContentTreeAsync(
+    private const int FlagPartialFile = 1 << 15;
+    private const int FlagVirtualDocument = 1 << 9;
+
+    private static LocalContentState FlagsState(int flags) =>
+        AndroidDocumentPresence.FromFlags(
+            (flags & FlagPartialFile) != 0,
+            (flags & FlagVirtualDocument) != 0,
+            OperatingSystem.IsAndroidVersionAtLeast(36),
+            availableLocally: null,
+            downloadProgress: false,
+            downloadError: false);
+
+    private async IAsyncEnumerable<GrantedTextDocument> ReadContentTreeAsync(
         ScopeFolderGrant grant,
         UserSkipAdditions user,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
@@ -43,7 +56,7 @@ public sealed partial class MauiGrantedTextReader
         }
 
         var shared = new List<GitIgnoreFile>();
-        await foreach (var document in WalkTreeAsync(resolver, tree, rootId, string.Empty, grant, user, shared, cancellationToken).ConfigureAwait(false))
+        await foreach (var document in WalkTreeAsync(resolver, tree, rootId, string.Empty, grant, user, shared, remoteSkip, cancellationToken).ConfigureAwait(false))
         {
             yield return document;
         }
@@ -57,6 +70,7 @@ public sealed partial class MauiGrantedTextReader
         ScopeFolderGrant grant,
         UserSkipAdditions user,
         List<GitIgnoreFile> shared,
+        IRemoteFileSkipReport remoteSkip,
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -73,6 +87,7 @@ public sealed partial class MauiGrantedTextReader
                 DocumentsContract.Document.ColumnDisplayName,
                 DocumentsContract.Document.ColumnMimeType,
                 DocumentsContract.Document.ColumnLastModified,
+                DocumentsContract.Document.ColumnFlags,
             ],
             null,
             null,
@@ -86,8 +101,10 @@ public sealed partial class MauiGrantedTextReader
         var nameColumn = cursor.GetColumnIndex(DocumentsContract.Document.ColumnDisplayName);
         var mimeColumn = cursor.GetColumnIndex(DocumentsContract.Document.ColumnMimeType);
         var modifiedColumn = cursor.GetColumnIndex(DocumentsContract.Document.ColumnLastModified);
-        var rows = new List<(string Id, string Name, string Mime, long ModifiedMs)>();
+        var flagsColumn = cursor.GetColumnIndex(DocumentsContract.Document.ColumnFlags);
+        var rows = new List<(string Id, string Name, string Mime, long ModifiedMs, int Flags)>();
         string? gitIgnoreId = null;
+        var gitIgnoreFlags = 0;
         string? gitDirId = null;
         while (cursor.MoveToNext())
         {
@@ -101,11 +118,13 @@ public sealed partial class MauiGrantedTextReader
                 modifiedMs = cursor.GetLong(modifiedColumn);
             }
 
+            var flags = flagsColumn >= 0 && !cursor.IsNull(flagsColumn) ? cursor.GetInt(flagsColumn) : 0;
             var isDir = string.Equals(mime, DocumentsContract.Document.MimeTypeDir, StringComparison.Ordinal);
             if (!isDir && string.Equals(name, ".gitignore", StringComparison.OrdinalIgnoreCase))
             {
                 gitIgnoreId = id;
-                rows.Add((id, name, mime, modifiedMs));
+                gitIgnoreFlags = flags;
+                rows.Add((id, name, mime, modifiedMs, flags));
                 continue;
             }
 
@@ -115,14 +134,14 @@ public sealed partial class MauiGrantedTextReader
                 continue;
             }
 
-            rows.Add((id, name, mime, modifiedMs));
+            rows.Add((id, name, mime, modifiedMs, flags));
         }
 
         var added = 0;
         if (!string.IsNullOrEmpty(gitIgnoreId))
         {
             var ignoreUri = DocumentsContract.BuildDocumentUriUsingTree(tree, gitIgnoreId);
-            if (ignoreUri is not null)
+            if (ignoreUri is not null && LocalContentPolicy.MayReadBytes(FlagsState(gitIgnoreFlags)))
             {
                 using var ignoreStream = resolver.OpenInputStream(ignoreUri);
                 if (ignoreStream is not null)
@@ -148,7 +167,7 @@ public sealed partial class MauiGrantedTextReader
 
         try
         {
-            foreach (var (id, name, mime, modifiedMs) in rows)
+            foreach (var (id, name, mime, modifiedMs, flags) in rows)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (string.Equals(name, ".gitignore", StringComparison.OrdinalIgnoreCase))
@@ -175,7 +194,7 @@ public sealed partial class MauiGrantedTextReader
                         continue;
                     }
 
-                    await foreach (var document in WalkTreeAsync(resolver, tree, id, childRelative, grant, user, shared, cancellationToken).ConfigureAwait(false))
+                    await foreach (var document in WalkTreeAsync(resolver, tree, id, childRelative, grant, user, shared, remoteSkip, cancellationToken).ConfigureAwait(false))
                     {
                         yield return document;
                     }
@@ -198,6 +217,12 @@ public sealed partial class MauiGrantedTextReader
                 var documentUri = DocumentsContract.BuildDocumentUriUsingTree(tree, id);
                 if (documentUri is null)
                 {
+                    continue;
+                }
+
+                if (!LocalContentPolicy.MayReadBytes(FlagsState(flags)))
+                {
+                    remoteSkip.Add(documentUri.ToString()!);
                     continue;
                 }
 
@@ -249,20 +274,25 @@ public sealed partial class MauiGrantedTextReader
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var infoId = FindChildId(resolver, tree, gitDirId, "info");
-        if (string.IsNullOrEmpty(infoId))
+        var info = FindChildId(resolver, tree, gitDirId, "info");
+        if (info.Id is null)
         {
             return null;
         }
 
-        var excludeId = FindChildId(resolver, tree, infoId, "exclude");
-        if (string.IsNullOrEmpty(excludeId))
+        var exclude = FindChildId(resolver, tree, info.Id, "exclude");
+        if (exclude.Id is null)
         {
             return null;
         }
 
-        var excludeUri = DocumentsContract.BuildDocumentUriUsingTree(tree, excludeId);
+        var excludeUri = DocumentsContract.BuildDocumentUriUsingTree(tree, exclude.Id);
         if (excludeUri is null)
+        {
+            return null;
+        }
+
+        if (!LocalContentPolicy.MayReadBytes(FlagsState(exclude.Flags)))
         {
             return null;
         }
@@ -278,7 +308,7 @@ public sealed partial class MauiGrantedTextReader
         return text.Split(["\r\n", "\n"], StringSplitOptions.None);
     }
 
-    private static string? FindChildId(
+    private static (string? Id, int Flags) FindChildId(
         Android.Content.ContentResolver resolver,
         Android.Net.Uri tree,
         string parentId,
@@ -287,7 +317,7 @@ public sealed partial class MauiGrantedTextReader
         var children = DocumentsContract.BuildChildDocumentsUriUsingTree(tree, parentId);
         if (children is null)
         {
-            return null;
+            return (null, 0);
         }
 
         using var cursor = resolver.Query(
@@ -295,28 +325,31 @@ public sealed partial class MauiGrantedTextReader
             [
                 DocumentsContract.Document.ColumnDocumentId,
                 DocumentsContract.Document.ColumnDisplayName,
+                DocumentsContract.Document.ColumnFlags,
             ],
             null,
             null,
             null);
         if (cursor is null)
         {
-            return null;
+            return (null, 0);
         }
 
         var idColumn = cursor.GetColumnIndex(DocumentsContract.Document.ColumnDocumentId);
         var nameColumn = cursor.GetColumnIndex(DocumentsContract.Document.ColumnDisplayName);
+        var flagsColumn = cursor.GetColumnIndex(DocumentsContract.Document.ColumnFlags);
         while (cursor.MoveToNext())
         {
             var id = idColumn >= 0 ? cursor.GetString(idColumn) ?? string.Empty : string.Empty;
             var name = nameColumn >= 0 ? cursor.GetString(nameColumn) ?? string.Empty : string.Empty;
+            var flags = flagsColumn >= 0 && !cursor.IsNull(flagsColumn) ? cursor.GetInt(flagsColumn) : 0;
             if (string.Equals(name, childName, StringComparison.OrdinalIgnoreCase))
             {
-                return id;
+                return (id, flags);
             }
         }
 
-        return null;
+        return (null, 0);
     }
 }
 #endif

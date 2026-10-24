@@ -612,6 +612,7 @@ public sealed class TextBenchmarkHostTests
     public void Label_AndroidPhoneHostMixedCase_IsPhone()
     public void DesktopIdenticalVectors_AreNotThePhoneGate()
     public void PhoneHybridAndLoad_MeetTheExit()
+    public void Mean_TenSamples_IsArithmeticMean()
     public void LabelThisProcess_MatchesOperatingSystem()
 ```
 
@@ -626,6 +627,24 @@ public sealed class CodeAndSkipTests
     if (Directory.Exists(root))
     catch (IOException)
     if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+```
+
+
+
+## tests/Recall.UnitTests/CloseAddendumGapsTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public type CloseAddendumGapsTests
+CloseAddendumGapsTests
+public void TextSchema_FtsKey_UsesFtsIndexParam()
+public void NumericSpan_DigitsOnly_Bm25Only()
+public void Merge_AppendsAfterFts_OrdersByOverlap()
+public void FromFlags_Partial_IsRemote()
+public void CloudFile_NotLocal_NotIndexed()
+public void CloudProbe_AndroidReader_ChecksFlagsBeforeOpen()
+    if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+    catch (IOException ex)
 ```
 
 

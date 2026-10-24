@@ -143,7 +143,7 @@ public sealed partial class MauiGrantedTextReader
             if (!isDir && string.Equals(name, ".gitignore", StringComparison.OrdinalIgnoreCase))
             if (isDir && string.Equals(name, ".git", StringComparison.OrdinalIgnoreCase))
             if (!string.IsNullOrEmpty(gitIgnoreId))
-            if (ignoreUri is not null)
+            if (ignoreUri is not null && LocalContentPolicy.MayReadBytes(FlagsState(gitIgnoreFlags)))
             if (ignoreStream is not null)
             if (!string.IsNullOrEmpty(gitDirId))
             if (excludeLines is not null)
@@ -155,13 +155,15 @@ public sealed partial class MauiGrantedTextReader
                 if (GitIgnoreMatcher.LastDecision(childRelative, true, shared) == GitIgnoreDecision.Ignore)
                 if (FileAdmission.Decide(name, grant.EnabledKinds, user, gitIgnored) != FileAdmissionResult.Read)
                 if (documentUri is null)
+                if (!LocalContentPolicy.MayReadBytes(FlagsState(flags)))
                 if (stream is null)
                 if (!safe)
                 if (modifiedMs > 0)
             if (added > 0)
-            if (string.IsNullOrEmpty(infoId))
-            if (string.IsNullOrEmpty(excludeId))
+            if (info.Id is null)
+            if (exclude.Id is null)
             if (excludeUri is null)
+            if (!LocalContentPolicy.MayReadBytes(FlagsState(exclude.Flags)))
             if (string.Equals(name, childName, StringComparison.OrdinalIgnoreCase))
 ```
 
@@ -204,6 +206,34 @@ public type MauiIdleDetector
 MauiIdleDetector
 public IdleSignal Current => ReadCurrent();
 No branch.
+``` 
+
+## src/Recall.Maui/Platform/Files/MauiLocalContentProbe.Android.cs
+
+```csharp
+namespace Recall.Maui.Platform.Files;
+public type MauiLocalContentProbe
+MauiLocalContentProbe
+if (string.IsNullOrWhiteSpace(path))
+if (path.StartsWith("content://", StringComparison.OrdinalIgnoreCase))
+``` 
+
+## src/Recall.Maui/Platform/Files/MauiLocalContentProbe.Apple.cs
+
+```csharp
+namespace Recall.Maui.Platform.Files;
+public type MauiLocalContentProbe
+MauiLocalContentProbe
+if (string.IsNullOrWhiteSpace(path))
+if (AppleICloudPresence.IsStubName(Path.GetFileName(path)))
+if (!File.Exists(path) && !Directory.Exists(path))
+if (url is null)
+if (!url.TryGetResource(NSUrl.IsUbiquitousItemKey, out ubiquitousObject, out ubiquitousError))
+if (isUbiquitous == true)
+if (!url.TryGetResource(NSUrl.UbiquitousItemDownloadingStatusKey, out statusObject, out statusError))
+if (string.Equals(status, NSUrl.UbiquitousItemDownloadingStatusDownloaded, StringComparison.Ordinal))
+else if (string.Equals(status, NSUrl.UbiquitousItemDownloadingStatusCurrent, StringComparison.Ordinal))
+else if (string.Equals(status, NSUrl.UbiquitousItemDownloadingStatusNotDownloaded, StringComparison.Ordinal))
 ``` 
 
 ## src/Recall.Maui/Platform/Files/MauiLocalContentProbe.Default.cs

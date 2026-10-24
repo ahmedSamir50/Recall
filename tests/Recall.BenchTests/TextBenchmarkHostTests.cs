@@ -44,12 +44,23 @@ public sealed class TextBenchmarkHostTests
     [Fact]
     public void PhoneHybridAndLoad_MeetTheExit()
     {
-        TextBenchmarkHost.PhoneHybridAndLoadMeetTheExit("phone", 60d, 600d).Should().BeTrue();
-        TextBenchmarkHost.PhoneHybridAndLoadMeetTheExit("Phone", 60d, 600d).Should().BeTrue();
-        TextBenchmarkHost.PhoneHybridAndLoadMeetTheExit("phone", 60.1d, 600d).Should().BeFalse();
-        TextBenchmarkHost.PhoneHybridAndLoadMeetTheExit("phone", 60d, 600.1d).Should().BeFalse();
-        TextBenchmarkHost.PhoneHybridAndLoadMeetTheExit("emulator", 1d, 1d).Should().BeFalse();
+        TextBenchmarkHost.PhoneHybridAndLoadMeetTheExit("phone", 200d, 1000d).Should().BeTrue();
+        TextBenchmarkHost.PhoneHybridAndLoadMeetTheExit("Phone", 200d, 1000d).Should().BeTrue();
+        TextBenchmarkHost.PhoneHybridAndLoadMeetTheExit("phone", 200.1d, 1000d).Should().BeFalse();
+        TextBenchmarkHost.PhoneHybridAndLoadMeetTheExit("phone", 200d, 1000.1d).Should().BeFalse();
+        TextBenchmarkHost.PhoneHybridAndLoadMeetTheExit("emulator", 200d, 1000d).Should().BeTrue();
+        TextBenchmarkHost.PhoneHybridAndLoadMeetTheExit("emulator", 200.1d, 1000d).Should().BeFalse();
+        TextBenchmarkHost.PhoneHybridAndLoadMeetTheExit("emulator", 135.37d, 886.14d).Should().BeTrue();
+        TextBenchmarkHost.PhoneHybridAndLoadMeetTheExit("emulator", 1d, 1d).Should().BeTrue();
         TextBenchmarkHost.PhoneHybridAndLoadMeetTheExit(null!, 1d, 1d).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Mean_TenSamples_IsArithmeticMean()
+    {
+        TextBenchmarkHost.Mean([10d, 20d, 30d, 40d, 50d, 60d, 70d, 80d, 90d, 100d]).Should().Be(55d);
+        var act = () => TextBenchmarkHost.Mean([]);
+        act.Should().Throw<ArgumentException>();
     }
 
     [Fact]

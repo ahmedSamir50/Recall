@@ -346,6 +346,7 @@ public IReadOnlyList<int> ListOcrPages(string path)
     if (string.IsNullOrWhiteSpace(patch.ContentId))
     if (!ChunkRowExists(connection, transaction, chunk.ContentId))
     if (string.IsNullOrWhiteSpace(contentId) || string.IsNullOrWhiteSpace(path))
+    if (string.IsNullOrWhiteSpace(row.ContentId) || string.IsNullOrWhiteSpace(row.Path))
     if (string.IsNullOrWhiteSpace(path))
     if (!writeLock.Wait(0))
     if (!reader.Read())
@@ -561,9 +562,8 @@ public type AndroidDocumentPresence
 AndroidDocumentPresence
 public static LocalContentState FromFlags(
 if (partial || virtualDocument)
-if (!api36)
 if (downloadProgress || downloadError)
-if (availableLocally == true)
+if (availableLocally == false)
 ``` 
 
 ## src/Recall.Core/Scope/AppleICloudPresence.cs

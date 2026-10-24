@@ -17,21 +17,17 @@ public static class AndroidDocumentPresence
             return LocalContentState.Remote;
         }
 
-        if (!api36)
-        {
-            return LocalContentState.Unknown;
-        }
-
         if (downloadProgress || downloadError)
         {
             return LocalContentState.Remote;
         }
 
-        if (availableLocally == true)
+        if (availableLocally == false)
         {
-            return LocalContentState.Local;
+            return LocalContentState.Remote;
         }
 
-        return LocalContentState.Remote;
+        GC.KeepAlive(api36);
+        return LocalContentState.Local;
     }
 }

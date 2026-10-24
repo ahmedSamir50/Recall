@@ -6,7 +6,7 @@ Windows, Linux in WSL or Docker, and Android on an emulator or a phone over adb 
 
 ## Measured
 
-Task 2.2.5 is done. The desktop line is recorded in `docs/plan.md`: `Host: desktop`, `InsertOne` mean 30.66 us, `HybridTop20` mean 2,202.43 us, `LoadTextEncoder` mean 727.3 ms. The desktop encoder line is 800 ms. The mobile 60 ms and 600 ms cells were never measurable in Phase 2 and stay on task A.2.9. A connected phone cannot run this benchmark project, and an emulator label is not a phone number. The benchmark still exits without a number when `RECALL_TEXT_MODEL_DIR` is unset.
+Task 2.2.5 is done on the desktop row in `docs/plan.md`: `Host: desktop`, `InsertOne` mean 30.66 us, `HybridTop20` mean 2,202.43 us, `LoadTextEncoder` mean 727.3 ms. The desktop encoder line is 800 ms. Task A.2.9 is done. The mobile lines are hybrid ≤200 ms and load ≤1000 ms. The Windows `Recall.Benchmarks` executable still exits without a number when `RECALL_TEXT_MODEL_DIR` is unset; that exit is not the Android measurement. The Android local device from `adb devices` runs `AndroidTextBenchSession` inside `com.recall.shell`. On adb serial `emulator-5554` (1 GB RAM) the report is `Host: emulator`, `HybridTop20 mean 135.37 ms`, `LoadTextEncoder mean 886.14 ms`. Those means are inside 200 ms and 1000 ms. The APK packages `libomp.so` with `librecall_embed.so`, and the shared library exports `recall_embed_open`.
 
 Task 7.2.1 is done on this machine: `WinX64Publish_ContainsNoWeight` and `AndroidApk_ContainsNoWeight` pass, `adb install -r` succeeded on a connected device, and `dotnet test tests/Recall.UnitTests/Recall.UnitTests.csproj -c Release` exited 0 in WSL. The publish trees contain no `.gguf` and no `.onnx`.
 

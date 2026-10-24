@@ -78,9 +78,25 @@
     <Content Include="Platforms\Windows\appicon.ico" Link="appicon.ico" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="@(RecallEmbedNativeDlls)" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)" />
   </ItemGroup>
+  <Target Name="StageAndroidOpenMp" BeforeTargets="Build" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <PropertyGroup>
+      <_NdkHome Condition="'$(ANDROID_NDK_HOME)' != ''">$(ANDROID_NDK_HOME)</_NdkHome>
+      <_NdkHome Condition="'$(_NdkHome)' == ''">$(AndroidNdkDirectory)</_NdkHome>
+    </PropertyGroup>
+    <ItemGroup>
+      <_OmpX64 Include="$(_NdkHome)\toolchains\llvm\prebuilt\windows-x86_64\lib\clang\*\lib\linux\x86_64\libomp.so" />
+      <_OmpArm Include="$(_NdkHome)\toolchains\llvm\prebuilt\windows-x86_64\lib\clang\*\lib\linux\aarch64\libomp.so" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_OmpX64)" DestinationFolder="..\..\native\out\android-x64" SkipUnchangedFiles="true" Condition="'@(_OmpX64)' != ''" />
+    <Copy SourceFiles="@(_OmpArm)" DestinationFolder="..\..\native\out\android-arm64" SkipUnchangedFiles="true" Condition="'@(_OmpArm)' != ''" />
+    <Error Condition="!Exists('..\..\native\out\android-x64\libomp.so') Or !Exists('..\..\native\out\android-arm64\libomp.so')" Text="libomp.so was not staged. librecall_embed.so needs the NDK OpenMP runtime." />
+  </Target>
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
     <AndroidNativeLibrary Include="..\..\native\out\android-arm64\librecall_embed.so" Abi="arm64-v8a" />
+    <AndroidNativeLibrary Include="..\..\native\out\android-arm64\libomp.so" Abi="arm64-v8a" />
     <AndroidNativeLibrary Include="..\..\native\out\android-x64\librecall_embed.so" Abi="x86_64" />
+    <AndroidNativeLibrary Include="..\..\native\out\android-x64\libomp.so" Abi="x86_64" />
+    <Compile Include="..\Recall.Benchmarks\TextBenchmarkHost.cs" Link="Platform\Bench\TextBenchmarkHost.cs" />
   </ItemGroup>
   <Target Name="RecallClearMismatchedRuntimeIdentifier" BeforeTargets="ProcessFrameworkReferences">
     <PropertyGroup>

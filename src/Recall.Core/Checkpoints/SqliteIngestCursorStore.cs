@@ -120,10 +120,10 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
 
     public void MarkFinished(string path, string contentHash, string grantPath, string encoderHash)
     {
-        FinishPath(path, contentHash, grantPath, encoderHash, []);
+        FinishPath(path, contentHash, grantPath, encoderHash, [], null);
     }
 
-    public void FinishPath(string path, string contentHash, string grantPath, string encoderHash, IReadOnlyList<ChunkWrite> chunks)
+    public void FinishPath(string path, string contentHash, string grantPath, string encoderHash, IReadOnlyList<ChunkWrite> chunks, IReadOnlyList<Bm25OnlyRow>? bm25Only = null)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -131,12 +131,29 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
         }
 
         ArgumentNullException.ThrowIfNull(chunks);
+        bm25Only ??= [];
         using var connection = Open();
         using var transaction = connection.BeginTransaction();
         try
         {
             EnsureSchema(connection, transaction);
             UpsertFinishedFile(connection, transaction, path, contentHash, grantPath, encoderHash);
+
+            foreach (var row in bm25Only)
+            {
+                if (string.IsNullOrWhiteSpace(row.ContentId) || string.IsNullOrWhiteSpace(row.Path))
+                {
+                    throw new ArgumentException("Content id and path must not be blank.");
+                }
+
+                using var bm25Command = connection.CreateCommand();
+                bm25Command.Transaction = transaction;
+                bm25Command.CommandText = "INSERT OR REPLACE INTO bm25_only(content_id, path, raw_text) VALUES(@id, @path, @raw)";
+                bm25Command.Parameters.AddWithValue("@id", row.ContentId);
+                bm25Command.Parameters.AddWithValue("@path", row.Path);
+                bm25Command.Parameters.AddWithValue("@raw", row.RawText);
+                bm25Command.ExecuteNonQuery();
+            }
 
             var newIds = new HashSet<string>(chunks.Select(c => c.ContentId), StringComparer.Ordinal);
             RetireAbsentAliases(connection, transaction, path, newIds);

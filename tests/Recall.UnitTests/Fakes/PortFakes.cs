@@ -305,7 +305,7 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
         return new CheckpointLease(static () => { }, static () => { });
     }
 
-    public void FinishPath(string path, string contentHash, string grantPath, string encoderHash, IReadOnlyList<ChunkWrite> chunks)
+    public void FinishPath(string path, string contentHash, string grantPath, string encoderHash, IReadOnlyList<ChunkWrite> chunks, IReadOnlyList<Bm25OnlyRow>? bm25Only = null)
     {
         files[path] = new IngestFileRow(path, contentHash, IngestCursorState.Finished, grantPath, encoderHash);
         var newIds = chunks.Select(c => c.ContentId).ToHashSet(StringComparer.Ordinal);
@@ -341,6 +341,12 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
             }
 
             AddAlias(chunk.ContentId, path);
+        }
+
+        bm25Only ??= [];
+        foreach (var row in bm25Only)
+        {
+            PutBm25Only(row.ContentId, row.Path, row.RawText);
         }
     }
 
