@@ -1,10 +1,10 @@
 #if IOS || MACCATALYST
+using AudioToolbox;
 using AVFoundation;
 using CoreMedia;
 using Foundation;
 using Recall.Core.Ingest;
 using Recall.Core.Ports;
-using System.Runtime.InteropServices;
 
 namespace Recall.Maui.Platform;
 
@@ -45,7 +45,7 @@ public sealed class AppleAudioSource : IAudioSource
         }
 
         using var track = audioTracks[0];
-        using var outputSettings = new AudioSettings
+        var outputSettings = new AudioSettings
         {
             Format = AudioFormatType.LinearPCM,
             SampleRate = 16000,
@@ -103,9 +103,8 @@ public sealed class AppleAudioSource : IAudioSource
             return;
         }
 
-        var bytes = new byte[length];
-        var copyError = blockBuffer.CopyDataBytes(0, length, ref bytes);
-        if (copyError != CMBlockBufferError.None)
+        var copyError = blockBuffer.CopyDataBytes(0, length, out var bytes);
+        if (copyError != CMBlockBufferError.None || bytes is null)
         {
             return;
         }

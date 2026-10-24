@@ -101,26 +101,8 @@ internal static class PdfTextOrder
         }
     }
 
-    private static bool LineHasPresentation(List<Letter> line)
-    {
-        foreach (var letter in line)
-        {
-            if (IsWhitespace(letter))
-            {
-                continue;
-            }
-
-            foreach (var rune in letter.Value.EnumerateRunes())
-            {
-                if (rune.Value is >= 0xFB50 and <= 0xFDFF or >= 0xFE70 and <= 0xFEFC)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
+    private static bool LineHasPresentation(List<Letter> line) =>
+        line.Any(static letter => !IsWhitespace(letter) && letter.Value.EnumerateRunes().Any(static rune => rune.Value is >= 0xFB50 and <= 0xFDFF or >= 0xFE70 and <= 0xFEFC));
 
     private static void OrderRuns(List<TextRun> runs, Page page, List<Letter> line)
     {
@@ -186,27 +168,11 @@ internal static class PdfTextOrder
         }
 
         height = Math.Max(height, 2);
-        foreach (var word in page.GetWords())
-        {
-            if (Math.Abs(word.BoundingBox.Bottom - lineBottom) <= height * 0.5)
-            {
-                yield return word;
-            }
-        }
+        return page.GetWords().Where(word => Math.Abs(word.BoundingBox.Bottom - lineBottom) <= height * 0.5);
     }
 
-    private static bool IsRtlWord(Word word)
-    {
-        foreach (var letter in word.Letters)
-        {
-            if (ContainsArabicCodePoint(letter.Value))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
+    private static bool IsRtlWord(Word word) =>
+        word.Letters.Any(static letter => ContainsArabicCodePoint(letter.Value));
 
     private static bool IsNewLine(Letter current, Letter next)
     {

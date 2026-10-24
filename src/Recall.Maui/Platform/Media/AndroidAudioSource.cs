@@ -141,7 +141,8 @@ public sealed class AndroidAudioSource : IAudioSource
             var output = codec.GetOutputBuffer(status)!;
             output.Position(bufferInfo.Offset);
             output.Limit(bufferInfo.Offset + bufferInfo.Size);
-            output.Order(ByteOrder.NativeOrder());
+            var order = ByteOrder.NativeOrder() ?? throw new InvalidOperationException(AudioDecoders.FailureMessage);
+            output.Order(order);
             var shorts = output.AsShortBuffer();
             var count = shorts.Remaining();
             var samples = new short[count];
