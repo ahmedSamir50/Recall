@@ -212,7 +212,7 @@ This epic delivers tasks 4.3.2 through 4.3.5 with real sessions. The Epic 4.3 te
 
 ### Epic 7.2 — Local release — `partial`
 
-- **7.2.1** — `not-started` — Produce the Windows shell on this machine and the Android shell on an emulator or the phone over adb. Either Android target passes. Linux proof is dotnet test of tests/Recall.UnitTests in WSL, or in the SDK container if WSL is absent. The Apple heads stay in the project. apple-compile.yml compiles them. A physical install is not required. linux-x64 has no shell. The package contains no .gguf and no .onnx. First-run download stays task 2.1.1. Done when the Windows publish folder and the apk have no weight file, adb install succeeds, and the Linux test command exits 0.
+- **7.2.1** — `done` — Produce the Windows shell on this machine and the Android shell on an emulator or the phone over adb. Either Android target passes. Linux proof is dotnet test of tests/Recall.UnitTests in WSL, or in the SDK container if WSL is absent. The Apple heads stay in the project. apple-compile.yml compiles them. A physical install is not required. linux-x64 has no shell. The package contains no .gguf and no .onnx. First-run download stays task 2.1.1. Done when the Windows publish folder and the apk have no weight file, adb install succeeds, and the Linux test command exits 0. `WinX64Publish_ContainsNoWeight`, `AndroidApk_ContainsNoWeight`, adb install, and the WSL unit-test command passed on 24 Oct 2026.
 - **7.2.2** — `done` — Leave crash reports on the device. Done when no crash package is referenced. `CrashPackage_IsNotReferenced` locks it.
 - **7.2.3** — `done` — Windows, Mac Catalyst, Android, and iOS tokenize and embed through recall_embed in-process. No Tokenizers.DotNet package and no GemmaTextTokenizer. `Embed_LocalGguf_Is768AndUnit` locks a 768-wide unit vector when the GGUF is present. Done when those four shells share that library.
 - **7.2.4** — `not-started` — A later `libzvec_c_api.so` may be rebuilt at 16 KB page alignment. ZVec.NET 1.0.0-beta.6 measures four load segments at 4096. Android reports that as warning XA0141. The warning does not block install or search. The same library runs in `ZVec.NET.Samples.Maui` and in `ZVec.Net-DemosAndPOCs`. `Libzvec_LoadAlign_Is4096` locks the current measurement. This task does not hold 7.2.1. Done when a later package measures at least 16384.
@@ -259,131 +259,131 @@ Rules for every task:
 
 ## Progress
 
-Counted 23 Oct 2026. This is the only progress table.
+Counted 24 Oct 2026. This is the only progress table.
 
-| | Status |
-|---|---|
-| **Phase 1 — Shell** | `done` |
-| **Epic 1.1 — Solution** | `done` |
-| 1.1.1 | `done` |
-| 1.1.2 | `done` |
-| 1.1.3 | `done` |
-| **Epic 1.2 — Screens that can ship** | `done` |
-| 1.2.1 | `done` |
-| 1.2.2 | `done` |
-| 1.2.3 | `done` |
-| **Epic 1.3 — This device** | `done` |
-| 1.3.1 | `done` |
-| 1.3.2 | `done` |
-| **Phase 2 — Text search** | `done` |
-| **Epic 2.1 — Model download** | `done` |
-| 2.1.1 | `done` |
-| 2.1.2 | `done` |
-| 2.1.3 | `done` |
-| **Epic 2.2 — Text embed and index** | `done` |
-| 2.2.1 | `done` |
-| 2.2.2 | `done` |
-| 2.2.3 | `done` |
-| 2.2.4 | `done` |
-| 2.2.5 | `done` |
-| 2.2.6 | `done` |
-| **Epic 2.3 — Query text** | `done` |
-| 2.3.1 | `done` |
-| 2.3.2 | `done` |
-| **Phase 3 — Folders that stay current** | `done` |
-| **Epic 3.1 — Grants** | `done` |
-| 3.1.1 | `done` |
-| 3.1.2 | `done` |
-| **Epic 3.2 — Watch and scan** | `done` |
-| 3.2.1 | `done` |
-| 3.2.2 | `done` |
-| 3.2.3 | `done` |
-| **Epic 3.3 — Crash cursor** | `done` |
-| 3.3.1 | `done` |
-| **Phase Three Addendum — Gaps left by Phases 1–3** | `partial` |
-| **Epic A.2 — Closures** | `partial` |
-| A.2.2 | `done` |
-| A.2.3 | `done` |
-| A.2.4 | `done` |
-| A.2.5 | `done` |
-| A.2.6 | `partial` |
-| A.2.7 | `done` |
-| A.2.8 | `done` |
-| A.2.9 | `not-started` |
-| A.2.10 | `done` |
-| A.2.11 | `done` |
-| A.2.12 | `done` |
-| A.2.13 | `done` |
-| A.2.14 | `done` |
-| A.2.15 | `done` |
-| A.2.16 | `not-started` |
-| A.2.17 | `done` |
-| A.2.18 | `not-started` |
-| **Phase 4 — Pictures, video, and words in documents** | `partial` |
-| **Epic 4.1 — Vision** | `done` |
-| 4.1.1 | `done` |
-| 4.1.2 | `done` |
-| 4.1.3 | `done` |
-| **Epic 4.2 — Video frames** | `partial` |
-| 4.2.1 | `partial` |
-| 4.2.2 | `done` |
-| **Epic 4.3 — OCR for English and Arabic** | `partial` |
-| 4.3.2 | `not-started` |
-| 4.3.3 | `partial` |
-| 4.3.4 | `not-started` |
-| 4.3.5 | `partial` |
-| **Phase 5 — Audio and transcripts that already exist** | `partial` |
-| **Epic 5.1 — Audio files** | `partial` |
-| 5.1.1 | `done` |
-| 5.1.2 | `done` |
-| 5.1.3 | `partial` |
-| 5.1.4 | `done` |
-| **Epic 5.2 — Sibling transcript files** | `partial` |
-| 5.2.1 | `done` |
-| 5.2.2 | `done` |
-| 5.2.3 | `done` |
-| 5.2.4 | `partial` |
-| **Epic 5.3 — PDF text layer** | `partial` |
-| 5.3.1 | `partial` |
-| **Phase 6 — Age, pins, and OCR** | `partial` |
-| **Epic 6.1 — Move old pictures, video, and audio** | `partial` |
-| 6.1.1 | `done` |
-| 6.1.2 | `partial` |
-| 6.1.3 | `partial` |
-| **Epic 6.2 — Search across both ages** | `done` |
-| 6.2.1 | `done` |
-| **Epic 6.3 — OCR runtime and ingest order** | `partial` |
-| 6.3.1 | `not-started` |
-| 6.3.2 | `done` |
-| 6.3.3 | `not-started` |
-| **Phase 7 — Proof and a local build** | `partial` |
-| **Epic 7.1 — Tests that can fail** | `partial` |
-| 7.1.1 | `partial` |
-| 7.1.2 | `partial` |
-| 7.1.3 | `not-started` |
-| **Epic 7.2 — Local release** | `partial` |
-| 7.2.1 | `not-started` |
-| 7.2.2 | `done` |
-| 7.2.3 | `done` |
-| 7.2.4 | `not-started` |
-| **Launch Addendum — Public proof and growth** | `partial` |
-| **Epic P.1 — Story** | `partial` |
-| P.1.1 | `done` |
-| P.1.2 | `not-started` |
-| P.1.3 | `not-started` |
-| **Epic P.2 — Installable proof** | `not-started` |
-| P.2.1 | `not-started` |
-| P.2.2 | `not-started` |
-| P.2.3 | `not-started` |
-| P.2.4 | `not-started` |
-| P.2.5 | `not-started` |
-| **Epic P.3 — Reach** | `partial` |
-| P.3.1 | `partial` |
-| P.3.2 | `done` |
-| P.3.3 | `done` |
-| **Epic P.4 — Trust** | `done` |
-| P.4.1 | `done` |
-| **All epics** | `partial` |
+| | Status | Percent |
+|---|---|---|
+| **Phase 1 — Shell** | `done` | 100 |
+| **Epic 1.1 — Solution** | `done` | 100 |
+| 1.1.1 | `done` | 100 |
+| 1.1.2 | `done` | 100 |
+| 1.1.3 | `done` | 100 |
+| **Epic 1.2 — Screens that can ship** | `done` | 100 |
+| 1.2.1 | `done` | 100 |
+| 1.2.2 | `done` | 100 |
+| 1.2.3 | `done` | 100 |
+| **Epic 1.3 — This device** | `done` | 100 |
+| 1.3.1 | `done` | 100 |
+| 1.3.2 | `done` | 100 |
+| **Phase 2 — Text search** | `done` | 100 |
+| **Epic 2.1 — Model download** | `done` | 100 |
+| 2.1.1 | `done` | 100 |
+| 2.1.2 | `done` | 100 |
+| 2.1.3 | `done` | 100 |
+| **Epic 2.2 — Text embed and index** | `done` | 100 |
+| 2.2.1 | `done` | 100 |
+| 2.2.2 | `done` | 100 |
+| 2.2.3 | `done` | 100 |
+| 2.2.4 | `done` | 100 |
+| 2.2.5 | `done` | 100 |
+| 2.2.6 | `done` | 100 |
+| **Epic 2.3 — Query text** | `done` | 100 |
+| 2.3.1 | `done` | 100 |
+| 2.3.2 | `done` | 100 |
+| **Phase 3 — Folders that stay current** | `done` | 100 |
+| **Epic 3.1 — Grants** | `done` | 100 |
+| 3.1.1 | `done` | 100 |
+| 3.1.2 | `done` | 100 |
+| **Epic 3.2 — Watch and scan** | `done` | 100 |
+| 3.2.1 | `done` | 100 |
+| 3.2.2 | `done` | 100 |
+| 3.2.3 | `done` | 100 |
+| **Epic 3.3 — Crash cursor** | `done` | 100 |
+| 3.3.1 | `done` | 100 |
+| **Phase Three Addendum — Gaps left by Phases 1–3** | `partial` | 79 |
+| **Epic A.2 — Closures** | `partial` | 79 |
+| A.2.2 | `done` | 100 |
+| A.2.3 | `done` | 100 |
+| A.2.4 | `done` | 100 |
+| A.2.5 | `done` | 100 |
+| A.2.6 | `partial` | 50 |
+| A.2.7 | `done` | 100 |
+| A.2.8 | `done` | 100 |
+| A.2.9 | `not-started` | 0 |
+| A.2.10 | `done` | 100 |
+| A.2.11 | `done` | 100 |
+| A.2.12 | `done` | 100 |
+| A.2.13 | `done` | 100 |
+| A.2.14 | `done` | 100 |
+| A.2.15 | `done` | 100 |
+| A.2.16 | `not-started` | 0 |
+| A.2.17 | `done` | 100 |
+| A.2.18 | `not-started` | 0 |
+| **Phase 4 — Pictures, video, and words in documents** | `partial` | 61 |
+| **Epic 4.1 — Vision** | `done` | 100 |
+| 4.1.1 | `done` | 100 |
+| 4.1.2 | `done` | 100 |
+| 4.1.3 | `done` | 100 |
+| **Epic 4.2 — Video frames** | `partial` | 75 |
+| 4.2.1 | `partial` | 50 |
+| 4.2.2 | `done` | 100 |
+| **Epic 4.3 — OCR for English and Arabic** | `partial` | 25 |
+| 4.3.2 | `not-started` | 0 |
+| 4.3.3 | `partial` | 50 |
+| 4.3.4 | `not-started` | 0 |
+| 4.3.5 | `partial` | 50 |
+| **Phase 5 — Audio and transcripts that already exist** | `partial` | 83 |
+| **Epic 5.1 — Audio files** | `partial` | 88 |
+| 5.1.1 | `done` | 100 |
+| 5.1.2 | `done` | 100 |
+| 5.1.3 | `partial` | 50 |
+| 5.1.4 | `done` | 100 |
+| **Epic 5.2 — Sibling transcript files** | `partial` | 88 |
+| 5.2.1 | `done` | 100 |
+| 5.2.2 | `done` | 100 |
+| 5.2.3 | `done` | 100 |
+| 5.2.4 | `partial` | 50 |
+| **Epic 5.3 — PDF text layer** | `partial` | 50 |
+| 5.3.1 | `partial` | 50 |
+| **Phase 6 — Age, pins, and OCR** | `partial` | 57 |
+| **Epic 6.1 — Move old pictures, video, and audio** | `partial` | 67 |
+| 6.1.1 | `done` | 100 |
+| 6.1.2 | `partial` | 50 |
+| 6.1.3 | `partial` | 50 |
+| **Epic 6.2 — Search across both ages** | `done` | 100 |
+| 6.2.1 | `done` | 100 |
+| **Epic 6.3 — OCR runtime and ingest order** | `partial` | 33 |
+| 6.3.1 | `not-started` | 0 |
+| 6.3.2 | `done` | 100 |
+| 6.3.3 | `not-started` | 0 |
+| **Phase 7 — Proof and a local build** | `partial` | 57 |
+| **Epic 7.1 — Tests that can fail** | `partial` | 33 |
+| 7.1.1 | `partial` | 50 |
+| 7.1.2 | `partial` | 50 |
+| 7.1.3 | `not-started` | 0 |
+| **Epic 7.2 — Local release** | `partial` | 75 |
+| 7.2.1 | `done` | 100 |
+| 7.2.2 | `done` | 100 |
+| 7.2.3 | `done` | 100 |
+| 7.2.4 | `not-started` | 0 |
+| **Launch Addendum — Public proof and growth** | `partial` | 38 |
+| **Epic P.1 — Story** | `partial` | 33 |
+| P.1.1 | `done` | 100 |
+| P.1.2 | `not-started` | 0 |
+| P.1.3 | `not-started` | 0 |
+| **Epic P.2 — Installable proof** | `not-started` | 0 |
+| P.2.1 | `not-started` | 0 |
+| P.2.2 | `not-started` | 0 |
+| P.2.3 | `not-started` | 0 |
+| P.2.4 | `not-started` | 0 |
+| P.2.5 | `not-started` | 0 |
+| **Epic P.3 — Reach** | `partial` | 83 |
+| P.3.1 | `partial` | 50 |
+| P.3.2 | `done` | 100 |
+| P.3.3 | `done` | 100 |
+| **Epic P.4 — Trust** | `done` | 100 |
+| P.4.1 | `done` | 100 |
+| **All epics** | `partial` | 74 |
 
 ## Behavior matrix
 

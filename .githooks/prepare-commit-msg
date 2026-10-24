@@ -1,0 +1,10 @@
+#!/bin/sh
+# Strip agent Co-authored-by trailers Cursor may inject. Recall keeps human authorship only.
+msg_file="$1"
+if [ ! -f "$msg_file" ]; then
+  exit 0
+fi
+tmp="${msg_file}.recall-strip"
+grep -v -E '^Co-authored-by: Cursor <cursoragent@cursor\.com>[[:space:]]*$' "$msg_file" > "$tmp" || true
+mv "$tmp" "$msg_file"
+exit 0

@@ -15,6 +15,7 @@ The task list is [docs/plan.md](docs/plan.md). It is the only progress table.
 - .NET 10 SDK plus the MAUI workloads. `global.json` pins the SDK.
 - ZVec.NET 1.0.0-beta.6 is not on nuget.org. Restore uses the local feed in your user NuGet config. This repository does not publish that package.
 - `dotnet build Recall.slnx` builds the solution. `dotnet test` runs the suites.
+- `git config core.hooksPath .githooks` once per clone strips accidental `Co-authored-by: Cursor` trailers from commit messages.
 - A banned-API analyzer rejects `HttpClient`, `Socket`, `TcpListener`, and `UdpClient` inside `Recall.Core`.
 
 ## Tests

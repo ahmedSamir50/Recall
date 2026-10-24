@@ -45,6 +45,10 @@ Check each row once. When that check finds a gap the loaded files can close, clo
 
 The user is the approval gate. A low score does not reject the plan and does not stop the turn. `mitigation` names the gap. `recommendation` names the action. The synthesis names an alternative. Hand the plan to the user with those three. A rejection keeps the honest scores. The next turn closes the named gaps and scores that check. Do not raise a score so the plan looks ready. Record a `push-back` or `block` once, direct or advisory.
 
+## Git commits
+
+Never add a `Co-authored-by` line to a commit message. That includes `Co-authored-by: Cursor <cursoragent@cursor.com>` and any other agent or tool trailer. Never use `git commit --trailer`. Use `git commit -m "summary"` only. Project hooks block injected trailer flags on `git commit`.
+
 ## Otherwise
 
 Read the matching skill before editing that area. Also read `development-rules.md` and `test-honesty.md` before product code.

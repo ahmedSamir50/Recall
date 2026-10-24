@@ -8,12 +8,13 @@ permissions:
   contents: read
 jobs:
   compile:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
+      - run: sudo xcode-select -s /Applications/Xcode_27.1.app
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - run: dotnet workload install maui-android maui-ios maui-maccatalyst
+      - run: dotnet workload install maui-android maui-ios maui-maccatalyst --version 10.0.402.1
       - run: dotnet build src/Recall.Maui/Recall.Maui.csproj -f net10.0-ios -r ios-arm64 -c Release -p:EnableWindowsTargeting=true
       - run: dotnet build src/Recall.Maui/Recall.Maui.csproj -f net10.0-maccatalyst -r maccatalyst-arm64 -c Release -p:EnableWindowsTargeting=true

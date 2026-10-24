@@ -16,4 +16,6 @@ Android, iOS, and Mac Catalyst emit one JPEG every two seconds with `FrameCadenc
 
 Status: decided-absent
 
+Task 6.3.1 names `WindowsPdfPageRenderer`, `AndroidPdfPageRenderer`, and `ApplePdfPageRenderer` for PDF page PNG at 300 dpi. A physical Apple run is not required for those renderers.
+
 OCR stays decided-absent: no ONNX reader is constructed and no scanned page is read. The three model files are pinned in `OcrModelFiles`: PP-OCRv6 small detector, PP-OCRv6 small English reader, and the Arabic PP-OCRv5 mobile reader. A missing hash does not load a reader. `OcrLineChoice` keeps the higher reader score and keeps English on a tie within `1e-6`. `OcrSessionSet` is three booleans for Epic 6.3. Pages `BrokenArabic.NeedsOcr` flags are stored in `ocr_page` and ingest pass 3 runs `OcrPassStub` once per pass; that queue does not block audio. Real OCR is Epic 6.3 task 6.3.1 (`Microsoft.ML.OnnxRuntime` 1.31.0 and three `InferenceSession`s). The audio catalog id `embeddinggemma-2-audio` uses the same mmproj file as vision. U5 stays closed.

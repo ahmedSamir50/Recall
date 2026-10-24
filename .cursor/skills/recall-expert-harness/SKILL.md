@@ -37,6 +37,7 @@ Each expert returns the block in [sign-off.md](sign-off.md). The parent writes t
 - An accepted plan is an execution manifest. The implementing agent and the code review do not invent files, signatures, branches, or sentences.
 - A request to close a task, epic, or phase finishes that parent in the same plan unless a sign-off names a blocker. Another plan for the same close is a failed execution.
 - Sign-off YAML is written once, in the plan. The first line is `Direct:` and the main experts. An id not on that line is advisory. Confidence is honest. Every expert does a best accountable effort. A gap names a mitigation, a recommendation, and an alternative. The user is the approval gate. Do not raise a score so the plan looks ready.
+- Never add `Co-authored-by` to a git commit, including `Co-authored-by: Cursor <cursoragent@cursor.com>`. See [development-rules.md](development-rules.md).
 - Do not close an unresolved canon row by picking a side.
 - Adding an expert means a skill, an agent file with the same id, a panel row, and a line in the planning chain. Then run `tools/expert-harness/Test-ExpertPanel.ps1`.
 
