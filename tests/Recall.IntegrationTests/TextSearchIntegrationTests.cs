@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Recall.Adapters.Indexing;
 using Recall.Core.Checkpoints;
 using Recall.Core.Indexing;
@@ -7,7 +8,6 @@ using Recall.Core.Scope;
 using Recall.Core.Search;
 using Recall.Core.Text;
 using Recall.IntegrationTests.Infrastructure;
-using Microsoft.Extensions.DependencyInjection;
 using ZVec.NET;
 
 namespace Recall.IntegrationTests;

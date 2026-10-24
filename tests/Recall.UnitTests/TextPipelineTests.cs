@@ -1,10 +1,10 @@
 using FluentAssertions;
-using Recall.Core.Faults;
 using Recall.Core.Download;
+using Recall.Core.Faults;
 using Recall.Core.Indexing;
 using Recall.Core.Text;
-using Recall.Core.Vocabulary;
 using Recall.Core.Vectors;
+using Recall.Core.Vocabulary;
 
 namespace Recall.UnitTests;
 

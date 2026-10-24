@@ -1,6 +1,6 @@
-using System.Globalization;
 using Recall.Core.Ports;
 using Recall.Core.Preferences;
+using System.Globalization;
 
 namespace Recall.Core.Locale;
 

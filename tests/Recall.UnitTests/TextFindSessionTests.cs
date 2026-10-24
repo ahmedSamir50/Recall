@@ -1,7 +1,7 @@
-using System.Text.RegularExpressions;
 using FluentAssertions;
 using Recall.Core.Search;
 using Recall.UI.Pages;
+using System.Text.RegularExpressions;
 
 namespace Recall.UnitTests;
 

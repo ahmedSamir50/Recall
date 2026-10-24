@@ -1,6 +1,6 @@
+using FluentAssertions;
 using System.Text;
 using System.Text.RegularExpressions;
-using FluentAssertions;
 
 namespace Recall.UnitTests;
 

@@ -1,10 +1,10 @@
 #if WINDOWS
-using System.Diagnostics.CodeAnalysis;
-using Windows.Media.Editing;
-using Windows.Media.Core;
-using Windows.Storage.Streams;
 using Recall.Core.Ingest;
 using Recall.Core.Ports;
+using System.Diagnostics.CodeAnalysis;
+using Windows.Media.Core;
+using Windows.Media.Editing;
+using Windows.Storage.Streams;
 
 namespace Recall.Maui.Platform;
 

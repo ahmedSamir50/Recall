@@ -1,6 +1,6 @@
-using System.Text;
 using Recall.Core.Ingest;
 using Recall.Core.Ports;
+using System.Text;
 
 namespace Recall.Maui.Platform;
 

@@ -1,6 +1,6 @@
-using System.Text.Json;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
+using System.Text.Json;
 
 namespace Recall.Maui.Platform;
 

@@ -1,6 +1,6 @@
-using System.Text;
 using FluentAssertions;
 using Recall.Core.Text;
+using System.Text;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 

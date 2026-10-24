@@ -1,10 +1,10 @@
-using System.Reflection;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Recall.Core.DependencyInjection;
 using Recall.Core.Ports;
 using Recall.Core.Sync;
 using Recall.Core.Vocabulary;
+using System.Reflection;
 
 namespace Recall.UnitTests;
 

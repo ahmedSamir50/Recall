@@ -1,5 +1,5 @@
-using System.Xml.Linq;
 using FluentAssertions;
+using System.Xml.Linq;
 
 namespace Recall.UnitTests;
 

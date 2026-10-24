@@ -1,8 +1,3 @@
-using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
-using System.Xml.Linq;
-using Recall.UI.Localization;
 using FluentAssertions;
 using Recall.Adapters.Indexing;
 using Recall.Core.Download;
@@ -14,7 +9,12 @@ using Recall.Core.Scope;
 using Recall.Core.Search;
 using Recall.Core.Text;
 using Recall.Core.Vocabulary;
+using Recall.UI.Localization;
 using Recall.UnitTests.Fakes;
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
+using System.Xml.Linq;
 using ZVec.NET;
 
 namespace Recall.UnitTests;

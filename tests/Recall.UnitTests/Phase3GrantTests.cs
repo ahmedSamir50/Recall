@@ -1,4 +1,3 @@
-using System.Xml.Linq;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Recall.Core.DependencyInjection;
@@ -6,6 +5,7 @@ using Recall.Core.Ingest;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
 using Recall.UnitTests.Fakes;
+using System.Xml.Linq;
 
 namespace Recall.UnitTests;
 

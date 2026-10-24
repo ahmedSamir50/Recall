@@ -1,11 +1,11 @@
-using System.Text;
-using System.Xml.Linq;
 using FluentAssertions;
 using Recall.Core.Ingest;
 using Recall.Core.Preferences;
 using Recall.Core.Scope;
 using Recall.Core.Text;
 using Recall.UnitTests.Fakes;
+using System.Text;
+using System.Xml.Linq;
 
 namespace Recall.UnitTests;
 

@@ -1,5 +1,5 @@
-using System.Text;
 using Recall.Core.Ports;
+using System.Text;
 
 namespace Recall.Adapters.Embedding.Llama;
 

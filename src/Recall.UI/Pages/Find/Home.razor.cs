@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
@@ -8,6 +6,8 @@ using Recall.Core.Ports;
 using Recall.Core.Scope;
 using Recall.Core.Search;
 using Recall.UI.Localization;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 
 namespace Recall.UI.Pages;
 

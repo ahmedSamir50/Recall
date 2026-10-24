@@ -1,10 +1,10 @@
 using FluentAssertions;
 using Recall.Core.Locale;
-using Recall.UnitTests.Fakes;
 using Recall.Core.Preferences;
 using Recall.Core.Scope;
 using Recall.Core.Theme;
 using Recall.UI.State;
+using Recall.UnitTests.Fakes;
 
 namespace Recall.UnitTests;
 

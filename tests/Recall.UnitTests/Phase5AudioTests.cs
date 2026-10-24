@@ -1,6 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
-using System.Xml.Linq;
 using FluentAssertions;
 using Recall.Adapters.Embedding;
 using Recall.Adapters.Indexing;
@@ -17,6 +14,9 @@ using Recall.Core.Text;
 using Recall.Core.Vocabulary;
 using Recall.UI.Pages;
 using Recall.UnitTests.Fakes;
+using System.Security.Cryptography;
+using System.Text;
+using System.Xml.Linq;
 using ZVec.NET;
 
 namespace Recall.UnitTests;

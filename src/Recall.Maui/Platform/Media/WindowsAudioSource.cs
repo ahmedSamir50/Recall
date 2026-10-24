@@ -1,9 +1,9 @@
 #if WINDOWS
+using Recall.Core.Ingest;
+using Recall.Core.Ports;
 using Windows.Media;
 using Windows.Media.MediaProperties;
 using Windows.Media.Transcoding;
-using Recall.Core.Ingest;
-using Recall.Core.Ports;
 
 namespace Recall.Maui.Platform;
 

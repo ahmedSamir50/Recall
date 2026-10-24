@@ -1,10 +1,10 @@
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using Recall.Core.Locale;
 using Recall.Core.Ports;
 using Recall.Core.Preferences;
 using Recall.Core.Scope;
 using Recall.Core.Theme;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 
 namespace Recall.UI.State;
 

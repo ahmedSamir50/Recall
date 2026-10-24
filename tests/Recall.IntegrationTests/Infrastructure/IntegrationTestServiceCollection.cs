@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
+using Recall.Adapters.DependencyInjection;
 using Recall.Core.Checkpoints;
 using Recall.Core.DependencyInjection;
-using Recall.Adapters.DependencyInjection;
 
 namespace Recall.IntegrationTests.Infrastructure;
 

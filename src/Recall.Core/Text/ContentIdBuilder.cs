@@ -1,6 +1,6 @@
+using Recall.Core.Vocabulary;
 using System.Security.Cryptography;
 using System.Text;
-using Recall.Core.Vocabulary;
 
 namespace Recall.Core.Text;
 

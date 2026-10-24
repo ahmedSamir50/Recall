@@ -1,10 +1,10 @@
 #if IOS || MACCATALYST
-using System.Runtime.InteropServices;
 using AVFoundation;
 using CoreMedia;
 using Foundation;
 using Recall.Core.Ingest;
 using Recall.Core.Ports;
+using System.Runtime.InteropServices;
 
 namespace Recall.Maui.Platform;
 
@@ -38,22 +38,22 @@ public sealed class AppleAudioSource : IAudioSource
     {
         using var url = NSUrl.FromFilename(path);
         using var asset = AVAsset.FromUrl(url);
-        using var audioTracks = asset.TracksWithMediaType(AVMediaTypes.Audio);
+        var audioTracks = asset.GetTracks(AVMediaTypes.Audio);
         if (audioTracks is null || audioTracks.Length == 0)
         {
             throw new InvalidOperationException(AudioDecoders.FailureMessage);
         }
 
         using var track = audioTracks[0];
-        var outputSettings = new AudioSettingsDictionary
+        using var outputSettings = new AudioSettings
         {
-            [AVAudioSettings.AVFormatIDKey] = NSNumber.FromInt32((int)AudioFormatType.LinearPCM),
-            [AVAudioSettings.AVSampleRateKey] = NSNumber.FromFloat(16000f),
-            [AVAudioSettings.AVNumberOfChannelsKey] = NSNumber.FromInt32(1),
-            [AVAudioSettings.AVLinearPCMBitDepthKey] = NSNumber.FromInt32(16),
-            [AVAudioSettings.AVLinearPCMIsFloatKey] = NSNumber.FromBoolean(false),
-            [AVAudioSettings.AVLinearPCMIsBigEndianKey] = NSNumber.FromBoolean(false),
-            [AVAudioSettings.AVLinearPCMIsNonInterleaved] = NSNumber.FromBoolean(false),
+            Format = AudioFormatType.LinearPCM,
+            SampleRate = 16000,
+            NumberChannels = 1,
+            LinearPcmBitDepth = 16,
+            LinearPcmFloat = false,
+            LinearPcmBigEndian = false,
+            LinearPcmNonInterleaved = false,
         };
 
         using var reader = new AVAssetReader(asset, out var readerError);
@@ -104,7 +104,11 @@ public sealed class AppleAudioSource : IAudioSource
         }
 
         var bytes = new byte[length];
-        blockBuffer.CopyDataBytes(0, (uint)length, bytes);
+        var copyError = blockBuffer.CopyDataBytes(0, length, ref bytes);
+        if (copyError != CMBlockBufferError.None)
+        {
+            return;
+        }
         for (var index = 0; index + 1 < bytes.Length; index += 2)
         {
             var sample = (short)(bytes[index] | (bytes[index + 1] << 8));

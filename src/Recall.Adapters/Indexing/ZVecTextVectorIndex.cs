@@ -1,8 +1,8 @@
-using System.Globalization;
 using Recall.Core.Checkpoints;
 using Recall.Core.Indexing;
 using Recall.Core.Ports;
 using Recall.Core.Search;
+using System.Globalization;
 using ZVec.NET;
 
 namespace Recall.Adapters.Indexing;

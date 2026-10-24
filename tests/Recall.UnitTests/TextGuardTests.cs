@@ -1,7 +1,7 @@
-using System.Text;
 using FluentAssertions;
 using Recall.Core.Sync;
 using Recall.Core.Text;
+using System.Text;
 
 namespace Recall.UnitTests;
 

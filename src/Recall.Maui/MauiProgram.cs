@@ -2,12 +2,12 @@ using CommunityToolkit.Maui;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.LifecycleEvents;
-using Recall.Core.DependencyInjection;
-using Recall.Maui.DependencyInjection;
 using Recall.Core.Catalog;
-using Recall.Core.Text;
-using Recall.Maui.Platform;
+using Recall.Core.DependencyInjection;
 using Recall.Core.Ports;
+using Recall.Core.Text;
+using Recall.Maui.DependencyInjection;
+using Recall.Maui.Platform;
 using Recall.Maui.Platform.Debug;
 using Recall.UI.DependencyInjection;
 

@@ -1,5 +1,5 @@
-using System.Globalization;
 using Recall.Core.Search;
+using System.Globalization;
 
 namespace Recall.UI.Pages;
 

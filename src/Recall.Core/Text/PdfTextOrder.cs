@@ -20,7 +20,7 @@ internal static class PdfTextOrder
         {
             if (line.Count > 0 && IsNewLine(line[0], letter))
             {
-                AppendLine(builder, line);
+                AppendLine(builder, line, page);
                 line.Clear();
             }
 
@@ -30,7 +30,7 @@ internal static class PdfTextOrder
             }
         }
 
-        AppendLine(builder, line);
+        AppendLine(builder, line, page);
         return NormalizeNewlines(builder.ToString());
     }
 
@@ -40,7 +40,7 @@ internal static class PdfTextOrder
         return text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
     }
 
-    private static void AppendLine(StringBuilder builder, List<Letter> line)
+    private static void AppendLine(StringBuilder builder, List<Letter> line, Page page)
     {
         if (line.Count == 0)
         {
@@ -52,141 +52,157 @@ internal static class PdfTextOrder
             builder.Append('\n');
         }
 
-        var gapThreshold = GapThreshold(line);
-        var runs = new List<TextRun>();
-        TextRun? current = null;
-        Letter? previousGlyph = null;
-        foreach (var letter in line)
+        if (!LineHasPresentation(line))
         {
-            if (IsWhitespace(letter))
+            foreach (var letter in line)
             {
-                Flush(runs, ref current);
-                runs.Add(TextRun.Space());
-                previousGlyph = null;
-                continue;
+                if (IsWhitespace(letter))
+                {
+                    builder.Append(' ');
+                }
+                else
+                {
+                    builder.Append(letter.Value);
+                }
             }
 
-            if (previousGlyph is not null
-                && IsRtl(previousGlyph.Value)
-                && IsRtl(letter.Value)
-                && NeedsGapSpace(previousGlyph, letter, gapThreshold))
-            {
-                Flush(runs, ref current);
-                runs.Add(TextRun.Space());
-            }
-
-            var kind = IsRtl(letter.Value) ? RunKind.Rtl : RunKind.Ltr;
-            if (current is null || current.Kind != kind)
-            {
-                Flush(runs, ref current);
-                current = new TextRun(kind);
-            }
-
-            current.Add(letter);
-            previousGlyph = letter;
-        }
-
-        Flush(runs, ref current);
-        if (ShouldReverseMixedRuns(runs))
-        {
-            runs.Reverse();
-        }
-
-        foreach (var run in runs)
-        {
-            builder.Append(run.Text);
-        }
-    }
-
-    private static double GapThreshold(List<Letter> line)
-    {
-        var totalWidth = 0d;
-        var count = 0;
-        foreach (var letter in line)
-        {
-            if (IsWhitespace(letter))
-            {
-                continue;
-            }
-
-            totalWidth += letter.GlyphRectangle.Width;
-            count++;
-        }
-
-        if (count == 0)
-        {
-            return 1d;
-        }
-
-        return Math.Max(totalWidth / count * 0.35, 1d);
-    }
-
-    private static bool NeedsGapSpace(Letter previous, Letter next, double gapThreshold)
-    {
-        var gap = next.GlyphRectangle.Left - previous.GlyphRectangle.Right;
-        return gap > gapThreshold;
-    }
-
-    private static void Flush(List<TextRun> runs, ref TextRun? current)
-    {
-        if (current is null)
-        {
             return;
         }
 
-        current.Finish();
-        runs.Add(current);
-        current = null;
+        var runs = new List<TextRun>();
+        foreach (var word in WordsOnLine(page, line))
+        {
+            if (string.IsNullOrEmpty(word.Text))
+            {
+                continue;
+            }
+
+            var kind = IsRtlWord(word) ? RunKind.Rtl : RunKind.Ltr;
+            var run = new TextRun(kind, word.BoundingBox.Left);
+            foreach (var letter in word.Letters)
+            {
+                run.Add(letter);
+            }
+
+            run.Finish();
+            runs.Add(run);
+        }
+
+        OrderRuns(runs, page, line);
+
+        for (var index = 0; index < runs.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(' ');
+            }
+
+            builder.Append(runs[index].Text);
+        }
     }
 
-    private static bool ShouldReverseMixedRuns(IReadOnlyList<TextRun> runs)
+    private static bool LineHasPresentation(List<Letter> line)
+    {
+        foreach (var letter in line)
+        {
+            if (IsWhitespace(letter))
+            {
+                continue;
+            }
+
+            foreach (var rune in letter.Value.EnumerateRunes())
+            {
+                if (rune.Value is >= 0xFB50 and <= 0xFDFF or >= 0xFE70 and <= 0xFEFC)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static void OrderRuns(List<TextRun> runs, Page page, List<Letter> line)
     {
         var hasLtr = false;
         var hasRtl = false;
         var visualRtl = false;
-        var ltrRight = double.MinValue;
-        var rtlLeft = double.MaxValue;
         foreach (var run in runs)
         {
-            if (run.Kind == RunKind.Space)
-            {
-                continue;
-            }
-
             if (run.Kind == RunKind.Ltr)
             {
                 hasLtr = true;
-                ltrRight = Math.Max(ltrRight, run.Right);
             }
             else
             {
                 hasRtl = true;
-                rtlLeft = Math.Min(rtlLeft, run.Left);
                 visualRtl |= run.Visual;
             }
         }
 
         if (hasLtr && hasRtl)
         {
-            if (rtlLeft > ltrRight + 0.5)
+            var ltrRight = double.MinValue;
+            var rtlLeft = double.MaxValue;
+            foreach (var run in runs)
+            {
+                if (run.Kind == RunKind.Ltr)
+                {
+                    ltrRight = Math.Max(ltrRight, run.Right);
+                }
+                else
+                {
+                    rtlLeft = Math.Min(rtlLeft, run.Left);
+                }
+            }
+
+            var rtlRightOfLtr = rtlLeft > ltrRight + 0.5;
+            var minX = double.MaxValue;
+            foreach (var letter in line)
+            {
+                minX = Math.Min(minX, letter.GlyphRectangle.Left);
+            }
+
+            var rightAlignedBlock = minX > page.Width / 2d;
+            runs.Sort(rtlRightOfLtr || rightAlignedBlock
+                ? static (left, right) => right.Left.CompareTo(left.Left)
+                : static (left, right) => left.Left.CompareTo(right.Left));
+            return;
+        }
+
+        if (visualRtl)
+        {
+            runs.Reverse();
+        }
+    }
+
+    private static IEnumerable<Word> WordsOnLine(Page page, List<Letter> line)
+    {
+        var lineBottom = line[0].GlyphRectangle.Bottom;
+        var height = 0d;
+        foreach (var letter in line)
+        {
+            height = Math.Max(height, letter.GlyphRectangle.Height);
+        }
+
+        height = Math.Max(height, 2);
+        foreach (var word in page.GetWords())
+        {
+            if (Math.Abs(word.BoundingBox.Bottom - lineBottom) <= height * 0.5)
+            {
+                yield return word;
+            }
+        }
+    }
+
+    private static bool IsRtlWord(Word word)
+    {
+        foreach (var letter in word.Letters)
+        {
+            if (ContainsArabicCodePoint(letter.Value))
             {
                 return true;
             }
-
-            TextRun? first = null;
-            TextRun? last = null;
-            foreach (var run in runs)
-            {
-                if (run.Kind == RunKind.Space)
-                {
-                    continue;
-                }
-
-                first ??= run;
-                last = run;
-            }
-
-            return first is not null && last is not null && first.Left > last.Left + 0.5;
         }
 
         return false;
@@ -211,8 +227,6 @@ internal static class PdfTextOrder
 
         return false;
     }
-
-    private static bool IsRtl(string value) => ContainsArabicCodePoint(value);
 
     private static bool ContainsArabicCodePoint(string value)
     {
@@ -242,14 +256,18 @@ internal static class PdfTextOrder
     {
         Ltr = 0,
         Rtl = 1,
-        Space = 2,
     }
 
     private sealed class TextRun
     {
         private readonly StringBuilder pieces = new();
 
-        public TextRun(RunKind kind) => Kind = kind;
+        public TextRun(RunKind kind, double sortLeft)
+        {
+            Kind = kind;
+            Left = sortLeft;
+            Right = sortLeft;
+        }
 
         public RunKind Kind { get; }
 
@@ -267,28 +285,17 @@ internal static class PdfTextOrder
 
         private bool hasX;
 
-        public static TextRun Space()
-        {
-            var run = new TextRun(RunKind.Space);
-            run.Text = " ";
-            return run;
-        }
-
         public void Add(Letter letter)
         {
             var box = letter.GlyphRectangle;
             if (!hasX)
             {
                 firstX = box.Left;
-                Left = box.Left;
-                Right = box.Right;
                 hasX = true;
             }
-            else
-            {
-                Left = Math.Min(Left, box.Left);
-                Right = Math.Max(Right, box.Right);
-            }
+
+            Left = Math.Min(Left, box.Left);
+            Right = Math.Max(Right, box.Right);
 
             lastX = box.Left;
             if (ContainsPresentation(letter.Value))
@@ -316,12 +323,6 @@ internal static class PdfTextOrder
 
         public void Finish()
         {
-            if (Kind == RunKind.Space)
-            {
-                Text = " ";
-                return;
-            }
-
             var text = pieces.ToString();
             if (Kind == RunKind.Rtl && Visual && hasX && lastX + 0.5 >= firstX)
             {

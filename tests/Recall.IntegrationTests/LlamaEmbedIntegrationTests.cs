@@ -1,8 +1,8 @@
-using System.Security.Cryptography;
 using FluentAssertions;
 using Recall.Adapters.Embedding;
 using Recall.Core.Download;
 using Recall.IntegrationTests.Infrastructure;
+using System.Security.Cryptography;
 
 [assembly: Xunit.v3.Parallelization(Mode = Xunit.Sdk.ParallelMode.None)]
 

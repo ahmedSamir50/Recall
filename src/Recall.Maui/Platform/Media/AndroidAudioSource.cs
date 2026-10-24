@@ -24,10 +24,6 @@ public sealed class AndroidAudioSource : IAudioSource
         {
             return Decode(path);
         }
-        catch (InvalidOperationException)
-        {
-            throw;
-        }
         catch (IOException)
         {
             throw new InvalidOperationException(AudioDecoders.FailureMessage);
@@ -145,7 +141,7 @@ public sealed class AndroidAudioSource : IAudioSource
             var output = codec.GetOutputBuffer(status)!;
             output.Position(bufferInfo.Offset);
             output.Limit(bufferInfo.Offset + bufferInfo.Size);
-            output.Order(ByteOrder.NativeOrder);
+            output.Order(ByteOrder.NativeOrder());
             var shorts = output.AsShortBuffer();
             var count = shorts.Remaining();
             var samples = new short[count];

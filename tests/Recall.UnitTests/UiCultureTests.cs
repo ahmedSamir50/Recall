@@ -1,6 +1,6 @@
-using System.Globalization;
 using FluentAssertions;
 using Recall.UI;
+using System.Globalization;
 
 namespace Recall.UnitTests;
 

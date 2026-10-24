@@ -2,15 +2,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Recall.Core.Checkpoints;
 using Recall.Core.Device;
 using Recall.Core.Download;
-using Recall.Core.Ingest;
-using Recall.Core.Text;
 using Recall.Core.Indexing;
+using Recall.Core.Ingest;
 using Recall.Core.Locale;
 using Recall.Core.Ports;
 using Recall.Core.Preferences;
 using Recall.Core.Scope;
 using Recall.Core.Search;
 using Recall.Core.Sync;
+using Recall.Core.Text;
 using Recall.Core.Theme;
 
 namespace Recall.Core.DependencyInjection;

@@ -1,9 +1,9 @@
-using System.Globalization;
 using Recall.Core.Checkpoints;
 using Recall.Core.Indexing;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
 using Recall.Core.Text;
+using System.Globalization;
 
 namespace Recall.Core.Ingest;
 

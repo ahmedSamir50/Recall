@@ -1,8 +1,8 @@
-using System.Globalization;
 using FluentAssertions;
 using Recall.Core.Locale;
 using Recall.Core.Preferences;
 using Recall.UnitTests.Fakes;
+using System.Globalization;
 
 namespace Recall.UnitTests;
 
