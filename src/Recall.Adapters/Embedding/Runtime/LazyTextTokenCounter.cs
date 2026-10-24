@@ -12,4 +12,6 @@ public sealed class LazyTextTokenCounter : ITextTokenCounter
     }
 
     public int CountTokens(string text) => runtime.GetCounter().CountTokens(text);
+
+    public IReadOnlyList<int> TokenEnds(string text) => runtime.GetCounter().TokenEnds(text);
 }

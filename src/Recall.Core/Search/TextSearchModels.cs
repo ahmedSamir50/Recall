@@ -32,6 +32,7 @@ public sealed record TextSearchHit(
     int Ordinal = 0,
     string RawNote = "",
     string GrantPath = "",
-    bool SourceMissing = false);
+    bool SourceMissing = false,
+    double StartSeconds = 0);
 
 public sealed record VectorLiveState(string ContentId, bool PathLive, string EncoderHash, string GrantPath);

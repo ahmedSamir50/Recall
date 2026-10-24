@@ -57,4 +57,10 @@ public interface IIngestCursorStore
     CheckpointLease EnterWrite();
 
     void FinishPath(string path, string contentHash, string grantPath, string encoderHash, IReadOnlyList<ChunkWrite> chunks);
+
+    void ReplaceDocumentPatches(string path, IReadOnlyList<ChunkWrite> patches);
+
+    void ReplaceOcrPages(string path, IReadOnlyList<int> pageNumbers);
+
+    IReadOnlyList<int> ListOcrPages(string path);
 }

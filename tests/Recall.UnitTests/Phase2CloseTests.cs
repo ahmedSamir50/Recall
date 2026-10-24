@@ -36,25 +36,25 @@ public sealed class Phase2CloseTests
     }
 
     [Fact]
-    public void PlanChunks_UnderBudget_StaysOnePiece()
+    public void Plan_UnderAim_IsOnePatch()
     {
-        var pieces = TextChunkPlanner.PlanChunks("Notes", "mars", _ => 3);
-        pieces.Should().HaveCount(1);
-        pieces[0].Ordinal.Should().Be(0);
-        pieces[0].RawText.Should().Be("mars");
+        var patches = DocumentPatchPlanner.Plan("Notes", "mars", null, 0, Enumerable.Range(1, 5).ToList());
+        patches.Should().HaveCount(1);
+        patches[0].Ordinal.Should().Be(0);
+        patches[0].Raw.Should().Be("mars");
     }
 
     [Fact]
-    public void PlanChunks_BlankContent_Throws()
+    public void Plan_BlankContent_Throws()
     {
-        var act = () => TextChunkPlanner.PlanChunks("Notes", " ", _ => 1);
+        var act = () => DocumentPatchPlanner.Plan("Notes", " ", null, 0, Enumerable.Range(1, 5).ToList());
         act.Should().Throw<ArgumentException>();
     }
 
     [Fact]
-    public void PlanChunks_NullCounter_Throws()
+    public void Plan_NullEnds_Throws()
     {
-        var act = () => TextChunkPlanner.PlanChunks("Notes", "mars", null!);
+        var act = () => DocumentPatchPlanner.Plan("Notes", "mars", null, 0, null!);
         act.Should().Throw<ArgumentNullException>();
     }
 

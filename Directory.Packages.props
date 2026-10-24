@@ -2,7 +2,10 @@
   <ItemGroup>
     <!-- ZVec.NET 1.0.0-beta.6 is the NuGet id. It is not on nuget.org. This machine restores it from the local feed in the user NuGet config. -->
     <PackageVersion Include="ZVec.NET" Version="1.0.0-beta.6" />
+    <PackageVersion Include="UglyToad.PdfPig" Version="1.7.0-custom-5" />
+    <PackageVersion Include="UglyToad.PdfPig.DocumentLayoutAnalysis" Version="1.7.0-custom-5" />
     <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.110" />
+    <PackageVersion Include="CommunityToolkit.Maui.MediaElement" Version="10.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.110" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.12" />

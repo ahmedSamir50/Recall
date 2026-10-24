@@ -270,6 +270,11 @@ public sealed class Phase3GrantTests
             await Task.CompletedTask;
             yield break;
         }
+
+        public async IAsyncEnumerable<string> ListAudioAndVideoAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            yield break;
+        }
     }
 
     private static Dictionary<string, string> ReadResx(string path)

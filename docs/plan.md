@@ -1,4 +1,4 @@
-Status: semi-final plan, 13 Oct 2026. InitDocs/ is history and is not this plan.
+﻿Status: semi-final plan, 13 Oct 2026. InitDocs/ is history and is not this plan.
 
 The code map is [index.md](index.md). This file remains the only progress table.
 
@@ -16,7 +16,7 @@ Build order is phases. Each phase is a set of epics. Each epic is a set of tasks
 
 A parent is `done` only when every child is `done`. A parent is `not-started` only when every child is `not-started`. Any mix is `partial`.
 
-**Progress percentage.** A task is 100 when `done`, 50 when `partial`, and 0 when `not-started`. An epic's percentage is the mean of its tasks, rounded to the nearest whole number. A phase's percentage is the mean of its tasks, the same way. The only place those figures are written is the one table at the end of this plan. Do not invent a finer score.
+**Progress table.** The table at the end of this plan lists status only. Recompute the all-epics row from the task rows that are `done`, `partial`, or `not-started`. Do not write a single headline percent for the whole project.
 
 Phase Three Addendum sits between Phase 3 and Phase 4. Its tasks are in that same table. The Launch Addendum sits after Phase 7. Its tasks are in that same table. The all-epics row is the mean of every task in Phases 1–7 and both addenda.
 
@@ -132,7 +132,7 @@ This phase is new. It does not rewrite Phases 1, 2, or 3. Task 2.2.5 is done on 
 
 ## Phase 4 — Pictures, video, and words in documents — `partial`
 
-Vision waits on tasks A.2.2, A.2.3, A.2.4, A.2.7, A.2.8, A.2.10, A.2.11, A.2.12, A.2.13, A.2.14, and A.2.17. It does not wait on A.2.6, A.2.9, A.2.15, or A.2.16. A.2.15 gates task 6.2.1. A.2.11 and A.2.14 gate these tasks and task 6.2.1. Phase 4 is partial: the vision download and runtime, the media collections, picture search, frame cadence, frame collapse, and the OCR file pins are in code. The OCR readers and the OCR job are not.
+Vision waits on tasks A.2.2, A.2.3, A.2.4, A.2.7, A.2.8, A.2.10, A.2.11, A.2.12, A.2.13, A.2.14, and A.2.17. It does not wait on A.2.6, A.2.9, A.2.15, or A.2.16. A.2.15 gates task 6.2.1. A.2.11 and A.2.14 gate these tasks and task 6.2.1. Phase 4 is partial: the vision download and runtime, the media collections, picture search, frame cadence, frame collapse, and the OCR file pins are in code. `NeedsOcr` pages are stored in `ocr_page` and queued for pass 3; that queue runs `OcrPassStub` only and does not block audio. Real ONNX OCR for tasks 4.3.2 through 4.3.5 stays Epic 6.3.
 
 ### Epic 4.1 — Vision — `done`
 
@@ -142,15 +142,17 @@ Vision waits on tasks A.2.2, A.2.3, A.2.4, A.2.7, A.2.8, A.2.10, A.2.11, A.2.12,
 
 ### Epic 4.2 — Video frames — `partial`
 
-- **4.2.1** — `partial` — This task waits on A.2.2, A.2.3, A.2.4, A.2.7, A.2.8, A.2.10, A.2.11, A.2.12, A.2.13, A.2.14, and A.2.17. Sample one JPEG frame every two seconds with the platform sampler. Embed those frames with the vision encoder into the video collection at 768. The soundtrack is task 5.1.3. Android, iOS, and Mac Catalyst emit the two-second frames. Windows SampleEveryTwoSeconds throws NotSupportedException with message Windows video sampling has no package. Done when a two-second cadence is what the sampler emits. `FrameCadence_FiveSeconds_StartsAtZeroTwoFour` and `FrameCadence_ZeroDuration_IsEmpty` lock the cadence. No Android or Apple device run is in this tree.
+- **4.2.1** — `partial` — This task waits on A.2.2, A.2.3, A.2.4, A.2.7, A.2.8, A.2.10, A.2.11, A.2.12, A.2.13, A.2.14, and A.2.17. Sample one JPEG frame every two seconds with the platform sampler. Embed those frames with the vision encoder into the video collection at 768. The soundtrack is task 5.1.3. Android, iOS, and Mac Catalyst emit the two-second frames. On Windows build 22000 or newer, `MediaComposition.GetThumbnailsAsync` samples every two seconds. On an older build the sampler throws `NotSupportedException` with message `Windows frame thumbnails need Windows 11.` and does not call `GetThumbnailsAsync`. Done when a real Windows clip returns JPEG thumbnails at 0, 2, and 4 seconds and the cadence tests stay green. `FrameCadence_FiveSeconds_StartsAtZeroTwoFour` and `FrameCadence_ZeroDuration_IsEmpty` lock the cadence. No Android or Apple device run is in this tree.
 - **4.2.2** — `done` — This task waits on A.2.2, A.2.3, A.2.4, A.2.7, A.2.8, A.2.10, A.2.11, A.2.12, A.2.13, A.2.14, and A.2.17. Frames of one video compete as one file. The card is the frame `Collapse.EarliestStart` keeps, the highest RRF score, and a tie keeps the earlier start. Top 20 counts files. Stores: `items_video`. Signature: `MediaSearchHit Collapse.EarliestStart(IReadOnlyList<MediaSearchHit> hits)`. A kill does not write in this task. Done when one video does not fill the 20 slots. `Frames_OneVideo_OneFileInTop20` and `Frames_OneVideo_KeepsMaxRrfScore` lock it.
 
 ### Epic 4.3 — OCR for English and Arabic — `partial`
 
+Epic 6.3 delivers real ONNX sessions for these rows. The audio close only queues `ocr_page`, enqueues pass 3, and runs `OcrPassStub`; it does not mark 4.3.2 through 4.3.5 `done`.
+
 - **4.3.2** — `not-started` — This task waits on A.2.2, A.2.3, A.2.4, A.2.7, A.2.8, A.2.10, A.2.11, A.2.12, A.2.13, A.2.14, and A.2.17. OCR a scanned page. OCR an image only for words printed in it. The vision vector is still stored. A photo with no words is found by the picture query in task 4.1.3. A text query does not return it. A scanned page is found by its words. Done when both of those are true.
 - **4.3.3** — `partial` — This task waits on A.2.2, A.2.3, A.2.4, A.2.7, A.2.8, A.2.10, A.2.11, A.2.12, A.2.13, A.2.14, and A.2.17. Ship one shared text finder, the PP-OCRv6 small English ONNX reader, and the separate Arabic ONNX reader of about 8 MB. Both readers are on for v1. The three files, their Hugging Face bases, and their SHA-256 values are pinned in `OcrModelFiles`. No ONNX session is constructed. Done when an English page and an Arabic page each return their words.
 - **4.3.4** — `not-started` — This task waits on A.2.2, A.2.3, A.2.4, A.2.7, A.2.8, A.2.10, A.2.11, A.2.12, A.2.13, A.2.14, and A.2.17. Any other language is off until the person turns it on, and that turn-on downloads only that reader. Done when Chinese weights are absent until Chinese is selected.
-- **4.3.5** — `partial` — This task waits on A.2.2, A.2.3, A.2.4, A.2.7, A.2.8, A.2.10, A.2.11, A.2.12, A.2.13, A.2.14, and A.2.17. The shared finder and the English and Arabic readers unload when the OCR job ends. They are not kept resident with the audio encoder. A text-layer page does not load them. Done when the readers are unloaded after the job and are not loaded during an audio embed. `Ocr_UnloadedAfterJob` locks it.
+- **4.3.5** — `partial` — This task waits on A.2.2, A.2.3, A.2.4, A.2.7, A.2.8, A.2.10, A.2.11, A.2.12, A.2.13, A.2.14, and A.2.17. The shared finder and the English and Arabic readers unload when the OCR job ends. They are not kept resident with the audio encoder. A text-layer page does not load them. Done when the readers are unloaded after the job and are not loaded during an audio embed. `Scheduler_SwitchesModelOncePerPass` locks one `OcrPassStub` open per pass. There is no `Ocr_UnloadedAfterJob` test until Epic 6.3.
 
 ---
 
@@ -158,21 +160,21 @@ Vision waits on tasks A.2.2, A.2.3, A.2.4, A.2.7, A.2.8, A.2.10, A.2.11, A.2.12,
 
 ### Epic 5.1 — Audio files — `partial`
 
-- **5.1.1** — `not-started` — If the audio file type is off, show one line and do not embed. If it is on, download the separate audio encoder file through in-process llama.cpp, embed, store in `items_audio` at 768, then unload. The row uses the same fields as task 4.1.2: `embedding`, `words`, `path_live`, `encoder_hash`, `grant_path`, `start_seconds`, and `end_seconds`. The catalog id is `embeddinggemma-2-audio`. The task is not done until `appsettings.json` names that file and its SHA-256, and the output width is 768. Stores: that ZVec collection. Signature: `void ZVecMediaVectorIndex.Create(string collectionName, int width)`. A kill before unload disposes the session in `finally`. Done when the encoder is not still loaded after the job, and there is no microphone control.
+- **5.1.1** — `done` — If the audio file type is off, show one line and do not embed. If it is on, download the shared mmproj file `mmproj-embeddinggemma-2-Q8_0.gguf` through in-process llama.cpp, embed, store in `items_audio` at 768, then unload when the ingest pass ends. A lone `IndexAsync` call still closes audio after that file when it opened the session. The row uses the same fields as task 4.1.2: `embedding`, `words`, `path_live`, `encoder_hash`, `grant_path`, `start_seconds`, and `end_seconds`. The catalog id is `embeddinggemma-2-audio`. `appsettings.json` names that file and its SHA-256 `c4a8a52691ecef40618438928bdf9e68379b854e24166f292592353db0aab64f`, and the output width is 768. Stores: that ZVec collection. Signature: `void ZVecMediaVectorIndex.Create(string collectionName, int width)`. A kill before unload disposes the session in `finally`. Done when the encoder is not still loaded after the job, and there is no microphone control. `AudioOn_Wav_InsertsWindowsAndUnloads` and `AudioModelOptions_NamesMmprojAndHash` lock it.
 - **5.1.2** — `done` — Do not add a speech-to-text model. Done when the solution contains no ASR package. The solution has no speech-to-text package.
-- **5.1.3** — `not-started` — When the audio file type is on, a video soundtrack and an audio file are overlapping windows of the audio encoder’s native length. The hop is half that length, integer division, and at least 1. The second window starts at that hop. Each window stores a start and an end. A tail shorter than the native length extends the last window’s end to the file end and is not its own vector. Windows of one file compete as one card. The card is the window `Collapse.EarliestStart` keeps, the highest RRF score, and a tie keeps the earlier start. Unload the vision session before the audio session loads. Frames stay the one JPEG every two seconds from task 4.2.1. Stores: `items_audio` and `items_video`. Signature: `MediaSearchHit Collapse.EarliestStart(IReadOnlyList<MediaSearchHit> hits)`. A kill before unload disposes the session in `finally`. Done when a video with audio on produces those windows, a short tail adds no window, one file does not fill the 20 slots, and the vision session is not loaded during the windows. `Windows_HopIsHalfNative_SecondStartsAtHalf`, `Windows_ShortTail_ExtendsLastWindow`, and `Windows_OneFile_KeepsMaxRrfScore` lock it.
-- **5.1.4** — `not-started` — Find can take an audio file that sits inside a grant. The audio encoder embeds that file. Dense search stays in the audio collection. There is no microphone control. English `Search with an audio file`. Arabic `ابحث بملف صوتي`. Done when that control searches audio only. `AudioQuery_StaysInAudio` locks it.
+- **5.1.3** — `partial` — When the audio file type is on, a video soundtrack and an audio file are overlapping windows of 11200 milliseconds. The hop is 5600 milliseconds, integer half of the native length. The second window starts at that hop. Each window stores a start and an end. A tail shorter than the native length extends the last window’s end to the file end and is not its own vector. Windows of one file compete as one card. The card is the window `Collapse.EarliestStart` keeps, the highest RRF score, and a tie keeps the earlier start. Unload the vision session before the audio session loads when `MediaContextPolicy.OneContext` is false. Frames stay the one JPEG every two seconds from task 4.2.1. A 16-bit PCM WAV is read by `WavPcm`. Compressed audio and a video soundtrack are decoded by `MediaExtractor` and `MediaCodec`, `AVAssetReader`, or `MediaTranscoder`, then resampled to 16 kHz mono PCM. Stores: `items_audio` and `items_video`. Signature: `MediaSearchHit Collapse.EarliestStart(IReadOnlyList<MediaSearchHit> hits)`. A kill before unload disposes the session in `finally`. Done when a real compressed file and a real video soundtrack on Android, Apple, and Windows each produce 16 kHz windows. `Windows_HopIsHalfNative_SecondStartsAtHalf`, `Windows_ShortTail_ExtendsLastWindow`, `Windows_OneFile_KeepsMaxRrfScore`, and `PlatformAudio_DecodersAreSourceLocked` lock the plan. `CompressedAudio_NotDecoded_DoesNotEmbed` locks the failure branch only.
+- **5.1.4** — `done` — Find can take an audio file that sits inside a grant. The audio encoder embeds that file. Dense search stays in the audio collection. There is no microphone control. English `Search with an audio file`. Arabic `ابحث بملف صوتي`. Done when that control searches audio only. `AudioQuery_StaysInsideGrant`, `AudioQuery_NoAudioGrant_ReturnsEmpty`, and `HomeRazor_HasAudioControlWithoutMicrophone` lock it.
 
-### Epic 5.2 — Sibling transcript files — `not-started`
+### Epic 5.2 — Sibling transcript files — `partial`
 
-- **5.2.1** — `not-started` — If `talk.mp4` or `talk.m4a` has `talk.srt`, `talk.vtt`, `talk.sbv`, `talk.ass`, `talk.ssa`, `talk.ttml`, or a language tag such as `talk.en.vtt`, attach that text to the media item. Done when a search for those words opens the media file.
-- **5.2.2** — `not-started` — Do not also index that sibling as its own unlinked document. Do not read a caption track hidden inside the media file. Done when both of those stays are tested.
-- **5.2.3** — `not-started` — When `talk.en.vtt` and `talk.ar.vtt` both exist, both texts are kept. Order is the UTF-8 byte order of the file name. Neither file is dropped. Neither file is its own document. Done when a search for a word that is only in `talk.ar.vtt` opens `talk.mp4`, and the same for `talk.en.vtt`. `BothLanguageTags_AppendInNameOrder` locks it.
-- **5.2.4** — `not-started` — Opening an audio or video card seeks to the start stored on the winning row, in seconds. A frame row uses the frame time. An audio-window row uses the window start. The two are not averaged. File collapse keeps that one row’s start. A text card opens the file. A PDF card is task 5.3.1. Stores: `start_seconds` on the media row. Signature: `double MediaHitStart.Seconds(TextSearchHit hit)`. A kill does not write. Done when a window that starts at 4 seconds opens at 4 seconds, and a hit that also has a frame at 2 seconds seeks to the winning row. `OpenHit_SeeksToWindowStart` and `OpenHit_UsesWinningRowStart` lock it.
+- **5.2.1** — `done` — If `talk.mp4` or `talk.m4a` has `talk.srt`, `talk.vtt`, `talk.sbv`, `talk.ass`, `talk.ssa`, `talk.ttml`, or a language tag such as `talk.en.vtt`, attach that text to the media item. Done when a search for those words opens the media file. `TranscriptWords_OpenMediaFile` locks it.
+- **5.2.2** — `done` — Do not also index that sibling as its own unlinked document. Do not read a caption track hidden inside the media file. Done when both of those stays are tested. `Caption_Srt_IsSkippedBeforeDecoding`, `EmbeddedCaption_NotRead`, and `TranscriptWords_OpenMediaFile` lock it.
+- **5.2.3** — `done` — When `talk.en.vtt` and `talk.ar.vtt` both exist, both texts are kept. Order is the UTF-8 byte order of the file name. Neither file is dropped. Neither file is its own document. Done when joined sibling text keeps both languages in that order on the media row. `TranscriptWords_MultipleLanguages_AppendInNameOrder` locks it.
+- **5.2.4** — `partial` — Opening an audio or video card seeks to the start stored on the winning row, in seconds. A frame row uses the frame time. An audio-window row uses the window start. The two are not averaged. File collapse keeps that one row’s start. A text card opens the file. A PDF card is task 5.3.1. Stores: `start_seconds` on the media row. Signature: `double MediaHitStart.Seconds(TextSearchHit hit)`. A kill does not write. Done when `CommunityToolkit.Maui.MediaElement` on a real file seeks to the stored start. `OpenHit_SeeksToWindowStart`, `OpenHit_UsesWinningRowStart`, and `OpenHit_StartFour_PlaysAtFour` lock the numbers. A launcher path still ignores the start.
 
-### Epic 5.3 — PDF text layer — `not-started`
+### Epic 5.3 — PDF text layer — `partial`
 
-- **5.3.1** — `not-started` — A text-layer PDF indexes the first slice and leaves the rest unread. `PdfSlicePolicy.TokenCap` is 8192. `PdfSlicePolicy.PageCap` is 10. The slice ends when the token count reaches 8192 or the page count reaches 10, whichever comes first. The caps are provisional. A text-layer page is not OCR'd unless `BrokenArabic.NeedsOcr` is true. `NeedsOcr` is true when the word contains at least one letter of Unicode script Arabic and a run of 3 or more U+FFFD. A missing page opens at page 1. This execution does not index that PDF. `EndsSlice_At8192Tokens_IsTrue`, `EndsSlice_At10Pages_IsTrue`, `EndsSlice_NinePagesAnd8191Tokens_IsFalse`, `NeedsOcr_ThreeReplacementChars_IsTrue`, `NeedsOcr_TwoReplacementChars_IsFalse`, and `NeedsOcr_NoArabicLetter_IsFalse` lock it.
+- **5.3.1** — `partial` — A text-layer PDF is read with PdfPig 0.1.16 through `ContentOrderTextExtractor.GetText`, then `PdfTextOrder` restores Arabic presentation forms stored left to right into logical base letters, patched by `DocumentPatchPlanner` at target 2048 tokens, lookback 512, overlap 256 to 384 starting at a sentence, cut snapped to a paragraph then a sentence then whitespace, hard cap 7680, and stored on `ingest_chunk` with `page_start`, `page_end`, `char_start`, and `char_end`. The stored text encoder hash is the file SHA-256 plus `:patch-v3`. There is no 10-page stop and no `document_patch` table. A `NeedsOcr` page is queued in `ocr_page` and is not embedded. `NeedsOcr` is true when the word contains at least one letter of Unicode script Arabic and a run of 3 or more U+FFFD. A missing page opens at page 1 through `DocumentPatchPlanner.OpenPage`. Done when a real PDF produces patches on `ingest_chunk` with a boundary cut near 2048 tokens and sentence-start overlap. `EndsPatch_At7680_IsTrue`, `Patch_Targets2048`, `SplitPdfPages_NeedsOcr_OmitsPageFromJoin`, and the other `Phase5PdfTests` locks stay green without a real file.
 
 ---
 
@@ -190,12 +192,12 @@ Task 6.2.1 waits on A.2.11, A.2.14, and A.2.15. Task 6.1.2 does not. Epic 6.3 wa
 
 - **6.2.1** — `not-started` — This task waits on A.2.11, A.2.14, and A.2.15. Dense search stays per encoder. Inside one encoder, embed once and cut to the long width and the old width. A text vector is not a picture vector or an audio vector. A text query’s dense search stays in text. Its hit in a picture, video, or audio row is BM25 only. A picture or audio file with no matching words is absent from that text query. A picture query is task 4.1.3 and stays in picture and video. An audio query is task 5.1.4 and stays in audio. Those dense lists are not fused with the text dense list. OCR words, the sibling transcript, and keywords stay on that media row, in that order, joined by a newline. They are not copied into `items_text`. There is no per-source weight. Long and old lists use the same unweighted RRF. That equal weight is the age trade once the task 6.1.2 gate has passed. There is no weighted RRF in this plan. Search order is the task A.2.11 pipeline: filters inside the query, at most 64 on each raw list, one RRF at `k=60`, one hit per file, at most 20 files. A row whose encoder-file hash differs stays out until task A.2.4 has finished the repair. Done when both ages of one encoder return one list, a text query misses a wordless picture, and the words on a scanned page or on `talk.srt` open that media file. `TextQuery_WordlessPicture_IsAbsent` and `LongAndOld_SameRrfWeight` lock it.
 
-### Epic 6.3 — OCR runtime and ingest order — `not-started`
+### Epic 6.3 — OCR runtime and ingest order — `partial`
 
 This epic delivers tasks 4.3.2 through 4.3.5 with real sessions. The Epic 4.3 text is not changed. When 6.3.1 and 6.3.3 are `done`, tasks 4.3.2, 4.3.3, and 4.3.5 are set `done`. Task 4.3.4 is met because no Chinese, Korean, Japanese, or Indic reader is shipped. OCR scripts are Arabic, English, and European Latin only. Epic 6.3 does not wait on Epic 6.1 or Epic 6.2.
 
 - **6.3.1** — `not-started` — Real OCR. Add NuGet `Microsoft.ML.OnnxRuntime` 1.31.0. Replace the bool-only `OcrSessionSet` with three `InferenceSession`s: the pinned PP-OCRv6 small detector, the pinned PP-OCRv6 small reader for English and European Latin, and the pinned Arabic PP-OCRv5 mobile reader. All three load together at the start of one OCR pass and are disposed once in `finally` at its end. No reader is loaded or unloaded per page or per line. Inputs: pages in `ocr_page`, image-only PDF pages rendered at 300 DPI by the OS renderer (Windows.Data.Pdf, Android PdfRenderer, Apple PDFKit), and images in which the detector finds words. Routing: for each page, read the first 3 detected lines with both readers and keep the reader with the higher mean confidence as the page reader. Every other line goes to the page reader. A line below 0.6 confidence is also read by the other reader, and the higher confidence wins. Reading order: Arabic lines right to left, Latin lines left to right, and a mixed line by box x within the line direction. The OCR text goes through `DocumentPatchPlanner` like any text and is stored on that file's rows with page spans. If French, German, or Spanish accents fail task 6.3.3, the Latin reader is replaced by the pinned `latin_PP-OCRv5_mobile_rec` and this task stays open. Done when a real scanned Arabic page, a real scanned English page, and a mixed Arabic and English page are each found by their words. `OcrPass_LoadsOnce_ForManyPages`, `OcrRoute_ArabicPage_UsesArabicReader`, `OcrRoute_LowConfidenceLine_TriesOtherReader`, and `OcrOrder_MixedLine_ArabicRightToLeft` lock it.
-- **6.3.2** — `not-started` — Ingest by model. One ingest scheduler groups pending files by the model they need and runs passes in this order: text model (notes, code, text-layer PDFs), media context (pictures, video frames, audio windows), then OCR. Each model opens once per pass, drains its queue, and closes in `finally`. Watcher events go to the queue, not straight to a model. A pass opens when its queue reaches 20 files or 30 seconds after the last event. A model is never opened twice inside one pass. Done when a mixed grant of text, pictures, audio, and scanned pages opens each model once, and a burst of 50 watcher events opens one pass. `Scheduler_SwitchesModelOncePerPass` and `Scheduler_BurstOf50Events_OneOpen` lock it.
+- **6.3.2** — `done` — Ingest by model. One ingest scheduler groups pending files by the model they need and runs passes in this order: text model (notes, code, text-layer PDFs), media context (pictures, video frames, audio windows), then OCR. Each model opens once per pass, drains its queue, and closes in `finally`. Watcher events go to the queue, not straight to a model. A pass opens when its queue reaches 20 files or 30 seconds after the last event. A model is never opened twice inside one pass. Pass 3 runs `OcrPassStub` until Epic 6.3 replaces it with ONNX. Done when a mixed grant of text, pictures, audio, and scanned pages opens each model once, and a burst of 50 watcher events opens one pass. `Scheduler_SwitchesModelOncePerPass` and `Scheduler_BurstOf50Events_OneOpen` lock it.
 - **6.3.3** — `not-started` — OCR quality gate on real pages. Golden set: 30 Arabic, 30 English, and 20 French, German, and Spanish pages, including phone photos and mixed Arabic and English pages, each with a ground-truth text file outside the indexed folders. Character error rate (CER) is at most 5% on clean scans and at most 10% on phone photos for each script, and Arabic word order is right on every mixed line. These limits are starting values and may be tuned once from the first run, with the change written here. Stores: the OCR golden report. Done when the report passes. `OcrGolden_OverLimit_Fails` locks the fail.
 
 ---
@@ -259,142 +261,142 @@ Rules for every task:
 
 Counted 23 Oct 2026. This is the only progress table.
 
-| | Status | Progress |
+| | Status |
 |---|---|---|
-| **Phase 1 — Shell** | `done` | 100% |
-| **Epic 1.1 — Solution** | `done` | 100% |
-| 1.1.1 | `done` | 100% |
-| 1.1.2 | `done` | 100% |
-| 1.1.3 | `done` | 100% |
-| **Epic 1.2 — Screens that can ship** | `done` | 100% |
-| 1.2.1 | `done` | 100% |
-| 1.2.2 | `done` | 100% |
-| 1.2.3 | `done` | 100% |
-| **Epic 1.3 — This device** | `done` | 100% |
-| 1.3.1 | `done` | 100% |
-| 1.3.2 | `done` | 100% |
-| **Phase 2 — Text search** | `done` | 100% |
-| **Epic 2.1 — Model download** | `done` | 100% |
-| 2.1.1 | `done` | 100% |
-| 2.1.2 | `done` | 100% |
-| 2.1.3 | `done` | 100% |
-| **Epic 2.2 — Text embed and index** | `done` | 100% |
-| 2.2.1 | `done` | 100% |
-| 2.2.2 | `done` | 100% |
-| 2.2.3 | `done` | 100% |
-| 2.2.4 | `done` | 100% |
-| 2.2.5 | `done` | 100% |
-| 2.2.6 | `done` | 100% |
-| **Epic 2.3 — Query text** | `done` | 100% |
-| 2.3.1 | `done` | 100% |
-| 2.3.2 | `done` | 100% |
-| **Phase 3 — Folders that stay current** | `done` | 100% |
-| **Epic 3.1 — Grants** | `done` | 100% |
-| 3.1.1 | `done` | 100% |
-| 3.1.2 | `done` | 100% |
-| **Epic 3.2 — Watch and scan** | `done` | 100% |
-| 3.2.1 | `done` | 100% |
-| 3.2.2 | `done` | 100% |
-| 3.2.3 | `done` | 100% |
-| **Epic 3.3 — Crash cursor** | `done` | 100% |
-| 3.3.1 | `done` | 100% |
-| **Phase Three Addendum — Gaps left by Phases 1–3** | `partial` | 74% |
-| **Epic A.2 — Closures** | `partial` | 74% |
-| A.2.2 | `done` | 100% |
-| A.2.3 | `done` | 100% |
-| A.2.4 | `done` | 100% |
-| A.2.5 | `done` | 100% |
-| A.2.6 | `partial` | 50% |
-| A.2.7 | `done` | 100% |
-| A.2.8 | `done` | 100% |
-| A.2.9 | `not-started` | 0% |
-| A.2.10 | `done` | 100% |
-| A.2.11 | `done` | 100% |
-| A.2.12 | `done` | 100% |
-| A.2.13 | `done` | 100% |
-| A.2.14 | `done` | 100% |
-| A.2.15 | `not-started` | 0% |
-| A.2.16 | `not-started` | 0% |
-| A.2.17 | `done` | 100% |
-| A.2.18 | `not-started` | 0% |
-| **Phase 4 — Pictures, video, and words in documents** | `partial` | 61% |
-| **Epic 4.1 — Vision** | `done` | 100% |
-| 4.1.1 | `done` | 100% |
-| 4.1.2 | `done` | 100% |
-| 4.1.3 | `done` | 100% |
-| **Epic 4.2 — Video frames** | `partial` | 75% |
-| 4.2.1 | `partial` | 50% |
-| 4.2.2 | `done` | 100% |
-| **Epic 4.3 — OCR for English and Arabic** | `partial` | 25% |
-| 4.3.2 | `not-started` | 0% |
-| 4.3.3 | `partial` | 50% |
-| 4.3.4 | `not-started` | 0% |
-| 4.3.5 | `partial` | 50% |
-| **Phase 5 — Audio and transcripts that already exist** | `partial` | 11% |
-| **Epic 5.1 — Audio files** | `partial` | 25% |
-| 5.1.1 | `not-started` | 0% |
-| 5.1.2 | `done` | 100% |
-| 5.1.3 | `not-started` | 0% |
-| 5.1.4 | `not-started` | 0% |
-| **Epic 5.2 — Sibling transcript files** | `not-started` | 0% |
-| 5.2.1 | `not-started` | 0% |
-| 5.2.2 | `not-started` | 0% |
-| 5.2.3 | `not-started` | 0% |
-| 5.2.4 | `not-started` | 0% |
-| **Epic 5.3 — PDF text layer** | `not-started` | 0% |
-| 5.3.1 | `not-started` | 0% |
-| **Phase 6 — Age, pins, and OCR** | `partial` | 14% |
-| **Epic 6.1 — Move old pictures, video, and audio** | `partial` | 33% |
-| 6.1.1 | `done` | 100% |
-| 6.1.2 | `not-started` | 0% |
-| 6.1.3 | `not-started` | 0% |
-| **Epic 6.2 — Search across both ages** | `not-started` | 0% |
-| 6.2.1 | `not-started` | 0% |
-| **Epic 6.3 — OCR runtime and ingest order** | `not-started` | 0% |
-| 6.3.1 | `not-started` | 0% |
-| 6.3.2 | `not-started` | 0% |
-| 6.3.3 | `not-started` | 0% |
-| **Phase 7 — Proof and a local build** | `partial` | 21% |
-| **Epic 7.1 — Tests that can fail** | `partial` | 17% |
-| 7.1.1 | `partial` | 50% |
-| 7.1.2 | `not-started` | 0% |
-| 7.1.3 | `not-started` | 0% |
-| **Epic 7.2 — Local release** | `partial` | 25% |
-| 7.2.1 | `not-started` | 0% |
-| 7.2.2 | `not-started` | 0% |
-| 7.2.3 | `done` | 100% |
-| 7.2.4 | `not-started` | 0% |
-| **Launch Addendum — Public proof and growth** | `partial` | 38% |
-| **Epic P.1 — Story** | `partial` | 33% |
-| P.1.1 | `done` | 100% |
-| P.1.2 | `not-started` | 0% |
-| P.1.3 | `not-started` | 0% |
-| **Epic P.2 — Installable proof** | `not-started` | 0% |
-| P.2.1 | `not-started` | 0% |
-| P.2.2 | `not-started` | 0% |
-| P.2.3 | `not-started` | 0% |
-| P.2.4 | `not-started` | 0% |
-| P.2.5 | `not-started` | 0% |
-| **Epic P.3 — Reach** | `partial` | 83% |
-| P.3.1 | `partial` | 50% |
-| P.3.2 | `done` | 100% |
-| P.3.3 | `done` | 100% |
-| **Epic P.4 — Trust** | `done` | 100% |
-| P.4.1 | `done` | 100% |
-| **All epics** | `partial` | 59% |
+| **Phase 1 — Shell** | `done` |
+| **Epic 1.1 — Solution** | `done` |
+| 1.1.1 | `done` |
+| 1.1.2 | `done` |
+| 1.1.3 | `done` |
+| **Epic 1.2 — Screens that can ship** | `done` |
+| 1.2.1 | `done` |
+| 1.2.2 | `done` |
+| 1.2.3 | `done` |
+| **Epic 1.3 — This device** | `done` |
+| 1.3.1 | `done` |
+| 1.3.2 | `done` |
+| **Phase 2 — Text search** | `done` |
+| **Epic 2.1 — Model download** | `done` |
+| 2.1.1 | `done` |
+| 2.1.2 | `done` |
+| 2.1.3 | `done` |
+| **Epic 2.2 — Text embed and index** | `done` |
+| 2.2.1 | `done` |
+| 2.2.2 | `done` |
+| 2.2.3 | `done` |
+| 2.2.4 | `done` |
+| 2.2.5 | `done` |
+| 2.2.6 | `done` |
+| **Epic 2.3 — Query text** | `done` |
+| 2.3.1 | `done` |
+| 2.3.2 | `done` |
+| **Phase 3 — Folders that stay current** | `done` |
+| **Epic 3.1 — Grants** | `done` |
+| 3.1.1 | `done` |
+| 3.1.2 | `done` |
+| **Epic 3.2 — Watch and scan** | `done` |
+| 3.2.1 | `done` |
+| 3.2.2 | `done` |
+| 3.2.3 | `done` |
+| **Epic 3.3 — Crash cursor** | `done` |
+| 3.3.1 | `done` |
+| **Phase Three Addendum — Gaps left by Phases 1–3** | `partial` |
+| **Epic A.2 — Closures** | `partial` |
+| A.2.2 | `done` |
+| A.2.3 | `done` |
+| A.2.4 | `done` |
+| A.2.5 | `done` |
+| A.2.6 | `partial` |
+| A.2.7 | `done` |
+| A.2.8 | `done` |
+| A.2.9 | `not-started` |
+| A.2.10 | `done` |
+| A.2.11 | `done` |
+| A.2.12 | `done` |
+| A.2.13 | `done` |
+| A.2.14 | `done` |
+| A.2.15 | `not-started` |
+| A.2.16 | `not-started` |
+| A.2.17 | `done` |
+| A.2.18 | `not-started` |
+| **Phase 4 — Pictures, video, and words in documents** | `partial` |
+| **Epic 4.1 — Vision** | `done` |
+| 4.1.1 | `done` |
+| 4.1.2 | `done` |
+| 4.1.3 | `done` |
+| **Epic 4.2 — Video frames** | `partial` |
+| 4.2.1 | `partial` |
+| 4.2.2 | `done` |
+| **Epic 4.3 — OCR for English and Arabic** | `partial` |
+| 4.3.2 | `not-started` |
+| 4.3.3 | `partial` |
+| 4.3.4 | `not-started` |
+| 4.3.5 | `partial` |
+| **Phase 5 — Audio and transcripts that already exist** | `partial` |
+| **Epic 5.1 — Audio files** | `partial` |
+| 5.1.1 | `done` |
+| 5.1.2 | `done` |
+| 5.1.3 | `partial` |
+| 5.1.4 | `done` |
+| **Epic 5.2 — Sibling transcript files** | `partial` |
+| 5.2.1 | `done` |
+| 5.2.2 | `done` |
+| 5.2.3 | `done` |
+| 5.2.4 | `partial` |
+| **Epic 5.3 — PDF text layer** | `partial` |
+| 5.3.1 | `partial` |
+| **Phase 6 — Age, pins, and OCR** | `partial` |
+| **Epic 6.1 — Move old pictures, video, and audio** | `partial` |
+| 6.1.1 | `done` |
+| 6.1.2 | `not-started` |
+| 6.1.3 | `not-started` |
+| **Epic 6.2 — Search across both ages** | `not-started` |
+| 6.2.1 | `not-started` |
+| **Epic 6.3 — OCR runtime and ingest order** | `partial` |
+| 6.3.1 | `not-started` |
+| 6.3.2 | `done` |
+| 6.3.3 | `not-started` |
+| **Phase 7 — Proof and a local build** | `partial` |
+| **Epic 7.1 — Tests that can fail** | `partial` |
+| 7.1.1 | `partial` |
+| 7.1.2 | `not-started` |
+| 7.1.3 | `not-started` |
+| **Epic 7.2 — Local release** | `partial` |
+| 7.2.1 | `not-started` |
+| 7.2.2 | `not-started` |
+| 7.2.3 | `done` |
+| 7.2.4 | `not-started` |
+| **Launch Addendum — Public proof and growth** | `partial` |
+| **Epic P.1 — Story** | `partial` |
+| P.1.1 | `done` |
+| P.1.2 | `not-started` |
+| P.1.3 | `not-started` |
+| **Epic P.2 — Installable proof** | `not-started` |
+| P.2.1 | `not-started` |
+| P.2.2 | `not-started` |
+| P.2.3 | `not-started` |
+| P.2.4 | `not-started` |
+| P.2.5 | `not-started` |
+| **Epic P.3 — Reach** | `partial` |
+| P.3.1 | `partial` |
+| P.3.2 | `done` |
+| P.3.3 | `done` |
+| **Epic P.4 — Trust** | `done` |
+| P.4.1 | `done` |
+| **All epics** | `partial` |
 
 ## Behavior matrix
 
-Find after the operation. One card per live path. At most 20. A shared id stays visible while any path is live.
+Find after the operation. One card per live path. At most 20 files (`RecallIndexCaps.FileCap`). A shared id stays visible while any path is live. A text query lists dense text hits first, then appends transcript-word hits from `items_audio` and `items_video`, then `Take(20)`, so a mixed grant can show only text cards when text already fills the cap. Deleting an audio or video file retires its `ingest_chunk` rows and sets `path_live` to 0 on the vector rows.
 
 | | Create | Edit | Shrink | Delete | Rename | Age | Pin | Repair |
 |---|---|---|---|---|---|---|---|---|
 | Text | New ids at 512. The file is a hit. | Old ids go away when no other path is live. New ids stay at 512. | Same as edit. `DELETE` only for an id with no live path. | Vector stays. That path is hidden. | Same hash updates the alias. The new path is the hit. No second embed. | Text does not move. | Width stays 512. | `Reading`, delete, same id, `Finished`. The new vector is a hit only after `Finished`. |
 | Picture | One 768 row in `items_image`. `start_seconds` and `end_seconds` stay unset. | A short row stays short unless pinned. A young long row stays long. A long row past the cutoff is written short. | One vector. Byte change follows edit. | Vector stays. The path is hidden. | Alias only. Same row. | UTC last-write. Aliases move to the short id before the long row is deleted. A younger time does not regrow. A missing corpus or a failed gate leaves the row long. | Present file returns to 768. Unpin of an old file writes short and deletes long. | Same `Reading` rule on that collection. |
 | Video | Frames at 768. One card, the highest RRF score. Seek is that frame’s start. | Same width rule as a picture. Dropped frame ids follow the shared-path delete rule. | Fewer frames follow edit. | Frames stay. The path is hidden. | Alias only. | All frames of the file move together. Each frame’s aliases move to its short id before the long row is deleted. | All frames stay long while pinned. Unpin of an old file moves them together. | One repair per frame id. |
-| Audio | Windows at 768. One card, the highest RRF score. Seek is that window’s start. | Same width rule. A short tail extends the last window. | Fewer windows follow edit. | Windows stay. The path is hidden. | Alias only. | All windows move together. Each window’s aliases move to its short id before the long row is deleted. | Same as video. | One repair per window id. |
+| Audio | Windows at 768. One card, the highest RRF score. Seek is that window’s start. | Same width rule. A short tail extends the last window. | Fewer windows follow edit. | Chunk rows retire through the alias path and `path_live` goes to 0. The path is hidden. | Alias only. | All windows move together. Each window’s aliases move to its short id before the long row is deleted. | Same as video. | One repair per window id. |
 
-A text query does not dense-search picture, video, or audio. A wordless picture is absent from that query. A picture query stays in picture and video. An audio query stays in audio. One card keeps the highest RRF score. A tie keeps the earlier ordinal or start. Two paths with the same bytes are two cards, in ordinal path order. A digits-only non-code span is in the BM25 list and not in HNSW. A code file stays dense. A skipped dataset folder has no hit. Phase 4 is partial: vision, pictures, video frames, and the OCR file pins are in code; the OCR readers and the OCR job are not. Find reconciles at most 64 pending ids.
+A text query does not dense-search picture, video, or audio. Transcript words on `items_audio` and `items_video` append after the text hits, then the combined list is cut at `RecallIndexCaps.FileCap` (20). Text hits already in the list are not duplicated. A wordless picture is absent from that query. A picture query stays in picture and video. An audio query stays in audio. One card keeps the highest RRF score. A tie keeps the earlier ordinal or start. Two paths with the same bytes are two cards, in ordinal path order. A digits-only non-code span is in the BM25 list and not in HNSW. A code file stays dense. A skipped dataset folder has no hit. Phase 4 is partial: vision, pictures, video frames, and the OCR file pins are in code; `ocr_page` and pass 3 use `OcrPassStub` only. Real ONNX OCR is Epic 6.3. Find reconciles at most 64 pending ids.
 
 # Version 1.5
 
@@ -445,30 +447,30 @@ v1 still has no language model. Group labels stay the deterministic TF-IDF label
 
 ## Progress
 
-| | Status | Progress |
+| | Status |
 |---|---|---|
-| **Phase 1 — Sections** | `not-started` | 0% |
-| **Epic 1.1 — Structure split** | `not-started` | 0% |
-| 1.1.1 | `not-started` | 0% |
-| 1.1.2 | `not-started` | 0% |
-| **Epic 1.2 — Links inside a grant** | `not-started` | 0% |
-| 1.2.1 | `not-started` | 0% |
-| **Phase 2 — File details** | `not-started` | 0% |
-| **Epic 2.1 — Details already in the file** | `not-started` | 0% |
-| 2.1.1 | `not-started` | 0% |
-| 2.1.2 | `not-started` | 0% |
-| **Phase 3 — People** | `not-started` | 0% |
-| **Epic 3.1 — Same face** | `not-started` | 0% |
-| 3.1.1 | `not-started` | 0% |
-| 3.1.2 | `not-started` | 0% |
-| 3.1.3 | `not-started` | 0% |
-| **Phase 4 — Notes** | `not-started` | 0% |
-| **Epic 4.1 — One local model** | `not-started` | 0% |
-| 4.1.1 | `not-started` | 0% |
-| **Epic 4.2 — Entity rows** | `not-started` | 0% |
-| 4.2.1 | `not-started` | 0% |
-| 4.2.2 | `not-started` | 0% |
-| **All v1.5 tasks** | `not-started` | 0% |
+| **Phase 1 — Sections** | `not-started` |
+| **Epic 1.1 — Structure split** | `not-started` |
+| 1.1.1 | `not-started` |
+| 1.1.2 | `not-started` |
+| **Epic 1.2 — Links inside a grant** | `not-started` |
+| 1.2.1 | `not-started` |
+| **Phase 2 — File details** | `not-started` |
+| **Epic 2.1 — Details already in the file** | `not-started` |
+| 2.1.1 | `not-started` |
+| 2.1.2 | `not-started` |
+| **Phase 3 — People** | `not-started` |
+| **Epic 3.1 — Same face** | `not-started` |
+| 3.1.1 | `not-started` |
+| 3.1.2 | `not-started` |
+| 3.1.3 | `not-started` |
+| **Phase 4 — Notes** | `not-started` |
+| **Epic 4.1 — One local model** | `not-started` |
+| 4.1.1 | `not-started` |
+| **Epic 4.2 — Entity rows** | `not-started` |
+| 4.2.1 | `not-started` |
+| 4.2.2 | `not-started` |
+| **All v1.5 tasks** | `not-started` |
 
 ## Later, not in these phases — `not-started`
 

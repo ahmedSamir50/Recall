@@ -327,9 +327,13 @@ public partial class Home
         if (file is null || !AudioAcceptExtensions.Contains(Path.GetExtension(file.Name), StringComparer.OrdinalIgnoreCase))
         if (pickedAudio is null)
         if (!audioDownloadStarted)
+        if (MediaHitStart.Seeks(MediaHitStart.Seconds(hit)))
+        if (MediaHitStart.Seeks(card.StartSeconds))
 ```
 
 Picture input accepts only the allowlisted image extensions, reads at most 32 MiB into memory, and runs `PictureQueryGate` before embedding. Wait starts the vision download once; Fail shows `Search_PictureFailed`; Search queries both media collections and renders path, invariant start-to-end seconds, and an open button. A null pick is ignored.
+
+Audio and text cards with a start above zero open the media file in the app player through `IMediaPreview.PlayAsync`; a start of 0 keeps the launcher path.
 
 
 ## src/Recall.UI/Pages/Find/Lattice.razor.cs
@@ -347,7 +351,7 @@ No branch.
 ```csharp
 namespace Recall.UI.Pages;
 public static class TextFindSession
-public sealed record TextFindCard(string SourcePath, string FileName, string KindKey, string LocalTime, string ReasonKey, bool Unavailable);
+public sealed record TextFindCard(string SourcePath, string FileName, string KindKey, string LocalTime, string ReasonKey, bool Unavailable, string RawNote = "", double StartSeconds = 0);
 public sealed record TextFindView(IReadOnlyList<TextFindCard> Immediate, IReadOnlyList<TextFindCard> Deferred, bool HasHits)
     public static bool ShouldQuery(string? text) => !string.IsNullOrWhiteSpace(text);
     public static string? FaultKey(Exception? exception)

@@ -18,7 +18,7 @@ Progress numbers live only in [plan.md](plan.md). The design is [architecture/de
 
 ## What is not in the tree
 
-Not in the tree: an ingest job that writes `items_image` or `items_video` from a grant, an ONNX OCR reader, pin storage, vector aging, a golden recall report, a four-shell release. linux-x64 is a v1 RID. The Linux shell is open and is not in the tree. Windows tray, Mac menu bar, sign-in start, and search shortcut. A Linux tray, sign-in start, and search shortcut are open and are not in the tree. The public remote is https://github.com/ahmedSamir50/Recall. Branch main is the pushed branch. A GitHub Actions workflow is open and is not in the tree. Speech-to-text is forbidden.
+Not in the tree: real ONNX OCR (pass 3 is `OcrPassStub` only), pin storage, vector aging, a golden recall report, a four-shell release. linux-x64 is a v1 RID. The Linux shell is open and is not in the tree. Windows tray, Mac menu bar, sign-in start, and search shortcut. A Linux tray, sign-in start, and search shortcut are open and are not in the tree. The public remote is https://github.com/ahmedSamir50/Recall. Branch main is the pushed branch. A GitHub Actions workflow is open and is not in the tree. Speech-to-text is forbidden.
 
 ```mermaid
 flowchart TD

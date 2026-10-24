@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using Recall.Core.Text;
 using Recall.Core.Vocabulary;
 
@@ -63,6 +62,31 @@ public sealed record MediaIndexInsert(
             endSeconds);
     }
 
+    public static MediaIndexInsert AudioWindow(
+        ReadOnlySpan<byte> fileBytes,
+        string sourcePath,
+        string words,
+        ReadOnlyMemory<float> vector768,
+        string encoderHash,
+        bool pathLive,
+        string grantPath,
+        int windowOrdinal,
+        string startSeconds,
+        string endSeconds)
+    {
+        return new(
+            ContentIdBuilder.Build(Modality.Audio, HashFile(fileBytes), StoredWidth.W768, windowOrdinal),
+            sourcePath,
+            Path.GetFileName(sourcePath),
+            words,
+            vector768,
+            encoderHash,
+            pathLive,
+            grantPath,
+            startSeconds,
+            endSeconds);
+    }
+
     private static string HashFile(ReadOnlySpan<byte> fileBytes) =>
-        Convert.ToHexString(SHA256.HashData(fileBytes)).ToLowerInvariant();
+        ContentIdBuilder.HashBytes(fileBytes);
 }

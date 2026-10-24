@@ -8,36 +8,102 @@ public sealed class TextIngestEngine
         ITextVectorIndex index,
         IIndexPolicy indexPolicy,
         ITextTokenCounter tokenCounter,
-        LocalOpLogWriter opLog)
-    public async Task IngestFileAsync(string filePath, string rawText, DateTimeOffset modifiedAt, CancellationToken cancellationToken)
-            if (!dense)
-            if (cursors.AnyLivePath(ContentIdBuilder.Build(Modality.Text, sourceHash, StoredWidth.W512, chunk.Ordinal)))
+        LocalOpLogWriter opLog,
+        IIngestCursorStore cursors)
+    public async Task<TextIngestResult> IngestFileAsync(string filePath, string rawText, DateTimeOffset modifiedAt, string grantPath, string encoderHash, bool codeFile, CancellationToken cancellationToken)
+        var prefixTokenCount = tokenCounter.CountTokens(EmbeddingTaskPrefixes.TitledPrefix(title));
+        var ends = tokenCounter.TokenEnds(rawText);
+        var patches = DocumentPatchPlanner.Plan(title, documentText, pdfPages, prefixTokenCount, ends);
+            if (!NumericSpanPolicy.IsDense(patch.Raw, codeFile))
+            if (cursors.AnyLivePath(contentId))
             if (index.TryInsert(insert))
 ```
 
-
+One tokenize per document. For a `.pdf` path the engine reads with `PdfPigPageSource`, runs `SplitPdfPages`, and passes `EmbeddablePages` into `DocumentPatchPlanner` so `page_start` and `page_end` are set. `OcrPageNumbers` on the result are written through `OcrPageWaitlist`. For other paths the joined document is the raw text and page spans stay zero. The engine counts the title prefix once, asks the token counter for the document's token ends once, and lets `DocumentPatchPlanner` place the cuts. Every patch keeps the title prefix through `EmbeddingTaskPrefixes.WrapTitledDocument` and carries its page and char spans into the chunk rows. A patch that is not dense keeps its row without a vector.
 
 ```csharp
 TextIngestChunk
 TextIngestResult
 ``` 
-## src/Recall.Core/Text/TextChunkPlanner.cs
+## src/Recall.Core/Text/DocumentPatchPlanner.cs
 
 ```csharp
 namespace Recall.Core.Text;
-public static class TextChunkPlanner
-public readonly record struct TextChunkPiece(string PrefixedText, string RawText, int Ordinal);
-    public static IReadOnlyList<TextChunkPiece> PlanChunks(
-        string title,
-        string content,
-        Func<string, int> countTokens)
-        if (countTokens(whole) <= MaxTokenBudget)
-            if (end <= start)
-            if (countTokens(wrapped) <= MaxTokenBudget)
-        if (index > 0 && index < text.Length && char.IsLowSurrogate(text[index]))
-        if (start >= text.Length)
-        if (end < text.Length && char.IsHighSurrogate(text[start]) && char.IsLowSurrogate(text[end]))
+public readonly record struct PdfPageText(int PageNumber, string Text);
+public readonly record struct PdfPatch(string Raw, int Ordinal, int PageStart, int PageEnd, int CharStart, int CharEnd);
+public readonly record struct PdfPageSplit(string JoinedDocument, IReadOnlyList<PdfPageText> EmbeddablePages, IReadOnlyList<int> OcrPageNumbers);
+public static class DocumentPatchPlanner
+    public const int PatchTargetTokens = 2048;
+    public const int LookbackTokens = 512;
+    public const int OverlapTokens = 256;
+    public const int MaxOverlapTokens = 384;
+    public const int HardCapTokens = 7680;
+    public static bool EndsPatch(int prefixedTokenCount)
+    public static int OpenPage(int? page)
+    public static bool IsOcrPage(string pageText)
+    public static PdfPageSplit SplitPdfPages(IReadOnlyList<PdfPageText> pages)
+        if (IsOcrPage(page.Text))
+        if (embeddable.Count == 0)
+    public static IReadOnlyList<PdfPatch> Plan(string title, string joinedDocument, IReadOnlyList<PdfPageText>? pages, int prefixTokenCount, IReadOnlyList<int>? tokenEnds)
+        if (endCount == 0 || startToken + aim >= endCount)
+        if (boundary < 0)
+        if (cls > bestClass)
+        if (cls == ParagraphClass)
+        if (IsSentenceBoundary(document, position))
+        if (whitespace < 0 && position < document.Length && char.IsWhiteSpace(document[position]))
+        if (position < 1 || position >= document.Length)
+        if (position >= 2 && document[position - 1] == '\n' && document[position - 2] == '\n')
+        if (document[position - 1] == '\f')
+        if (document[position - 1] == '\n' && IsHeadingLine(document, position))
+        if (document[position - 1] == '\n')
+        if (document[position - 1] == ArabicSemicolon)
+        if (document[position - 1] == ArabicComma)
+        if (char.IsWhiteSpace(document[position]))
+        if (position == 0 || position >= document.Length)
+        if (!char.IsWhiteSpace(document[position]))
+        if (mark is not ('.' or '!' or '?' or '\u061F' or '\u2026'))
+        if (IsAbbreviation(document, position - 1))
+        if (next >= document.Length)
+        if (document[position - 1] != '\n')
+        if (ends[mid] <= position)
+        if (token < low || token > high)
+        if (token > bestToken)
+        if (index + 1 >= document.Length || !IsSentenceBoundary(document, index + 1))
+        if (pages is null || pages.Count == 0)
 ```
+
+One planner covers notes and PDFs. The target is 2048 body tokens, the lookback is 512, and 7680 is only the ceiling. From the aim, the planner searches back to token `2048 - 512`, takes the latest boundary of the highest class, and snaps to the nearest token end at or before it. Classes, highest first: a paragraph break `\n\n`, a `\f` page break, a heading line of one to six `#` and a space, a sentence end `.`, `!`, `?`, `؟`, or `…` followed by whitespace when the word is not `e.g.`, `i.e.`, `etc.`, `vs.`, `Dr.`, `Mr.`, or `No.` and the next non-space is an ASCII capital or an Arabic letter, a line break `\n`, `؛`, `،`, and any whitespace. `3.5` is not an end. The next patch starts at a sentence start 256 to 384 tokens back, closest to 256; without one it starts at the cut. Only when one paragraph runs past 7680 does the planner cut that paragraph at a sentence end, then whitespace, still on a token end. A blank document throws `ArgumentException`, null token ends throw `ArgumentNullException`, and a negative prefix count throws `ArgumentOutOfRangeException`. A page whose words trip `BrokenArabic.NeedsOcr` is not patched. `SplitPdfPages` joins the remaining pages with `\f`, records their numbers in `OcrPageNumbers`, and leaves a `NeedsOcr` page out of the join with no extra form feed.
+
+## src/Recall.Core/Text/ChunkerStamp.cs
+
+```csharp
+namespace Recall.Core.Text;
+public static class ChunkerStamp
+    public const string Suffix = ":patch-v3";
+```
+
+No branch. The stored and filtered text encoder hash is the file SHA-256 plus this suffix. `:patch-v2` was the earlier non-boundary cutter and is never written.
+
+## src/Recall.Core/Text/PdfPigPageSource.cs
+
+```csharp
+namespace Recall.Core.Text;
+public static class PdfPigPageSource
+    public static IReadOnlyList<PdfPageText> Read(Stream stream)
+        catch (Exception ex) when (ex is not OperationCanceledException)
+```
+
+`Read` opens `UglyToad.PdfPig.PdfDocument`, enumerates `GetPages()` one page at a time, and passes `page.Number` and `PdfTextOrder.Logical(page)` into the page list. It never calls `page.Text`. A page with no Arabic letter returns `ContentOrderTextExtractor.GetText` with `addDoubleNewline: true`, normalized to `\n`. A page that contains Arabic uses `page.GetWords()` so positioning gaps keep spaces between words. Presentation-form runs whose x increases are reversed and NFKC-normalized. A mixed line reverses run order when RTL glyphs sit to the right of LTR glyphs, not from a page midpoint. A null stream throws `ArgumentNullException`. A PDF that PdfPig cannot open, including an encrypted one, throws `InvalidDataException` with message `PDF text could not be read.`
+
+## src/Recall.Core/Text/PdfTextOrder.cs
+
+```csharp
+namespace Recall.Core.Text;
+internal static class PdfTextOrder
+    public static string Logical(Page page)
+```
+
+`Logical` is the page text `PdfPigPageSource.Read` stores. A null page throws `ArgumentNullException`. A page with no Arabic letter returns normalized `GetText(page, addDoubleNewline: true)`. An Arabic page walks `GetWords()`, keeps inter-word spaces, reverses presentation-form words when x increases, and reverses mixed run order when RTL words sit right of LTR words on the line.
 
 
 ## src/Recall.Core/Text/EmbeddingTaskPrefixes.cs
@@ -45,6 +111,7 @@ public readonly record struct TextChunkPiece(string PrefixedText, string RawText
 ```csharp
 namespace Recall.Core.Text;
 public static class EmbeddingTaskPrefixes
+    public static string TitledPrefix(string title)
     public static string WrapSearchQuery(string query)
     public static string WrapTitledDocument(string title, string content)
         if (query.StartsWith(SearchTask, StringComparison.Ordinal))
@@ -284,6 +351,8 @@ public async Task ApplyAsync(
     if (change.Kind == ScopeChangeKind.Created || change.Kind == ScopeChangeKind.Modified)
     if (grant is null)
     if (grant is not null && audio is not null
+    if (scheduler is not null)
+    if (audio is not null && (MediaFileKinds.IsAudio(change.Path) || MediaFileKinds.IsVideo(change.Path)))
 ``` 
 
 
@@ -309,6 +378,7 @@ public void Dispose()
     if (ScopeWatcherKindPolicy.Choose(kind) == ScopeWatcherKind.WindowsFileSystem)
     if (!IsRunning)
     if (wake.CurrentCount == 0)
+    if (ingestScheduler is not null)
     catch (Exception ex)
     if (buffer.NeedsRescan)
     if (!IdleIngestGate.ShouldRun(idle.Current))
@@ -421,17 +491,82 @@ if (durationSeconds <= 0)
 
 A two-second cadence yields starts at 0, 2, 4, and so on while the start is below the duration. Zero or negative duration yields no starts. The end is clamped to the duration. No OCR or audio path is involved.
 
-## src/Recall.Core/Text/PdfSlicePolicy.cs
+## src/Recall.Core/Ingest/IngestScheduler.cs
 
 ```csharp
-namespace Recall.Core.Text;
-public static class PdfSlicePolicy
-public const int TokenCap = 8192;
-public const int PageCap = 10;
-public static bool EndsSlice(int tokens, int pages) => tokens >= TokenCap || pages >= PageCap;
+namespace Recall.Core.Ingest;
+public enum IngestModel
+public readonly record struct IngestJob(IngestModel Model, string Path);
+public sealed class IngestScheduler
+public void Enqueue(IngestJob job)
+public bool ShouldOpen(IngestModel model, DateTimeOffset now)
+        if (queue.Count == 0)
+        if (queue.Count >= OpenFileThreshold)
+        if (queue.Count == 0)
 ```
 
-Both caps are provisional. A slice ends when either the token cap or the page cap is reached. No branch.
+Three queues: text, media, and OCR. A pass opens when its queue holds 20 files or 30 seconds have passed since the last enqueue for that model. The watch loop waits `IngestScheduler.OpenIdleDelay` so a quiet queue opens without another watcher event. Cancellation stops the pass and leaves the rest queued. `OpenText` runs inside the pass try, and `CloseText` runs in `finally` only after that open succeeded.
+
+## src/Recall.Core/Ingest/IngestSchedulerRunner.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public sealed class IngestPassHooks
+public sealed class IngestSchedulerRunner
+        if (!scheduler.ShouldOpen(IngestModel.Text, now))
+                if (hooks.ProcessTextJobAsync is not null)
+        if (!scheduler.ShouldOpen(IngestModel.Media, now))
+        if (jobs.Count == 0)
+            if (MediaFileKinds.IsAudio(path))
+            if (oneContext)
+                    if (hooks.ProcessMediaJobAsync is not null)
+                if (visionJobs.Count > 0)
+                        if (hooks.ProcessMediaJobAsync is not null)
+                if (audioJobs.Count > 0)
+                        if (hooks.ProcessMediaJobAsync is not null)
+            if (visionOpen)
+        if (!scheduler.ShouldOpen(IngestModel.Ocr, now))
+        if (jobs.Count == 0)
+```
+
+Pass order is text, media, then OCR. Media opens vision and audio once per pass, or one shared vision context when `MediaContextPolicy.OneContext` is true. OCR pass 3 calls `OcrPassStub.Run` once for the drained paths.
+
+## src/Recall.Core/Ingest/IngestSchedulerService.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public sealed class IngestSchedulerService
+public Task RunReadyPassesAsync(DateTimeOffset now, CancellationToken cancellationToken = default)
+```
+
+Production hooks dispatch text and media jobs through `ScheduledIngestDispatcher`. OCR hooks are not wired in production until Epic 6.3.
+
+## src/Recall.Core/Ingest/MediaContextPolicy.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public static class MediaContextPolicy
+public static bool OneContext { get; set; }
+```
+
+Set once by `MediaContextProbe` when the local mmproj can embed vision and audio on one open mtmd context.
+
+## src/Recall.Core/Ingest/ScheduledIngestDispatcher.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public sealed class ScheduledIngestDispatcher
+        if (grant is null)
+        if (document is null)
+        if (grant is null || audio is null)
+        if (MediaFileKinds.IsAudio(path) || MediaFileKinds.IsVideo(path))
+            if (grant is null || string.IsNullOrWhiteSpace(grant.Path))
+            if (ContentUri.IsContent(grant.Path))
+                if (string.Equals(grant.Path, path, StringComparison.OrdinalIgnoreCase))
+            if (ScopeGrantPolicy.IsInsideGrant(grant.Path, path))
+```
+
+Resolves the grant for a queued path and calls text ingest or `IAudioFileIngest.IndexAsync` for audio and video paths.
 
 ## src/Recall.Core/Ocr/OcrModelFiles.cs
 
@@ -501,6 +636,27 @@ if (IsArabicLetter(rune))
 ```
 
 A null or empty word is not broken. A run of three or more U+FFFD replacement characters triggers OCR only after an Arabic letter has already appeared. Arabic is tested with `Rune.IsLetter` plus `UnicodeRanges.Arabic`; `Rune.GetUnicodeScript` is not used. A run shorter than three does not trigger.
+
+## src/Recall.Core/Ocr/OcrPageWaitlist.cs
+
+```csharp
+namespace Recall.Core.Ocr;
+public static class OcrPageWaitlist
+public static void Apply(string path, IReadOnlyList<int> pageNumbers, IIngestCursorStore cursors, IngestScheduler? scheduler = null)
+if (pageNumbers.Count > 0 && scheduler is not null)
+```
+
+`Apply` writes the page numbers into `ocr_page` through `ReplaceOcrPages` and enqueues one `IngestModel.Ocr` job when the list is not empty. Real ONNX OCR is Epic 6.3; pass 3 today runs `OcrPassStub` only. Audio ingest does not wait on this queue.
+
+## src/Recall.Core/Ocr/OcrPassStub.cs
+
+```csharp
+namespace Recall.Core.Ocr;
+public static class OcrPassStub
+public static void Run(Action processJobs)
+```
+
+Counts one OCR open per scheduler pass. It does not construct an ONNX session. `Scheduler_SwitchesModelOncePerPass` locks the open count.
 
 ## src/Recall.Core/Ingest/WavPcm.cs
 

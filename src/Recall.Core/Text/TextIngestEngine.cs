@@ -7,9 +7,12 @@ using Recall.Core.Vocabulary;
 
 namespace Recall.Core.Text;
 
-public sealed record TextIngestChunk(string ContentId, int Ordinal, bool Dense = true);
+public sealed record TextIngestChunk(string ContentId, int Ordinal, bool Dense = true, int PageStart = 0, int PageEnd = 0, int CharStart = 0, int CharEnd = 0);
 
-public sealed record TextIngestResult(string ContentHash, IReadOnlyList<TextIngestChunk> Chunks);
+public sealed record TextIngestResult(
+    string ContentHash,
+    IReadOnlyList<TextIngestChunk> Chunks,
+    IReadOnlyList<int> OcrPageNumbers);
 
 public sealed class TextIngestEngine
 {
@@ -49,58 +52,99 @@ public sealed class TextIngestEngine
         indexPolicy.EnsureStorableWidth(Modality.Text, storedWidth);
 
         var title = Path.GetFileName(filePath);
-        var sourceHash = ContentIdBuilder.HashSourceContent(rawText);
-        var chunks = TextChunkPlanner.PlanChunks(title, rawText, tokenCounter.CountTokens);
+        string documentText;
+        IReadOnlyList<PdfPageText>? pdfPages = null;
+        IReadOnlyList<int> ocrPageNumbers = [];
+        if (IsPdfPath(filePath))
+        {
+            await using var stream = new FileStream(
+                filePath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                bufferSize: 4096,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
+            var pages = PdfPigPageSource.Read(stream);
+            var split = DocumentPatchPlanner.SplitPdfPages(pages);
+            documentText = split.JoinedDocument;
+            pdfPages = split.EmbeddablePages;
+            ocrPageNumbers = split.OcrPageNumbers;
+        }
+        else
+        {
+            documentText = rawText;
+        }
+
+        var sourceHash = ContentIdBuilder.HashSourceContent(documentText);
+        var prefixTokenCount = tokenCounter.CountTokens(EmbeddingTaskPrefixes.TitledPrefix(title));
+        var ends = tokenCounter.TokenEnds(documentText);
+        var patches = DocumentPatchPlanner.Plan(title, documentText, pdfPages, prefixTokenCount, ends);
 
         var resultChunks = new List<TextIngestChunk>();
-        foreach (var chunk in chunks)
+        foreach (var patch in patches)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var dense = NumericSpanPolicy.IsDense(chunk.RawText, codeFile);
-            if (!dense)
+            var contentId = ContentIdBuilder.Build(Modality.Text, sourceHash, StoredWidth.W512, patch.Ordinal);
+            if (!NumericSpanPolicy.IsDense(patch.Raw, codeFile))
             {
                 resultChunks.Add(new TextIngestChunk(
-                    ContentIdBuilder.Build(Modality.Text, sourceHash, StoredWidth.W512, chunk.Ordinal),
-                    chunk.Ordinal,
-                    false));
+                    contentId,
+                    patch.Ordinal,
+                    false,
+                    patch.PageStart,
+                    patch.PageEnd,
+                    patch.CharStart,
+                    patch.CharEnd));
                 continue;
             }
 
-            if (cursors.AnyLivePath(ContentIdBuilder.Build(Modality.Text, sourceHash, StoredWidth.W512, chunk.Ordinal)))
+            if (cursors.AnyLivePath(contentId))
             {
                 resultChunks.Add(new TextIngestChunk(
-                    ContentIdBuilder.Build(Modality.Text, sourceHash, StoredWidth.W512, chunk.Ordinal),
-                    chunk.Ordinal));
-                cursors.AddAlias(
-                    ContentIdBuilder.Build(Modality.Text, sourceHash, StoredWidth.W512, chunk.Ordinal),
-                    filePath);
+                    contentId,
+                    patch.Ordinal,
+                    true,
+                    patch.PageStart,
+                    patch.PageEnd,
+                    patch.CharStart,
+                    patch.CharEnd));
+                cursors.AddAlias(contentId, filePath);
                 continue;
             }
 
-            var full768 = await encoder.EmbedPrefixedTextAsync(chunk.PrefixedText, cancellationToken).ConfigureAwait(false);
+            var full768 = await encoder.EmbedPrefixedTextAsync(EmbeddingTaskPrefixes.WrapTitledDocument(title, patch.Raw), cancellationToken).ConfigureAwait(false);
             var vector512 = MatryoshkaVectorMath.CutAndNormalize(full768.Span, storedWidth);
-            var contentId = ContentIdBuilder.Build(Modality.Text, sourceHash, StoredWidth.W512, chunk.Ordinal);
-            var folded = string.Join(' ', KeywordFold.Tokens(KeywordFold.Fold(chunk.RawText)));
+            var folded = string.Join(' ', KeywordFold.Tokens(KeywordFold.Fold(patch.Raw)));
             var insert = new TextIndexInsert(
                 contentId,
                 filePath,
                 title,
-                chunk.RawText,
+                patch.Raw,
                 vector512,
                 modifiedAt,
                 encoderHash,
                 true,
                 grantPath,
                 folded,
-                chunk.Ordinal);
+                patch.Ordinal);
             if (index.TryInsert(insert))
             {
                 opLog.AppendInsert(contentId);
             }
 
-            resultChunks.Add(new TextIngestChunk(contentId, chunk.Ordinal));
+            resultChunks.Add(new TextIngestChunk(
+                contentId,
+                patch.Ordinal,
+                true,
+                patch.PageStart,
+                patch.PageEnd,
+                patch.CharStart,
+                patch.CharEnd));
         }
 
-        return new TextIngestResult(sourceHash, resultChunks);
+        return new TextIngestResult(sourceHash, resultChunks, ocrPageNumbers);
     }
+
+    private static bool IsPdfPath(string filePath) =>
+        string.Equals(Path.GetExtension(filePath), ".pdf", StringComparison.OrdinalIgnoreCase);
 }

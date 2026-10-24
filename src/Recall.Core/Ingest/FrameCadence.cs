@@ -4,7 +4,9 @@ public static class FrameCadence
 {
     public const double PeriodSeconds = 2;
 
-    public const string WindowsPackageMessage = "Windows video sampling has no package.";
+    public const int WindowsMinimumBuild = 22000;
+
+    public const string WindowsMinimumBuildMessage = "Windows frame thumbnails need Windows 11.";
 
     public static IReadOnlyList<double> Starts(double durationSeconds)
     {

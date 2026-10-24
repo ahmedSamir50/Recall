@@ -751,6 +751,11 @@ public sealed class Phase3WatchTests
             await Task.CompletedTask;
             yield break;
         }
+
+        public async IAsyncEnumerable<string> ListAudioAndVideoAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            yield break;
+        }
     }
 
     private sealed class ThrowFirstIngestService : IGrantedTextIngestService

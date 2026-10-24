@@ -19,9 +19,9 @@ public sealed record IngestAliasRow(string ContentId, string Path, bool Missing,
 
 public sealed record Bm25OnlyRow(string ContentId, string Path, string RawText);
 
-public sealed record ChunkWrite(string ContentId, int Ordinal);
+public sealed record ChunkWrite(string ContentId, int Ordinal, int PageStart = 0, int PageEnd = 0, int CharStart = 0, int CharEnd = 0);
 
-public sealed record IngestChunkRow(string ContentId, string Path, int Ordinal, bool Missing, bool Retired);
+public sealed record IngestChunkRow(string ContentId, string Path, int Ordinal, bool Missing, bool Retired, int PageStart = 0, int PageEnd = 0, int CharStart = 0, int CharEnd = 0);
 
 public sealed record GrantScanRow(string GrantPath, IngestCursorState State);
 

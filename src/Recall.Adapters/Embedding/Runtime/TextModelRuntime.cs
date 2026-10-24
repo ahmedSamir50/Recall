@@ -10,7 +10,6 @@ public sealed class TextModelRuntime : IDisposable
     private readonly string modelDirectory;
     private readonly TextModelDownloadOptions options;
     private readonly IRecallEmbedLibrary library;
-    private readonly SemaphoreSlim embedGate = new(1, 1);
     private readonly object loadGate = new();
     private LlamaTextEmbeddingEncoder? encoder;
     private LlamaTextTokenCounter? counter;
@@ -50,15 +49,31 @@ public sealed class TextModelRuntime : IDisposable
     public LlamaTextEmbeddingEncoder GetEncoder()
     {
         ObjectDisposedException.ThrowIf(disposed != 0, this);
-        EnsureLoaded();
-        return encoder!;
+        LlamaNativeGate.Enter();
+        try
+        {
+            EnsureLoaded();
+            return encoder!;
+        }
+        finally
+        {
+            LlamaNativeGate.Exit();
+        }
     }
 
     public LlamaTextTokenCounter GetCounter()
     {
         ObjectDisposedException.ThrowIf(disposed != 0, this);
-        EnsureLoaded();
-        return counter!;
+        LlamaNativeGate.Enter();
+        try
+        {
+            EnsureLoaded();
+            return counter!;
+        }
+        finally
+        {
+            LlamaNativeGate.Exit();
+        }
     }
 
     public void Dispose()
@@ -69,16 +84,57 @@ public sealed class TextModelRuntime : IDisposable
         }
 
         disposed = 1;
-        encoder?.Dispose();
-        encoder = null;
-        counter = null;
-        if (opened)
+        LlamaNativeGate.Enter();
+        try
         {
-            library.Close();
-            opened = false;
+            encoder?.Dispose();
+            encoder = null;
+            counter = null;
+            if (opened)
+            {
+                library.Close();
+                opened = false;
+            }
         }
+        finally
+        {
+            LlamaNativeGate.Exit();
+        }
+    }
 
-        embedGate.Dispose();
+    public void OpenSession()
+    {
+        ObjectDisposedException.ThrowIf(disposed != 0, this);
+        LlamaNativeGate.Enter();
+        try
+        {
+            EnsureLoaded();
+        }
+        finally
+        {
+            LlamaNativeGate.Exit();
+        }
+    }
+
+    public void CloseSession()
+    {
+        ObjectDisposedException.ThrowIf(disposed != 0, this);
+        LlamaNativeGate.Enter();
+        try
+        {
+            encoder?.Dispose();
+            encoder = null;
+            counter = null;
+            if (opened)
+            {
+                library.Close();
+                opened = false;
+            }
+        }
+        finally
+        {
+            LlamaNativeGate.Exit();
+        }
     }
 
     private void EnsureLoaded()
@@ -112,8 +168,8 @@ public sealed class TextModelRuntime : IDisposable
                 opened = true;
             }
 
-            encoder = new LlamaTextEmbeddingEncoder(library, embedGate);
-            counter = new LlamaTextTokenCounter(library, embedGate);
+            encoder = new LlamaTextEmbeddingEncoder(library);
+            counter = new LlamaTextTokenCounter(library);
         }
     }
 }

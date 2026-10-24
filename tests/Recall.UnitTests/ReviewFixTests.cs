@@ -50,16 +50,21 @@ public sealed class ReviewFixTests
     public void LongNote_EachChunkKeepsTitlePrefix_AndDoesNotSplitSurrogate()
     {
         var emoji = "\U0001F600";
-        var content = new string('a', 30) + emoji + new string('b', 30);
-        var pieces = TextChunkPlanner.PlanChunks("Notes", content, text => text.Length > 24 ? 9000 : text.Length);
+        var pattern = new string('a', 30) + emoji + new string('b', 30) + "\n";
+        var content = string.Concat(Enumerable.Repeat(pattern, 50));
+        var ends = Enumerable.Range(0, content.Length + 1).ToList();
+        var pieces = DocumentPatchPlanner.Plan("Notes", content, null, 0, ends);
         pieces.Count.Should().BeGreaterThan(1);
         foreach (var piece in pieces)
         {
-            piece.PrefixedText.Should().StartWith("title: Notes | text: ");
-            HasLoneSurrogate(piece.RawText).Should().BeFalse();
+            EmbeddingTaskPrefixes.WrapTitledDocument("Notes", piece.Raw).Should().StartWith("title: Notes | text: ");
+            HasLoneSurrogate(piece.Raw).Should().BeFalse();
+            content.Contains(piece.Raw).Should().BeTrue();
         }
 
-        string.Concat(pieces.Select(piece => piece.RawText)).Should().Be(content);
+        pieces[0].CharStart.Should().Be(0);
+        pieces[^1].Raw[^30..].Should().Be(content[^30..]);
+        pieces[^1].Raw.Should().Contain(emoji);
     }
 
     [Fact]

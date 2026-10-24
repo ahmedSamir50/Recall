@@ -1,4 +1,5 @@
 using Recall.Core.Checkpoints;
+using Recall.Core.Ocr;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
 using Recall.Core.Sync;
@@ -15,6 +16,8 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
     private readonly ITextVectorIndex index;
     private readonly LocalOpLogWriter opLog;
     private readonly IEncoderFileHash encoderFileHash;
+    private readonly IAudioFileIngest? audio;
+    private readonly IngestScheduler? scheduler;
 
     public GrantedTextIngestService(
         IScopeManagerService scope,
@@ -23,7 +26,9 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
         IIngestCursorStore cursors,
         ITextVectorIndex index,
         LocalOpLogWriter opLog,
-        IEncoderFileHash encoderFileHash)
+        IEncoderFileHash encoderFileHash,
+        IAudioFileIngest? audio = null,
+        IngestScheduler? scheduler = null)
     {
         this.scope = scope;
         this.reader = reader;
@@ -32,6 +37,8 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
         this.index = index;
         this.opLog = opLog;
         this.encoderFileHash = encoderFileHash;
+        this.audio = audio;
+        this.scheduler = scheduler;
     }
 
     public async Task IngestGrantedTextAsync(CancellationToken cancellationToken = default)
@@ -51,18 +58,28 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
             return;
         }
 
-        if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Text) && !grant.EnabledKinds.HasFlag(GrantFileKinds.Code))
+        var textOrCode = grant.EnabledKinds.HasFlag(GrantFileKinds.Text) || grant.EnabledKinds.HasFlag(GrantFileKinds.Code);
+        var media = grant.EnabledKinds.HasFlag(GrantFileKinds.Audio) || grant.EnabledKinds.HasFlag(GrantFileKinds.Video);
+        if (!textOrCode && !media)
         {
             return;
         }
 
-        cursors.MarkGrantReading(grant.Path);
-        await foreach (var document in reader.ReadAsync(grant, cancellationToken).ConfigureAwait(false))
+        if (textOrCode)
         {
-            await IngestDocumentAsync(grant, document, cancellationToken).ConfigureAwait(false);
+            cursors.MarkGrantReading(grant.Path);
+            await foreach (var document in reader.ReadAsync(grant, cancellationToken).ConfigureAwait(false))
+            {
+                await IngestDocumentAsync(grant, document, cancellationToken).ConfigureAwait(false);
+            }
+
+            cursors.MarkGrantFinished(grant.Path);
         }
 
-        cursors.MarkGrantFinished(grant.Path);
+        if (media && audio is not null)
+        {
+            await audio.IndexGrantAsync(grant, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     public async Task IngestDocumentAsync(ScopeFolderGrant grant, GrantedTextDocument document, CancellationToken cancellationToken = default)
@@ -112,7 +129,7 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
             cancellationToken).ConfigureAwait(false);
 
         var writes = result.Chunks
-            .Select(c => new ChunkWrite(c.ContentId, c.Ordinal))
+            .Select(c => new ChunkWrite(c.ContentId, c.Ordinal, c.PageStart, c.PageEnd, c.CharStart, c.CharEnd))
             .ToList();
         foreach (var chunk in result.Chunks.Where(c => !c.Dense))
         {
@@ -120,6 +137,11 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
         }
 
         cursors.FinishPath(document.Path, result.ContentHash, grant.Path, encoderHash, writes);
+        if (result.OcrPageNumbers.Count > 0)
+        {
+            OcrPageWaitlist.Apply(document.Path, result.OcrPageNumbers, cursors, scheduler);
+        }
+
         foreach (var retiredId in cursors.ListRetiredIds(document.Path))
         {
             if (cursors.AnyLivePath(retiredId))

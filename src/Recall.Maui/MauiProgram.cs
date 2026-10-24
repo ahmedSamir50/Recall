@@ -1,3 +1,4 @@
+using CommunityToolkit.Maui;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.LifecycleEvents;
@@ -23,6 +24,7 @@ public static class MauiProgram
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
             })
+            .UseMauiCommunityToolkitMediaElement(false)
 #if WINDOWS
             .ConfigureLifecycleEvents(events =>
             {
@@ -72,11 +74,12 @@ public static class MauiProgram
 
         var textModel = TextModelConfiguration.Read(builder.Configuration);
         var visionModel = TextModelConfiguration.ReadVision(builder.Configuration);
+        var audioModel = TextModelConfiguration.ReadAudio(builder.Configuration);
         ModelCatalog.Use(TextModelConfiguration.ReadCatalog(builder.Configuration));
         GrantTextFiles.Use(TextModelConfiguration.ReadIngest(builder.Configuration));
         builder.Services.AddRecallCore();
         builder.Services.AddRecallUi();
-        builder.Services.AddRecallMauiPlatform(textModel, visionModel);
+        builder.Services.AddRecallMauiPlatform(textModel, visionModel, audioModel);
 #if DEBUG
         builder.Services.AddSingleton<IDebugAppReset, MauiDebugAppReset>();
 #else

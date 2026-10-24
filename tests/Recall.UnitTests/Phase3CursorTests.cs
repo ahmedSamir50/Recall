@@ -317,6 +317,45 @@ public sealed class Phase3CursorTests
     }
 
     [Fact]
+    public void ReplaceDocumentPatches_SamePath_ListsOrdinals()
+    {
+        var db = NewTempDb();
+        try
+        {
+            var store = new SqliteIngestCursorStore(db);
+            store.ReplaceDocumentPatches("doc.pdf", [
+                new ChunkWrite("pid0", 0, 1, 1, 0, 500),
+                new ChunkWrite("pid1", 1, 1, 2, 480, 1200)]);
+            var chunks = store.ListChunks("doc.pdf");
+            chunks.Select(c => c.Ordinal).Should().Equal(0, 1);
+            chunks[0].ContentId.Should().Be("pid0");
+            chunks[0].PageStart.Should().Be(1);
+            chunks[0].PageEnd.Should().Be(1);
+            chunks[0].CharStart.Should().Be(0);
+            chunks[0].CharEnd.Should().Be(500);
+            chunks[1].ContentId.Should().Be("pid1");
+            chunks[1].PageStart.Should().Be(1);
+            chunks[1].PageEnd.Should().Be(2);
+            chunks[1].CharStart.Should().Be(480);
+            chunks[1].CharEnd.Should().Be(1200);
+            chunks[0].Retired.Should().BeFalse();
+            store.ReplaceDocumentPatches("doc.pdf", []);
+            store.ListChunks("doc.pdf").Should().BeEmpty();
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(Path.GetDirectoryName(db)!, true);
+            }
+            catch (IOException ex)
+            {
+                GC.KeepAlive(ex);
+            }
+        }
+    }
+
+    [Fact]
     public void CheckpointSql_UsesParametersAndFileName()
     {
         CheckpointSql.FileName.Should().Be("checkpoints.db");
@@ -346,6 +385,11 @@ public sealed class Phase3CursorTests
             }
 
             await Task.CompletedTask;
+        }
+
+        public async IAsyncEnumerable<string> ListAudioAndVideoAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            yield break;
         }
     }
 

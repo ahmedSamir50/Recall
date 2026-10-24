@@ -24,18 +24,21 @@ No branch.
 
 ## src/Recall.Core/Ingest/AudioFileIngest.cs
 
-`AudioFileIngest` is the real audio walk. A caption file is ignored. Audio off is reported and the file is not embedded. A WAV is decoded in process. Other containers use the platform source. Each window is stored in `items_audio`, and the native audio context is closed after the file.
+`AudioFileIngest` is the real audio walk. A caption file is ignored. Audio off is reported and the file is not embedded. A WAV is decoded in process. Other containers use the platform source. Each window is stored in `items_audio` at its window ordinal, an `ingest_file` row and one `ingest_chunk` row per window are written through `FinishPath` with the alias, a file already finished with the same SHA-256 content hash is skipped, and changed bytes retire and `TryDelete` their old window ids. The native audio context is closed after the file.
 
 ```csharp
 public sealed class AudioFileIngest
 if (SiblingTranscript.IsCaptionFile(fileName))
 if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Audio))
 if (fileBytes is null)
+if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
 if (WavPcm.IsWav(fileBytes))
 catch (InvalidDataException)
 catch (NotSupportedException)
 if (windows.Count == 0)
 if (startSample >= pcm.LongLength)
+if (cursors.AnyLivePath(retiredId))
+if (index.TryDelete(retiredId))
 ```
 
 ## src/Recall.Core/Ports/AudioPorts.cs
@@ -99,7 +102,7 @@ if (!inputDone)
 if (inputIndex >= 0)
 if (size < 0)
 if (status < 0)
-if ((bufferInfo.Flags & MediaCodec.BufferFlagsEndOfStream) != 0)
+if (bufferInfo.Flags.HasFlag(MediaCodecBufferFlags.EndOfStream))
 ```
 
 ## src/Recall.Maui/Platform/Media/AppleAudioSource.cs
@@ -112,7 +115,7 @@ if (openError is not null)
 if (channels == 0 || channels > 2)
 if (rate <= 0)
 if (readError is not null)
-if (converter.ConvertToBuffer(input, output, out var convertError) == false
+if (!converter.ConvertToBuffer(input, output, out var convertError)
 if (convertError is not null)
 if (output.FrameLength > 0)
 if (wantsFlush)

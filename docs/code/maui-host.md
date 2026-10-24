@@ -218,6 +218,7 @@ namespace Recall.Maui.Platform.Files;
 public sealed partial class MauiLocalFileOpener : ILocalFileOpener
     public bool Exists(string sourcePath)
     public async Task<LocalFileOpenResult> OpenAsync(string sourcePath, CancellationToken cancellationToken = default)
+    public Task<LocalFileOpenResult> OpenAtAsync(string sourcePath, double startSeconds, CancellationToken cancellationToken = default) =>
         if (probe == LocalFileProbe.Empty)
         if (probe == LocalFileProbe.ContentUri)
             if (exists)
@@ -424,4 +425,28 @@ catch (IOException)
 ```
 
 Uses `AVAssetImageGenerator` with the preferred track transform and `FrameCadence.Starts`. A null image or failed JPEG encode skips the frame. A cache-write `IOException` skips that frame. No branch beyond those guards.
+
+## src/Recall.Maui/Platform/Media/MauiMediaPreview.cs
+
+```csharp
+namespace Recall.Maui.Platform.Media;
+public sealed class MauiMediaPreview : IMediaPreview
+    public async Task PlayAsync(string path, double startSeconds, CancellationToken cancellationToken = default)
+        if (page is null)
+```
+
+`PlayAsync` throws on a requested cancellation, picks the first window's page, and pushes a modal `MediaPreviewPage` for the requested path and start on that page's dispatcher. A window without a page returns without pushing.
+
+## src/Recall.Maui/Platform/Media/MediaPreviewPage.xaml.cs
+
+```csharp
+namespace Recall.Maui.Platform.Media;
+public partial class MediaPreviewPage : ContentPage
+    public MediaPreviewPage(string path, double startSeconds)
+    private void OnPlayerMediaOpened(object? sender, EventArgs args)
+    private async Task SeekThenPlayAsync()
+        catch (Exception)
+```
+
+The page hosts `CommunityToolkit.Maui.MediaElement` as `Player`, sets the file as the media source, and on opened seeks to the requested seconds and plays once. A seek failure returns without playing.
 

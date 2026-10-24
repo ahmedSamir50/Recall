@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Recall.Core.Checkpoints;
 using Recall.Core.Device;
 using Recall.Core.Download;
 using Recall.Core.Ingest;
@@ -37,7 +38,32 @@ public static class RecallCoreServiceCollectionExtensions
         services.AddSingleton<ITextSearchService, TextSearchService>();
         services.AddSingleton<TextIngestEngine>();
         services.AddSingleton<IGrantedTextIngestService, GrantedTextIngestService>();
-        services.AddSingleton<ScopeChangeApplier>();
+        services.AddSingleton<AudioOffReport>();
+        services.AddSingleton<IAudioOffReport>(sp => sp.GetRequiredService<AudioOffReport>());
+        services.AddSingleton<IAudioFileIngest, DisabledAudioFileIngest>();
+        services.AddSingleton<IngestScheduler>();
+        services.AddSingleton<IngestSchedulerRunner>();
+        services.AddSingleton(sp => new ScheduledIngestDispatcher(
+            sp.GetRequiredService<IScopeManagerService>(),
+            sp.GetRequiredService<IGrantedTextIngestService>(),
+            sp.GetRequiredService<IUserSkipStore>(),
+            sp.GetRequiredService<ILocalContentProbe>(),
+            sp.GetRequiredService<IRemoteFileSkipReport>(),
+            sp.GetService<IAudioFileIngest>(),
+            sp.GetService<IVisionFileIngest>()));
+        services.AddSingleton(sp => new IngestSchedulerService(
+            sp.GetRequiredService<IngestScheduler>(),
+            sp.GetRequiredService<IngestSchedulerRunner>(),
+            sp.GetRequiredService<ScheduledIngestDispatcher>(),
+            sp.GetService<IIngestModelSession>()));
+        services.AddSingleton<ScopeChangeApplier>(sp => new ScopeChangeApplier(
+            sp.GetRequiredService<IIngestCursorStore>(),
+            sp.GetRequiredService<IGrantedTextIngestService>(),
+            sp.GetRequiredService<LocalOpLogWriter>(),
+            sp.GetService<IAudioFileIngest>(),
+            sp.GetRequiredService<IngestScheduler>(),
+            sp.GetRequiredService<IUserSkipStore>(),
+            sp.GetService<IVisionFileIngest>()));
         services.AddSingleton<ForegroundScanService>();
         services.AddSingleton<IIndexNowService, IndexNowService>();
         services.AddSingleton<ScopeWatchCoordinator>();

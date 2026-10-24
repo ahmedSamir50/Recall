@@ -49,6 +49,9 @@ public sealed partial class MauiLocalFileOpener : ILocalFileOpener
         }
     }
 
+    public Task<LocalFileOpenResult> OpenAtAsync(string sourcePath, double startSeconds, CancellationToken cancellationToken = default) =>
+        OpenAsync(sourcePath, cancellationToken);
+
     private partial bool TryOpenContent(string sourcePath);
 
     private partial bool ContentExists(string sourcePath);

@@ -6,13 +6,11 @@ namespace Recall.Adapters.Embedding.Llama;
 public sealed class LlamaTextEmbeddingEncoder : ITextEmbeddingEncoder, IDisposable
 {
     private readonly IRecallEmbedLibrary library;
-    private readonly SemaphoreSlim gate;
     private int disposed;
 
-    internal LlamaTextEmbeddingEncoder(IRecallEmbedLibrary library, SemaphoreSlim gate)
+    internal LlamaTextEmbeddingEncoder(IRecallEmbedLibrary library)
     {
         this.library = library;
-        this.gate = gate;
     }
 
     public async ValueTask<ReadOnlyMemory<float>> EmbedPrefixedTextAsync(string prefixedText, CancellationToken cancellationToken = default)
@@ -20,7 +18,7 @@ public sealed class LlamaTextEmbeddingEncoder : ITextEmbeddingEncoder, IDisposab
         ObjectDisposedException.ThrowIf(disposed != 0, this);
         ArgumentException.ThrowIfNullOrWhiteSpace(prefixedText);
         cancellationToken.ThrowIfCancellationRequested();
-        await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await LlamaNativeGate.EnterAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             var buffer = new float[MatryoshkaVectorMath.NativeWidth];
@@ -35,7 +33,7 @@ public sealed class LlamaTextEmbeddingEncoder : ITextEmbeddingEncoder, IDisposab
         }
         finally
         {
-            gate.Release();
+            LlamaNativeGate.Exit();
         }
     }
 

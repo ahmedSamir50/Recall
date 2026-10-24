@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="TestAssets\embeddinggemma-2-text\embeddinggemma-2-Q8_0.gguf" CopyToOutputDirectory="PreserveNewest" Link="TestAssets\embeddinggemma-2-text\embeddinggemma-2-Q8_0.gguf" Condition="Exists('TestAssets\embeddinggemma-2-text\embeddinggemma-2-Q8_0.gguf')" />
+    <Content Include="TestAssets\embeddinggemma-2-vision\mmproj-embeddinggemma-2-Q8_0.gguf" CopyToOutputDirectory="PreserveNewest" Link="TestAssets\embeddinggemma-2-vision\mmproj-embeddinggemma-2-Q8_0.gguf" Condition="Exists('TestAssets\embeddinggemma-2-vision\mmproj-embeddinggemma-2-Q8_0.gguf')" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="@(RecallEmbedNativeDlls)" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)" />

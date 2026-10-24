@@ -61,6 +61,7 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
     private readonly Dictionary<string, IngestAliasRow> aliases = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Bm25OnlyRow> bm25Only = new(StringComparer.Ordinal);
     private readonly HashSet<string> pending = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, List<int>> ocrPages = new(StringComparer.OrdinalIgnoreCase);
 
     public bool AllowWrite { get; set; } = true;
 
@@ -328,15 +329,64 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
                 && string.Equals(existing.Path, path, StringComparison.OrdinalIgnoreCase)
                 && !existing.Retired)
             {
-                chunkRows[chunk.ContentId] = existing with { Ordinal = chunk.Ordinal, Missing = false };
+                chunkRows[chunk.ContentId] = existing with { Ordinal = chunk.Ordinal, Missing = false, PageStart = chunk.PageStart, PageEnd = chunk.PageEnd, CharStart = chunk.CharStart, CharEnd = chunk.CharEnd };
             }
             else if (!chunkRows.ContainsKey(chunk.ContentId))
             {
-                chunkRows[chunk.ContentId] = new IngestChunkRow(chunk.ContentId, path, chunk.Ordinal, false, false);
+                chunkRows[chunk.ContentId] = new IngestChunkRow(chunk.ContentId, path, chunk.Ordinal, false, false, chunk.PageStart, chunk.PageEnd, chunk.CharStart, chunk.CharEnd);
             }
 
             AddAlias(chunk.ContentId, path);
         }
+    }
+
+    public void ReplaceDocumentPatches(string path, IReadOnlyList<ChunkWrite> patches)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        ArgumentNullException.ThrowIfNull(patches);
+        foreach (var id in chunkRows.Keys.ToList())
+        {
+            var chunk = chunkRows[id];
+            if (string.Equals(chunk.Path, path, StringComparison.OrdinalIgnoreCase) && !chunk.Retired)
+            {
+                chunkRows.Remove(id);
+            }
+        }
+
+        foreach (var patch in patches)
+        {
+            if (string.IsNullOrWhiteSpace(patch.ContentId))
+            {
+                throw new ArgumentException("Content id must not be blank.", nameof(patches));
+            }
+
+            chunkRows[patch.ContentId] = new IngestChunkRow(patch.ContentId, path, patch.Ordinal, false, false, patch.PageStart, patch.PageEnd, patch.CharStart, patch.CharEnd);
+        }
+    }
+
+    public void ReplaceOcrPages(string path, IReadOnlyList<int> pageNumbers)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        ArgumentNullException.ThrowIfNull(pageNumbers);
+        ocrPages[path] = pageNumbers.OrderBy(page => page).ToList();
+    }
+
+    public IReadOnlyList<int> ListOcrPages(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        return ocrPages.TryGetValue(path, out var pages) ? pages : [];
     }
 
     public void ResetTextIngest()
@@ -347,6 +397,7 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
         aliases.Clear();
         bm25Only.Clear();
         pending.Clear();
+        ocrPages.Clear();
     }
 }
 
@@ -455,6 +506,32 @@ public sealed class FakeModelDownloadService : IModelDownloadService
 
         return Task.CompletedTask;
     }
+
+    public TextModelDownloadSnapshot AudioSnapshot { get; set; } = new(TextModelDownloadPhase.NotStarted, 0, null);
+
+    public int AudioDownloadCalls { get; private set; }
+
+    public TextModelDownloadSnapshot GetAudioDownloadSnapshot() => AudioSnapshot;
+
+    public async Task DownloadAudioModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
+    {
+        AudioDownloadCalls++;
+        var decision = AudioDownloadJoinPolicy.Decide(VisionSnapshot.Phase, VisionSnapshot.Phase == TextModelDownloadPhase.Ready);
+        if (decision == AudioDownloadJoin.WaitForCurrent)
+        {
+            AudioSnapshot = VisionSnapshot;
+            return;
+        }
+
+        if (decision == AudioDownloadJoin.StartVision)
+        {
+            await DownloadVisionModelAsync(progress, cancellationToken).ConfigureAwait(false);
+        }
+
+        AudioSnapshot = decision == AudioDownloadJoin.UseReady
+            ? AudioSnapshot with { Phase = TextModelDownloadPhase.Ready, Fault = null }
+            : VisionSnapshot;
+    }
 }
 
 public sealed class FakeIndexPolicy : IIndexPolicy
@@ -469,6 +546,8 @@ public sealed class FakeIndexPolicy : IIndexPolicy
 public sealed class FakeTextTokenCounter : ITextTokenCounter
 {
     public int CountTokens(string text) => Math.Max(1, text.Length / 4);
+
+    public IReadOnlyList<int> TokenEnds(string text) => Enumerable.Range(1, text.Length).ToList();
 }
 
 public sealed class FakeTextEmbeddingEncoder : ITextEmbeddingEncoder
@@ -584,10 +663,16 @@ public sealed class FakeTextVectorIndex : ITextVectorIndex
 public sealed class FakeEncoderFileHash : IEncoderFileHash
 {
     public string? TextHash { get; set; } = "test-hash";
+
+    public string? VisionHash { get; set; }
+
+    public string? AudioHash { get; set; }
 }
 
 public static class IngestTestKit
 {
+    public static readonly float[] SixteenKFloats = [0.5f];
+
     public static DirectoryGrantedTextReader CreateDirectoryReader(IUserSkipStore? skips = null) =>
         new(
             skips ?? new FakeUserSkipStore(),
@@ -615,15 +700,18 @@ public static class IngestTestKit
         FakeIngestCursorStore cursors,
         FakeTextVectorIndex index,
         LocalOpLogWriter opLog,
-        IEncoderFileHash? encoderFileHash = null) =>
-        new(scope, reader, engine, cursors, index, opLog, encoderFileHash ?? new FakeEncoderFileHash());
+        IEncoderFileHash? encoderFileHash = null,
+        IAudioFileIngest? audio = null) =>
+        new(scope, reader, engine, cursors, index, opLog, encoderFileHash ?? new FakeEncoderFileHash(), audio);
 
     public static TextSearchService CreateSearchService(
         FakeTextEmbeddingEncoder encoder,
         ITextVectorIndex index,
         FakeIngestCursorStore? cursors = null,
-        IVisionEmbeddingEncoder? vision = null) =>
-        new(encoder, index, new FakeIndexPolicy(), cursors ?? new FakeIngestCursorStore(), new FakeEncoderFileHash(), vision);
+        IVisionEmbeddingEncoder? vision = null,
+        IMediaVectorIndex? mediaIndex = null,
+        IEncoderFileHash? encoderFileHash = null) =>
+        new(encoder, index, new FakeIndexPolicy(), cursors ?? new FakeIngestCursorStore(), encoderFileHash ?? new FakeEncoderFileHash(), mediaIndex ?? new FakeMediaVectorIndex(), vision);
 }
 
 public sealed class FakeLocalContentProbe : ILocalContentProbe
@@ -766,6 +854,12 @@ public sealed class FakeMediaVectorIndex : IMediaVectorIndex
 
     public List<MediaSearchRequest> Requests { get; } = [];
 
+    public List<string> WordsQueries { get; } = [];
+
+    public List<(string Collection, string Query, string Filter, int TopK)> WordsRequests { get; } = [];
+
+    public Func<string, string, int, IReadOnlyList<MediaSearchHit>>? OnSearchWords { get; set; }
+
     public Func<MediaSearchRequest, IReadOnlyList<MediaSearchHit>>? OnSearch { get; set; }
 
     public void Create(string collectionName, int width)
@@ -787,11 +881,37 @@ public sealed class FakeMediaVectorIndex : IMediaVectorIndex
     public bool TryDelete(string contentId) =>
         Inserts.RemoveAll(i => string.Equals(i.ContentId, contentId, StringComparison.Ordinal)) > 0;
 
+    public int ReconcileCalls { get; private set; }
+
+    public void Reconcile(IReadOnlyList<VectorLiveState> states)
+    {
+        ArgumentNullException.ThrowIfNull(states);
+        ReconcileCalls++;
+        var live = new HashSet<string>(states.Where(s => s.PathLive).Select(s => s.ContentId), StringComparer.Ordinal);
+        for (var i = 0; i < Inserts.Count; i++)
+        {
+            Inserts[i] = Inserts[i] with { PathLive = live.Contains(Inserts[i].ContentId) };
+        }
+    }
+
     public IReadOnlyList<MediaSearchHit> Search(MediaSearchRequest request, CancellationToken cancellationToken = default)
     {
         Requests.Add(request);
         QueriedCollections.Add(request.CollectionName);
         return OnSearch?.Invoke(request) ?? [];
+    }
+
+    public IReadOnlyList<MediaSearchHit> SearchWords(string collectionName, string query, string filter, int topK, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return [];
+        }
+
+        WordsQueries.Add(query);
+        WordsRequests.Add((collectionName, query, filter, topK));
+        QueriedCollections.Add(collectionName);
+        return OnSearchWords?.Invoke(collectionName, query, topK) ?? [];
     }
 }
 
@@ -810,6 +930,157 @@ public sealed class FakePictureSearchService : IPictureSearchService
     {
         Calls++;
         LastGrants = grants;
+        return Task.FromResult(Result);
+    }
+}
+
+public sealed class FakeAudioEmbeddingEncoder : IAudioEmbeddingEncoder
+{
+    public int EmbedCalls { get; private set; }
+
+    public int CloseCalls { get; private set; }
+
+    public bool IsLoaded { get; private set; }
+
+    public ReadOnlyMemory<float> LastPcm { get; private set; }
+
+    public Action<ReadOnlyMemory<float>, float[]>? OnEmbed { get; set; }
+
+    public void EmbedPcm(ReadOnlyMemory<float> mono16k, float[] destination768)
+    {
+        EmbedCalls++;
+        LastPcm = mono16k;
+        IsLoaded = true;
+        if (OnEmbed is not null)
+        {
+            OnEmbed(mono16k, destination768);
+            return;
+        }
+
+        destination768[0] = 1;
+    }
+
+    public void CloseAudio()
+    {
+        CloseCalls++;
+        IsLoaded = false;
+    }
+}
+
+public sealed class FakeAudioSource : IAudioSource
+{
+    public byte[]? NextBytes { get; set; } = [];
+
+    public bool SameReferenceOnReadCompressed { get; set; }
+
+    public ReadOnlyMemory<byte> LastReadCompressed { get; private set; }
+
+    public int ReadCalls { get; private set; }
+
+    public int ReadCompressedCalls { get; private set; }
+
+    public Exception? OnReadCompressed { get; set; }
+
+    public byte[]? Read(string path)
+    {
+        ReadCalls++;
+        return NextBytes;
+    }
+
+    public float[] ReadCompressed(byte[] file)
+    {
+        ReadCompressedCalls++;
+        if (OnReadCompressed is not null)
+        {
+            throw OnReadCompressed;
+        }
+
+        LastReadCompressed = file;
+        return SameReferenceOnReadCompressed
+            ? IngestTestKit.SixteenKFloats
+            : [0.25f, 0.5f];
+    }
+}
+
+public sealed class FakeSiblingFiles : ISiblingFiles
+{
+    public List<SiblingFile> Next { get; set; } = [];
+
+    public string? LastMediaPath { get; private set; }
+
+    public IReadOnlyList<SiblingFile> List(string mediaPath)
+    {
+        LastMediaPath = mediaPath;
+        return Next;
+    }
+}
+
+public sealed class FakeAudioOffReport : IAudioOffReport
+{
+    public int ReportCalls { get; private set; }
+
+    public int ClearCalls { get; private set; }
+
+    public bool Shown { get; private set; }
+
+    public void Report()
+    {
+        ReportCalls++;
+        Shown = true;
+    }
+
+    public void Clear()
+    {
+        ClearCalls++;
+        Shown = false;
+    }
+}
+
+public sealed class FakeAudioFileIngest : IAudioFileIngest
+{
+    public int IndexAsyncCalls { get; private set; }
+
+    public int IndexGrantCalls { get; private set; }
+
+    public List<string> IndexedPaths { get; } = [];
+
+    public Task IndexAsync(ScopeFolderGrant grant, string path, CancellationToken cancellationToken = default)
+    {
+        IndexAsyncCalls++;
+        IndexedPaths.Add(path);
+        return Task.CompletedTask;
+    }
+
+    public Task IndexGrantAsync(ScopeFolderGrant grant, CancellationToken cancellationToken = default)
+    {
+        IndexGrantCalls++;
+        return Task.CompletedTask;
+    }
+}
+
+public sealed class FakeAudioSearchService : IAudioSearchService
+{
+    public IReadOnlyList<MediaSearchHit> Result { get; set; } = [];
+
+    public int Calls { get; private set; }
+
+    public IReadOnlyList<ScopeFolderGrant> LastGrants { get; private set; } = [];
+
+    public Exception? OnFind { get; set; }
+
+    public Task<IReadOnlyList<MediaSearchHit>> FindAsync(
+        ReadOnlyMemory<float> mono16k,
+        IReadOnlyList<ScopeFolderGrant> grants,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Calls++;
+        LastGrants = grants;
+        if (OnFind is not null)
+        {
+            throw OnFind;
+        }
+
         return Task.FromResult(Result);
     }
 }

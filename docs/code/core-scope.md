@@ -228,10 +228,18 @@ public const string CreateFileTable =
 public const string CreateChunkTable =
 public const string CreateChunkPathIndex =
 public const string CreateGrantTable =
+public const string AddEncoderHashColumn =
+public const string AddChunkPageStartColumn =
+public const string AddChunkPageEndColumn =
+public const string AddChunkCharStartColumn =
+public const string AddChunkCharEndColumn =
+public const string CreateOcrPageTable =
 public const string EnsureSchema =
 
 No branch.
 ``` 
+
+`ingest_chunk` gains `page_start`, `page_end`, `char_start`, and `char_end`, each `INTEGER NOT NULL DEFAULT 0`, added with `ALTER TABLE ingest_chunk ADD COLUMN IF NOT EXISTS`. `char_start` and `char_end` are indexes into the whole document string, so the second patch of one file does not start at 0. `ocr_page(path TEXT NOT NULL, page_number INTEGER NOT NULL, PRIMARY KEY(path, page_number))` holds the pages `BrokenArabic.NeedsOcr` flags; those pages are not embedded and wait for the OCR epic. There is no `document_patch` table.
 
 
 
@@ -242,6 +250,9 @@ namespace Recall.Core.Checkpoints;
 public type IIngestCursorStore
 IIngestCursorStore
 public interface IIngestCursorStore
+public void ReplaceDocumentPatches(string path, IReadOnlyList<ChunkWrite> patches);
+public void ReplaceOcrPages(string path, IReadOnlyList<int> pageNumbers);
+public IReadOnlyList<int> ListOcrPages(string path);
 public void ResetTextIngest()
 
 No branch.
@@ -276,8 +287,8 @@ public enum IngestCursorDecision
 public sealed record IngestFileRow(string Path, string ContentHash, IngestCursorState State, string GrantPath, string EncoderHash);
 public sealed record IngestAliasRow(string ContentId, string Path, bool Missing, bool Retired);
 public sealed record Bm25OnlyRow(string ContentId, string Path, string RawText);
-public sealed record ChunkWrite(string ContentId, int Ordinal);
-public sealed record IngestChunkRow(string ContentId, string Path, int Ordinal, bool Missing, bool Retired);
+public sealed record ChunkWrite(string ContentId, int Ordinal, int PageStart = 0, int PageEnd = 0, int CharStart = 0, int CharEnd = 0);
+public sealed record IngestChunkRow(string ContentId, string Path, int Ordinal, bool Missing, bool Retired, int PageStart = 0, int PageEnd = 0, int CharStart = 0, int CharEnd = 0);
 public sealed record GrantScanRow(string GrantPath, IngestCursorState State);
 public static class IngestCursorPolicy
 public static IngestCursorDecision Decide(IngestFileRow? row, string contentHash)
@@ -311,10 +322,17 @@ public void MarkGrantReading(string grantPath)
 public void MarkGrantFinished(string grantPath)
 public void ResetTextIngest()
 public bool IsGrantFinished(string grantPath)
+public void ReplaceDocumentPatches(string path, IReadOnlyList<ChunkWrite> patches)
+public void ReplaceOcrPages(string path, IReadOnlyList<int> pageNumbers)
+    if (string.IsNullOrWhiteSpace(path))
+    if (string.IsNullOrWhiteSpace(path))
+public IReadOnlyList<int> ListOcrPages(string path)
+    if (string.IsNullOrWhiteSpace(path))
     if (string.IsNullOrWhiteSpace(databasePath))
     if (reader.Read())
     if (string.IsNullOrWhiteSpace(path))
     if (string.IsNullOrWhiteSpace(chunk.ContentId))
+    if (string.IsNullOrWhiteSpace(patch.ContentId))
     if (!ChunkRowExists(connection, transaction, chunk.ContentId))
     if (string.IsNullOrWhiteSpace(contentId) || string.IsNullOrWhiteSpace(path))
     if (string.IsNullOrWhiteSpace(path))
@@ -323,11 +341,14 @@ public bool IsGrantFinished(string grantPath)
     if (value is null || value == DBNull.Value)
     if (acquired)
     if (!string.IsNullOrWhiteSpace(directory))
-    if (!HasColumn(connection, transaction, "ingest_file", "encoder_hash"))
+    if (!HasColumn(connection, transaction, "PRAGMA table_info(ingest_file)", "encoder_hash"))
+    if (HasColumn(connection, transaction, "PRAGMA table_info(ingest_chunk)", columnName))
     if (!string.Equals(tableName, "ingest_file", StringComparison.Ordinal))
     if (string.Equals(name, columnName, StringComparison.OrdinalIgnoreCase))
     if (existing.Add(key))
 ``` 
+
+`ReplaceDocumentPatches` deletes the live `ingest_chunk` rows for one path and writes the given patch rows with their page and char spans. A blank path throws `ArgumentException` with message `Path must not be blank.`, and a null patch list throws `ArgumentNullException`. `ingest_chunk` gains `page_start`, `page_end`, `char_start`, and `char_end`, each `INTEGER NOT NULL DEFAULT 0`, added with `ALTER TABLE ingest_chunk ADD COLUMN IF NOT EXISTS`. A plain note stores 0 for both page columns. Shrink, alias, and delete keep using `ingest_chunk` only.
 
 
 

@@ -220,6 +220,18 @@ public sealed record MediaSearchRequest(
 
 `MediaSearchHit` is the picture or frame card. `MediaSearchRequest` names one media collection, one 768-wide query vector, a grant filter, and a top-k. No branch.
 
+## src/Recall.Core/Search/MediaHitStart.cs
+
+```csharp
+namespace Recall.Core.Search;
+public static class MediaHitStart
+    public static double Seconds(TextSearchHit hit)
+    public static double Seconds(MediaSearchHit hit)
+    public static bool Seeks(double startSeconds) => startSeconds > 0;
+```
+
+`Seconds` reads the start seconds off a text or media hit and throws on a null hit. `Seeks` is true only above zero, so a start of 0 keeps the launcher. No branch.
+
 ## src/Recall.Core/Search/PictureQueryGate.cs
 
 ```csharp

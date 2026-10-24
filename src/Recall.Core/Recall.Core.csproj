@@ -9,6 +9,8 @@
     <InternalsVisibleTo Include="Recall.UnitTests" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="UglyToad.PdfPig" />
+    <PackageReference Include="UglyToad.PdfPig.DocumentLayoutAnalysis" />
     <AdditionalFiles Include="BannedSymbols.txt" />
   </ItemGroup>
 </Project>

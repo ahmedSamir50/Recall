@@ -36,6 +36,16 @@ public sealed partial class MauiGrantedTextReader : IGrantedTextReader
         return files.ReadAsync(grant, cancellationToken);
     }
 
+    public IAsyncEnumerable<string> ListAudioAndVideoAsync(ScopeFolderGrant grant, CancellationToken cancellationToken)
+    {
+        if (Interlocked.Exchange(ref restored, 1) == 0)
+        {
+            access.RestorePersistedAccess();
+        }
+
+        return files.ListAudioAndVideoAsync(grant, cancellationToken);
+    }
+
     private static IAsyncEnumerable<GrantedTextDocument> NoDocuments { get; } = new EmptyDocuments();
 
     private sealed class EmptyDocuments : IAsyncEnumerable<GrantedTextDocument>

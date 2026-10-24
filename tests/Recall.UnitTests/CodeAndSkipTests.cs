@@ -42,6 +42,11 @@ public sealed class CodeAndSkipTests
             await Task.CompletedTask.ConfigureAwait(false);
             yield break;
         }
+
+        public async IAsyncEnumerable<string> ListAudioAndVideoAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            yield break;
+        }
     }
 
     [Fact]

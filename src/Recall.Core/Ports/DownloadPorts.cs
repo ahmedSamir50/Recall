@@ -15,6 +15,10 @@ public interface IModelDownloadService
     Task DownloadVisionModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default);
 
     TextModelDownloadSnapshot GetVisionDownloadSnapshot();
+
+    TextModelDownloadSnapshot GetAudioDownloadSnapshot();
+
+    Task DownloadAudioModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default);
 }
 
 public interface ISecureStorageService

@@ -6,6 +6,9 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
 {
     private readonly string databasePath;
     private readonly SemaphoreSlim writeLock = new(1, 1);
+    private int writeDepth;
+    private int writeOwner;
+    private int spanReady;
 
     public SqliteIngestCursorStore(string databasePath)
     {
@@ -64,7 +67,7 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
         EnsureSchema(connection, transaction);
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = "SELECT content_id, path, ordinal, missing, retired FROM ingest_chunk WHERE path = @path";
+        command.CommandText = "SELECT content_id, path, ordinal, missing, retired, page_start, page_end, char_start, char_end FROM ingest_chunk WHERE path = @path";
         command.Parameters.AddWithValue("@path", path);
         var list = new List<IngestChunkRow>();
         using var reader = command.ExecuteReader();
@@ -84,7 +87,7 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
         EnsureSchema(connection, transaction);
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = "SELECT content_id, path, ordinal, missing, retired FROM ingest_chunk WHERE content_id = @id";
+        command.CommandText = "SELECT content_id, path, ordinal, missing, retired, page_start, page_end, char_start, char_end FROM ingest_chunk WHERE content_id = @id";
         command.Parameters.AddWithValue("@id", contentId);
         using var reader = command.ExecuteReader();
         IngestChunkRow? row = null;
@@ -153,7 +156,16 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
 
                 if (!ChunkRowExists(connection, transaction, chunk.ContentId))
                 {
-                    InsertChunkRow(connection, transaction, chunk.ContentId, path, chunk.Ordinal);
+                    InsertChunkRow(
+                        connection,
+                        transaction,
+                        chunk.ContentId,
+                        path,
+                        chunk.Ordinal,
+                        chunk.PageStart,
+                        chunk.PageEnd,
+                        chunk.CharStart,
+                        chunk.CharEnd);
                 }
 
                 AddAliasInTransaction(connection, transaction, chunk.ContentId, path);
@@ -166,6 +178,127 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
             transaction.Rollback();
             throw;
         }
+    }
+
+    public void ReplaceDocumentPatches(string path, IReadOnlyList<ChunkWrite> patches)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        ArgumentNullException.ThrowIfNull(patches);
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            EnsureSchema(connection, transaction);
+            var newIds = new HashSet<string>(patches.Select(patch => patch.ContentId), StringComparer.Ordinal);
+            RetireAbsentAliases(connection, transaction, path, newIds);
+            using (var deleteLive = connection.CreateCommand())
+            {
+                deleteLive.Transaction = transaction;
+                deleteLive.CommandText = "DELETE FROM ingest_chunk WHERE path = @path AND retired = 0";
+                deleteLive.Parameters.AddWithValue("@path", path);
+                deleteLive.ExecuteNonQuery();
+            }
+
+            foreach (var patch in patches)
+            {
+                if (string.IsNullOrWhiteSpace(patch.ContentId))
+                {
+                    throw new ArgumentException("Content id must not be blank.", nameof(patches));
+                }
+
+                if (!ChunkRowExists(connection, transaction, patch.ContentId))
+                {
+                    InsertChunkRow(
+                        connection,
+                        transaction,
+                        patch.ContentId,
+                        path,
+                        patch.Ordinal,
+                        patch.PageStart,
+                        patch.PageEnd,
+                        patch.CharStart,
+                        patch.CharEnd);
+                }
+
+                AddAliasInTransaction(connection, transaction, patch.ContentId, path);
+            }
+
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+    public void ReplaceOcrPages(string path, IReadOnlyList<int> pageNumbers)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        ArgumentNullException.ThrowIfNull(pageNumbers);
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            EnsureSchema(connection, transaction);
+            using (var delete = connection.CreateCommand())
+            {
+                delete.Transaction = transaction;
+                delete.CommandText = "DELETE FROM ocr_page WHERE path = @path";
+                delete.Parameters.AddWithValue("@path", path);
+                delete.ExecuteNonQuery();
+            }
+
+            foreach (var pageNumber in pageNumbers)
+            {
+                using var insert = connection.CreateCommand();
+                insert.Transaction = transaction;
+                insert.CommandText = "INSERT INTO ocr_page(path, page_number) VALUES (@path, @page)";
+                insert.Parameters.AddWithValue("@path", path);
+                insert.Parameters.AddWithValue("@page", pageNumber);
+                insert.ExecuteNonQuery();
+            }
+
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+    public IReadOnlyList<int> ListOcrPages(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT page_number FROM ocr_page WHERE path = @path ORDER BY page_number";
+        command.Parameters.AddWithValue("@path", path);
+        var pages = new List<int>();
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            pages.Add(reader.GetInt32(0));
+        }
+
+        transaction.Commit();
+        return pages;
     }
 
     public bool AnyLivePath(string contentId)
@@ -426,6 +559,7 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
             "DELETE FROM bm25_only",
             "DELETE FROM pending_reconcile",
             "DELETE FROM grant_scan",
+            "DELETE FROM ocr_page",
         })
         {
             using var command = connection.CreateCommand();
@@ -439,7 +573,7 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
 
     public bool TryEnterWrite(out CheckpointLease? lease)
     {
-        if (!writeLock.Wait(0))
+        if (!TryAcquireWrite())
         {
             lease = null;
             return false;
@@ -451,7 +585,7 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
 
     public CheckpointLease EnterWrite()
     {
-        writeLock.Wait();
+        AcquireWrite();
         return CreateWriteLease();
     }
 
@@ -635,7 +769,7 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
             {
                 if (acquired)
                 {
-                    writeLock.Release();
+                    ReleaseWrite();
                     acquired = false;
                 }
             },
@@ -643,10 +777,56 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
             {
                 if (acquired)
                 {
-                    writeLock.Release();
+                    ReleaseWrite();
                     acquired = false;
                 }
             });
+    }
+
+    private void AcquireWrite()
+    {
+        var id = Environment.CurrentManagedThreadId;
+        if (writeDepth > 0 && writeOwner == id)
+        {
+            writeDepth++;
+            return;
+        }
+
+        writeLock.Wait();
+        writeOwner = id;
+        writeDepth = 1;
+    }
+
+    private bool TryAcquireWrite()
+    {
+        var id = Environment.CurrentManagedThreadId;
+        if (writeDepth > 0 && writeOwner == id)
+        {
+            writeDepth++;
+            return true;
+        }
+
+        if (!writeLock.Wait(0))
+        {
+            return false;
+        }
+
+        writeOwner = id;
+        writeDepth = 1;
+        return true;
+    }
+
+    private void ReleaseWrite()
+    {
+        writeDepth--;
+        if (writeDepth > 0)
+        {
+            return;
+        }
+
+        writeOwner = 0;
+        writeDepth = 0;
+        writeLock.Release();
     }
 
     private static IngestFileRow ReadFileRow(SqliteDataReader reader)
@@ -666,7 +846,11 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
             reader.GetString(1),
             reader.GetInt32(2),
             reader.GetInt32(3) != 0,
-            reader.GetInt32(4) != 0);
+            reader.GetInt32(4) != 0,
+            reader.GetInt32(5),
+            reader.GetInt32(6),
+            reader.GetInt32(7),
+            reader.GetInt32(8));
 
     private static void UpsertFinishedFile(
         SqliteConnection connection,
@@ -731,14 +915,22 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
         SqliteTransaction transaction,
         string contentId,
         string path,
-        int ordinal)
+        int ordinal,
+        int pageStart,
+        int pageEnd,
+        int charStart,
+        int charEnd)
     {
         using var chunkCommand = connection.CreateCommand();
         chunkCommand.Transaction = transaction;
-        chunkCommand.CommandText = "INSERT INTO ingest_chunk(content_id, path, ordinal, missing, retired) VALUES(@id, @path, @ordinal, 0, 0)";
+        chunkCommand.CommandText = "INSERT INTO ingest_chunk(content_id, path, ordinal, missing, retired, page_start, page_end, char_start, char_end) VALUES(@id, @path, @ordinal, 0, 0, @pageStart, @pageEnd, @charStart, @charEnd)";
         chunkCommand.Parameters.AddWithValue("@id", contentId);
         chunkCommand.Parameters.AddWithValue("@path", path);
         chunkCommand.Parameters.AddWithValue("@ordinal", ordinal);
+        chunkCommand.Parameters.AddWithValue("@pageStart", pageStart);
+        chunkCommand.Parameters.AddWithValue("@pageEnd", pageEnd);
+        chunkCommand.Parameters.AddWithValue("@charStart", charStart);
+        chunkCommand.Parameters.AddWithValue("@charEnd", charEnd);
         chunkCommand.ExecuteNonQuery();
     }
 
@@ -765,7 +957,7 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
         return connection;
     }
 
-    private static void EnsureSchema(SqliteConnection connection, SqliteTransaction transaction)
+    private void EnsureSchema(SqliteConnection connection, SqliteTransaction transaction)
     {
         using (var file = connection.CreateCommand())
         {
@@ -816,7 +1008,14 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
             bm25Only.ExecuteNonQuery();
         }
 
-        if (!HasColumn(connection, transaction, "ingest_file", "encoder_hash"))
+        using (var ocrPage = connection.CreateCommand())
+        {
+            ocrPage.Transaction = transaction;
+            ocrPage.CommandText = CheckpointSql.CreateOcrPageTable;
+            ocrPage.ExecuteNonQuery();
+        }
+
+        if (!HasColumn(connection, transaction, "PRAGMA table_info(ingest_file)", "encoder_hash"))
         {
             using var alter = connection.CreateCommand();
             alter.Transaction = transaction;
@@ -824,19 +1023,57 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
             alter.ExecuteNonQuery();
         }
 
+        EnsureChunkSpanColumns(connection, transaction);
+
         CopyChunkPairsToChunkPath(connection, transaction);
     }
 
-    private static bool HasColumn(SqliteConnection connection, SqliteTransaction transaction, string tableName, string columnName)
+    private void EnsureChunkSpanColumns(SqliteConnection connection, SqliteTransaction transaction)
     {
-        if (!string.Equals(tableName, "ingest_file", StringComparison.Ordinal))
+        if (Volatile.Read(ref spanReady) != 0)
         {
-            throw new ArgumentException("Unknown table name.", nameof(tableName));
+            return;
+        }
+
+        AcquireWrite();
+        try
+        {
+            if (spanReady != 0)
+            {
+                return;
+            }
+
+            AddSpanColumn(connection, transaction, "page_start", "ALTER TABLE ingest_chunk ADD COLUMN page_start INTEGER NOT NULL DEFAULT 0");
+            AddSpanColumn(connection, transaction, "page_end", "ALTER TABLE ingest_chunk ADD COLUMN page_end INTEGER NOT NULL DEFAULT 0");
+            AddSpanColumn(connection, transaction, "char_start", "ALTER TABLE ingest_chunk ADD COLUMN char_start INTEGER NOT NULL DEFAULT 0");
+            AddSpanColumn(connection, transaction, "char_end", "ALTER TABLE ingest_chunk ADD COLUMN char_end INTEGER NOT NULL DEFAULT 0");
+
+            spanReady = 1;
+        }
+        finally
+        {
+            ReleaseWrite();
+        }
+    }
+
+    private static void AddSpanColumn(SqliteConnection connection, SqliteTransaction transaction, string columnName, string alter)
+    {
+        if (HasColumn(connection, transaction, "PRAGMA table_info(ingest_chunk)", columnName))
+        {
+            return;
         }
 
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = "PRAGMA table_info(ingest_file)";
+        command.CommandText = alter;
+        command.ExecuteNonQuery();
+    }
+
+    private static bool HasColumn(SqliteConnection connection, SqliteTransaction transaction, string tableInfo, string columnName)
+    {
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = tableInfo;
         using var reader = command.ExecuteReader();
         while (reader.Read())
         {

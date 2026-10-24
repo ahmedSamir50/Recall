@@ -11,26 +11,40 @@ public sealed class MauiModelDownloadService : IModelDownloadService
     private readonly IGrantedTextIngestService ingest;
     private readonly TextModelDownloadOptions options;
     private readonly VisionModelDownloadOptions visionOptions;
+    private readonly AudioModelDownloadOptions audioOptions;
     private readonly string modelDirectory;
     private readonly string visionDirectory;
     private readonly object gate = new();
     private CancellationTokenSource? downloadCts;
     private CancellationTokenSource? visionDownloadCts;
+    private Task? visionDownloadInFlight;
     private int lastPublishedPercent = -1;
     private int lastPublishedVisionPercent = -1;
     private TextModelDownloadSnapshot snapshot = new(TextModelDownloadPhase.NotStarted, 0, null);
     private TextModelDownloadSnapshot visionSnapshot = new(TextModelDownloadPhase.NotStarted, 0, null);
+    private TextModelDownloadSnapshot audioSnapshot = new(TextModelDownloadPhase.NotStarted, 0, null);
 
     public MauiModelDownloadService(
         IHttpClientFactory httpClientFactory,
         IGrantedTextIngestService ingest,
         TextModelDownloadOptions options,
         VisionModelDownloadOptions visionOptions)
+        : this(httpClientFactory, ingest, options, visionOptions, new AudioModelDownloadOptions())
+    {
+    }
+
+    public MauiModelDownloadService(
+        IHttpClientFactory httpClientFactory,
+        IGrantedTextIngestService ingest,
+        TextModelDownloadOptions options,
+        VisionModelDownloadOptions visionOptions,
+        AudioModelDownloadOptions audioOptions)
     {
         this.httpClientFactory = httpClientFactory;
         this.ingest = ingest;
         this.options = options;
         this.visionOptions = visionOptions;
+        this.audioOptions = audioOptions;
         modelDirectory = Path.Combine(FileSystem.AppDataDirectory, options.RelativeModelDirectory);
         visionDirectory = Path.Combine(FileSystem.AppDataDirectory, visionOptions.RelativeModelDirectory);
         Directory.CreateDirectory(modelDirectory);
@@ -53,6 +67,14 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         }
     }
 
+    public TextModelDownloadSnapshot GetAudioDownloadSnapshot()
+    {
+        lock (gate)
+        {
+            return audioSnapshot;
+        }
+    }
+
     public Task DownloadTextModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
     {
         return RunDownloadAsync(
@@ -64,15 +86,102 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             cancellationToken);
     }
 
-    public Task DownloadVisionModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
+    public async Task DownloadVisionModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
     {
-        return RunDownloadAsync(
-            [(visionOptions.ModelFileName, visionOptions.ModelBaseUri, visionOptions.ModelSha256)],
-            visionDirectory,
-            vision: true,
-            ingestAfter: false,
-            progress,
-            cancellationToken);
+        Task downloadTask;
+        lock (gate)
+        {
+            if (visionDownloadInFlight is not null)
+            {
+                downloadTask = visionDownloadInFlight;
+            }
+            else
+            {
+                downloadTask = RunDownloadAsync(
+                    [(visionOptions.ModelFileName, visionOptions.ModelBaseUri, visionOptions.ModelSha256)],
+                    visionDirectory,
+                    vision: true,
+                    ingestAfter: false,
+                    progress,
+                    cancellationToken);
+                visionDownloadInFlight = downloadTask;
+            }
+        }
+
+        try
+        {
+            await downloadTask.ConfigureAwait(false);
+        }
+        finally
+        {
+            lock (gate)
+            {
+                if (visionDownloadInFlight == downloadTask)
+                {
+                    visionDownloadInFlight = null;
+                }
+            }
+        }
+    }
+
+    public async Task DownloadAudioModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
+    {
+        var fileReady = await ModelHashVerifier.MatchesExpectedHashAsync(
+            Path.Combine(visionDirectory, audioOptions.ModelFileName),
+            audioOptions.ModelSha256,
+            cancellationToken).ConfigureAwait(false);
+
+        TextModelDownloadSnapshot visionPhaseSnapshot;
+        lock (gate)
+        {
+            visionPhaseSnapshot = visionSnapshot;
+        }
+
+        var decision = AudioDownloadJoinPolicy.Decide(visionPhaseSnapshot.Phase, fileReady);
+        switch (decision)
+        {
+            case AudioDownloadJoin.UseReady:
+                SetAudioSnapshot(current => current with { Phase = TextModelDownloadPhase.Ready, Fault = null });
+                return;
+            case AudioDownloadJoin.WaitForCurrent:
+                await AwaitVisionInFlightAsync().ConfigureAwait(false);
+                break;
+            default:
+                await DownloadVisionModelAsync(progress, cancellationToken).ConfigureAwait(false);
+                break;
+        }
+
+        CopyVisionSnapshotToAudio();
+    }
+
+    private async Task AwaitVisionInFlightAsync()
+    {
+        Task? inFlight;
+        lock (gate)
+        {
+            inFlight = visionDownloadInFlight;
+        }
+
+        if (inFlight is not null)
+        {
+            await inFlight.ConfigureAwait(false);
+        }
+    }
+
+    private void CopyVisionSnapshotToAudio()
+    {
+        lock (gate)
+        {
+            audioSnapshot = visionSnapshot;
+        }
+    }
+
+    private void SetAudioSnapshot(Func<TextModelDownloadSnapshot, TextModelDownloadSnapshot> update)
+    {
+        lock (gate)
+        {
+            audioSnapshot = update(audioSnapshot);
+        }
     }
 
     public void CancelTextDownload()
@@ -94,10 +203,12 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             visionDownloadCts?.Cancel();
             visionDownloadCts?.Dispose();
             visionDownloadCts = null;
+            visionDownloadInFlight = null;
             lastPublishedPercent = -1;
             lastPublishedVisionPercent = -1;
             snapshot = new TextModelDownloadSnapshot(TextModelDownloadPhase.NotStarted, 0, null);
             visionSnapshot = new TextModelDownloadSnapshot(TextModelDownloadPhase.NotStarted, 0, null);
+            audioSnapshot = new TextModelDownloadSnapshot(TextModelDownloadPhase.NotStarted, 0, null);
         }
 
         ClearDirectory(modelDirectory);

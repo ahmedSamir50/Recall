@@ -233,7 +233,7 @@ public sealed class PhaseAddendumTests
             var grant = parts.Grant;
             var longDoc = new GrantedTextDocument(@"D:\Known\a.txt", "a.txt", TwoChunkText, DateTimeOffset.UtcNow);
             await parts.Service.IngestDocumentAsync(grant, longDoc, CancellationToken.None);
-            if (parts.Index.Inserts.Count > 1)
+            while (parts.Index.Inserts.Count > 1)
             {
                 parts.Index.Inserts.RemoveAt(1);
             }
@@ -546,6 +546,11 @@ public sealed class PhaseAddendumTests
         public async IAsyncEnumerable<GrantedTextDocument> ReadAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
+            yield break;
+        }
+
+        public async IAsyncEnumerable<string> ListAudioAndVideoAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
             yield break;
         }
     }

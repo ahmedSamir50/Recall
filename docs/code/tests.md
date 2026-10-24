@@ -88,9 +88,9 @@ No branch.
 namespace Recall.UnitTests;
 public sealed class Phase2CloseTests
     public void MarkVerifying_SetsPhaseAndClearsFault()
-    public void PlanChunks_UnderBudget_StaysOnePiece()
-    public void PlanChunks_BlankContent_Throws()
-    public void PlanChunks_NullCounter_Throws()
+    public void Plan_UnderAim_IsOnePatch()
+    public void Plan_BlankContent_Throws()
+    public void Plan_NullEnds_Throws()
     public void MauiProject_ContainsNoOnnxWeights()
     public void HomeRazor_OmitsDemoCards()
     public void AppCss_DefinesFillHeight()
@@ -449,6 +449,8 @@ if (string.Equals(row.Path, path, StringComparison.OrdinalIgnoreCase) && !row.Re
 
 ```csharp
 if (string.Equals(this.chunks[id].Path, path, StringComparison.OrdinalIgnoreCase))
+if (string.Equals(chunk.Path, path, StringComparison.OrdinalIgnoreCase) && !chunk.Retired)
+if (string.IsNullOrWhiteSpace(patch.ContentId))
 if (OnReadCompressed is not null)
 if (OnFind is not null)
 public sealed class FakeAudioSource
@@ -548,6 +550,36 @@ public static class IntegrationTextModelPaths
 ```
 
 
+## tests/Recall.IntegrationTests/Infrastructure/MediaContextProbePaths.cs
+
+```csharp
+namespace Recall.IntegrationTests.Infrastructure;
+public static class MediaContextProbePaths
+    public const string MmprojFileName = "mmproj-embeddinggemma-2-Q8_0.gguf"
+    public const string RelativeDir = "TestAssets/embeddinggemma-2-vision"
+    public static string ResolveMmprojFile()
+        if (!string.IsNullOrWhiteSpace(env) && File.Exists(Path.Combine(env, MmprojFileName)))
+            if (File.Exists(file))
+        if (File.Exists(Path.Combine(dir.FullName, "Recall.slnx")))
+        throw new InvalidOperationException("Recall.slnx not found.");
+```
+
+Resolves the pinned mmproj path for the one-context vision-then-audio probe.
+
+
+## tests/Recall.IntegrationTests/MediaContextProbeTests.cs
+
+```csharp
+namespace Recall.IntegrationTests;
+public sealed class MediaContextProbeTests
+    public async Task Mtmd_OneContext_EmbedsVisionThenAudio()
+            if (visionCode != 0)
+                if (x >= width / 4 && x < 3 * width / 4 && y >= height / 4 && y < 3 * height / 4)
+```
+
+One-day probe: open text and mmproj, embed one JPEG and one PCM buffer without closing between them.
+
+
 ## tests/Recall.BenchTests/TextBenchmarkHostTests.cs
 
 ```csharp
@@ -599,6 +631,7 @@ public void MarkMissing_KeepsChunkRowAndSetsMissing()
 public void RetirePath_SetsRetired()
 public void IsGrantFinished_OnlyWhenFinished()
 public void CheckpointSql_UsesParametersAndFileName()
+public void ReplaceDocumentPatches_SamePath_ListsOrdinals()
 public int Calls { get; private set; }
 public List<GrantedTextDocument> Documents { get; } = [];
 public async IAsyncEnumerable<GrantedTextDocument> ReadAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
@@ -778,8 +811,6 @@ public sealed class LlamaEmbedTests
     public Task Dispose_ClosesOnce()
     public void Defaults_AreGguF()
     public void AppSettings_TextModel_IsGguF()
-            if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
-            if (mmprojPath is null)
 ```
 
 No branch.
@@ -852,8 +883,6 @@ public async Task PictureQuery_GrantedImage_HitsPictureCollection()
 public async Task PictureFind_OutOfGrant_DoesNotTakeASlot()
 public async Task PictureFind_NoGrants_ReturnsEmpty()
 public void OcrReaders_MissingHash_DoesNotLoad()
-public void EndsSlice_At8192Tokens_IsTrue()
-public void EndsSlice_At10Pages_IsTrue()
 public void NeedsOcr_ThreeReplacementChars_IsTrue()
 catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
 if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
@@ -939,11 +968,84 @@ public void AudioEmbed_Throw_LeavesSessionOpen()
 public void AudioEmbed_ClosesVisionFirst()
 public void AudioEmbed_NullDestination_Throws()
 public void AudioEmbed_Disposed_Throws()
-if (format == 0xFFFEu)
-if (includeData)
-if (includeData)
-if (start < 0)
-if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+public void AudioQueryGate_Ready_Searches()
+public void AudioQueryGate_Downloading_Waits()
+public void AudioQueryGate_Cancelled_Fails()
+public async Task AudioQuery_EmptyPcm_ReturnsEmpty()
+public async Task AudioQuery_NoAudioGrant_ReturnsEmpty()
+public async Task AudioQuery_StaysInsideGrant()
+public async Task AudioQuery_Cancels_ThrowsBeforeEmbed()
+public async Task AudioQuery_CollapsesToEarliestWindow()
+public async Task AudioQuery_RanksByScoreThenStart()
+public void OpenHit_SeeksToWindowStart()
+public void OpenHit_UsesWinningRowStart()
+public void OpenHit_StartFour_PlaysAtFour()
+public void OpenHit_TextCard_DoesNotSeek()
+public async Task TranscriptWords_OpenMediaFile()
+public async Task MediaQuery_ImageOnlyGrant_IsEmpty()
+public async Task AudioOn_Wav_InsertsWindowsAndUnloads()
+public async Task TranscriptWords_AreCarriedIntoInsert()
+public async Task TranscriptWords_MultipleLanguages_AppendInNameOrder()
+public async Task Caption_Srt_IsSkippedBeforeDecoding()
+public async Task AudioOff_ReportsAndSkips()
+public async Task CompressedAudio_NotDecoded_DoesNotEmbed()
+public async Task AudioIngest_ThrowDuringEmbed_LeavesSessionOpen()
+public async Task AudioOn_Wav_WritesFileRowAndWindowChunkRows()
+public async Task AudioIngest_SameBytes_SkipsReembed()
+public async Task AudioIngest_ChangedBytes_TryDeletesRetiredWindows()
+public async Task Apply_DeletedAudio_EnqueuesWindowIdsThroughAliasPath()
+public async Task Find_AfterAudioDelete_ReconcilesMediaPathLiveToZero()
+public void ZVecMedia_Reconcile_FlipsPathLiveOnDeletedAudioRow()
+public async Task IngestGrant_AudioOnly_ListsWav()
+public void MediaFileKinds_AudioAccept_IncludesSafeTypes()
+public void HomeRazor_HasAudioControlWithoutMicrophone()
+public void StringsResx_AudioKeys_AreLocalized()
+public void PlatformAudio_DecodersAreSourceLocked()
+public async Task Scheduler_SwitchesModelOncePerPass()
+public async Task Scheduler_BurstOf50Events_OneOpen()
 ```
 
-Phase 5 close locks for media kinds, audio windows, resampling, WAV reading, sibling transcripts, the mmproj download join policy, items_audio creation, the native audio session contract, and the AudioModelRuntime open/embed/close ownership.
+Phase 5 close locks for media kinds, audio windows, resampling, WAV reading, sibling transcripts, the mmproj download join policy, items_audio creation, the native audio session contract, audio delete through ingest_chunk, and the AudioModelRuntime open/embed/close ownership.
+
+## tests/Recall.UnitTests/Phase5PdfTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class Phase5PdfTests
+public void EndsPatch_At7680_IsTrue()
+public void EndsPatch_At7679_IsFalse()
+public void OpenPage_Null_IsOne()
+public void OpenPage_Zero_IsOne()
+public void OpenPage_Three_StaysThree()
+public void Patch_Targets2048()
+public void FullDocument_ElevenShortPages_IsOnePatchThroughPageEleven()
+public void Cut_PrefersParagraph()
+public void Cut_FallsBackToSentence_ArabicQuestionMark()
+public void Cut_NeverInsideWord()
+public void Overlap_StartsAtSentenceStart()
+public void CharSpan_SecondPatch_IsNotZero()
+public void Decimal_IsNotSentenceEnd()
+public void Overlap_ShortPatch_DoesNotRepeat()
+public void SplitPdfPages_NeedsOcr_OmitsPageFromJoin()
+public void OcrPageWaitlist_EnqueuesScheduler()
+public void ReplaceOcrPages_Sqlite_RoundTrips()
+```
+
+Locks `DocumentPatchPlanner` at target 2048 with 512-token lookback, 256 to 384 token overlap on sentence starts, hard cap 7680, paragraph and sentence boundary cuts, whole-document char spans, and multi-page `PageStart`/`PageEnd` through eleven short pages. `SplitPdfPages` leaves `NeedsOcr` pages out of the `\f` join. `OcrPageWaitlist` writes `ocr_page` and enqueues pass 3. `ReplaceOcrPages` round-trips through SQLite.
+
+## tests/Recall.UnitTests/PdfTextOrderTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class PdfTextOrderTests
+public void Read_Null_Throws()
+public void Read_NotAPdf_Throws()
+public void Read_LtrEnglish_StaysLeftToRight()
+public void Read_LtrArabicPresentation_RawIsReversed_ReadIsLogical()
+public void Read_LtrMixed_KeepsEnglishOrder_AndRestoresArabic()
+public void Read_RtlMixedRightAligned_RestoresReadingOrder()
+public void Read_LogicalArabicPlacedRightToLeft_IsNotReversedAgain()
+public void Read_PageWithoutArabic_StaysContentOrder()
+```
+
+Locks `PdfPigPageSource.Read` on `arabic-visual.pdf`: English order, Arabic presentation reversal, mixed LTR and RTL lines, and a non-Arabic page through content-order text with `GetWords` spacing on Arabic pages.

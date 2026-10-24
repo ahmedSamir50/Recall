@@ -36,6 +36,19 @@ public static class TextModelConfiguration
         };
     }
 
+    public static AudioModelDownloadOptions ReadAudio(IConfiguration configuration)
+    {
+        var section = configuration.GetSection(AudioModelDownloadOptions.SectionName);
+        var defaults = new AudioModelDownloadOptions();
+        return new AudioModelDownloadOptions
+        {
+            ModelBaseUrl = Value(section, nameof(AudioModelDownloadOptions.ModelBaseUrl), defaults.ModelBaseUrl),
+            ModelFileName = Value(section, nameof(AudioModelDownloadOptions.ModelFileName), defaults.ModelFileName),
+            ModelSha256 = Value(section, nameof(AudioModelDownloadOptions.ModelSha256), defaults.ModelSha256),
+            RelativeModelDirectory = Value(section, nameof(AudioModelDownloadOptions.RelativeModelDirectory), defaults.RelativeModelDirectory),
+        };
+    }
+
     public static ModelCatalogOptions ReadCatalog(IConfiguration configuration)
     {
         var section = configuration.GetSection(ModelCatalogOptions.SectionName);

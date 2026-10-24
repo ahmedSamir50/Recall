@@ -7,15 +7,6 @@ public static class DatasetFolderSkip
         ".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".tif", ".tiff", ".bmp",
     ];
 
-    private static readonly HashSet<string> MediaExtensions = CreateMediaExtensions();
-
-    private static HashSet<string> CreateMediaExtensions()
-    {
-        var extensions = new HashSet<string>(ImageExtensions, StringComparer.OrdinalIgnoreCase);
-        extensions.UnionWith([".mp4", ".mov", ".mkv", ".webm", ".avi", ".mp3", ".m4a", ".wav", ".flac", ".ogg", ".aac"]);
-        return extensions;
-    }
-
     public static bool ShouldSkip(string folderPath, bool isGrantRoot, IReadOnlyList<string> directChildNames)
     {
         ArgumentNullException.ThrowIfNull(folderPath);
@@ -30,8 +21,8 @@ public static class DatasetFolderSkip
         foreach (var name in directChildNames)
         {
             ArgumentNullException.ThrowIfNull(name);
-            var extension = Path.GetExtension(name);
-            if (!MediaExtensions.Contains(extension))
+            var isMedia = MediaFileKinds.IsAudio(name) || MediaFileKinds.IsVideo(name) || MediaFileKinds.IsImage(name);
+            if (!isMedia)
             {
                 continue;
             }

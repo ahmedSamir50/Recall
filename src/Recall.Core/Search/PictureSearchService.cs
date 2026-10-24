@@ -35,7 +35,7 @@ public sealed class PictureSearchService : IPictureSearchService
             .Where(grant => grant.EnabledKinds.HasFlag(GrantFileKinds.Image) || grant.EnabledKinds.HasFlag(GrantFileKinds.Video))
             .Select(grant => grant.Path)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var hash = encoderHash.TextHash ?? string.Empty;
+        var hash = encoderHash.VisionHash ?? string.Empty;
         var filter = TextSearchFilter.Build(grantedPaths, hash);
         if (filter.Length == 0)
         {

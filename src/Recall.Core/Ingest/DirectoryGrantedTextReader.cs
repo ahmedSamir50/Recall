@@ -44,6 +44,107 @@ public sealed class DirectoryGrantedTextReader : IGrantedTextReader
         }
     }
 
+    public async IAsyncEnumerable<string> ListAudioAndVideoAsync(
+        ScopeFolderGrant grant,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        if (!Directory.Exists(grant.Path))
+        {
+            yield break;
+        }
+
+        var user = skips.Load();
+        var shared = new List<GitIgnoreFile>();
+        await foreach (var path in WalkMediaAsync(grant.Path, grant.Path, grant.EnabledKinds, user, shared, cancellationToken).ConfigureAwait(false))
+        {
+            yield return path;
+        }
+    }
+
+    private async IAsyncEnumerable<string> WalkMediaAsync(
+        string grantRoot,
+        string directory,
+        GrantFileKinds kinds,
+        UserSkipAdditions user,
+        List<GitIgnoreFile> shared,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var added = AddDirectoryIgnores(grantRoot, directory, shared);
+        try
+        {
+            foreach (var entry in Directory.EnumerateFileSystemEntries(directory))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var name = Path.GetFileName(entry);
+                if (Directory.Exists(entry))
+                {
+                    if (FileAdmission.IsBlockedFolder(name, user))
+                    {
+                        continue;
+                    }
+
+                    var relativeDir = ToRelative(grantRoot, entry);
+                    if (IsDirectoryIgnored(relativeDir, shared))
+                    {
+                        continue;
+                    }
+
+                    var directChildNames = Directory.EnumerateFileSystemEntries(entry)
+                        .Select(Path.GetFileName)
+                        .Where(name => !string.IsNullOrWhiteSpace(name))
+                        .Select(name => name!)
+                        .ToList();
+                    var isGrantRoot = string.Equals(entry, grantRoot, StringComparison.OrdinalIgnoreCase);
+                    if (DatasetFolderSkip.ShouldSkip(entry, isGrantRoot, directChildNames))
+                    {
+                        datasetSkip.Add(entry);
+                        continue;
+                    }
+
+                    await foreach (var path in WalkMediaAsync(grantRoot, entry, kinds, user, shared, cancellationToken).ConfigureAwait(false))
+                    {
+                        yield return path;
+                    }
+
+                    continue;
+                }
+
+                var relativeFile = ToRelative(grantRoot, entry);
+                var gitIgnored = GitIgnoreMatcher.IsIgnored(relativeFile, shared);
+                if (gitIgnored)
+                {
+                    continue;
+                }
+
+                if (!MediaFileKinds.IsAudio(name) && !MediaFileKinds.IsVideo(name))
+                {
+                    continue;
+                }
+
+                if (MediaIngestFilter.UserSkipped(name, user) || !MediaIngestFilter.KindAllowed(kinds, name))
+                {
+                    continue;
+                }
+
+                if (!LocalContentPolicy.MayReadBytes(probe.Probe(entry)))
+                {
+                    remoteSkip.Add(entry);
+                    continue;
+                }
+
+                yield return entry;
+            }
+        }
+        finally
+        {
+            if (added > 0)
+            {
+                shared.RemoveRange(shared.Count - added, added);
+            }
+        }
+    }
+
     private static async IAsyncEnumerable<GrantedTextDocument> WalkAsync(
         string grantRoot,
         string directory,

@@ -10,7 +10,6 @@ public sealed class VisionModelRuntime : IVisionEmbeddingEncoder, IDisposable
     private readonly VisionModelDownloadOptions options;
     private readonly IRecallEmbedLibrary library;
     private readonly TextModelRuntime? textRuntime;
-    private readonly SemaphoreSlim gate = new(1, 1);
     private bool opened;
     private int disposed;
 
@@ -50,20 +49,14 @@ public sealed class VisionModelRuntime : IVisionEmbeddingEncoder, IDisposable
     {
         ObjectDisposedException.ThrowIf(disposed != 0, this);
         ArgumentNullException.ThrowIfNull(destination768);
-        gate.Wait();
+        LlamaNativeGate.Enter();
+        var openedHere = false;
         try
         {
             if (!opened)
             {
-                textRuntime?.GetEncoder();
-                var modelPath = Path.Combine(modelDirectory, options.ModelFileName);
-                var code = library.OpenVision(modelPath);
-                if (code != 0)
-                {
-                    throw new InvalidOperationException($"recall_embed vision open failed with code {code}.");
-                }
-
-                opened = true;
+                OpenVisionCore();
+                openedHere = true;
             }
 
             IsLoaded = true;
@@ -71,14 +64,53 @@ public sealed class VisionModelRuntime : IVisionEmbeddingEncoder, IDisposable
         }
         finally
         {
-            IsLoaded = false;
+            if (openedHere && opened)
+            {
+                library.CloseVision();
+                opened = false;
+                IsLoaded = false;
+            }
+
+            LlamaNativeGate.Exit();
+        }
+    }
+
+    public void OpenSession()
+    {
+        ObjectDisposedException.ThrowIf(disposed != 0, this);
+        LlamaNativeGate.Enter();
+        try
+        {
+            if (!opened)
+            {
+                OpenVisionCore();
+            }
+
+            IsLoaded = true;
+        }
+        finally
+        {
+            LlamaNativeGate.Exit();
+        }
+    }
+
+    public void CloseSession()
+    {
+        ObjectDisposedException.ThrowIf(disposed != 0, this);
+        LlamaNativeGate.Enter();
+        try
+        {
             if (opened)
             {
                 library.CloseVision();
                 opened = false;
             }
 
-            gate.Release();
+            IsLoaded = false;
+        }
+        finally
+        {
+            LlamaNativeGate.Exit();
         }
     }
 
@@ -90,12 +122,33 @@ public sealed class VisionModelRuntime : IVisionEmbeddingEncoder, IDisposable
         }
 
         disposed = 1;
-        if (opened)
+        LlamaNativeGate.Enter();
+        try
         {
-            library.CloseVision();
-            opened = false;
+            if (opened)
+            {
+                library.CloseVision();
+                opened = false;
+            }
+
+            IsLoaded = false;
+        }
+        finally
+        {
+            LlamaNativeGate.Exit();
+        }
+    }
+
+    private void OpenVisionCore()
+    {
+        textRuntime?.GetEncoder();
+        var modelPath = Path.Combine(modelDirectory, options.ModelFileName);
+        var code = library.OpenVision(modelPath);
+        if (code != 0)
+        {
+            throw new InvalidOperationException($"recall_embed vision open failed with code {code}.");
         }
 
-        gate.Dispose();
+        opened = true;
     }
 }

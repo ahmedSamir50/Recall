@@ -1,13 +1,15 @@
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Recall.Adapters.DependencyInjection;
-using Recall.Adapters.Media;
 using Recall.Core.Checkpoints;
 using Recall.Core.Download;
 using Recall.Core.Ports;
 using Recall.Core.Ingest;
 using Recall.Core.Scope;
 using Recall.Core.Sync;
+using Recall.Core.Text;
 using Recall.Maui.Platform;
 using Recall.Maui.Platform.Files;
+using Recall.Maui.Platform.Media;
 
 namespace Recall.Maui.DependencyInjection;
 
@@ -16,11 +18,18 @@ public static class MauiServiceCollectionExtensions
     public static IServiceCollection AddRecallMauiPlatform(
         this IServiceCollection services,
         TextModelDownloadOptions textModel,
-        VisionModelDownloadOptions? visionModel = null)
+        VisionModelDownloadOptions? visionModel = null,
+        AudioModelDownloadOptions? audioModel = null)
     {
         services.AddSingleton(textModel);
         services.AddSingleton(visionModel ?? new VisionModelDownloadOptions());
-        services.AddSingleton<IEncoderFileHash>(_ => new DefaultEncoderFileHash { TextHash = textModel.ModelSha256 });
+        services.AddSingleton(audioModel ?? new AudioModelDownloadOptions());
+        services.AddSingleton<IEncoderFileHash>(_ => new DefaultEncoderFileHash
+        {
+            TextHash = textModel.ModelSha256 + ChunkerStamp.Suffix,
+            VisionHash = (visionModel ?? new VisionModelDownloadOptions()).ModelSha256,
+            AudioHash = (audioModel ?? new AudioModelDownloadOptions()).ModelSha256,
+        });
         services.AddHttpClient();
         services.AddSingleton<IThemePreferenceStore, MauiThemePreferenceStore>();
         services.AddSingleton<IUiLocaleStore, MauiUiLocaleStore>();
@@ -36,9 +45,19 @@ public static class MauiServiceCollectionExtensions
         services.AddSingleton<IRecallShellKind, MauiRecallShellKind>();
         services.AddSingleton<IGrantedFolderAccessService, MauiGrantedFolderAccessService>();
         services.AddSingleton<IGrantedTextReader, MauiGrantedTextReader>();
+        services.AddSingleton<ISiblingFiles, MauiSiblingFiles>();
+#if WINDOWS
+        services.AddSingleton<IAudioSource, WindowsAudioSource>();
+#elif ANDROID
+        services.AddSingleton<IAudioSource, AndroidAudioSource>();
+#elif IOS || MACCATALYST
+        services.AddSingleton<IAudioSource, AppleAudioSource>();
+#endif
+        services.Replace(ServiceDescriptor.Singleton<IAudioFileIngest, AudioFileIngest>());
         services.AddSingleton(new LocalOpLogWriter(Path.Combine(FileSystem.AppDataDirectory, LocalOpLogWriter.DirectoryName)));
         services.AddSingleton<IModelDownloadService, MauiModelDownloadService>();
         services.AddSingleton<ILocalFileOpener, MauiLocalFileOpener>();
+        services.AddSingleton<IMediaPreview, MauiMediaPreview>();
         services.AddSingleton<ILocalContentProbe, MauiLocalContentProbe>();
         services.AddSingleton<IIdleDetectorService, MauiIdleDetector>();
         services.AddSingleton<IIngestCursorStore>(_ => new SqliteIngestCursorStore(Path.Combine(FileSystem.AppDataDirectory, CheckpointSql.FileName)));

@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Linq;
-using Recall.Adapters.Media;
 using Recall.UI.Localization;
 using FluentAssertions;
 using Recall.Adapters.Indexing;
@@ -87,7 +86,7 @@ public sealed class Phase4VisionTests : IDisposable
     public void VisionEmbed_WidthNot768_Returns5()
     {
         var function = FunctionBody(NativeSource(), "recall_embed_vision_embed");
-        var widthCheck = function.IndexOf("llama_model_n_embd_inp(g_model) != RECALL_EMBED_DIM", StringComparison.Ordinal);
+        var widthCheck = function.IndexOf("recall_embed_output_width() != RECALL_EMBED_DIM", StringComparison.Ordinal);
         var firstWrite = function.IndexOf("out768[", StringComparison.Ordinal);
         widthCheck.Should().BeGreaterThanOrEqualTo(0);
         firstWrite.Should().BeGreaterThan(widthCheck);
@@ -233,9 +232,19 @@ public sealed class Phase4VisionTests : IDisposable
     [Fact]
     public void FrameCadence_NullStream_Throws()
     {
-        var sampler = new WindowsVideoFrameSampler();
-        var act = () => sampler.SampleEveryTwoSeconds(null!);
-        act.Should().Throw<ArgumentNullException>();
+        var source = File.ReadAllText(
+            Path.Combine(
+                RepoRoot(),
+                "src",
+                "Recall.Maui",
+                "Platform",
+                "Media",
+                "WindowsVideoFrameSampler.cs"),
+            Encoding.UTF8);
+        source.Should().Contain("ArgumentNullException.ThrowIfNull(media)");
+        source.Should().Contain("IVideoFrameSamplerService");
+        source.Should().Contain("MediaComposition");
+        source.Should().Contain("Task.Run");
     }
 
     [Fact]
@@ -408,24 +417,6 @@ public sealed class Phase4VisionTests : IDisposable
     }
 
     [Fact]
-    public void EndsSlice_At8192Tokens_IsTrue()
-    {
-        PdfSlicePolicy.EndsSlice(8192, 1).Should().BeTrue();
-    }
-
-    [Fact]
-    public void EndsSlice_At10Pages_IsTrue()
-    {
-        PdfSlicePolicy.EndsSlice(1, 10).Should().BeTrue();
-    }
-
-    [Fact]
-    public void EndsSlice_NinePagesAnd8191Tokens_IsFalse()
-    {
-        PdfSlicePolicy.EndsSlice(8191, 9).Should().BeFalse();
-    }
-
-    [Fact]
     public void NeedsOcr_ThreeReplacementChars_IsTrue()
     {
         BrokenArabic.NeedsOcr("مر\uFFFD\uFFFD\uFFFD").Should().BeTrue();
@@ -452,7 +443,7 @@ public sealed class Phase4VisionTests : IDisposable
         var english = ResxValue(Path.Combine(RepoRoot(), "src", "Recall.UI", "Resources", "Strings.resx"), "Search_PictureWaiting");
         var arabic = ResxValue(Path.Combine(RepoRoot(), "src", "Recall.UI", "Resources", "Strings.ar.resx"), "Search_PictureWaiting");
         english.Should().Be("The picture model is still downloading.");
-        arabic.Should().Be("نموذج الصور ما زال يُنزَّل.");
+        arabic.Should().Be("نموذج الصور ما زال قيد التحميل.");
         ResxValue(Path.Combine(RepoRoot(), "src", "Recall.UI", "Resources", "Strings.resx"), "Search_PictureFailed")
             .Should().Be("The picture model did not download.");
         ResxValue(Path.Combine(RepoRoot(), "src", "Recall.UI", "Resources", "Strings.ar.resx"), "Search_PictureFailed")
@@ -464,7 +455,7 @@ public sealed class Phase4VisionTests : IDisposable
         RecallText.Get("Search_PictureWaiting", CultureInfo.GetCultureInfo("en"))
             .Should().Be("The picture model is still downloading.");
         RecallText.Get("Search_PictureWaiting", CultureInfo.GetCultureInfo("ar"))
-            .Should().Be("نموذج الصور ما زال يُنزَّل.");
+            .Should().Be("نموذج الصور ما زال قيد التحميل.");
     }
 
     public void Dispose()

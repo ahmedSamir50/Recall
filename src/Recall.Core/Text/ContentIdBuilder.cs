@@ -25,4 +25,7 @@ public static class ContentIdBuilder
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawText));
         return Convert.ToHexString(bytes).ToLowerInvariant();
     }
+
+    public static string HashBytes(ReadOnlySpan<byte> content) =>
+        Convert.ToHexString(SHA256.HashData(content)).ToLowerInvariant();
 }

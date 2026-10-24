@@ -27,6 +27,17 @@ public static class EmbeddingTaskPrefixes
         return SearchTask + query;
     }
 
+    public static string TitledPrefix(string title)
+    {
+        var safeTitle = string.IsNullOrWhiteSpace(title) ? string.Empty : title.Trim();
+        if (safeTitle.Length == 0)
+        {
+            return TextOnlyMarker;
+        }
+
+        return TitleMarker + safeTitle + TextJoiner;
+    }
+
     public static string WrapTitledDocument(string title, string content)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(content);

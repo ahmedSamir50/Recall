@@ -54,4 +54,6 @@ public interface ILocalFileOpener
     bool Exists(string sourcePath);
 
     Task<LocalFileOpenResult> OpenAsync(string sourcePath, CancellationToken cancellationToken = default);
+
+    Task<LocalFileOpenResult> OpenAtAsync(string sourcePath, double startSeconds, CancellationToken cancellationToken = default);
 }

@@ -28,6 +28,21 @@ public static class CheckpointSql
     public const string AddEncoderHashColumn =
         "ALTER TABLE ingest_file ADD COLUMN IF NOT EXISTS encoder_hash TEXT";
 
+    public const string AddChunkPageStartColumn =
+        "ALTER TABLE ingest_chunk ADD COLUMN IF NOT EXISTS page_start INTEGER NOT NULL DEFAULT 0";
+
+    public const string AddChunkPageEndColumn =
+        "ALTER TABLE ingest_chunk ADD COLUMN IF NOT EXISTS page_end INTEGER NOT NULL DEFAULT 0";
+
+    public const string AddChunkCharStartColumn =
+        "ALTER TABLE ingest_chunk ADD COLUMN IF NOT EXISTS char_start INTEGER NOT NULL DEFAULT 0";
+
+    public const string AddChunkCharEndColumn =
+        "ALTER TABLE ingest_chunk ADD COLUMN IF NOT EXISTS char_end INTEGER NOT NULL DEFAULT 0";
+
+    public const string CreateOcrPageTable =
+        "CREATE TABLE IF NOT EXISTS ocr_page(path TEXT NOT NULL, page_number INTEGER NOT NULL, PRIMARY KEY(path, page_number))";
+
     public const string EnsureSchema =
-        CreateFileTable + ";" + CreateChunkTable + ";" + CreateChunkPathIndex + ";" + CreateGrantTable + ";" + CreateChunkPathTable + ";" + CreatePendingTable + ";" + CreateBm25OnlyTable;
+        CreateFileTable + ";" + CreateChunkTable + ";" + CreateChunkPathIndex + ";" + CreateGrantTable + ";" + CreateChunkPathTable + ";" + CreatePendingTable + ";" + CreateBm25OnlyTable + ";" + CreateOcrPageTable;
 }

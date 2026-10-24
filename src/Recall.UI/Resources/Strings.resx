@@ -218,4 +218,8 @@
   <data name="Search_WithPicture" xml:space="preserve"><value>Search with a picture</value></data>
   <data name="Search_PictureWaiting" xml:space="preserve"><value>The picture model is still downloading.</value></data>
   <data name="Search_PictureFailed" xml:space="preserve"><value>The picture model did not download.</value></data>
+  <data name="Search_WithAudio" xml:space="preserve"><value>Search with an audio file</value></data>
+  <data name="Search_AudioWaiting" xml:space="preserve"><value>The audio model is still downloading.</value></data>
+  <data name="Search_AudioFailed" xml:space="preserve"><value>The audio model did not download.</value></data>
+  <data name="Search_AudioOff" xml:space="preserve"><value>Audio files are off for this folder.</value></data>
 </root>

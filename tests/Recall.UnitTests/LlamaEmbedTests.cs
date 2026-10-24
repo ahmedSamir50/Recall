@@ -12,8 +12,7 @@ public sealed class LlamaEmbedTests
     public async Task Embed_Blank_Throws()
     {
         var library = new FakeRecallEmbedLibrary();
-        var gate = new SemaphoreSlim(1, 1);
-        using var encoder = new LlamaTextEmbeddingEncoder(library, gate);
+        using var encoder = new LlamaTextEmbeddingEncoder(library);
         var act = () => encoder.EmbedPrefixedTextAsync(" ", TestContext.Current.CancellationToken);
         await act.Should().ThrowAsync<ArgumentException>();
         library.EmbedCalls.Should().Be(0);
@@ -23,8 +22,7 @@ public sealed class LlamaEmbedTests
     public async Task Embed_Cancelled_Throws()
     {
         var library = new FakeRecallEmbedLibrary();
-        var gate = new SemaphoreSlim(1, 1);
-        using var encoder = new LlamaTextEmbeddingEncoder(library, gate);
+        using var encoder = new LlamaTextEmbeddingEncoder(library);
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
         var act = () => encoder.EmbedPrefixedTextAsync("task: search result | query: mars", cts.Token);
@@ -36,8 +34,7 @@ public sealed class LlamaEmbedTests
     public async Task Embed_NativeCode_Throws()
     {
         var library = new FakeRecallEmbedLibrary { EmbedCode = 4 };
-        var gate = new SemaphoreSlim(1, 1);
-        using var encoder = new LlamaTextEmbeddingEncoder(library, gate);
+        using var encoder = new LlamaTextEmbeddingEncoder(library);
         var act = () => encoder.EmbedPrefixedTextAsync("task: search result | query: mars", TestContext.Current.CancellationToken);
         var ex = await act.Should().ThrowAsync<InvalidOperationException>();
         ex.Which.Message.Should().Be("recall_embed embed failed with code 4.");
@@ -51,8 +48,7 @@ public sealed class LlamaEmbedTests
             EmbedCode = 0,
             EmbedFill = 2f,
         };
-        var gate = new SemaphoreSlim(1, 1);
-        using var encoder = new LlamaTextEmbeddingEncoder(library, gate);
+        using var encoder = new LlamaTextEmbeddingEncoder(library);
         var vector = await encoder.EmbedPrefixedTextAsync("task: search result | query: mars", TestContext.Current.CancellationToken);
         vector.Length.Should().Be(768);
         L2Norm(vector.Span).Should().BeApproximately(1d, 0.00001);
@@ -62,8 +58,7 @@ public sealed class LlamaEmbedTests
     public void Count_Blank_Throws()
     {
         var library = new FakeRecallEmbedLibrary();
-        var gate = new SemaphoreSlim(1, 1);
-        var counter = new LlamaTextTokenCounter(library, gate);
+        var counter = new LlamaTextTokenCounter(library);
         var act = () => counter.CountTokens(" ");
         act.Should().Throw<ArgumentException>();
     }
@@ -72,8 +67,7 @@ public sealed class LlamaEmbedTests
     public void Count_ReturnsValue()
     {
         var library = new FakeRecallEmbedLibrary { CountResult = 12 };
-        var gate = new SemaphoreSlim(1, 1);
-        var counter = new LlamaTextTokenCounter(library, gate);
+        var counter = new LlamaTextTokenCounter(library);
         counter.CountTokens("red planet", TestContext.Current.CancellationToken).Should().Be(12);
     }
 
@@ -129,8 +123,7 @@ public sealed class LlamaEmbedTests
     public async Task Count_Cancelled_Throws()
     {
         var library = new FakeRecallEmbedLibrary();
-        var gate = new SemaphoreSlim(1, 1);
-        var counter = new LlamaTextTokenCounter(library, gate);
+        var counter = new LlamaTextTokenCounter(library);
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
         var act = () => counter.CountTokens("red planet", cts.Token);
@@ -243,6 +236,20 @@ public sealed class LlamaEmbedTests
 
         public string? LastMmprojPath { get; private set; }
 
+        public int OpenAudioCode { get; set; }
+
+        public int EmbedAudioCode { get; set; }
+
+        public Action? OnEmbedAudio { get; set; }
+
+        public int OpenAudioCalls { get; private set; }
+
+        public int EmbedAudioCalls { get; private set; }
+
+        public int CloseAudioCalls { get; private set; }
+
+        public string? LastAudioMmprojPath { get; private set; }
+
         public bool TextModelOpen { get; private set; } = true;
 
         public int Open(string modelPath)
@@ -261,6 +268,23 @@ public sealed class LlamaEmbedTests
         {
             CountCalls++;
             return CountResult;
+        }
+
+        public int TokenEndsCode { get; set; }
+
+        public int[] TokenEndResult { get; set; } = [];
+
+        public int TokenEndsCalls { get; private set; }
+
+        public int[] TokenEnds(string text)
+        {
+            TokenEndsCalls++;
+            if (TokenEndsCode != 0)
+            {
+                throw new InvalidOperationException(string.Format(System.Globalization.CultureInfo.InvariantCulture, RecallEmbedResults.TokenEndsFailedFormat, TokenEndsCode));
+            }
+
+            return TokenEndResult;
         }
 
         public int Embed(string text, float[] destination768)
@@ -299,5 +323,31 @@ public sealed class LlamaEmbedTests
         }
 
         public void CloseVision() => CloseVisionCalls++;
+
+        public int OpenAudio(string mmprojPath)
+        {
+            OpenAudioCalls++;
+            LastAudioMmprojPath = mmprojPath;
+            if (mmprojPath is null)
+            {
+                return 1;
+            }
+
+            return OpenAudioCode;
+        }
+
+        public int EmbedAudio(float[] samples, float[] destination768)
+        {
+            EmbedAudioCalls++;
+            OnEmbedAudio?.Invoke();
+            for (var i = 0; i < destination768.Length; i++)
+            {
+                destination768[i] = EmbedFill;
+            }
+
+            return EmbedAudioCode;
+        }
+
+        public void CloseAudio() => CloseAudioCalls++;
     }
 }

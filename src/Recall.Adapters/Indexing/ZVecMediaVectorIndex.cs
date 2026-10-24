@@ -21,6 +21,7 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
     private readonly string databaseRoot;
     private readonly ZVecFactory factory;
     private readonly Dictionary<string, IZvecCollection> collections = new(StringComparer.Ordinal);
+    private readonly object sync = new();
     private bool disposed;
 
     public ZVecMediaVectorIndex(string databaseRoot)
@@ -33,6 +34,14 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
 
     public void Create(string collectionName, int width)
     {
+        lock (sync)
+        {
+            CreateCore(collectionName, width);
+        }
+    }
+
+    private void CreateCore(string collectionName, int width)
+    {
         if (width != MediaCollections.Width)
         {
             throw new ArgumentOutOfRangeException(nameof(width));
@@ -40,7 +49,7 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
 
         if (!MediaCollections.IsMedia(collectionName))
         {
-            throw new ArgumentException("Only picture and video collections are media collections.", nameof(collectionName));
+            throw new ArgumentException("Only picture, video, and audio collections are media collections.", nameof(collectionName));
         }
 
         if (collections.ContainsKey(collectionName))
@@ -108,6 +117,14 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
 
     public bool TryInsert(string collectionName, MediaIndexInsert insert)
     {
+        lock (sync)
+        {
+            return TryInsertCore(collectionName, insert);
+        }
+    }
+
+    private bool TryInsertCore(string collectionName, MediaIndexInsert insert)
+    {
         var collection = RequireCollection(collectionName);
         if (collection.Fetch(insert.ContentId, includeVector: false) is not null)
         {
@@ -138,6 +155,14 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
 
     public bool TryDelete(string contentId)
     {
+        lock (sync)
+        {
+            return TryDeleteCore(contentId);
+        }
+    }
+
+    private bool TryDeleteCore(string contentId)
+    {
         var deleted = false;
         foreach (var collection in collections.Values)
         {
@@ -155,7 +180,45 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
         return deleted;
     }
 
+    public void Reconcile(IReadOnlyList<VectorLiveState> states)
+    {
+        lock (sync)
+        {
+            ReconcileCore(states);
+        }
+    }
+
+    private void ReconcileCore(IReadOnlyList<VectorLiveState> states)
+    {
+        ArgumentNullException.ThrowIfNull(states);
+        foreach (var state in states)
+        {
+            foreach (var collection in collections.Values)
+            {
+                var existing = collection.Fetch(state.ContentId, includeVector: false);
+                if (existing is null)
+                {
+                    continue;
+                }
+
+                var fields = new Dictionary<string, object>(existing.Fields)
+                {
+                    [PathLiveField] = state.PathLive ? 1 : 0,
+                };
+                collection.Update(ZVecDoc.Create(existing.Id, existing.DenseVectors, existing.SparseVectors, fields));
+            }
+        }
+    }
+
     public IReadOnlyList<MediaSearchHit> Search(MediaSearchRequest request, CancellationToken cancellationToken = default)
+    {
+        lock (sync)
+        {
+            return SearchCore(request, cancellationToken);
+        }
+    }
+
+    private IReadOnlyList<MediaSearchHit> SearchCore(MediaSearchRequest request, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var collection = RequireCollection(request.CollectionName);
@@ -181,7 +244,53 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
         return hits;
     }
 
+    public IReadOnlyList<MediaSearchHit> SearchWords(string collectionName, string query, string filter, int topK, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return [];
+        }
+
+        lock (sync)
+        {
+            return SearchWordsCore(collectionName, query, filter, topK, cancellationToken);
+        }
+    }
+
+    private IReadOnlyList<MediaSearchHit> SearchWordsCore(string collectionName, string query, string filter, int topK, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var collection = RequireCollection(collectionName);
+        var fts = new ZVecQuery
+        {
+            FieldName = WordsField,
+            Fts = new ZVecFtsQuery { QueryString = query, DefaultOperator = ZVecFtsDefaultOperator.And },
+        };
+        var filterArgument = string.IsNullOrWhiteSpace(filter) ? null : filter;
+        var docs = collection.Query(fts, topk: topK, filter: filterArgument, includeVector: false);
+        var hits = new List<MediaSearchHit>(docs.Count);
+        foreach (var doc in docs)
+        {
+            hits.Add(new MediaSearchHit(
+                doc.Id,
+                ReadField(doc, SourcePathField),
+                ReadSeconds(doc, StartSecondsField),
+                ReadSeconds(doc, EndSecondsField),
+                doc.Score));
+        }
+
+        return hits;
+    }
+
     public string StoredField(string collectionName, string contentId, string fieldName)
+    {
+        lock (sync)
+        {
+            return StoredFieldCore(collectionName, contentId, fieldName);
+        }
+    }
+
+    private string StoredFieldCore(string collectionName, string contentId, string fieldName)
     {
         var collection = RequireCollection(collectionName);
         var doc = collection.Fetch(contentId, includeVector: false);
@@ -192,12 +301,12 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
     {
         if (!MediaCollections.IsMedia(collectionName))
         {
-            throw new ArgumentException("Only picture and video collections are media collections.", nameof(collectionName));
+            throw new ArgumentException("Only picture, video, and audio collections are media collections.", nameof(collectionName));
         }
 
         if (!collections.ContainsKey(collectionName))
         {
-            Create(collectionName, MediaCollections.Width);
+            CreateCore(collectionName, MediaCollections.Width);
         }
 
         return collections[collectionName];
@@ -213,6 +322,14 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
     }
 
     public void Dispose()
+    {
+        lock (sync)
+        {
+            DisposeCore();
+        }
+    }
+
+    private void DisposeCore()
     {
         if (disposed)
         {

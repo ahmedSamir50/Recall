@@ -13,6 +13,7 @@ public sealed class ScopeWatchCoordinator : IScopeChangeSink, IDisposable
     private readonly IIdleDetectorService idle;
     private readonly ILocalContentProbe contentProbe;
     private readonly IRemoteFileSkipReport remoteSkip;
+    private readonly IngestSchedulerService? ingestScheduler;
     private readonly ScopeChangeBuffer buffer = new();
     private readonly SemaphoreSlim wake = new(0, 1);
     private CancellationTokenSource? loopCts;
@@ -27,7 +28,8 @@ public sealed class ScopeWatchCoordinator : IScopeChangeSink, IDisposable
         IUserSkipStore skips,
         IIdleDetectorService idle,
         ILocalContentProbe contentProbe,
-        IRemoteFileSkipReport remoteSkip)
+        IRemoteFileSkipReport remoteSkip,
+        IngestSchedulerService? ingestScheduler = null)
     {
         this.watcher = watcher;
         this.scope = scope;
@@ -37,6 +39,7 @@ public sealed class ScopeWatchCoordinator : IScopeChangeSink, IDisposable
         this.idle = idle;
         this.contentProbe = contentProbe;
         this.remoteSkip = remoteSkip;
+        this.ingestScheduler = ingestScheduler;
     }
 
     public ScopeChangeBuffer Buffer => buffer;
@@ -135,6 +138,11 @@ public sealed class ScopeWatchCoordinator : IScopeChangeSink, IDisposable
                 GC.KeepAlive(change);
             }
         }
+
+        if (ingestScheduler is not null)
+        {
+            await ingestScheduler.RunReadyPassesAsync(DateTimeOffset.UtcNow, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     private void Signal()
@@ -211,7 +219,7 @@ public sealed class ScopeWatchCoordinator : IScopeChangeSink, IDisposable
             {
                 try
                 {
-                    await wake.WaitAsync(token).ConfigureAwait(false);
+                    await wake.WaitAsync(IngestScheduler.OpenIdleDelay, token).ConfigureAwait(false);
                     await PumpOnceAsync(token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)

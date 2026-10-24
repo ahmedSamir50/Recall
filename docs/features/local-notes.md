@@ -6,7 +6,7 @@ v1.5 keeps the switch off until the person turns it on. The download is one loca
 
 Ask this device. اسأل هذا الجهاز.
 
-This download is a small notes model. It stays on this device. هذا التنزيل نموذج ملاحظات صغير. يبقى على هذا الجهاز.
+This download is a small notes model. It stays on this device. هذا التحميل نموذج ملاحظات صغير. يبقى على هذا الجهاز.
 
 Notes are off. الملاحظات متوقفة.
 

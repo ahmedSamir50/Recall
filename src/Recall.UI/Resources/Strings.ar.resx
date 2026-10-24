@@ -59,7 +59,7 @@
   <data name="Models_Entry_Text" xml:space="preserve"><value>يفهم النص</value></data>
   <data name="Models_Entry_Vision" xml:space="preserve"><value>يفهم الصور</value></data>
   <data name="Models_Entry_Audio" xml:space="preserve"><value>يفهم الصوت</value></data>
-  <data name="Models_NotReady" xml:space="preserve"><value>لم يُنزَّل بعد</value></data>
+  <data name="Models_NotReady" xml:space="preserve"><value>لم يتم تحميله بعد</value></data>
   <data name="Models_Entry_Deferred" xml:space="preserve"><value>غير متوفر في هذا الإصدار</value></data>
   <data name="Models_Status_Queued" xml:space="preserve"><value>في الانتظار</value></data>
   <data name="Models_Status_Downloading" xml:space="preserve"><value>جارٍ التحميل {0}%</value></data>
@@ -216,6 +216,10 @@
   <data name="Search_OpenFailed" xml:space="preserve"><value>تعذر فتح الملف.</value></data>
   <data name="Search_Fault" xml:space="preserve"><value>تعذّر البحث. قد لا يزال تحميل ملفات البحث قيد التنفيذ.</value></data>
   <data name="Search_WithPicture" xml:space="preserve"><value>ابحث بصورة</value></data>
-  <data name="Search_PictureWaiting" xml:space="preserve"><value>نموذج الصور ما زال يُنزَّل.</value></data>
+  <data name="Search_PictureWaiting" xml:space="preserve"><value>نموذج الصور ما زال قيد التحميل.</value></data>
   <data name="Search_PictureFailed" xml:space="preserve"><value>لم يكتمل تنزيل نموذج الصور.</value></data>
+  <data name="Search_WithAudio" xml:space="preserve"><value>ابحث بملف صوتي</value></data>
+  <data name="Search_AudioWaiting" xml:space="preserve"><value>لا يزال نموذج الصوت قيد التحميل.</value></data>
+  <data name="Search_AudioFailed" xml:space="preserve"><value>لم يتم تنزيل نموذج الصوت.</value></data>
+  <data name="Search_AudioOff" xml:space="preserve"><value>ملفات الصوت متوقفة لهذا المجلد.</value></data>
 </root>

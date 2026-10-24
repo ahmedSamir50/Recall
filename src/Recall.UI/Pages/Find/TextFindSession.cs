@@ -34,14 +34,18 @@ public static class TextFindSession
         var cards = hits.Select(hit =>
         {
             var unavailable = hit.SourceMissing || !fileExists(hit.SourcePath);
+            var localTime = hit.ModifiedAt == DateTimeOffset.UnixEpoch
+                ? string.Empty
+                : hit.ModifiedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
             return new TextFindCard(
                 hit.SourcePath,
                 hit.FileName,
                 "Kind_Document",
-                hit.ModifiedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+                localTime,
                 "Search_Match_MeaningAndWords",
                 unavailable,
-                hit.RawNote);
+                hit.RawNote,
+                hit.StartSeconds);
         }).ToList();
 
         var immediate = cards.Take(ImmediateCardCount).ToList();
@@ -50,7 +54,7 @@ public static class TextFindSession
     }
 }
 
-public sealed record TextFindCard(string SourcePath, string FileName, string KindKey, string LocalTime, string ReasonKey, bool Unavailable, string RawNote = "");
+public sealed record TextFindCard(string SourcePath, string FileName, string KindKey, string LocalTime, string ReasonKey, bool Unavailable, string RawNote = "", double StartSeconds = 0);
 
 public sealed record TextFindView(IReadOnlyList<TextFindCard> Immediate, IReadOnlyList<TextFindCard> Deferred, bool HasHits)
 {
