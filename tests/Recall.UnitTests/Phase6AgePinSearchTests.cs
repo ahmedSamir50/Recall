@@ -1,5 +1,8 @@
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using Recall.Adapters.DependencyInjection;
 using Recall.Adapters.Indexing;
+using Recall.Core.DependencyInjection;
 using Recall.Core.Age;
 using Recall.Core.Checkpoints;
 using Recall.Core.Faults;
@@ -458,12 +461,14 @@ public sealed class Phase6AgePinSearchTests
         var cursors = new FakeIngestCursorStore();
         var index = new FakeMediaVectorIndex();
         var (move, _, _, _, _) = CreateAgeMove(new FailClosedAgeCutDecision(), cursors: cursors, index: index);
+        var (pin, _, _) = CreatePin(cursors: cursors, index: index);
         var longId = LongId(Modality.Image, SampleHash, 0);
         var shortId = ShortId(Modality.Image, SampleHash, 0);
         SeedLongImage(cursors, index, path, SampleHash);
         InsertShort(index, MediaCollections.ImageOld, shortId, path);
         cursors.AddPin(path);
         cursors.StagePinResume(path, longId, shortId);
+        pin.Resume();
         move.Sweep(DateTimeOffset.UtcNow);
         index.TryRead(shortId, out _).Should().BeFalse();
     }
@@ -531,16 +536,7 @@ public sealed class Phase6AgePinSearchTests
                 var fileFacts = new ConfigurableMediaFileFacts();
                 var preferences = new AgeCutoffPreferenceService(new FakeAgeCutoffPreferenceStore());
                 var hashes = new FakeEncoderFileHash { VisionHash = "vis", AudioHash = "aud", TextHash = "t" };
-                var pin = new PinService(
-                    cursors,
-                    reopened,
-                    fileFacts,
-                    new FailClosedAgeCutDecision(),
-                    new RecordingVisionIngest(),
-                    new FakeAudioFileIngest(),
-                    new LocalOpLogWriter(),
-                    preferences);
-                var move = new AgeMoveService(reopened, cursors, hashes, new FailClosedAgeCutDecision(), fileFacts, preferences, pin);
+                var move = new AgeMoveService(reopened, cursors, hashes, new FailClosedAgeCutDecision(), fileFacts, preferences);
                 move.Resume();
                 reopened.TryRead(longId, out _).Should().BeFalse();
                 cursors.ListAgeCuts().Should().BeEmpty();
@@ -1177,6 +1173,38 @@ public sealed class Phase6AgePinSearchTests
     }
 
     [Fact]
+    public void Host_ResolvesAgeMoveAndPin_DoesNotCycle()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "recall_phase6_host_" + Guid.NewGuid().ToString("N"));
+        var modelDir = Path.Combine(root, "models");
+        var vectorRoot = Path.Combine(root, "vectors");
+        Directory.CreateDirectory(modelDir);
+        Directory.CreateDirectory(vectorRoot);
+        try
+        {
+            var services = new ServiceCollection();
+            services.AddRecallCore();
+            services.AddSingleton<IAgeCutoffPreferenceStore, FakeAgeCutoffPreferenceStore>();
+            services.AddSingleton<IIngestCursorStore>(_ => new SqliteIngestCursorStore(Path.Combine(vectorRoot, CheckpointSql.FileName)));
+            services.AddRecallAdapters(modelDir, vectorRoot);
+            using var provider = services.BuildServiceProvider();
+            provider.GetRequiredService<AgeMoveService>().Should().NotBeNull();
+            provider.GetRequiredService<PinService>().Should().NotBeNull();
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(root, true);
+            }
+            catch (IOException ex)
+            {
+                GC.KeepAlive(ex);
+            }
+        }
+    }
+
+    [Fact]
     public void CommitAgeCut_BlankId_DoesNotOpenARow()
     {
         var db = Path.Combine(Path.GetTempPath(), "recall_phase6_sql_" + Guid.NewGuid().ToString("N"), CheckpointSql.FileName);
@@ -1215,16 +1243,7 @@ public sealed class Phase6AgePinSearchTests
         var store = preferenceStore ?? new FakeAgeCutoffPreferenceStore();
         var preferences = new AgeCutoffPreferenceService(store);
         var hashes = new FakeEncoderFileHash { VisionHash = visionHash, AudioHash = audioHash, TextHash = "t" };
-        var pin = new PinService(
-            cursors,
-            index,
-            fileFacts,
-            decision,
-            new RecordingVisionIngest(),
-            new FakeAudioFileIngest(),
-            new LocalOpLogWriter(),
-            preferences);
-        var move = new AgeMoveService(index, cursors, hashes, decision, fileFacts, preferences, pin);
+        var move = new AgeMoveService(index, cursors, hashes, decision, fileFacts, preferences);
         return (move, cursors, index, fileFacts, store);
     }
 

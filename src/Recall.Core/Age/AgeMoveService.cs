@@ -16,7 +16,6 @@ public sealed class AgeMoveService
     private readonly IAgeCutDecision decision;
     private readonly IMediaFileFacts facts;
     private readonly AgeCutoffPreferenceService preferences;
-    private readonly PinService pinService;
 
     public AgeMoveService(
         IMediaVectorIndex index,
@@ -24,8 +23,7 @@ public sealed class AgeMoveService
         IEncoderFileHash hashes,
         IAgeCutDecision decision,
         IMediaFileFacts facts,
-        AgeCutoffPreferenceService preferences,
-        PinService pinService)
+        AgeCutoffPreferenceService preferences)
     {
         this.index = index;
         this.cursors = cursors;
@@ -33,7 +31,6 @@ public sealed class AgeMoveService
         this.decision = decision;
         this.facts = facts;
         this.preferences = preferences;
-        this.pinService = pinService;
     }
 
     public bool TryMovePath(string path, Modality modality, DateTimeOffset utcNow)
@@ -182,7 +179,6 @@ public sealed class AgeMoveService
     public void Sweep(DateTimeOffset utcNow)
     {
         Resume();
-        pinService.Resume();
         foreach (var row in cursors.ListMediaFiles())
         {
             TryMovePath(row.Path, row.Modality, utcNow);

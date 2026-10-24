@@ -11,10 +11,18 @@ public sealed class IngestSchedulerService
         IngestSchedulerRunner runner,
         ScheduledIngestDispatcher dispatcher,
         IIngestModelSession? session = null,
-        Age.AgeMoveService? ageMove = null)
+        Age.AgeMoveService? ageMove = null,
+        Age.PinService? pin = null)
     {
         this.scheduler = scheduler;
         this.runner = runner;
+        Action<DateTimeOffset>? sweepAgedMedia = ageMove is null && pin is null
+            ? null
+            : now =>
+            {
+                pin?.Resume();
+                ageMove?.Sweep(now);
+            };
         productionHooks = new IngestPassHooks
         {
             OpenText = session is null ? null : session.OpenText,
@@ -27,7 +35,7 @@ public sealed class IngestSchedulerService
             BeginMediaLeg = dispatcher.SetLeg,
             ProcessTextJobAsync = dispatcher.DispatchTextAsync,
             ProcessMediaJobAsync = dispatcher.DispatchMediaAsync,
-            SweepAgedMedia = ageMove is null ? null : ageMove.Sweep,
+            SweepAgedMedia = sweepAgedMedia,
         };
     }
 

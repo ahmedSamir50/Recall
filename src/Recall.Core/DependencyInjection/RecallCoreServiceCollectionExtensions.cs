@@ -61,7 +61,8 @@ public static class RecallCoreServiceCollectionExtensions
             sp.GetRequiredService<IngestSchedulerRunner>(),
             sp.GetRequiredService<ScheduledIngestDispatcher>(),
             sp.GetService<IIngestModelSession>(),
-            sp.GetService<AgeMoveService>()));
+            sp.GetService<AgeMoveService>(),
+            sp.GetService<PinService>()));
         services.AddSingleton<ScopeChangeApplier>(sp => new ScopeChangeApplier(
             sp.GetRequiredService<IIngestCursorStore>(),
             sp.GetRequiredService<IGrantedTextIngestService>(),
