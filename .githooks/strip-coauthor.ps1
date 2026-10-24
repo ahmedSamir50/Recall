@@ -7,5 +7,6 @@ if ($null -eq $lines) {
     exit 0
 }
 $filtered = $lines | Where-Object { $_ -notmatch '(?i)^\s*Co-authored-by:\s*Cursor\s*<cursoragent@cursor\.com>\s*$' }
-$filtered | Set-Content -LiteralPath $MsgFile -Encoding utf8
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllLines($MsgFile, [string[]]$filtered, $utf8NoBom)
 exit 0
