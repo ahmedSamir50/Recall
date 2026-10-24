@@ -6,7 +6,7 @@ Recall v1 shells are `android-arm64`, `ios-arm64`, `win-x64`, and `maccatalyst-a
 
 A later plan may add, for Windows, Linux, and Mac Catalyst, and only in this process: a notification-area icon on Windows, a menu-bar icon on Mac, hide on window close, Quit as the menu item that stops the watcher, sign-in start defaulting off, and a shortcut defaulting on that shows the window and navigates to `/`. Whether hide keeps the watcher running is not picked. A helper process stays forbidden. A daily update check stays out.
 
-The public remote is https://github.com/ahmedSamir50/Recall. A later Actions workflow for `android-arm64`, `ios-arm64`, `win-x64`, and `maccatalyst-arm64` is open. That workflow is not this page.
+The public remote is https://github.com/ahmedSamir50/Recall. apple-compile.yml compiles ios-arm64 and maccatalyst-arm64. A physical Apple run is not a done-when. The Apple platform files stay in the tree.
 
 Copy, not in either resx file:
 

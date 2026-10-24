@@ -196,8 +196,22 @@ public sealed class SolutionShapeTests
     public void RecallUi_WhenScanned_DoesNotInjectThemeLocaleOrScopeServices()
     public void RazorMarkup_WhenScanned_HasNoCodeBlocks()
     public void AddRecallCore_CanBeCalledWithoutMaui()
+    public void CrashPackage_IsNotReferenced()
+    public void WinX64Publish_ContainsNoWeight()
+    public void AndroidApk_ContainsNoWeight()
+    public void Libzvec_LoadAlign_Is4096()
     public void HttpClient_IsAbsentFromCoreAndUiSource()
             if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+            if (include is null)
+            if (forbidden.Any(name => string.Equals(include, name, StringComparison.Ordinal)))
+            if (!Directory.Exists(publishRoot))
+            if (apk is null)
+            if (library is null)
+            if (extracted)
+            if (ident.Length < 16 || ident[0] != 0x7f || ident[1] != (byte)'E' || ident[2] != (byte)'L' || ident[3] != (byte)'F')
+            if (ident[4] != 2)
+            if (segmentType == 1)
+            if (entry is null)
         throw new InvalidOperationException("Recall.slnx was not found above the test output directory.");
 ```
 
@@ -1118,4 +1132,59 @@ public sealed class LlamaNativeGateTests
 ```
 
 Eight threads and eight tasks each keep the inside-count at 1. A nested enter blocks another thread until the outer exit. A cancelled wait leaves the holder inside, and `CountTokens` stays at one call until that holder finishes.
+
+## tests/Recall.UnitTests/EgressProbeTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class EgressProbeTests
+    public void EgressProxyMissing_Fault_IsTwentyTwo()
+    public void EgressWatchIncomplete_Fault_IsTwentyThree()
+    public async Task HasNonLocalByteAsync_Cancelled_Throws()
+    public async Task HasNonLocalByteAsync_NullPath_ThrowsEgressProxyMissing()
+    public async Task HasNonLocalByteAsync_MissingFile_ThrowsEgressProxyMissing()
+    public async Task HasNonLocalByteAsync_NoMarker_ThrowsEgressProxyMissing()
+    public async Task HasNonLocalByteAsync_TwoMarkers_ThrowsFormatException()
+    public async Task HasNonLocalByteAsync_BlankLine_ThrowsFormatException()
+    public async Task HasNonLocalByteAsync_BadTimestamp_ThrowsFormatException()
+    public async Task HasNonLocalByteAsync_BlankAddress_ThrowsFormatException()
+    public async Task HasNonLocalByteAsync_BadByteCount_ThrowsFormatException()
+    public async Task HasNonLocalByteAsync_NegativeByteCount_ThrowsFormatException()
+    public async Task HasNonLocalByteAsync_MarkerByteCountNonZero_ThrowsFormatException()
+    public async Task HasNonLocalByteAsync_UnderSixtyMinutes_ThrowsEgressWatchIncomplete()
+    public async Task HasNonLocalByteAsync_LoopbackOnly_ReturnsFalse()
+    public async Task HasNonLocalByteAsync_NonLocalByte_ReturnsTrue()
+    public async Task HasNonLocalByteAsync_ZeroByteNonLocal_ReturnsFalse()
+    public async Task HasNonLocalByteAsync_BeforeMarker_IgnoresNonLocal()
+```
+
+No branch.
+
+## tests/Recall.IntegrationTests/CrashRestartKillHost.cs
+
+```csharp
+namespace Recall.IntegrationTests;
+public static class CrashRestartKillHost
+    public static void Enter()
+    public static void Run(string root)
+        if (!string.Equals(Environment.GetEnvironmentVariable("RECALL_CRASH_KILL"), "1", StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(root))
+            if (row is { State: IngestCursorState.Reading })
+```
+
+## tests/Recall.IntegrationTests/CrashRestartTests.cs
+
+```csharp
+namespace Recall.IntegrationTests;
+public sealed class CrashRestartTests : IDisposable
+    public void Dispose()
+    public async Task CrashRestart_ResumesFromCheckpoint()
+    public async Task Egress_AfterDownload_ZeroNonLocalBytes()
+        if (root is null || !Directory.Exists(root))
+            catch (IOException) when (attempt < 19)
+        if (Environment.ProcessPath is null)
+            if (entry.Key is string key && entry.Value is string value)
+        if (!child.WaitForExit(180_000))
+```
+
 

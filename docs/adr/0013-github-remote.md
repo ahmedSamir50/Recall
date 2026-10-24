@@ -4,4 +4,4 @@ Context: U6 closed the remote as Bitbucket on 13 Oct 2026. The public repository
 
 Decision: the git remote for main is https://github.com/ahmedSamir50/Recall. The branch backup/pre-strip-embeddinggemma is not pushed. GitHub Actions is not added. No cloud build.
 
-Consequences: ADR 0010 keeps its other cuts. Task 7.2.1 still produces the four shells on the developer machine. A later plan has to accept a cloud build before a workflow file is added. ZVec.NET 1.0.0-beta.6 stays off nuget.org, and this decision does not pick a feed.
+Consequences: ADR 0010 keeps its other cuts. Task 7.2.1 still produces the four shells on the developer machine. ADR 0015 accepts one macOS compile workflow. ZVec.NET 1.0.0-beta.6 stays off nuget.org, and this decision does not pick a feed.

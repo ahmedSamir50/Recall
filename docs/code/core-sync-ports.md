@@ -294,7 +294,7 @@ public bool TryMovePath(string path, Modality modality, DateTimeOffset utcNow)
 public void Sweep(DateTimeOffset utcNow)
 ```
 
-`if (string.IsNullOrWhiteSpace(path))` throws. `if (modality == Modality.Text)` returns false. `if (string.IsNullOrEmpty(encoderHash))` returns false. `if (lastWrite is null)` returns false. `if (mediaRow is null)` returns false. `if (chunks.Count == 0)` returns false. `if (string.IsNullOrEmpty(contentHash))` returns false. `if (cursors.IsPinned(path))` deletes a stray short row when both ids exist and returns false. `if (index.TryRead(longId, out _) && index.TryRead(shortId, out _))` deletes the short id while pinned. `if (hasShort)` keeps only the short row when not pinned. `if (hasLong)` deletes the long row when a short row already exists. `if (!FileAgePolicy.IsPastCutoff(lastWrite, years, utcNow))` returns false. `if (!decision.TryPass(modality))` returns false. `if (!hasLong)` returns false before staging. `if (anyMoved)` sets media width to 512.
+`if (string.IsNullOrWhiteSpace(path))` throws. `if (modality == Modality.Text)` returns false. `if (string.IsNullOrEmpty(encoderHash))` returns false. `if (lastWrite is null)` returns false. `if (mediaRow is null)` returns false. `if (chunks.Count == 0)` returns false. `if (string.IsNullOrEmpty(contentHash))` returns false. `if (cursors.IsPinned(path))` deletes a stray short row when both ids exist and returns false. `if (index.TryRead(longId, out _) && index.TryRead(shortId, out _))` deletes the short id while pinned. `if (hasShort)` keeps only the short row when not pinned. `if (hasLong)` deletes the long row when a short row already exists. `if (!FileAgePolicy.IsPastCutoff(lastWrite, years, utcNow))` returns false. `if (!decision.TryPass(modality))` returns false. `if (!hasLong)` returns false before staging. `if (anyMoved)` sets media width to 512. `if (index.TryRead(shortId, out _))` skips a short id that is already stored. `if (!index.TryRead(longId, out var longVector))` skips a missing long row. `if (stages.Count > 0)` commits the staged cuts. `if (reconciledShortOnly)` reconciles only the short ids.
 
 ## src/Recall.Core/Age/PinService.cs
 
@@ -305,7 +305,7 @@ public PinResult Pin(string path)
 public PinResult Unpin(string path)
 ```
 
-`if (string.IsNullOrWhiteSpace(path))` throws on pin and unpin. `if (modality is null)` returns `NotMedia` or removes pin on unpin. `if (mediaRow is null)` returns `NotMedia` on pin. `if (!facts.Exists(path))` pins without embed and returns `MissingFileStays`. `if (mediaRow.Width == MediaCollections.Width)` returns `AlreadyLong`. `if (!string.IsNullOrEmpty(longId))` appends pin or unpin to the op-log. `if (!cursors.IsPinned(path))` returns `NotPinned`. `if (mediaRow.Width == MediaCollections.OldWidth)` returns `UnpinReturnedShort`. `if (lastWrite is null || !FileAgePolicy.IsPastCutoff(lastWrite, years, DateTimeOffset.UtcNow))` returns `UnpinStaysLong`. `if (!decision.TryPass(modality.Value))` returns `GateFailedStaysLong`. `if (!cursors.IsPinned(row.Path))` skips resume delete when the pin row is gone. `if (chunk is null || string.IsNullOrEmpty(contentHash))` returns `NotMedia` after regrow. `if (!index.TryRead(longId, out _))` rolls back pin on failed regrow. `if (!index.TryRead(longId, out var stored))` skips a missing chunk on unpin cut. `if (MediaFileKinds.IsImage(path))` `if (MediaFileKinds.IsVideo(path))` `if (MediaFileKinds.IsAudio(path))` resolve modality. `if (chunk is null)` yields an empty long id.
+`if (string.IsNullOrWhiteSpace(path))` throws on pin and unpin. `if (modality is null)` returns `NotMedia` or removes pin on unpin. `if (mediaRow is null)` returns `NotMedia` on pin. `if (!facts.Exists(path))` pins without embed and returns `MissingFileStays`. `if (mediaRow.Width == MediaCollections.Width)` returns `AlreadyLong`. `if (!string.IsNullOrEmpty(longId))` appends pin or unpin to the op-log. `if (!cursors.IsPinned(path))` returns `NotPinned`. `if (mediaRow.Width == MediaCollections.OldWidth)` returns `UnpinReturnedShort`. `if (lastWrite is null || !FileAgePolicy.IsPastCutoff(lastWrite, years, DateTimeOffset.UtcNow))` returns `UnpinStaysLong`. `if (!decision.TryPass(modality.Value))` returns `GateFailedStaysLong`. `if (!cursors.IsPinned(row.Path))` skips resume delete when the pin row is gone. `if (chunk is null || string.IsNullOrEmpty(contentHash))` returns `NotMedia` after regrow. `if (!index.TryRead(longId, out _))` rolls back pin on failed regrow. `if (!index.TryRead(longId, out var stored))` skips a missing chunk on unpin cut. `if (MediaFileKinds.IsImage(path))` `if (MediaFileKinds.IsVideo(path))` `if (MediaFileKinds.IsAudio(path))` resolve modality. `if (chunk is null)` yields an empty long id. `if (chunks.Count == 0 || string.IsNullOrEmpty(contentHash))` returns before regrow. `if (string.IsNullOrEmpty(firstLongId))` returns when no long id was stored. `if (string.IsNullOrEmpty(contentHash))` returns when the file hash is blank.
 
 ## src/Recall.Core/Age/AgeCutoffActions.cs
 
@@ -366,7 +366,7 @@ public static void Stage(IMediaVectorIndex index, IIngestCursorStore cursors, Ag
 public static void Finish(IMediaVectorIndex index, IIngestCursorStore cursors, string longId)
 ```
 
-`if (stage.Vector768.Length != MediaCollections.Width)` throws `RecallFault.EmbeddingWidthUnexpected`. Stage cuts to 512, inserts the short row, and `CommitAgeCut`. Finish deletes the long id and `CompleteAgeCut`.
+`if (stage.Vector768.Length != MediaCollections.Width)` throws `RecallFault.EmbeddingWidthUnexpected`. Stage cuts to 512, inserts the short row, and `CommitAgeCut`. Finish deletes the long id and `CompleteAgeCut`. `if (!index.TryDelete(longId))` leaves the long row when delete fails.
 
 ## src/Recall.Core/Age/MediaWords.cs
 
@@ -399,3 +399,39 @@ public interface IMediaFileFacts
 ```
 
 Disk paths for age move and pin; missing or inaccessible files read as absent.
+
+## src/Recall.Core/Ports/IEgressProbe.cs
+
+```csharp
+namespace Recall.Core.Ports;
+public interface IEgressProbe
+    Task<bool> HasNonLocalByteAsync(CancellationToken cancellationToken);
+```
+
+No branch.
+
+## src/Recall.Core/Privacy/ProxyLogEgressProbe.cs
+
+```csharp
+namespace Recall.Core.Privacy;
+public sealed class ProxyLogEgressProbe : IEgressProbe
+    public const string DownloadFinishedMarker = "download-finished";
+    public static readonly TimeSpan WatchWindow = TimeSpan.FromMinutes(60);
+    public ProxyLogEgressProbe(string? logPath)
+    public async Task<bool> HasNonLocalByteAsync(CancellationToken cancellationToken)
+        if (string.IsNullOrWhiteSpace(logPath) || !File.Exists(logPath))
+            if (string.IsNullOrWhiteSpace(line))
+            if (parts.Length != 3)
+            if (!long.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var timestamp))
+            if (parts[1].Length == 0)
+            if (!int.TryParse(parts[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out var byteCount))
+            if (byteCount < 0)
+        if (markerLines.Count == 0)
+        if (markerLines.Count > 1)
+        if (marker.ByteCount != 0)
+        if (end - start < 60_000)
+            if (record.Timestamp < start)
+            if (string.Equals(record.Address, DownloadFinishedMarker, StringComparison.Ordinal))
+            if (IsLocalAddress(record.Address))
+            if (record.ByteCount > 0)
+```

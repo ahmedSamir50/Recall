@@ -14,7 +14,7 @@ No browser history.
 
 No sync transport.
 
-No cloud build.
+No cloud build other than the one macOS compile workflow in ADR 0015.
 
 No HNSW-RaBitQ.
 

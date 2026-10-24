@@ -45,6 +45,7 @@ if (inserted)
 
 ```csharp
 if (!sessionOwned)
+if (storedLong)
 ```
 
 ## src/Recall.Core/Ports/AudioPorts.cs

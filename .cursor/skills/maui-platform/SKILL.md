@@ -22,7 +22,7 @@ You own the four shells in the tree. linux-x64 is a v1 RID with no shell and no 
 | `maccatalyst-arm64` | `FSEventStream` | plain HNSW. `QuantizeType` is canon U13 |
 | `linux-x64` | not in the tree. Do not add a GTK4 backend. | plain HNSW. DiskANN stays out. |
 
-`win-arm64` is not a v1 RID. iOS `ios-arm64` is a beta risk (plan R-1): if it fails, ship the other three and record the deferral. Do not drop Android to save iOS.
+`win-arm64` is not a v1 RID. Android proof is an emulator or a phone over adb. Write the Apple platform code. A physical iPhone or Mac run does not gate the task. The macOS runner compiles those heads. Do not drop Android.
 
 ## Capture behavior
 

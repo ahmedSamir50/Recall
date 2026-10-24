@@ -887,6 +887,8 @@ public sealed class VisionFileIngest
     if (ShouldSkipShort(path, Modality.Video))
     if (frames.Count == 0)
     if (inserted)
+    if (inserted || index.TryRead(insert.ContentId, out _))
+    if (storedLong)
 ```
 
 An image is embedded as one picture row after the image grant flag allows the file. Video frames are sampled every two seconds and stored after `FinishPath`. A missing sampler, a missing file, or a grant without the video flag writes no frame row.

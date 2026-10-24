@@ -18,4 +18,6 @@ public enum RecallFault
     RrfRankConstant = 14,
     VectorSchemaStale = 20,
     AgeCutTextForbidden = 21,
+    EgressProxyMissing = 22,
+    EgressWatchIncomplete = 23,
 }

@@ -5,6 +5,7 @@ using Recall.Core.Ports;
 using Recall.Core.Sync;
 using Recall.Core.Vocabulary;
 using System.Reflection;
+using System.Xml.Linq;
 
 namespace Recall.UnitTests;
 
@@ -459,6 +460,232 @@ public sealed class SolutionShapeTests
         services.Should().Contain(descriptor => descriptor.ServiceType == typeof(Recall.Core.Theme.ThemeService));
         services.Should().Contain(descriptor => descriptor.ServiceType == typeof(Recall.Core.Locale.LocaleService));
         services.Should().Contain(descriptor => descriptor.ServiceType == typeof(IScopeManagerService));
+    }
+
+    [Fact]
+    public void CrashPackage_IsNotReferenced()
+    {
+        // Arrange
+        var forbidden = new[]
+        {
+            "Sentry",
+            "Sentry.Maui",
+            "Sentry.AspNetCore",
+            "Microsoft.AppCenter",
+            "Microsoft.AppCenter.Crashes",
+            "Microsoft.AppCenter.Analytics",
+        };
+        var projectFiles = Directory
+            .EnumerateFiles(Path.Combine(RepoRoot, "src"), "*.csproj", SearchOption.AllDirectories)
+            .Concat(Directory.EnumerateFiles(Path.Combine(RepoRoot, "tests"), "*.csproj", SearchOption.AllDirectories))
+            .Append(Path.Combine(RepoRoot, "Directory.Packages.props"))
+            .ToList();
+
+        // Act
+        var hits = new List<string>();
+        foreach (var projectFile in projectFiles)
+        {
+            var document = XDocument.Load(projectFile);
+            foreach (var element in document.Descendants())
+            {
+                var include = element.Attribute("Include")?.Value;
+                if (include is null)
+                {
+                    continue;
+                }
+
+                if (forbidden.Any(name => string.Equals(include, name, StringComparison.Ordinal)))
+                {
+                    hits.Add($"{projectFile}: {include}");
+                }
+            }
+        }
+
+        // Assert
+        hits.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void WinX64Publish_ContainsNoWeight()
+    {
+        // Arrange
+        var publishRoot = Path.Combine(
+            RepoRoot,
+            "src",
+            "Recall.Maui",
+            "bin",
+            "Release",
+            "net10.0-windows10.0.19041.0",
+            "win-x64",
+            "publish");
+        if (!Directory.Exists(publishRoot))
+        {
+            throw new InvalidOperationException("Windows publish folder is missing.");
+        }
+
+        // Act
+        var weights = Directory
+            .EnumerateFiles(publishRoot, "*.*", SearchOption.AllDirectories)
+            .Where(path => path.EndsWith(".gguf", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith(".onnx", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        // Assert
+        weights.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AndroidApk_ContainsNoWeight()
+    {
+        // Arrange
+        var publishRoot = Path.Combine(
+            RepoRoot,
+            "src",
+            "Recall.Maui",
+            "bin",
+            "Release",
+            "net10.0-android",
+            "android-arm64",
+            "publish");
+        if (!Directory.Exists(publishRoot))
+        {
+            throw new InvalidOperationException("Android publish folder is missing.");
+        }
+
+        var apk = Directory.EnumerateFiles(publishRoot, "*.apk", SearchOption.AllDirectories).FirstOrDefault();
+        if (apk is null)
+        {
+            throw new InvalidOperationException("Android publish folder is missing.");
+        }
+
+        // Act
+        using var archive = System.IO.Compression.ZipFile.OpenRead(apk);
+        var weights = archive.Entries
+            .Where(entry => entry.FullName.EndsWith(".gguf", StringComparison.OrdinalIgnoreCase)
+                || entry.FullName.EndsWith(".onnx", StringComparison.OrdinalIgnoreCase))
+            .Select(entry => entry.FullName)
+            .ToList();
+
+        // Assert
+        weights.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Libzvec_LoadAlign_Is4096()
+    {
+        // Arrange
+        var publishRoot = Path.Combine(
+            RepoRoot,
+            "src",
+            "Recall.Maui",
+            "bin",
+            "Release",
+            "net10.0-android",
+            "android-arm64",
+            "publish");
+        if (!Directory.Exists(publishRoot))
+        {
+            throw new InvalidOperationException("Android publish folder is missing.");
+        }
+
+        var extracted = false;
+        var library = Directory
+            .EnumerateFiles(publishRoot, "libzvec_c_api.so", SearchOption.AllDirectories)
+            .FirstOrDefault();
+        if (library is null)
+        {
+            library = ExtractPublishedLibzvec(publishRoot);
+            extracted = true;
+        }
+
+        try
+        {
+            // Act
+            var aligns = ReadElf64PtLoadAlignments(library);
+
+            // Assert
+            aligns.Should().Equal(4096, 4096, 4096, 4096);
+        }
+        finally
+        {
+            if (extracted)
+            {
+                File.Delete(library);
+            }
+        }
+    }
+
+    private static List<long> ReadElf64PtLoadAlignments(string path)
+    {
+        using var stream = File.OpenRead(path);
+        using var reader = new BinaryReader(stream);
+        var ident = reader.ReadBytes(16);
+        if (ident.Length < 16 || ident[0] != 0x7f || ident[1] != (byte)'E' || ident[2] != (byte)'L' || ident[3] != (byte)'F')
+        {
+            throw new InvalidOperationException("Android publish folder is missing.");
+        }
+
+        if (ident[4] != 2)
+        {
+            throw new InvalidOperationException("Android publish folder is missing.");
+        }
+
+        reader.ReadUInt16();
+        reader.ReadUInt16();
+        reader.ReadUInt32();
+        reader.ReadUInt64();
+        var programHeaderOffset = reader.ReadUInt64();
+        reader.ReadUInt64();
+        reader.ReadUInt32();
+        reader.ReadUInt16();
+        var programHeaderEntrySize = reader.ReadUInt16();
+        var programHeaderCount = reader.ReadUInt16();
+
+        var aligns = new List<long>();
+        for (var index = 0; index < programHeaderCount; index++)
+        {
+            stream.Position = (long)programHeaderOffset + index * programHeaderEntrySize;
+            var segmentType = reader.ReadUInt32();
+            reader.ReadUInt32();
+            reader.ReadUInt64();
+            reader.ReadUInt64();
+            reader.ReadUInt64();
+            reader.ReadUInt64();
+            reader.ReadUInt64();
+            var alignment = reader.ReadUInt64();
+            if (segmentType == 1)
+            {
+                aligns.Add((long)alignment);
+            }
+        }
+
+        return aligns;
+    }
+
+    private static string ExtractPublishedLibzvec(string publishRoot)
+    {
+        var apk = Directory.EnumerateFiles(publishRoot, "*.apk", SearchOption.AllDirectories).FirstOrDefault();
+        if (apk is null)
+        {
+            throw new InvalidOperationException("Android publish folder is missing.");
+        }
+
+        using var archive = System.IO.Compression.ZipFile.OpenRead(apk);
+        var entry = archive.Entries.FirstOrDefault(item =>
+            item.FullName.Replace('\\', '/').EndsWith("lib/arm64-v8a/libzvec_c_api.so", StringComparison.Ordinal));
+        if (entry is null)
+        {
+            throw new InvalidOperationException("Android publish folder is missing.");
+        }
+
+        var extracted = Path.Combine(Path.GetTempPath(), "recall-libzvec-" + Guid.NewGuid().ToString("N") + ".so");
+        using (var source = entry.Open())
+        using (var destination = File.Create(extracted))
+        {
+            source.CopyTo(destination);
+        }
+
+        return extracted;
     }
 
     [Fact]

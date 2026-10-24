@@ -12,5 +12,6 @@
 - [ADR 0012: llama.cpp in-process](0012-llamacpp-in-process.md)
 - [ADR 0013: GitHub remote](0013-github-remote.md)
 - [ADR 0014: Linux RID](0014-linux-rid.md)
+- [ADR 0015: Proof hosts](0015-proof-hosts.md)
 
 An open item is not an ADR.
