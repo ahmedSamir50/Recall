@@ -198,6 +198,10 @@ if (visionDownloadInFlight == downloadTask)
 Text download and vision download share `RunDownloadAsync`. Vision progress and phase live in a second snapshot; `GetVisionDownloadSnapshot` is what the picture query gate reads. Vision is downloaded after text is open and does not ingest on completion. Text download and vision download each keep a cancellation token. `CancelTextDownload` cancels the text token only. `ClearLocalDownloadState` cancels both tokens and deletes both model directories. The partial file is hash-checked before it is moved into place.
 
 
+```csharp
+if (visionDownloadInFlight is not null)
+```
+
 ## src/Recall.Maui/Platform/Download/TextModelConfiguration.cs
 
 ```csharp
@@ -449,4 +453,10 @@ public partial class MediaPreviewPage : ContentPage
 ```
 
 The page hosts `CommunityToolkit.Maui.MediaElement` as `Player`, sets the file as the media source, and on opened seeks to the requested seconds and plays once. A seek failure returns without playing.
+
+```csharp
+if (!seekAfterReady)
+if (args.NewState is not (MediaElementState.Stopped or MediaElementState.Paused))
+catch (Exception ex)
+```
 

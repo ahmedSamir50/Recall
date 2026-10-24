@@ -336,6 +336,14 @@ Picture input accepts only the allowlisted image extensions, reads at most 32 Mi
 Audio and text cards with a start above zero open the media file in the app player through `IMediaPreview.PlayAsync`; a start of 0 keeps the launcher path.
 
 
+```csharp
+if (audioPickCts is not null)
+if (read == 0)
+if (generation != audioPickGeneration)
+catch (OperationCanceledException)
+if (pickedAudio is null || generation != audioPickGeneration)
+```
+
 ## src/Recall.UI/Pages/Find/Lattice.razor.cs
 
 ```csharp
@@ -506,6 +514,10 @@ Markup only.
                 <button type="button" class="btn btn-p text-13" @onclick="RetryAsync">
 ```
 
+```csharp
+else if (phase == TextModelDownloadPhase.HashFailed)
+```
+
 ## src/Recall.UI/Components/Onboarding/FolderGrantPanel.razor
 
 ```razor
@@ -546,6 +558,10 @@ Markup only.
             <input @bind="query" @bind:event="oninput" aria-label="@T("Search_Placeholder")" placeholder="@T("Search_Placeholder")" @onkeydown="OnKeyDownAsync" class="w-full search-input" />
                             <button type="button" class="btn btn-g" @onclick="() => OpenAsync(card)">@T("Home_OpenFile")</button>
                             <button type="button" class="btn btn-g" @onclick="() => OpenAsync(card)">@T("Home_OpenFile")</button>
+```
+
+```csharp
+else if (!view.HasHits)
 ```
 
 ## src/Recall.UI/Pages/Find/Lattice.razor

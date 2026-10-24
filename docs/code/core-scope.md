@@ -357,6 +357,15 @@ public IReadOnlyList<int> ListOcrPages(string path)
 if (duplicate is not null)
 if (liveById.ContainsKey(chunk.ContentId))
 ``` 
+```csharp
+if (!ChunkRowExists(connection, transaction, patch.ContentId))
+if (!TryAcquireWrite())
+if (writeDepth > 0 && writeOwner == id)
+if (writeDepth > 0)
+if (Volatile.Read(ref spanReady) != 0)
+if (spanReady != 0)
+```
+
 ## src/Recall.Core/Scope/DisabledScopeWatcher.cs
 
 ```csharp

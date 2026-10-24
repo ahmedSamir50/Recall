@@ -25,6 +25,10 @@ One tokenize per document. For a `.pdf` path the engine reads with `PdfPigPageSo
 TextIngestChunk
 TextIngestResult
 ``` 
+```csharp
+if (IsPdfPath(filePath))
+```
+
 ## src/Recall.Core/Text/DocumentPatchPlanner.cs
 
 ```csharp
@@ -74,6 +78,14 @@ public static class DocumentPatchPlanner
 
 One planner covers notes and PDFs. The target is 2048 body tokens, the lookback is 512, and 7680 is only the ceiling. From the aim, the planner searches back to token `2048 - 512`, takes the latest boundary of the highest class, and snaps to the nearest token end at or before it. Classes, highest first: a paragraph break `\n\n`, a `\f` page break, a heading line of one to six `#` and a space, a sentence end `.`, `!`, `?`, `؟`, or `…` followed by whitespace when the word is not `e.g.`, `i.e.`, `etc.`, `vs.`, `Dr.`, `Mr.`, or `No.` and the next non-space is an ASCII capital or an Arabic letter, a line break `\n`, `؛`, `،`, and any whitespace. `3.5` is not an end. The next patch starts at a sentence start 256 to 384 tokens back, closest to 256; without one it starts at the cut. Only when one paragraph runs past 7680 does the planner cut that paragraph at a sentence end, then whitespace, still on a token end. A blank document throws `ArgumentException`, null token ends throw `ArgumentNullException`, and a negative prefix count throws `ArgumentOutOfRangeException`. A page whose words trip `BrokenArabic.NeedsOcr` is not patched. `SplitPdfPages` joins the remaining pages with `\f`, records their numbers in `OcrPageNumbers`, and leaves a `NeedsOcr` page out of the join with no extra form feed.
 
+```csharp
+if (pageText.IndexOf('\uFFFD') < 0)
+if (start >= pageText.Length)
+if (BrokenArabic.NeedsOcr(pageText[start..end]))
+if (bestToken >= 0)
+if (token < cutToken)
+```
+
 ## src/Recall.Core/Text/ChunkerStamp.cs
 
 ```csharp
@@ -101,10 +113,33 @@ public static class PdfPigPageSource
 namespace Recall.Core.Text;
 internal static class PdfTextOrder
     public static string Logical(Page page)
+No public type.
 ```
 
 `Logical` is the page text `PdfPigPageSource.Read` stores. A null page throws `ArgumentNullException`. A page with no Arabic letter returns normalized `GetText(page, addDoubleNewline: true)`. An Arabic page walks `GetWords()`, keeps inter-word spaces, reverses presentation-form words when x increases, and reverses mixed run order when RTL words sit right of LTR words on the line.
 
+
+```csharp
+if (page.Letters.Count == 0 || !ContainsArabic(page.Letters))
+if (line.Count > 0 && IsNewLine(line[0], letter))
+if (!string.IsNullOrEmpty(letter.Value))
+if (line.Count == 0)
+if (builder.Length > 0)
+if (!LineHasPresentation(line))
+if (IsWhitespace(letter))
+if (string.IsNullOrEmpty(word.Text))
+if (index > 0)
+if (run.Kind == RunKind.Ltr)
+if (hasLtr && hasRtl)
+if (visualRtl)
+if (ContainsArabicCodePoint(letter.Value))
+if (IsArabicCodePoint(rune.Value))
+if (!hasX)
+if (ContainsPresentation(letter.Value))
+if (rune.Value is >= 0xFB50 and <= 0xFDFF or >= 0xFE70 and <= 0xFEFC)
+if (Kind == RunKind.Rtl && Visual && hasX && lastX + 0.5 >= firstX)
+else if (Visual)
+```
 
 ## src/Recall.Core/Text/EmbeddingTaskPrefixes.cs
 
@@ -205,6 +240,10 @@ if (!textOrCode && !media)
 if (textOrCode)
 if (media && audio is not null)
 ``` 
+```csharp
+if (result.OcrPageNumbers.Count > 0)
+```
+
 ## src/Recall.Core/Ingest/GrantedTextDocument.cs
 
 ```csharp
@@ -247,6 +286,10 @@ public sealed class DirectoryGrantedTextReader : IGrantedTextReader
         if (gitIgnored)
 ```
 
+
+```csharp
+if (MediaIngestFilter.UserSkipped(name, user) || !MediaIngestFilter.KindAllowed(kinds, name))
+```
 
 ## src/Recall.Core/Ingest/IGrantedTextReader.cs
 
@@ -356,6 +399,17 @@ public async Task ApplyAsync(
 ``` 
 
 
+
+```csharp
+if (MediaFileKinds.IsAudio(change.Path) || MediaFileKinds.IsVideo(change.Path) || MediaFileKinds.IsImage(change.Path))
+if (MediaIngestFilter.UserSkipped(fileName, user))
+if (!allowed)
+if (audio is not null && (MediaFileKinds.IsAudio(path) || MediaFileKinds.IsVideo(path)) && !grant.EnabledKinds.HasFlag(GrantFileKinds.Audio))
+if (MediaFileKinds.IsImage(path))
+if (vision is not null)
+if (audio is not null && (MediaFileKinds.IsAudio(path) || MediaFileKinds.IsVideo(path)))
+if (vision is not null && MediaFileKinds.IsVideo(path))
+```
 
 ## src/Recall.Core/Ingest/ScopeWatchCoordinator.cs
 
@@ -531,6 +585,21 @@ public sealed class IngestSchedulerRunner
 
 Pass order is text, media, then OCR. Media opens vision and audio once per pass, or one shared vision context when `MediaContextPolicy.OneContext` is true. OCR pass 3 calls `OcrPassStub.Run` once for the drained paths.
 
+```csharp
+if (hooks.OpenText is not null)
+if (!scheduler.TryDequeue(IngestModel.Text, out var job))
+if (opened)
+if (!scheduler.TryDequeue(IngestModel.Media, out var job))
+if (MediaFileKinds.IsImage(path))
+else if (MediaFileKinds.IsVideo(path))
+else if (MediaFileKinds.IsAudio(path))
+if (hooks.OpenVision is not null)
+if (hooks.OpenAudio is not null)
+catch (OperationCanceledException)
+if (audioOpen)
+if (!scheduler.TryDequeue(IngestModel.Ocr, out var job))
+```
+
 ## src/Recall.Core/Ingest/IngestSchedulerService.cs
 
 ```csharp
@@ -567,6 +636,17 @@ public sealed class ScheduledIngestDispatcher
 ```
 
 Resolves the grant for a queued path and calls text ingest or `IAudioFileIngest.IndexAsync` for audio and video paths.
+
+```csharp
+if (MediaIngestFilter.UserSkipped(fileName, skips.Load()))
+if (MediaFileKinds.IsImage(path))
+if (vision is null || !MediaIngestFilter.KindAllowed(grant.EnabledKinds, fileName))
+if (MediaFileKinds.IsAudio(path))
+if (audio is null)
+if (!MediaFileKinds.IsVideo(path) || !MediaIngestFilter.KindAllowed(grant.EnabledKinds, fileName))
+if (vision is not null && Leg is IngestMediaLeg.Shared or IngestMediaLeg.Vision)
+if (audio is not null && Leg is IngestMediaLeg.Shared or IngestMediaLeg.Audio or IngestMediaLeg.None)
+```
 
 ## src/Recall.Core/Ocr/OcrModelFiles.cs
 
@@ -748,4 +828,63 @@ if (first[index] != second[index])
 ```
 
 Caption file matching by stem and language tag, UTF-8 byte ordering, and cue extraction for srt, vtt, sbv, ass, ssa, and ttml sidecars with no embedded track.
+
+## src/Recall.Core/Ingest/IIngestModelSession.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public interface IIngestModelSession
+void OpenText();
+void CloseText();
+void OpenVision();
+void CloseVision();
+void OpenAudio();
+void CloseAudio();
+void EnsureProbe();
+```
+
+No branch.
+
+The scheduler pass calls these methods once per opened model.
+
+## src/Recall.Core/Ingest/IngestMediaLeg.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public enum IngestMediaLeg
+```
+
+No branch.
+
+`None`, `Shared`, `Vision`, and `Audio` name which model a media job uses inside one pass.
+
+## src/Recall.Core/Ingest/MediaIngestFilter.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public static class MediaIngestFilter
+    if (string.IsNullOrWhiteSpace(fileName))
+    if (FileAdmission.IsSecret(fileName) || FileAdmission.IsDatabase(fileName) || FileAdmission.IsLockFile(fileName))
+    if (user.FileNames.Any(candidate => string.Equals(candidate, fileName, StringComparison.OrdinalIgnoreCase)))
+    if (!string.IsNullOrEmpty(extension)
+    if (MediaFileKinds.IsImage(fileName))
+    if (MediaFileKinds.IsVideo(fileName))
+    if (MediaFileKinds.IsAudio(fileName))
+```
+
+A blank name, a secret, a database, a lock file, a skipped file name, or a skipped extension is not indexed. Image, video, and audio are indexed only when that grant flag is on.
+
+## src/Recall.Core/Ingest/VisionFileIngest.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public interface IVisionFileIngest
+public sealed class VisionFileIngest
+    if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Image) || !File.Exists(path))
+    if (sampler is null || !grant.EnabledKinds.HasFlag(GrantFileKinds.Video) || !File.Exists(path))
+    if (frames.Count == 0)
+```
+
+An image is embedded as one picture row after the image grant flag allows the file. Video frames are sampled every two seconds and stored after `FinishPath`. A missing sampler, a missing file, or a grant without the video flag writes no frame row.
+
 

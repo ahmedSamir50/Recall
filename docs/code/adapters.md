@@ -157,6 +157,18 @@ public static class MediaContextProbe
 
 One-day probe: open text and mmproj, embed a minimal JPEG and a PCM buffer without closing between them. When both succeed, `MediaContextPolicy.OneContext` is true. Missing files return without writing `OneContext` and without latching `applied`. A vision open or embed failure sets `OneContext` false and latches `applied`. The probe closes only a context that same call opened, and it does not call `CloseAudio`. `Mtmd_OneContext_EmbedsVisionThenAudio` locks the success path.
 
+```csharp
+if (openCode == 0)
+else if (openCode != 8)
+if (visionCode == 0)
+else if (visionCode != 8)
+catch (InvalidOperationException)
+if (embedCode != 0)
+if (openedVision)
+if (openedText)
+if (latch)
+```
+
 ## src/Recall.Adapters/Embedding/Runtime/VisionModelRuntime.cs
 
 ```csharp
@@ -182,6 +194,10 @@ if (opened)
 ```
 
 One JPEG at a time. `EmbedJpeg` opens the mmproj after ensuring the text runtime is open only when this call did not find the session already open, and it closes in `finally` only then. A pass that called `OpenSession` leaves the session open. A non-zero open code throws `InvalidOperationException` with `recall_embed vision open failed with code CODE.` An embed throw still closes the vision handle when this call opened it. `IsModelReady` checks the mmproj file only.
+
+```csharp
+if (openedHere && opened)
+```
 
 ## src/Recall.Adapters/Indexing/ZVecMediaVectorIndex.cs
 
@@ -252,6 +268,10 @@ if (disposed != 0)
 if (opened)
 ```
 
+```csharp
+if (opened || MediaContextPolicy.OneContext)
+```
+
 ## src/Recall.Adapters/Embedding/MediaContextPolicy.cs
 
 ```csharp
@@ -259,3 +279,32 @@ namespace Recall.Adapters.Embedding;
 public static class MediaContextPolicy
 public static bool OneContext { get; set; }
 ```
+
+## src/Recall.Adapters/Embedding/Llama/LlamaNativeGate.cs
+
+```csharp
+namespace Recall.Adapters.Embedding.Llama;
+No public type.
+    if (depth > 0)
+    if (depth > 1)
+```
+
+One process-wide `SemaphoreSlim(1, 1)`. A nested call on the thread that already holds it increments a thread-static depth. `Exit` releases only when that depth returns to zero.
+
+## src/Recall.Adapters/Embedding/LlamaIngestModelSession.cs
+
+```csharp
+namespace Recall.Adapters.Embedding;
+public sealed class LlamaIngestModelSession
+public void OpenText()
+public void CloseText()
+public void OpenVision()
+public void CloseVision()
+public void OpenAudio()
+public void CloseAudio()
+public void EnsureProbe()
+```
+
+No branch.
+
+The ingest pass opens and closes text, vision, and audio through this session. `EnsureProbe` holds `LlamaNativeGate` while `MediaContextProbe.EnsureApplied` runs.

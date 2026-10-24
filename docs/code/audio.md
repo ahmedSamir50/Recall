@@ -41,6 +41,10 @@ if (cursors.AnyLivePath(retiredId))
 if (index.TryDelete(retiredId))
 ```
 
+```csharp
+if (!sessionOwned)
+```
+
 ## src/Recall.Core/Ports/AudioPorts.cs
 
 These are the promises the MAUI host keeps. `DisabledAudioFileIngest` is the headless registration and does not read. `SiblingFile` is one caption found next to a media file.
@@ -89,6 +93,12 @@ if (!WavPcm.IsWav(wav))
 catch (IOException)
 ```
 
+```csharp
+catch (InvalidDataException)
+catch (System.Runtime.InteropServices.COMException)
+if (prepared.FailureReason != TranscodeFailureReason.None)
+```
+
 ## src/Recall.Maui/Platform/Media/AndroidAudioSource.cs
 
 `AndroidAudioSource` finds an audio track and decodes it with `MediaCodec` to 16 kHz mono PCM.
@@ -103,6 +113,14 @@ if (inputIndex >= 0)
 if (size < 0)
 if (status < 0)
 if (bufferInfo.Flags.HasFlag(MediaCodecBufferFlags.EndOfStream))
+```
+
+```csharp
+catch (Java.Lang.Exception)
+if (iterations > MaxDrainIterations)
+if (BitConverter.IsLittleEndian)
+if (!format.ContainsKey(MediaFormat.KeyPcmEncoding))
+if (encoding != (int)Android.Media.Encoding.Pcm16bit)
 ```
 
 ## src/Recall.Maui/Platform/Media/AppleAudioSource.cs
@@ -121,6 +139,22 @@ if (output.FrameLength > 0)
 if (wantsFlush)
 if (channel == IntPtr.Zero)
 catch (IOException)
+```
+
+```csharp
+catch (InvalidOperationException)
+catch (Exception)
+if (audioTracks is null || audioTracks.Length == 0)
+if (reader is null || readerError is not null)
+if (!reader.StartReading())
+if (sampleBuffer is null)
+if (reader.Status == AVAssetReaderStatus.Failed || samples.Count == 0)
+if (blockBuffer is null)
+if (length <= 0)
+if (copyError != CMBlockBufferError.None || bytes is null)
+if (file.Length >= 12 && file[4] == (byte)'f' && file[5] == (byte)'t' && file[6] == (byte)'y' && file[7] == (byte)'p')
+if (file.Length >= 3 && file[0] == (byte)'I' && file[1] == (byte)'D' && file[2] == (byte)'3')
+if (file.Length >= 2 && file[0] == 0xFF && (file[1] & 0xE0) == 0xE0)
 ```
 
 ## src/Recall.Maui/Platform/Media/MauiSiblingFiles.cs

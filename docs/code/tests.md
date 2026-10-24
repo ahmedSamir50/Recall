@@ -816,6 +816,12 @@ public sealed class LlamaEmbedTests
 No branch.
 
 
+```csharp
+if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+if (TokenEndsCode != 0)
+if (mmprojPath is null)
+```
+
 ## tests/Recall.UnitTests/PhaseAddendumTests.cs
 
 ```csharp
@@ -1007,6 +1013,13 @@ public async Task Scheduler_BurstOf50Events_OneOpen()
 
 Phase 5 close locks for media kinds, audio windows, resampling, WAV reading, sibling transcripts, the mmproj download join policy, items_audio creation, the native audio session contract, audio delete through ingest_chunk, and the AudioModelRuntime open/embed/close ownership.
 
+```csharp
+if (format == 0xFFFEu)
+if (includeData)
+if (start < 0)
+if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+```
+
 ## tests/Recall.UnitTests/Phase5PdfTests.cs
 
 ```csharp
@@ -1033,6 +1046,10 @@ public void ReplaceOcrPages_Sqlite_RoundTrips()
 
 Locks `DocumentPatchPlanner` at target 2048 with 512-token lookback, 256 to 384 token overlap on sentence starts, hard cap 7680, paragraph and sentence boundary cuts, whole-document char spans, and multi-page `PageStart`/`PageEnd` through eleven short pages. `SplitPdfPages` leaves `NeedsOcr` pages out of the `\f` join. `OcrPageWaitlist` writes `ocr_page` and enqueues pass 3. `ReplaceOcrPages` round-trips through SQLite.
 
+```csharp
+catch (IOException ex)
+```
+
 ## tests/Recall.UnitTests/PdfTextOrderTests.cs
 
 ```csharp
@@ -1049,3 +1066,20 @@ public void Read_PageWithoutArabic_StaysContentOrder()
 ```
 
 Locks `PdfPigPageSource.Read` on `arabic-visual.pdf`: English order, Arabic presentation reversal, mixed LTR and RTL lines, and a non-Arabic page through content-order text with `GetWords` spacing on Arabic pages.
+
+```csharp
+if (File.Exists(path))
+```
+
+## tests/Recall.UnitTests/LlamaNativeGateTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class LlamaNativeGateTests
+    if (now != 1)
+    catch (Exception ex)
+    if (call == 1)
+```
+
+Eight threads and eight tasks each keep the inside-count at 1. A nested enter blocks another thread until the outer exit. A cancelled wait leaves the holder inside, and `CountTokens` stays at one call until that holder finishes.
+

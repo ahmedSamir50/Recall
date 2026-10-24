@@ -478,7 +478,7 @@ Sync may later say a file is on another of the person’s devices. It will not c
 
 The group browser is not in v1. Group labels, when built, are the strongest word, the date range, and the counts, in the person’s language. No language model writes them.
 
-Version 1.5 is the separate board after the progress table. It is not part of Phases 1–7.
+Version 1.5 is the separate board after the progress table. Progress on that board is 0%. It is not part of Phases 1–7.
 
 Browser history is not in v1.
 

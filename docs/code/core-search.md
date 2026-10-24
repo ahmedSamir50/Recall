@@ -30,6 +30,13 @@ if (info.Exists)
 catch (UnauthorizedAccessException)
 catch (IOException)
 ``` 
+```csharp
+if (fileBudget <= 0)
+if (!best.TryGetValue(hit.SourcePath, out var existing) || PreferMedia(hit, existing))
+if (winners.Count > fileBudget)
+if (candidate.Score > current.Score)
+```
+
 ## src/Recall.Core/Search/TextSearchModels.cs
 
 ```csharp
