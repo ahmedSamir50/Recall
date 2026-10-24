@@ -10,7 +10,8 @@ public sealed class IngestSchedulerService
         IngestScheduler scheduler,
         IngestSchedulerRunner runner,
         ScheduledIngestDispatcher dispatcher,
-        IIngestModelSession? session = null)
+        IIngestModelSession? session = null,
+        Age.AgeMoveService? ageMove = null)
     {
         this.scheduler = scheduler;
         this.runner = runner;
@@ -26,6 +27,7 @@ public sealed class IngestSchedulerService
             BeginMediaLeg = dispatcher.SetLeg,
             ProcessTextJobAsync = dispatcher.DispatchTextAsync,
             ProcessMediaJobAsync = dispatcher.DispatchMediaAsync,
+            SweepAgedMedia = ageMove is null ? null : ageMove.Sweep,
         };
     }
 

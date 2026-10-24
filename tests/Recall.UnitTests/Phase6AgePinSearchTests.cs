@@ -409,7 +409,7 @@ public sealed class Phase6AgePinSearchTests
     }
 
     [Fact]
-    public void YoungerShort_Reingest_DoesNotWriteLong()
+    public async Task YoungerShort_Reingest_DoesNotWriteLong()
     {
         const string path = @"C:\G\young-short.jpg";
         var utcNow = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
@@ -424,7 +424,7 @@ public sealed class Phase6AgePinSearchTests
         cursors.FindMediaFile(path, Modality.Image)!.Width.Should().Be(MediaCollections.OldWidth);
         var ingest = new VisionFileIngest(new FakeVisionEmbeddingEncoder(), index, hashes, cursors, ageMove: move);
         var grant = new ScopeFolderGrant(@"C:\G", "G", GrantFileKinds.Image);
-        ingest.IndexImageAsync(grant, path).GetAwaiter().GetResult();
+        await ingest.IndexImageAsync(grant, path, TestContext.Current.CancellationToken);
         index.TryRead(LongId(Modality.Image, SampleHash, 0), out _).Should().BeFalse();
         index.TryRead(ShortId(Modality.Image, SampleHash, 0), out _).Should().BeTrue();
     }
@@ -566,11 +566,11 @@ public sealed class Phase6AgePinSearchTests
     }
 
     [Fact]
-    public void Reingest_ExistingLongId_WritesMediaFile()
+    public async Task Reingest_ExistingLongId_WritesMediaFile()
     {
         var bytes = new byte[] { 9, 8, 7, 6, 5 };
         var path = Path.Combine(Path.GetTempPath(), "recall_existing_long_" + Guid.NewGuid().ToString("N") + ".jpg");
-        File.WriteAllBytes(path, bytes);
+        await File.WriteAllBytesAsync(path, bytes, TestContext.Current.CancellationToken);
         try
         {
             var cursors = new FakeIngestCursorStore();
@@ -583,7 +583,7 @@ public sealed class Phase6AgePinSearchTests
             cursors.FindMediaFile(path, Modality.Image).Should().BeNull();
             var ingest = new VisionFileIngest(new FakeVisionEmbeddingEncoder(), index, hashes, cursors);
             var grant = new ScopeFolderGrant(Path.GetDirectoryName(path) ?? path, "G", GrantFileKinds.Image);
-            ingest.IndexImageAsync(grant, path).GetAwaiter().GetResult();
+            await ingest.IndexImageAsync(grant, path, TestContext.Current.CancellationToken);
             cursors.FindMediaFile(path, Modality.Image).Should().NotBeNull();
         }
         finally

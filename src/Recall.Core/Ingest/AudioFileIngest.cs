@@ -1,8 +1,10 @@
+using Recall.Core.Age;
 using Recall.Core.Checkpoints;
 using Recall.Core.Indexing;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
 using Recall.Core.Text;
+using Recall.Core.Vocabulary;
 
 namespace Recall.Core.Ingest;
 
@@ -16,6 +18,7 @@ public sealed class AudioFileIngest : IAudioFileIngest
     private readonly IEncoderFileHash hashes;
     private readonly IGrantedTextReader reader;
     private readonly IIngestCursorStore cursors;
+    private readonly AgeMoveService? ageMove;
 
     public AudioFileIngest(
         IAudioSource source,
@@ -25,7 +28,8 @@ public sealed class AudioFileIngest : IAudioFileIngest
         IAudioOffReport report,
         IEncoderFileHash hashes,
         IGrantedTextReader reader,
-        IIngestCursorStore cursors)
+        IIngestCursorStore cursors,
+        AgeMoveService? ageMove = null)
     {
         this.source = source;
         this.siblings = siblings;
@@ -35,6 +39,7 @@ public sealed class AudioFileIngest : IAudioFileIngest
         this.hashes = hashes;
         this.reader = reader;
         this.cursors = cursors;
+        this.ageMove = ageMove;
     }
 
     public async Task IndexGrantAsync(ScopeFolderGrant grant, CancellationToken cancellationToken = default)
@@ -60,6 +65,11 @@ public sealed class AudioFileIngest : IAudioFileIngest
         if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Audio))
         {
             report.Report();
+            return;
+        }
+
+        if (ShouldSkipShort(path))
+        {
             return;
         }
 
@@ -128,7 +138,7 @@ public sealed class AudioFileIngest : IAudioFileIngest
             return;
         }
 
-        var words = SiblingWords(path);
+        var words = MediaWords.Join(null, SiblingTranscript.Join(SiblingTexts(path)), null);
         var encoderHash = hashes.AudioHash ?? string.Empty;
         var sessionOwned = encoder.IsLoaded || MediaContextPolicy.OneContext;
         var inserts = new List<MediaIndexInsert>(windows.Count);
@@ -163,9 +173,16 @@ public sealed class AudioFileIngest : IAudioFileIngest
 
         cursors.FinishPath(path, contentHash, grant.Path, encoderHash, writes);
         index.Create(MediaCollections.Audio, MediaCollections.Width);
+        var storedLong = false;
         foreach (var insert in inserts)
         {
-            index.TryInsert(MediaCollections.Audio, insert);
+            storedLong |= index.TryInsert(MediaCollections.Audio, insert) || index.TryRead(insert.ContentId, out _);
+        }
+
+        if (storedLong)
+        {
+            cursors.UpsertMediaFile(path, Modality.Audio);
+            ageMove?.TryMovePath(path, Modality.Audio, DateTimeOffset.UtcNow);
         }
 
         if (!sessionOwned)
@@ -186,7 +203,13 @@ public sealed class AudioFileIngest : IAudioFileIngest
         }
     }
 
-    private string SiblingWords(string mediaPath)
+    private bool ShouldSkipShort(string path)
+    {
+        var row = cursors.FindMediaFile(path, Modality.Audio);
+        return row is not null && row.Width == MediaCollections.OldWidth && !cursors.IsPinned(path);
+    }
+
+    private List<string> SiblingTexts(string mediaPath)
     {
         var mediaFileName = Path.GetFileName(mediaPath);
         var candidates = siblings.List(mediaPath)
@@ -202,7 +225,7 @@ public sealed class AudioFileIngest : IAudioFileIngest
             texts.Add(SiblingTranscript.ExtractCues(Path.GetExtension(name), sibling.Text));
         }
 
-        return SiblingTranscript.Join(texts);
+        return texts;
     }
 
     private static int SampleIndex(int milliseconds) =>

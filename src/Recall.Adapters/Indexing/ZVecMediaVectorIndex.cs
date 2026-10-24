@@ -1,6 +1,7 @@
 using Recall.Core.Indexing;
 using Recall.Core.Ports;
 using Recall.Core.Search;
+using Recall.Core.Vectors;
 using System.Globalization;
 using ZVec.NET;
 
@@ -42,14 +43,15 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
 
     private void CreateCore(string collectionName, int width)
     {
-        if (width != MediaCollections.Width)
-        {
-            throw new ArgumentOutOfRangeException(nameof(width));
-        }
-
         if (!MediaCollections.IsMedia(collectionName))
         {
             throw new ArgumentException("Only picture, video, and audio collections are media collections.", nameof(collectionName));
+        }
+
+        var expected = MediaCollections.WidthFor(collectionName);
+        if (width != expected)
+        {
+            throw new ArgumentOutOfRangeException(nameof(width));
         }
 
         if (collections.ContainsKey(collectionName))
@@ -89,7 +91,7 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
                 {
                     Name = EmbeddingField,
                     DataType = ZVecDataType.VectorFp32,
-                    Dimension = MediaCollections.Width,
+                    Dimension = width,
                     IndexParam = new ZVecHnswIndexParam
                     {
                         MetricType = ZVecMetricType.Cosine,
@@ -126,6 +128,12 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
     private bool TryInsertCore(string collectionName, MediaIndexInsert insert)
     {
         var collection = RequireCollection(collectionName);
+        var expectedWidth = MediaCollections.WidthFor(collectionName);
+        if (insert.Vector768.Length != expectedWidth)
+        {
+            throw new ArgumentException("Vector length must match the collection width.");
+        }
+
         if (collection.Fetch(insert.ContentId, includeVector: false) is not null)
         {
             return false;
@@ -153,6 +161,46 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
         return collection.Insert(doc).IsSuccess;
     }
 
+    public bool TryRead(string contentId, out MediaStoredVector vector)
+    {
+        lock (sync)
+        {
+            return TryReadCore(contentId, out vector);
+        }
+    }
+
+    private bool TryReadCore(string contentId, out MediaStoredVector vector)
+    {
+        OpenExistingCollections();
+        foreach (var pair in collections)
+        {
+            var doc = pair.Value.Fetch(contentId, includeVector: true);
+            if (doc is null)
+            {
+                continue;
+            }
+
+            var embedding = doc.DenseVectors.TryGetValue(EmbeddingField, out var dense)
+                ? dense.ToArray()
+                : [];
+            vector = new MediaStoredVector(
+                contentId,
+                pair.Key,
+                embedding,
+                ReadField(doc, WordsField),
+                ReadField(doc, EncoderHashField),
+                ReadField(doc, GrantPathField),
+                ReadField(doc, SourcePathField),
+                ReadField(doc, StartSecondsField),
+                ReadField(doc, EndSecondsField),
+                ReadField(doc, PathLiveField) == "1");
+            return true;
+        }
+
+        vector = null!;
+        return false;
+    }
+
     public bool TryDelete(string contentId)
     {
         lock (sync)
@@ -163,6 +211,7 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
 
     private bool TryDeleteCore(string contentId)
     {
+        OpenExistingCollections();
         var deleted = false;
         foreach (var collection in collections.Values)
         {
@@ -221,7 +270,10 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
     private IReadOnlyList<MediaSearchHit> SearchCore(MediaSearchRequest request, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var collection = RequireCollection(request.CollectionName);
+        if (!TryOpenCollection(request.CollectionName, out var collection) || collection is null)
+        {
+            return [];
+        }
         var dense = new ZVecQuery
         {
             FieldName = EmbeddingField,
@@ -260,7 +312,10 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
     private IReadOnlyList<MediaSearchHit> SearchWordsCore(string collectionName, string query, string filter, int topK, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var collection = RequireCollection(collectionName);
+        if (!TryOpenCollection(collectionName, out var collection) || collection is null)
+        {
+            return [];
+        }
         var fts = new ZVecQuery
         {
             FieldName = WordsField,
@@ -306,10 +361,41 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
 
         if (!collections.ContainsKey(collectionName))
         {
-            CreateCore(collectionName, MediaCollections.Width);
+            CreateCore(collectionName, MediaCollections.WidthFor(collectionName));
         }
 
         return collections[collectionName];
+    }
+
+    private void OpenExistingCollections()
+    {
+        foreach (var collectionName in MediaCollections.WordCollections)
+        {
+            TryOpenCollection(collectionName, out _);
+        }
+    }
+
+    private bool TryOpenCollection(string collectionName, out IZvecCollection? collection)
+    {
+        if (!MediaCollections.IsMedia(collectionName))
+        {
+            throw new ArgumentException("Only picture, video, and audio collections are media collections.", nameof(collectionName));
+        }
+
+        var rootPath = Path.Combine(databaseRoot, collectionName);
+        if (!Directory.Exists(rootPath))
+        {
+            collection = null;
+            return false;
+        }
+
+        if (!collections.ContainsKey(collectionName))
+        {
+            CreateCore(collectionName, MediaCollections.WidthFor(collectionName));
+        }
+
+        collection = collections[collectionName];
+        return true;
     }
 
     private static string ReadField(ZVecDoc doc, string field) =>
