@@ -1,3 +1,4 @@
+#if ANDROID
 using System.Diagnostics;
 using System.Globalization;
 using Recall.Adapters.Embedding;
@@ -202,3 +203,4 @@ public static class AndroidTextBenchSession
         }
     }
 }
+#endif
