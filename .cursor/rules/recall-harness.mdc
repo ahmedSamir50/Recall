@@ -47,7 +47,7 @@ The user is the approval gate. A low score does not reject the plan and does not
 
 ## Git commits
 
-Never add a `Co-authored-by` line to a commit message. That includes `Co-authored-by: Cursor <cursoragent@cursor.com>` and any other agent or tool trailer. Never use `git commit --trailer`. Use `git commit -m "summary"` only. Project hooks block injected trailer flags on `git commit`.
+Never add a `Co-authored-by` line to a commit message. That includes `Co-authored-by: Cursor <cursoragent@cursor.com>` and any other agent or tool trailer. Never use `git commit --trailer`. Use `git commit -m "summary"` only. `.githooks` strips any injected `Co-authored-by: Cursor` line via hidden PowerShell, not Git Bash.
 
 ## Otherwise
 

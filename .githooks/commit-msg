@@ -1,0 +1,4 @@
+#!/bin/sh
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "$SCRIPT_DIR/strip-coauthor.ps1" "$1"
+exit 0

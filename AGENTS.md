@@ -7,3 +7,5 @@ On-device multimodal second brain. One .NET 10 MAUI Blazor Hybrid app, Embedding
 `@recall: <plan>` or `@reacall: <plan>` runs the full expert panel in that same chat before a plan is accepted. Each expert signs off with evidence, a verdict, confidence, options, alternatives, and risks. Do not spawn a subagent per expert. Development rules and test honesty live next to that skill.
 
 Do not implement device sync, a web client, a chat UI, a helper process, or ambient OS capture unless a later spec the user has accepted says so.
+
+Git: never `git commit --trailer` or any `Co-authored-by` line. Use `git commit -m "summary"` only. `.githooks` strips injected Cursor co-author lines; do not add bash hook scripts on Windows.

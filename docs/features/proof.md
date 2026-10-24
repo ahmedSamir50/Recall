@@ -20,7 +20,7 @@ Task 7.1.3 is not started. ADR 0008 names English, Arabic, Chinese, Hindi, and F
 
 `libzvec_c_api.so` in that package measures four `PT_LOAD` segments with `p_align` 4096 on android-arm64. Task 7.2.4 stays open until a later package measures at least 16384. `Libzvec_LoadAlign_Is4096` locks the current measurement.
 
-`apple-compile.yml` runs on `macos-26`, selects the newest installed Xcode 27.1 app bundle, and builds `net10.0-ios` / `ios-arm64` and `net10.0-maccatalyst` / `maccatalyst-arm64` without signing or uploading weights. Run `40076993280` on 24 Oct 2026 failed at `xcode-select` because `/Applications/Xcode_27.1.app` was not on that image; the workflow now probes known Xcode paths before build. A later run that fails on `ZVec.NET` or `UglyToad.PdfPig` restore is recorded here with the cache path and byte count above.
+`apple-compile.yml` runs on `macos-27`, pins Xcode 27.1 through `setup-xcode`, and builds `net10.0-ios` / `ios-arm64` and `net10.0-maccatalyst` / `maccatalyst-arm64` without signing or uploading weights. Run `40077057050` on 24 Oct 2026 reached restore and build but failed because the default `Xcode.app` on `macos-26` was 26.6 while .NET for iOS 27.1.10018 requires Xcode 27.1. A restore failure that names `ZVec.NET` or `UglyToad.PdfPig` is recorded here with the cache path and byte count above.
 
 ```mermaid
 flowchart LR
