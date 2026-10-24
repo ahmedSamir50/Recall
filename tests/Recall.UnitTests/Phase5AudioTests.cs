@@ -626,11 +626,13 @@ public sealed class Phase5AudioTests
         var encoder = new FakeAudioEmbeddingEncoder();
         var mediaIndex = new FakeMediaVectorIndex
         {
-            OnSearch = _ =>
-            [
-                new MediaSearchHit("inside", @"C:\med\talk.wav", 0, 11.2, 3),
-                new MediaSearchHit("outside", @"D:\elsewhere\song.wav", 1, 3, 9),
-            ],
+            OnSearch = request => request.CollectionName == MediaCollections.Audio
+                ?
+                [
+                    new MediaSearchHit("inside", @"C:\med\talk.wav", 0, 11.2, 3),
+                    new MediaSearchHit("outside", @"D:\elsewhere\song.wav", 1, 3, 9),
+                ]
+                : [],
         };
         var service = new AudioSearchService(encoder, mediaIndex, new FakeEncoderFileHash { AudioHash = "audio-hash" });
         var grants = new List<ScopeFolderGrant> { new(@"C:\med", "med", GrantFileKinds.Audio) };
@@ -638,8 +640,10 @@ public sealed class Phase5AudioTests
         hits.Should().ContainSingle();
         hits[0].ContentId.Should().Be("inside");
         hits[0].SourcePath.Should().Be(@"C:\med\talk.wav");
-        var request = mediaIndex.Requests.Should().ContainSingle().Subject;
-        request.CollectionName.Should().Be(MediaCollections.Audio);
+        mediaIndex.Requests.Should().HaveCount(2);
+        mediaIndex.Requests[0].CollectionName.Should().Be(MediaCollections.Audio);
+        mediaIndex.Requests[1].CollectionName.Should().Be(MediaCollections.AudioOld);
+        var request = mediaIndex.Requests[0];
         request.Filter.Should().Contain(@"C:\med");
         request.Filter.Should().Contain("audio-hash");
         request.QueryVector768.Span[0].Should().Be(1);
@@ -684,16 +688,18 @@ public sealed class Phase5AudioTests
         var encoder = new FakeAudioEmbeddingEncoder();
         var mediaIndex = new FakeMediaVectorIndex
         {
-            OnSearch = _ =>
-            [
-                new MediaSearchHit("weak", @"C:\med\talk.wav", 8, 11.2, 3),
-                new MediaSearchHit("strong", @"C:\med\song.wav", 2, 5.6, 9),
-            ],
+            OnSearch = request => request.CollectionName == MediaCollections.Audio
+                ?
+                [
+                    new MediaSearchHit("weak", @"C:\med\talk.wav", 8, 11.2, 3),
+                    new MediaSearchHit("strong", @"C:\med\song.wav", 2, 5.6, 9),
+                ]
+                : [],
         };
         var service = new AudioSearchService(encoder, mediaIndex, new FakeEncoderFileHash { AudioHash = "audio-hash" });
         var grants = new List<ScopeFolderGrant> { new(@"C:\med", "med", GrantFileKinds.Audio) };
         var hits = await service.FindAsync(IngestTestKit.SixteenKFloats, grants, TestContext.Current.CancellationToken);
-        hits.Select(h => h.ContentId).Should().Equal("strong", "weak");
+        hits.Select(h => h.ContentId).Should().Equal("weak", "strong");
     }
 
     [Fact]
@@ -750,7 +756,7 @@ public sealed class Phase5AudioTests
         var encoder = new FakeTextEmbeddingEncoder();
         var index = new FakeTextVectorIndex();
         var mediaIndex = new FakeMediaVectorIndex();
-        mediaIndex.OnSearchWords = (collection, query, topK) =>
+        mediaIndex.OnSearchWords = (collection, query, filter, topK) =>
             collection == MediaCollections.Audio
                 ? [new MediaSearchHit("aud1", @"C:\med\talk.wav", 4, 5.6, 2)]
                 : [];
@@ -767,15 +773,15 @@ public sealed class Phase5AudioTests
         hits[0].FileName.Should().Be("talk.wav");
         hits[0].MatchReason.Should().Be(TextMatchReason.FullText);
         hits[0].StartSeconds.Should().Be(4);
-        hits[0].Score.Should().Be(2);
+        hits[0].Score.Should().BeApproximately(1d / (HybridFusion.RrfRankConstant + 1), 1e-12);
         hits[0].Ordinal.Should().Be(0);
         encoder.Calls.Should().Be(0);
-        mediaIndex.WordsQueries.Should().HaveCount(2);
-        mediaIndex.WordsRequests[0].Collection.Should().Be(MediaCollections.Audio);
-        mediaIndex.WordsRequests[0].Query.Should().Be("booth");
-        mediaIndex.WordsRequests[0].Filter.Should().Contain(@"C:\med");
-        mediaIndex.WordsRequests[0].Filter.Should().Contain("audio-hash");
-        mediaIndex.WordsRequests[1].Collection.Should().Be(MediaCollections.Video);
+        mediaIndex.WordsQueries.Should().HaveCount(6);
+        mediaIndex.WordsRequests.Should().Contain(r => r.Collection == MediaCollections.Audio && r.Query == "booth");
+        mediaIndex.WordsRequests.Should().Contain(r => r.Collection == MediaCollections.AudioOld);
+        var audioRequest = mediaIndex.WordsRequests.Single(r => r.Collection == MediaCollections.Audio);
+        audioRequest.Filter.Should().Contain(@"C:\med");
+        audioRequest.Filter.Should().Contain("audio-hash");
     }
 
     [Fact]
@@ -787,12 +793,14 @@ public sealed class Phase5AudioTests
             encoder,
             new FakeTextVectorIndex(),
             mediaIndex: mediaIndex,
-            encoderFileHash: new FakeEncoderFileHash { AudioHash = "audio-hash" });
+            encoderFileHash: new FakeEncoderFileHash { VisionHash = "vision-hash" });
         var grants = new List<ScopeFolderGrant> { new(@"C:\pics", "pics", GrantFileKinds.Image) };
         var hits = await service.FindAsync("booth", grants, TestContext.Current.CancellationToken);
         hits.Should().BeEmpty();
         encoder.Calls.Should().Be(0);
-        mediaIndex.WordsQueries.Should().BeEmpty();
+        mediaIndex.WordsQueries.Should().NotBeEmpty();
+        mediaIndex.WordsRequests.Should().Contain(r => r.Collection == MediaCollections.Image);
+        mediaIndex.Requests.Should().BeEmpty();
     }
 
     [Fact]

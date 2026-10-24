@@ -2,7 +2,7 @@ Status: in-code
 
 ## In words
 
-The shell is the screens and the one shared snapshot of theme, language, route, and grants. A screen calls a Core port. It does not choose a stored width, a prefix, or an index setting. Lattice shows that sync is off. Pin is an empty page. A tray, a sign-in start item, and a global shortcut are not part of this shell.
+The shell is the screens and the one shared snapshot of theme, language, route, and grants. A screen calls a Core port. It does not choose a stored width, a prefix, or an index setting. Lattice shows that sync is off. Pin is a route with empty-state copy only; Core pin logic is not wired from Find. A tray, a sign-in start item, and a global shortcut are not part of this shell.
 
 ## Owns
 

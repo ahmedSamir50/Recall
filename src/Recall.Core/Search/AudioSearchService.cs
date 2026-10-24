@@ -1,6 +1,7 @@
 using Recall.Core.Indexing;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
+using Recall.Core.Vectors;
 
 namespace Recall.Core.Search;
 
@@ -49,19 +50,29 @@ public sealed class AudioSearchService : IAudioSearchService
         var vector = new float[MediaCollections.Width];
         await Task.Run(() => encoder.EmbedPcm(mono16k, vector), cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
+        var vector512 = MatryoshkaVectorMath.CutAndNormalize(vector, MediaCollections.OldWidth);
 
-        var request = new MediaSearchRequest(MediaCollections.Audio, vector, filter, RecallIndexCaps.RawListCap);
-        var hits = index.Search(request, cancellationToken);
-        return hits
-            .Where(hit => IsInsideGrant(hit.SourcePath, grantedPaths))
-            .GroupBy(hit => hit.SourcePath, StringComparer.OrdinalIgnoreCase)
-            .Select(group => Collapse.EarliestStart(group.ToList()))
-            .OrderByDescending(hit => hit.Score)
-            .ThenBy(hit => hit.StartSeconds)
-            .Take(RecallIndexCaps.FileCap)
-            .ToList();
+        var lists = new List<IReadOnlyList<MediaSearchHit>>(MediaCollections.AudioCollections.Length);
+        foreach (var collection in MediaCollections.AudioCollections)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var query = MediaCollections.WidthFor(collection) == MediaCollections.OldWidth ? vector512 : vector;
+            var request = new MediaSearchRequest(collection, query, filter, RecallIndexCaps.RawListCap);
+            var hits = index.Search(request, cancellationToken)
+                .Where(hit => IsInsideGrant(hit.SourcePath, grantedPaths))
+                .ToList();
+            lists.Add(CollapseCollection(hits));
+        }
+
+        return AgeRrf.Fuse(lists).Take(RecallIndexCaps.FileCap).ToList();
     }
 
     private static bool IsInsideGrant(string path, IReadOnlySet<string> grantedPaths) =>
         grantedPaths.Any(grantPath => ScopeGrantPolicy.IsInsideGrant(grantPath, path));
+
+    private static IReadOnlyList<MediaSearchHit> CollapseCollection(IReadOnlyList<MediaSearchHit> hits) =>
+        hits
+            .GroupBy(hit => hit.SourcePath, StringComparer.OrdinalIgnoreCase)
+            .Select(group => Collapse.EarliestStart(group.ToList()))
+            .ToList();
 }

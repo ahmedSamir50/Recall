@@ -361,6 +361,12 @@ if (chunkRows.TryGetValue(chunk.ContentId, out var existing)
 else if (!chunkRows.ContainsKey(chunk.ContentId))
 if (chunkRows.ContainsKey(chunk.ContentId))
 if (removed)
+if (!mediaFiles.ContainsKey(key))
+if (width is not (MediaCollections.Width or MediaCollections.OldWidth))
+if (string.IsNullOrWhiteSpace(fromContentId) || string.IsNullOrWhiteSpace(toContentId))
+if (string.IsNullOrWhiteSpace(longId))
+if (string.IsNullOrWhiteSpace(longId) || string.IsNullOrWhiteSpace(shortId))
+if (stored.TryGetValue(contentId, out var entry))
 public sealed class FakeTextVectorIndex : ITextVectorIndex
 public sealed class FakeSyncAdapter : ISyncAdapter
 public sealed class FakeThemePreferenceStorePort : IThemePreferenceStore
@@ -870,9 +876,39 @@ public async Task TextModelReadyIngest_ReadGrantsAsync_CallsIngest()
 public void CloudFile_NotLocal_NotIndexed()
 public void VectorSchemaStale_Fault_IsTwenty()
 if (parts.Index.Inserts.Count > 1)
+if (request.Filter is not null && request.Filter.Contains(@"D:\In", StringComparison.Ordinal))
 catch (IOException ex)
 catch (IOException ex)
 ``` 
+
+## tests/Recall.UnitTests/Phase6AgePinSearchTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class Phase6AgePinSearchTests
+public void FileAgePolicy_IsPastCutoff(...)
+public void AgeCutGate_Passes(Modality modality, IReadOnlyList<AgeCutItem> items)
+public void AgeCut_RecallAt10_WithinFiveOfFullWidth()
+public void AgeMove_CopiesAliasBeforeLongDelete()
+public void AgeMove_MissingCorpus_Stays768()
+public void AgeMove_YoungerTime_StaysShort()
+public void PinRegrow_MissingFile_DoesNotEmbed()
+public void PinRegrow_PresentFile_EmbedsOnce()
+public void Unpin_OldFile_ReturnsShort()
+public void Unpin_GateFails_StaysLong()
+public void Fuse_EqualWeight_TieKeepsEarlierStart()
+public async Task PictureQuery_EmbedsOnce_SearchesLongAndOld()
+public async Task AudioQuery_EmbedsOnce_SearchesLongAndOld()
+public async Task TextQuery_WordlessPicture_IsAbsent()
+public async Task TextQuery_OcrWords_ReturnsMediaPath()
+public async Task TextQuery_DoesNotSearchMediaDense()
+if (id is >= 0 and <= 9 or 19)
+if (MediaCollections.WidthFor(request.CollectionName) == MediaCollections.OldWidth)
+catch (IOException ex)
+if (modality == Modality.Text)
+```
+
+Locks age policy, fail-closed gate, alias move order, pin regrow and unpin, equal-weight `AgeRrf.Fuse`, long and `_old` picture and audio queries, and text Find media-word behavior without dense media search.
 
 ## tests/Recall.UnitTests/Phase4VisionTests.cs
 

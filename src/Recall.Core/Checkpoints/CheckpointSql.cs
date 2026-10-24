@@ -43,6 +43,18 @@ public static class CheckpointSql
     public const string CreateOcrPageTable =
         "CREATE TABLE IF NOT EXISTS ocr_page(path TEXT NOT NULL, page_number INTEGER NOT NULL, PRIMARY KEY(path, page_number))";
 
+    public const string CreateMediaFileTable =
+        "CREATE TABLE IF NOT EXISTS media_file(path TEXT NOT NULL, modality INTEGER NOT NULL, width INTEGER NOT NULL, PRIMARY KEY(path, modality))";
+
+    public const string CreateAgeCutPendingTable =
+        "CREATE TABLE IF NOT EXISTS age_cut_pending(long_id TEXT PRIMARY KEY, short_id TEXT NOT NULL)";
+
+    public const string CreateIngestPinTable =
+        "CREATE TABLE IF NOT EXISTS ingest_pin(path TEXT PRIMARY KEY)";
+
+    public const string CreatePinResumeTable =
+        "CREATE TABLE IF NOT EXISTS pin_resume(path TEXT PRIMARY KEY, long_id TEXT NOT NULL, short_id TEXT NOT NULL)";
+
     public const string EnsureSchema =
-        CreateFileTable + ";" + CreateChunkTable + ";" + CreateChunkPathIndex + ";" + CreateGrantTable + ";" + CreateChunkPathTable + ";" + CreatePendingTable + ";" + CreateBm25OnlyTable + ";" + CreateOcrPageTable;
+        CreateFileTable + ";" + CreateChunkTable + ";" + CreateChunkPathIndex + ";" + CreateGrantTable + ";" + CreateChunkPathTable + ";" + CreatePendingTable + ";" + CreateBm25OnlyTable + ";" + CreateOcrPageTable + ";" + CreateMediaFileTable + ";" + CreateAgeCutPendingTable + ";" + CreateIngestPinTable + ";" + CreatePinResumeTable;
 }

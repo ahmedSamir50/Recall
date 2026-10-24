@@ -11,12 +11,26 @@ public interface IMediaVectorIndex
 
     bool TryDelete(string contentId);
 
+    bool TryRead(string contentId, out MediaStoredVector vector);
+
     void Reconcile(IReadOnlyList<VectorLiveState> states);
 
     IReadOnlyList<MediaSearchHit> Search(MediaSearchRequest request, CancellationToken cancellationToken = default);
 
     IReadOnlyList<MediaSearchHit> SearchWords(string collectionName, string query, string filter, int topK, CancellationToken cancellationToken = default);
 }
+
+public sealed record MediaStoredVector(
+    string ContentId,
+    string CollectionName,
+    float[] Vector,
+    string Words,
+    string EncoderHash,
+    string GrantPath,
+    string SourcePath,
+    string StartSeconds,
+    string EndSeconds,
+    bool PathLive);
 
 public interface IVisionEmbeddingEncoder
 {

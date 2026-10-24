@@ -62,6 +62,10 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
     private readonly Dictionary<string, Bm25OnlyRow> bm25Only = new(StringComparer.Ordinal);
     private readonly HashSet<string> pending = new(StringComparer.Ordinal);
     private readonly Dictionary<string, List<int>> ocrPages = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<(string Path, Modality Modality), MediaFileRow> mediaFiles = new();
+    private readonly Dictionary<string, AgeCutPending> ageCuts = new(StringComparer.Ordinal);
+    private readonly HashSet<string> pins = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, PinResumeRow> pinResumes = new(StringComparer.OrdinalIgnoreCase);
 
     public bool AllowWrite { get; set; } = true;
 
@@ -398,6 +402,134 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
         bm25Only.Clear();
         pending.Clear();
         ocrPages.Clear();
+        mediaFiles.Clear();
+        ageCuts.Clear();
+        pins.Clear();
+        pinResumes.Clear();
+    }
+
+    public void UpsertMediaFile(string path, Modality modality)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        var key = (path, modality);
+        if (!mediaFiles.ContainsKey(key))
+        {
+            mediaFiles[key] = new MediaFileRow(path, modality, MediaCollections.Width);
+        }
+    }
+
+    public MediaFileRow? FindMediaFile(string path, Modality modality)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        return mediaFiles.TryGetValue((path, modality), out var row) ? row : null;
+    }
+
+    public IReadOnlyList<MediaFileRow> ListMediaFiles() =>
+        mediaFiles.Values.OrderBy(row => row.Path, StringComparer.OrdinalIgnoreCase).ThenBy(row => row.Modality).ToList();
+
+    public void SetMediaWidth(string path, Modality modality, int width)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        if (width is not (MediaCollections.Width or MediaCollections.OldWidth))
+        {
+            throw new ArgumentOutOfRangeException(nameof(width));
+        }
+
+        mediaFiles[(path, modality)] = new MediaFileRow(path, modality, width);
+    }
+
+    public void CommitAgeCut(string fromContentId, string toContentId)
+    {
+        if (string.IsNullOrWhiteSpace(fromContentId) || string.IsNullOrWhiteSpace(toContentId))
+        {
+            throw new ArgumentException("Content id must not be blank.");
+        }
+
+        MoveLiveAliases(fromContentId, toContentId);
+        ageCuts[fromContentId] = new AgeCutPending(fromContentId, toContentId);
+    }
+
+    public IReadOnlyList<AgeCutPending> ListAgeCuts() =>
+        ageCuts.Values.OrderBy(row => row.LongId, StringComparer.Ordinal).ToList();
+
+    public void CompleteAgeCut(string longId)
+    {
+        if (string.IsNullOrWhiteSpace(longId))
+        {
+            throw new ArgumentException("Content id must not be blank.");
+        }
+
+        ageCuts.Remove(longId);
+    }
+
+    public bool IsPinned(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        return pins.Contains(path);
+    }
+
+    public void AddPin(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        pins.Add(path);
+    }
+
+    public void RemovePin(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        pins.Remove(path);
+    }
+
+    public void StagePinResume(string path, string longId, string shortId)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        if (string.IsNullOrWhiteSpace(longId) || string.IsNullOrWhiteSpace(shortId))
+        {
+            throw new ArgumentException("Content id must not be blank.");
+        }
+
+        pinResumes[path] = new PinResumeRow(path, longId, shortId);
+    }
+
+    public IReadOnlyList<PinResumeRow> ListPinResumes() =>
+        pinResumes.Values.OrderBy(row => row.Path, StringComparer.OrdinalIgnoreCase).ToList();
+
+    public void CompletePinResume(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        pinResumes.Remove(path);
     }
 }
 
@@ -858,7 +990,9 @@ public sealed class FakeMediaVectorIndex : IMediaVectorIndex
 
     public List<(string Collection, string Query, string Filter, int TopK)> WordsRequests { get; } = [];
 
-    public Func<string, string, int, IReadOnlyList<MediaSearchHit>>? OnSearchWords { get; set; }
+    public Func<string, string, string, int, IReadOnlyList<MediaSearchHit>>? OnSearchWords { get; set; }
+
+    private readonly Dictionary<string, (string Collection, MediaIndexInsert Insert)> stored = new(StringComparer.Ordinal);
 
     public Func<MediaSearchRequest, IReadOnlyList<MediaSearchHit>>? OnSearch { get; set; }
 
@@ -875,11 +1009,37 @@ public sealed class FakeMediaVectorIndex : IMediaVectorIndex
         }
 
         Inserts.Add(insert);
+        stored[insert.ContentId] = (collectionName, insert);
         return true;
     }
 
-    public bool TryDelete(string contentId) =>
-        Inserts.RemoveAll(i => string.Equals(i.ContentId, contentId, StringComparison.Ordinal)) > 0;
+    public bool TryRead(string contentId, out MediaStoredVector vector)
+    {
+        if (stored.TryGetValue(contentId, out var entry))
+        {
+            vector = new MediaStoredVector(
+                contentId,
+                entry.Collection,
+                entry.Insert.Vector768.ToArray(),
+                entry.Insert.Words,
+                entry.Insert.EncoderHash,
+                entry.Insert.GrantPath,
+                entry.Insert.SourcePath,
+                entry.Insert.StartSeconds,
+                entry.Insert.EndSeconds,
+                entry.Insert.PathLive);
+            return true;
+        }
+
+        vector = null!;
+        return false;
+    }
+
+    public bool TryDelete(string contentId)
+    {
+        stored.Remove(contentId);
+        return Inserts.RemoveAll(i => string.Equals(i.ContentId, contentId, StringComparison.Ordinal)) > 0;
+    }
 
     public int ReconcileCalls { get; private set; }
 
@@ -911,7 +1071,7 @@ public sealed class FakeMediaVectorIndex : IMediaVectorIndex
         WordsQueries.Add(query);
         WordsRequests.Add((collectionName, query, filter, topK));
         QueriedCollections.Add(collectionName);
-        return OnSearchWords?.Invoke(collectionName, query, topK) ?? [];
+        return OnSearchWords?.Invoke(collectionName, query, filter, topK) ?? [];
     }
 }
 

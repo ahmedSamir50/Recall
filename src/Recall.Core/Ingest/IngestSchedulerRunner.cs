@@ -26,6 +26,8 @@ public sealed class IngestPassHooks
     public Action? EnsureMediaContextProbe { get; init; }
 
     public Action<IngestMediaLeg>? BeginMediaLeg { get; init; }
+
+    public Action<DateTimeOffset>? SweepAgedMedia { get; init; }
 }
 
 public sealed class IngestSchedulerRunner
@@ -97,6 +99,7 @@ public sealed class IngestSchedulerRunner
         }
 
         cancellationToken.ThrowIfCancellationRequested();
+        hooks.SweepAgedMedia?.Invoke(now);
         hooks.EnsureMediaContextProbe?.Invoke();
 
         var jobs = new List<string>();

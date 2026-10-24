@@ -22,23 +22,30 @@ public sealed class LocalOpLogWriter
     public void AppendInsert(string contentId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(contentId);
-        var entry = new LocalOpLogEntry(OpLogOperation.Insert, contentId, DateTimeOffset.UtcNow, Sent: false);
-        entries.Add(entry);
-        if (string.IsNullOrWhiteSpace(directory))
-        {
-            return;
-        }
-
-        Directory.CreateDirectory(directory);
-        var path = Path.Combine(directory, entry.At.UtcDateTime.ToString(DayFilePattern, CultureInfo.InvariantCulture) + ".log");
-        var line = string.Create(CultureInfo.InvariantCulture, $"{entry.At:o}\t{entry.Operation}\t{entry.ContentId}{Environment.NewLine}");
-        File.AppendAllText(path, line);
+        AppendOperation(OpLogOperation.Insert, contentId);
     }
 
     public void AppendDelete(string contentId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(contentId);
-        var entry = new LocalOpLogEntry(OpLogOperation.Delete, contentId, DateTimeOffset.UtcNow, Sent: false);
+        AppendOperation(OpLogOperation.Delete, contentId);
+    }
+
+    public void AppendPin(string contentId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(contentId);
+        AppendOperation(OpLogOperation.Pin, contentId);
+    }
+
+    public void AppendUnpin(string contentId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(contentId);
+        AppendOperation(OpLogOperation.Unpin, contentId);
+    }
+
+    private void AppendOperation(OpLogOperation operation, string contentId)
+    {
+        var entry = new LocalOpLogEntry(operation, contentId, DateTimeOffset.UtcNow, Sent: false);
         entries.Add(entry);
         if (string.IsNullOrWhiteSpace(directory))
         {

@@ -1,4 +1,6 @@
 using Microsoft.Data.Sqlite;
+using Recall.Core.Indexing;
+using Recall.Core.Vocabulary;
 
 namespace Recall.Core.Checkpoints;
 
@@ -389,32 +391,7 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
         try
         {
             EnsureSchema(connection, transaction);
-            var paths = new List<string>();
-            using (var select = connection.CreateCommand())
-            {
-                select.Transaction = transaction;
-                select.CommandText = "SELECT path FROM ingest_chunk_path WHERE content_id = @fromId AND missing = 0 AND retired = 0";
-                select.Parameters.AddWithValue("@fromId", fromContentId);
-                using var reader = select.ExecuteReader();
-                while (reader.Read())
-                {
-                    paths.Add(reader.GetString(0));
-                }
-            }
-
-            using (var retire = connection.CreateCommand())
-            {
-                retire.Transaction = transaction;
-                retire.CommandText = "UPDATE ingest_chunk_path SET retired = 1 WHERE content_id = @fromId AND missing = 0 AND retired = 0";
-                retire.Parameters.AddWithValue("@fromId", fromContentId);
-                retire.ExecuteNonQuery();
-            }
-
-            foreach (var path in paths)
-            {
-                AddAliasInTransaction(connection, transaction, toContentId, path);
-            }
-
+            MoveLiveAliasesInTransaction(connection, transaction, fromContentId, toContentId);
             transaction.Commit();
         }
         catch
@@ -761,6 +738,315 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
         return Convert.ToInt32(value) == (int)IngestCursorState.Finished;
     }
 
+    public void UpsertMediaFile(string path, Modality modality)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "INSERT INTO media_file(path, modality, width) VALUES(@path, @modality, @width) ON CONFLICT(path, modality) DO NOTHING";
+        command.Parameters.AddWithValue("@path", path);
+        command.Parameters.AddWithValue("@modality", (int)modality);
+        command.Parameters.AddWithValue("@width", MediaCollections.Width);
+        command.ExecuteNonQuery();
+        transaction.Commit();
+    }
+
+    public MediaFileRow? FindMediaFile(string path, Modality modality)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT path, modality, width FROM media_file WHERE path = @path AND modality = @modality";
+        command.Parameters.AddWithValue("@path", path);
+        command.Parameters.AddWithValue("@modality", (int)modality);
+        using var reader = command.ExecuteReader();
+        if (!reader.Read())
+        {
+            transaction.Commit();
+            return null;
+        }
+
+        var row = new MediaFileRow(reader.GetString(0), (Modality)reader.GetInt32(1), reader.GetInt32(2));
+        transaction.Commit();
+        return row;
+    }
+
+    public IReadOnlyList<MediaFileRow> ListMediaFiles()
+    {
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT path, modality, width FROM media_file ORDER BY path, modality";
+        var list = new List<MediaFileRow>();
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            list.Add(new MediaFileRow(reader.GetString(0), (Modality)reader.GetInt32(1), reader.GetInt32(2)));
+        }
+
+        transaction.Commit();
+        return list;
+    }
+
+    public void SetMediaWidth(string path, Modality modality, int width)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        if (width is not (MediaCollections.Width or MediaCollections.OldWidth))
+        {
+            throw new ArgumentOutOfRangeException(nameof(width));
+        }
+
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "UPDATE media_file SET width = @width WHERE path = @path AND modality = @modality";
+        command.Parameters.AddWithValue("@path", path);
+        command.Parameters.AddWithValue("@modality", (int)modality);
+        command.Parameters.AddWithValue("@width", width);
+        command.ExecuteNonQuery();
+        transaction.Commit();
+    }
+
+    public void CommitAgeCut(string fromContentId, string toContentId)
+    {
+        if (string.IsNullOrWhiteSpace(fromContentId) || string.IsNullOrWhiteSpace(toContentId))
+        {
+            throw new ArgumentException("Content id must not be blank.");
+        }
+
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            EnsureSchema(connection, transaction);
+            MoveLiveAliasesInTransaction(connection, transaction, fromContentId, toContentId);
+            using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = "INSERT OR REPLACE INTO age_cut_pending(long_id, short_id) VALUES(@longId, @shortId)";
+            command.Parameters.AddWithValue("@longId", fromContentId);
+            command.Parameters.AddWithValue("@shortId", toContentId);
+            command.ExecuteNonQuery();
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+    public IReadOnlyList<AgeCutPending> ListAgeCuts()
+    {
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT long_id, short_id FROM age_cut_pending ORDER BY long_id";
+        var list = new List<AgeCutPending>();
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            list.Add(new AgeCutPending(reader.GetString(0), reader.GetString(1)));
+        }
+
+        transaction.Commit();
+        return list;
+    }
+
+    public void CompleteAgeCut(string longId)
+    {
+        if (string.IsNullOrWhiteSpace(longId))
+        {
+            throw new ArgumentException("Content id must not be blank.");
+        }
+
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using (var delete = connection.CreateCommand())
+        {
+            delete.Transaction = transaction;
+            delete.CommandText = "DELETE FROM age_cut_pending WHERE long_id = @longId";
+            delete.Parameters.AddWithValue("@longId", longId);
+            delete.ExecuteNonQuery();
+        }
+
+        transaction.Commit();
+    }
+
+    public bool IsPinned(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT 1 FROM ingest_pin WHERE path = @path LIMIT 1";
+        command.Parameters.AddWithValue("@path", path);
+        var pinned = command.ExecuteScalar() is not null;
+        transaction.Commit();
+        return pinned;
+    }
+
+    public void AddPin(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "INSERT OR IGNORE INTO ingest_pin(path) VALUES(@path)";
+        command.Parameters.AddWithValue("@path", path);
+        command.ExecuteNonQuery();
+        transaction.Commit();
+    }
+
+    public void RemovePin(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "DELETE FROM ingest_pin WHERE path = @path";
+        command.Parameters.AddWithValue("@path", path);
+        command.ExecuteNonQuery();
+        transaction.Commit();
+    }
+
+    public void StagePinResume(string path, string longId, string shortId)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        if (string.IsNullOrWhiteSpace(longId) || string.IsNullOrWhiteSpace(shortId))
+        {
+            throw new ArgumentException("Content id must not be blank.");
+        }
+
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "INSERT OR REPLACE INTO pin_resume(path, long_id, short_id) VALUES(@path, @longId, @shortId)";
+        command.Parameters.AddWithValue("@path", path);
+        command.Parameters.AddWithValue("@longId", longId);
+        command.Parameters.AddWithValue("@shortId", shortId);
+        command.ExecuteNonQuery();
+        transaction.Commit();
+    }
+
+    public IReadOnlyList<PinResumeRow> ListPinResumes()
+    {
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT path, long_id, short_id FROM pin_resume ORDER BY path";
+        var list = new List<PinResumeRow>();
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            list.Add(new PinResumeRow(reader.GetString(0), reader.GetString(1), reader.GetString(2)));
+        }
+
+        transaction.Commit();
+        return list;
+    }
+
+    public void CompletePinResume(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "DELETE FROM pin_resume WHERE path = @path";
+        command.Parameters.AddWithValue("@path", path);
+        command.ExecuteNonQuery();
+        transaction.Commit();
+    }
+
+    private static void MoveLiveAliasesInTransaction(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        string fromContentId,
+        string toContentId)
+    {
+        var paths = new List<string>();
+        using (var select = connection.CreateCommand())
+        {
+            select.Transaction = transaction;
+            select.CommandText = "SELECT path FROM ingest_chunk_path WHERE content_id = @fromId AND missing = 0 AND retired = 0";
+            select.Parameters.AddWithValue("@fromId", fromContentId);
+            using var reader = select.ExecuteReader();
+            while (reader.Read())
+            {
+                paths.Add(reader.GetString(0));
+            }
+        }
+
+        using (var retire = connection.CreateCommand())
+        {
+            retire.Transaction = transaction;
+            retire.CommandText = "UPDATE ingest_chunk_path SET retired = 1 WHERE content_id = @fromId AND missing = 0 AND retired = 0";
+            retire.Parameters.AddWithValue("@fromId", fromContentId);
+            retire.ExecuteNonQuery();
+        }
+
+        foreach (var path in paths)
+        {
+            AddAliasInTransaction(connection, transaction, toContentId, path);
+        }
+    }
+
     private CheckpointLease CreateWriteLease()
     {
         var acquired = true;
@@ -1013,6 +1299,34 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
             ocrPage.Transaction = transaction;
             ocrPage.CommandText = CheckpointSql.CreateOcrPageTable;
             ocrPage.ExecuteNonQuery();
+        }
+
+        using (var mediaFile = connection.CreateCommand())
+        {
+            mediaFile.Transaction = transaction;
+            mediaFile.CommandText = CheckpointSql.CreateMediaFileTable;
+            mediaFile.ExecuteNonQuery();
+        }
+
+        using (var ageCut = connection.CreateCommand())
+        {
+            ageCut.Transaction = transaction;
+            ageCut.CommandText = CheckpointSql.CreateAgeCutPendingTable;
+            ageCut.ExecuteNonQuery();
+        }
+
+        using (var ingestPin = connection.CreateCommand())
+        {
+            ingestPin.Transaction = transaction;
+            ingestPin.CommandText = CheckpointSql.CreateIngestPinTable;
+            ingestPin.ExecuteNonQuery();
+        }
+
+        using (var pinResume = connection.CreateCommand())
+        {
+            pinResume.Transaction = transaction;
+            pinResume.CommandText = CheckpointSql.CreatePinResumeTable;
+            pinResume.ExecuteNonQuery();
         }
 
         if (!HasColumn(connection, transaction, "PRAGMA table_info(ingest_file)", "encoder_hash"))

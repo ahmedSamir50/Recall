@@ -14,11 +14,11 @@ No steps. Feature: [audio-and-transcripts](../features/audio-and-transcripts.md)
 
 ## Pin an item
 
-No steps. Feature: [age-cutoff](../features/age-cutoff.md).
+No person steps. `PinService` and `ingest_pin` exist; the Pin screen is empty state only. Feature: [age-cutoff](../features/age-cutoff.md).
 
 ## Shrink old media
 
-No steps. Feature: [age-cutoff](../features/age-cutoff.md).
+No person steps beyond choosing years on Preferences. Move and gate code run on sweep and ingest; production does not cut without a recall corpus. Feature: [age-cutoff](../features/age-cutoff.md).
 
 ## Index a code file
 

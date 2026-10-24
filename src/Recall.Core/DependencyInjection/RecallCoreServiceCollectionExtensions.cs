@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Recall.Core.Age;
 using Recall.Core.Checkpoints;
 using Recall.Core.Device;
 using Recall.Core.Download;
@@ -27,6 +28,10 @@ public static class RecallCoreServiceCollectionExtensions
         services.AddSingleton<IScopeManagerService, ScopeGrantService>();
         services.AddSingleton<IIndexPolicy, RecallIndexPolicy>();
         services.AddSingleton<LocalOpLogWriter>();
+        services.AddSingleton<IMediaFileFacts, DiskMediaFileFacts>();
+        services.AddSingleton<IAgeCutDecision, FailClosedAgeCutDecision>();
+        services.AddSingleton<AgeMoveService>();
+        services.AddSingleton<PinService>();
         services.AddSingleton<IRandomDeviceIdSource, GuidRandomDeviceIdSource>();
         services.AddSingleton<IDeviceRecordService, DeviceRecordService>();
         services.AddSingleton<ILocalContentProbe, LocalOnlyContentProbe>();
@@ -55,7 +60,8 @@ public static class RecallCoreServiceCollectionExtensions
             sp.GetRequiredService<IngestScheduler>(),
             sp.GetRequiredService<IngestSchedulerRunner>(),
             sp.GetRequiredService<ScheduledIngestDispatcher>(),
-            sp.GetService<IIngestModelSession>()));
+            sp.GetService<IIngestModelSession>(),
+            sp.GetService<AgeMoveService>()));
         services.AddSingleton<ScopeChangeApplier>(sp => new ScopeChangeApplier(
             sp.GetRequiredService<IIngestCursorStore>(),
             sp.GetRequiredService<IGrantedTextIngestService>(),

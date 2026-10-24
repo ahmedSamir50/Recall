@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Recall.Core.Age;
 using Recall.Core.Ports;
 using Recall.Core.Preferences;
 using Recall.Core.Vocabulary;
@@ -12,6 +13,9 @@ public partial class Preferences
 
     [Inject]
     private AgeCutoffPreferenceService AgePreferences { get; set; } = null!;
+
+    [Inject]
+    private AgeMoveService AgeMove { get; set; } = null!;
 
     [Inject]
     private IDebugAppReset DebugReset { get; set; } = null!;
@@ -56,7 +60,7 @@ public partial class Preferences
 
     private void SetAge(AgeCutoffYears years)
     {
-        AgePreferences.Set(years);
+        AgeCutoffActions.Set(AgePreferences, AgeMove, years, DateTimeOffset.UtcNow);
         age = years;
     }
 

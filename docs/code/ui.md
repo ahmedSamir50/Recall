@@ -396,6 +396,10 @@ No branch.
 ```csharp
 namespace Recall.UI.Pages;
 public partial class Preferences
+    private AgeCutoffPreferenceService AgePreferences { get; set; } = null!;
+    private AgeMoveService AgeMove { get; set; } = null!;
+    private void SetAge(AgeCutoffYears years)
+        AgeCutoffActions.Set(AgePreferences, AgeMove, years, DateTimeOffset.UtcNow);
     public static bool IsThemeSelected(ThemePreference current, ThemePreference choice) => current == choice;
     public static string ThemeChoiceClass(ThemePreference current, ThemePreference choice) =>
         if (status == UserSkipAddStatus.Added)

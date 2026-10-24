@@ -6,7 +6,7 @@ A fault is a named product failure, such as a width of 128, a text width other t
 
 ## Owns
 
-Faults owns `RecallFault` and `RecallFaultException`. `VectorSchemaStale` is 20. Opening a text collection whose loaded schema has no `fts_key` field replaces that collection instead of throwing this fault. The value stays reserved.
+Faults owns `RecallFault` and `RecallFaultException`. `VectorSchemaStale` is 20. `AgeCutTextForbidden` is 21 when age shrink or the recall gate is invoked on text. Opening a text collection whose loaded schema has no `fts_key` field replaces that collection instead of throwing `VectorSchemaStale`. That value stays reserved.
 
 ## Does not own
 

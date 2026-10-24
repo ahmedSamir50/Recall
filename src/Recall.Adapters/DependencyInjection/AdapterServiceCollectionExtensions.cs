@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Recall.Adapters.Embedding;
 using Recall.Adapters.Indexing;
+using Recall.Core.Age;
 using Recall.Core.Checkpoints;
 using Recall.Core.Download;
 using Recall.Core.Ingest;
@@ -57,7 +58,8 @@ public static class AdapterServiceCollectionExtensions
             sp.GetRequiredService<IMediaVectorIndex>(),
             sp.GetRequiredService<IEncoderFileHash>(),
             sp.GetRequiredService<IIngestCursorStore>(),
-            sp.GetService<IVideoFrameSamplerService>()));
+            sp.GetService<IVideoFrameSamplerService>(),
+            sp.GetService<AgeMoveService>()));
         services.AddSingleton<IMediaVectorIndex>(_ => new ZVecMediaVectorIndex(vectorDatabaseRoot));
         services.AddSingleton<IPictureSearchService, PictureSearchService>();
         services.AddSingleton<IAudioSearchService, AudioSearchService>();

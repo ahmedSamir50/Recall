@@ -250,9 +250,20 @@ namespace Recall.Core.Checkpoints;
 public type IIngestCursorStore
 IIngestCursorStore
 public interface IIngestCursorStore
+public sealed record MediaFileRow(string Path, Modality Modality, int Width);
+public sealed record AgeCutPending(string LongId, string ShortId);
+public sealed record PinResumeRow(string Path, string LongId, string ShortId);
 public void ReplaceDocumentPatches(string path, IReadOnlyList<ChunkWrite> patches);
 public void ReplaceOcrPages(string path, IReadOnlyList<int> pageNumbers);
 public IReadOnlyList<int> ListOcrPages(string path);
+public void UpsertMediaFile(string path, Modality modality);
+public MediaFileRow? FindMediaFile(string path, Modality modality);
+public void SetMediaWidth(string path, Modality modality, int width);
+public void CommitAgeCut(string fromContentId, string toContentId);
+public void CompleteAgeCut(string longId);
+public bool IsPinned(string path);
+public void StagePinResume(string path, string longId, string shortId);
+public void CompletePinResume(string path);
 public void ResetTextIngest()
 
 No branch.
@@ -346,6 +357,10 @@ public IReadOnlyList<int> ListOcrPages(string path)
     if (!string.Equals(tableName, "ingest_file", StringComparison.Ordinal))
     if (string.Equals(name, columnName, StringComparison.OrdinalIgnoreCase))
     if (existing.Add(key))
+    if (width is not (MediaCollections.Width or MediaCollections.OldWidth))
+    if (string.IsNullOrWhiteSpace(fromContentId) || string.IsNullOrWhiteSpace(toContentId))
+    if (string.IsNullOrWhiteSpace(longId))
+    if (string.IsNullOrWhiteSpace(longId) || string.IsNullOrWhiteSpace(shortId))
 ``` 
 
 `ReplaceDocumentPatches` deletes the live `ingest_chunk` rows for one path and writes the given patch rows with their page and char spans. A blank path throws `ArgumentException` with message `Path must not be blank.`, and a null patch list throws `ArgumentNullException`. `ingest_chunk` gains `page_start`, `page_end`, `char_start`, and `char_end`, each `INTEGER NOT NULL DEFAULT 0`, added with `ALTER TABLE ingest_chunk ADD COLUMN IF NOT EXISTS`. A plain note stores 0 for both page columns. Shrink, alias, and delete keep using `ingest_chunk` only.

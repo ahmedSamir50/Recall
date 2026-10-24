@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Recall.Adapters.DependencyInjection;
+using Recall.Core.Age;
 using Recall.Core.Checkpoints;
 using Recall.Core.Download;
 using Recall.Core.Ingest;
@@ -53,7 +54,16 @@ public static class MauiServiceCollectionExtensions
 #elif IOS || MACCATALYST
         services.AddSingleton<IAudioSource, AppleAudioSource>();
 #endif
-        services.Replace(ServiceDescriptor.Singleton<IAudioFileIngest, AudioFileIngest>());
+        services.Replace(ServiceDescriptor.Singleton<IAudioFileIngest>(sp => new AudioFileIngest(
+            sp.GetRequiredService<IAudioSource>(),
+            sp.GetRequiredService<ISiblingFiles>(),
+            sp.GetRequiredService<IAudioEmbeddingEncoder>(),
+            sp.GetRequiredService<IMediaVectorIndex>(),
+            sp.GetRequiredService<IAudioOffReport>(),
+            sp.GetRequiredService<IEncoderFileHash>(),
+            sp.GetRequiredService<IGrantedTextReader>(),
+            sp.GetRequiredService<IIngestCursorStore>(),
+            sp.GetService<AgeMoveService>())));
         services.AddSingleton(new LocalOpLogWriter(Path.Combine(FileSystem.AppDataDirectory, LocalOpLogWriter.DirectoryName)));
         services.AddSingleton<IModelDownloadService, MauiModelDownloadService>();
         services.AddSingleton<ILocalFileOpener, MauiLocalFileOpener>();

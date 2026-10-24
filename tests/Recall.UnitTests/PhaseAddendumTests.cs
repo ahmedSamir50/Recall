@@ -156,11 +156,23 @@ public sealed class PhaseAddendumTests
     }
 
     [Fact]
-    public void Search_GrantFilter_DoesNotPromiseTwenty()
+    public async Task Search_GrantFilter_DoesNotPromiseTwenty()
     {
-        var filter = TextSearchFilter.Build(new HashSet<string> { @"D:\In" }, "hash");
-        filter.Should().Contain("grant_path");
-        filter.Should().Contain(@"D:\In");
+        var encoder = new FakeTextEmbeddingEncoder();
+        var index = new GrantScopedVectorIndex();
+        var cursors = new FakeIngestCursorStore();
+        var media = new FakeMediaVectorIndex();
+        var service = new TextSearchService(
+            encoder,
+            index,
+            new FakeIndexPolicy(),
+            cursors,
+            new FakeEncoderFileHash(),
+            media);
+        var grants = new List<ScopeFolderGrant> { new(@"D:\In", "in", GrantFileKinds.Text) };
+        var result = await service.FindAsync("query", grants, TestContext.Current.CancellationToken);
+        result.Should().HaveCount(4);
+        result.Should().OnlyContain(hit => hit.SourcePath.StartsWith(@"D:\In", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -552,6 +564,47 @@ public sealed class PhaseAddendumTests
         public async IAsyncEnumerable<string> ListAudioAndVideoAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {
             yield break;
+        }
+    }
+
+    private sealed class GrantScopedVectorIndex : ITextVectorIndex
+    {
+        public bool TryInsert(TextIndexInsert insert) => true;
+
+        public bool TryDelete(string contentId) => false;
+
+        public void Reconcile(IReadOnlyList<VectorLiveState> states)
+        {
+        }
+
+        public IReadOnlyList<TextSearchHit> Search(TextSearchRequest request, CancellationToken cancellationToken = default)
+        {
+            if (request.Filter is not null && request.Filter.Contains(@"D:\In", StringComparison.Ordinal))
+            {
+                return Enumerable.Range(0, 4)
+                    .Select(i => new TextSearchHit(
+                        "id" + i,
+                        $@"D:\In\{i}.txt",
+                        $"{i}.txt",
+                        DateTimeOffset.UtcNow,
+                        TextMatchReason.DenseAndFullText,
+                        1 - i * 0.01,
+                        i,
+                        GrantPath: @"D:\In"))
+                    .ToList();
+            }
+
+            return Enumerable.Range(0, 20)
+                .Select(i => new TextSearchHit(
+                    "out" + i,
+                    $@"D:\Out\{i}.txt",
+                    $"{i}.txt",
+                    DateTimeOffset.UtcNow,
+                    TextMatchReason.DenseAndFullText,
+                    1 - i * 0.01,
+                    i,
+                    GrantPath: @"D:\Out"))
+                .ToList();
         }
     }
 

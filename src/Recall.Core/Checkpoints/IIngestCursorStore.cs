@@ -1,4 +1,12 @@
+using Recall.Core.Vocabulary;
+
 namespace Recall.Core.Checkpoints;
+
+public sealed record MediaFileRow(string Path, Modality Modality, int Width);
+
+public sealed record AgeCutPending(string LongId, string ShortId);
+
+public sealed record PinResumeRow(string Path, string LongId, string ShortId);
 
 public interface IIngestCursorStore
 {
@@ -63,4 +71,30 @@ public interface IIngestCursorStore
     void ReplaceOcrPages(string path, IReadOnlyList<int> pageNumbers);
 
     IReadOnlyList<int> ListOcrPages(string path);
+
+    void UpsertMediaFile(string path, Modality modality);
+
+    MediaFileRow? FindMediaFile(string path, Modality modality);
+
+    IReadOnlyList<MediaFileRow> ListMediaFiles();
+
+    void SetMediaWidth(string path, Modality modality, int width);
+
+    void CommitAgeCut(string fromContentId, string toContentId);
+
+    IReadOnlyList<AgeCutPending> ListAgeCuts();
+
+    void CompleteAgeCut(string longId);
+
+    bool IsPinned(string path);
+
+    void AddPin(string path);
+
+    void RemovePin(string path);
+
+    void StagePinResume(string path, string longId, string shortId);
+
+    IReadOnlyList<PinResumeRow> ListPinResumes();
+
+    void CompletePinResume(string path);
 }

@@ -192,38 +192,26 @@ public sealed class TextSearchService : ITextSearchService
             return [];
         }
 
-        var mediaFilter = TextSearchFilter.Build(mediaGrantPaths, encoderHash.AudioHash ?? string.Empty);
-        if (mediaFilter.Length == 0)
-        {
-            return [];
-        }
-
         var mediaQuery = string.Join(' ', KeywordFold.Tokens(KeywordFold.Fold(query)));
-        var best = new Dictionary<string, MediaSearchHit>(StringComparer.OrdinalIgnoreCase);
-        foreach (var collection in new[] { MediaCollections.Audio, MediaCollections.Video })
+        var lists = new List<IReadOnlyList<MediaSearchHit>>();
+        foreach (var collection in MediaCollections.WordCollections)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            var hash = MediaCollections.EncoderHashFor(collection, encoderHash);
+            var mediaFilter = TextSearchFilter.Build(mediaGrantPaths, hash);
+            if (mediaFilter.Length == 0)
+            {
+                continue;
+            }
+
             var mediaHits = media.SearchWords(collection, mediaQuery, mediaFilter, RecallIndexCaps.RawListCap, cancellationToken);
-            foreach (var hit in mediaHits)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                if (!best.TryGetValue(hit.SourcePath, out var existing) || PreferMedia(hit, existing))
-                {
-                    best[hit.SourcePath] = hit;
-                }
-            }
+            lists.Add(mediaHits
+                .GroupBy(hit => hit.SourcePath, StringComparer.OrdinalIgnoreCase)
+                .Select(group => Collapse.EarliestStart(group.ToList()))
+                .ToList());
         }
 
-        var winners = new List<MediaSearchHit>(best.Count);
-        foreach (var hit in best.Values)
-        {
-            InsertByScore(winners, hit);
-            if (winners.Count > fileBudget)
-            {
-                winners.RemoveAt(winners.Count - 1);
-            }
-        }
-
+        var winners = AgeRrf.Fuse(lists).Take(fileBudget).ToList();
         var hits = new List<TextSearchHit>(winners.Count);
         foreach (var hit in winners)
         {
@@ -242,27 +230,6 @@ public sealed class TextSearchService : ITextSearchService
         }
 
         return hits;
-    }
-
-    private static bool PreferMedia(MediaSearchHit candidate, MediaSearchHit current)
-    {
-        if (candidate.Score > current.Score)
-        {
-            return true;
-        }
-
-        return Math.Abs(candidate.Score - current.Score) < 1e-12 && candidate.StartSeconds < current.StartSeconds;
-    }
-
-    private static void InsertByScore(List<MediaSearchHit> winners, MediaSearchHit hit)
-    {
-        var index = winners.Count;
-        while (index > 0 && PreferMedia(hit, winners[index - 1]))
-        {
-            index--;
-        }
-
-        winners.Insert(index, hit);
     }
 
     private static DateTimeOffset LastWriteUtc(string path)
@@ -298,7 +265,9 @@ public sealed class TextSearchService : ITextSearchService
     private static HashSet<string> BuildMediaGrantSet(IReadOnlyList<ScopeFolderGrant> grants)
     {
         return grants
-            .Where(grant => grant.EnabledKinds.HasFlag(GrantFileKinds.Audio) || grant.EnabledKinds.HasFlag(GrantFileKinds.Video))
+            .Where(grant => grant.EnabledKinds.HasFlag(GrantFileKinds.Audio)
+                || grant.EnabledKinds.HasFlag(GrantFileKinds.Video)
+                || grant.EnabledKinds.HasFlag(GrantFileKinds.Image))
             .Select(grant => grant.Path)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }

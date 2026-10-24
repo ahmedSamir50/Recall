@@ -217,15 +217,21 @@ public ZVecMediaVectorIndex(string databaseRoot)
 public void Create(string collectionName, int width)
 internal static ZVecCollectionSchema BuildSchema(string collectionName, int width)
 public bool TryInsert(string collectionName, MediaIndexInsert insert)
+public bool TryRead(string contentId, out MediaStoredVector vector)
 public bool TryDelete(string contentId)
 public void Reconcile(IReadOnlyList<VectorLiveState> states)
 public IReadOnlyList<MediaSearchHit> Search(MediaSearchRequest request, CancellationToken cancellationToken = default)
 if (string.IsNullOrWhiteSpace(query))
 public void Dispose()
-if (width != MediaCollections.Width)
+if (insert.Vector768.Length != expectedWidth)
+if (width != expected)
 if (!MediaCollections.IsMedia(collectionName))
 if (collections.ContainsKey(collectionName))
 if (Directory.Exists(rootPath))
+if (!Directory.Exists(rootPath))
+if (!TryOpenCollection(request.CollectionName, out var collection) || collection is null)
+if (!TryOpenCollection(collectionName, out var collection) || collection is null)
+if (doc is null)
 if (collection.Fetch(insert.ContentId, includeVector: false) is not null)
 if (collection.Fetch(contentId, includeVector: false) is null)
 if (collection.Delete(contentId).IsSuccess)
@@ -235,7 +241,7 @@ if (!collections.ContainsKey(collectionName))
 if (disposed)
 ```
 
-Only `items_image`, `items_video`, and `items_audio` at width 768. The schema uses HNSW cosine with the text index policy's `M` and `EfConstruction`, `QuantizeType` stays `Undefined`, and the `words` field uses the standard tokenizer with the lowercase filter. Create, insert, delete, reconcile, search, stored-field reads, and dispose take one lock so the UI thread and the thread pool cannot use the index together. Inserts are idempotent by `ContentId`; `TryDelete` scans every open collection; `Reconcile` flips only `path_live` on the ids it knows and keeps the stored `encoder_hash`, `grant_path`, and start fields. Search uses the single-query overload (a one-element multi-query is rejected by the native library), maps dense hits, and parses the second fields with invariant culture. A missing collection is created on first use. `Dispose` closes collections and shuts the factory down.
+Each media collection opens at `MediaCollections.WidthFor(collectionName)` (768 for long, 512 for `_old`). The schema uses HNSW cosine with the text index policy's `M` and `EfConstruction`, `QuantizeType` stays `Undefined`, and the `words` field uses the standard tokenizer with the lowercase filter. Create, insert, delete, reconcile, search, stored-field reads, and dispose take one lock so the UI thread and the thread pool cannot use the index together. Inserts are idempotent by `ContentId`; `TryDelete` scans every open collection; `Reconcile` flips only `path_live` on the ids it knows and keeps the stored `encoder_hash`, `grant_path`, and start fields. Search uses the single-query overload (a one-element multi-query is rejected by the native library), maps dense hits, and parses the stored fields with invariant culture. A missing collection is created on first use. `Dispose` closes collections and shuts the factory down.
 
 
 ## src/Recall.Adapters/Media/WindowsVideoFrameSampler.cs

@@ -17,4 +17,5 @@ public enum RecallFault
     TokenizerNativeUnsupported = 13,
     RrfRankConstant = 14,
     VectorSchemaStale = 20,
+    AgeCutTextForbidden = 21,
 }

@@ -29,6 +29,7 @@ No branch.
 ```csharp
 public sealed class AudioFileIngest
 if (SiblingTranscript.IsCaptionFile(fileName))
+if (ShouldSkipShort(path))
 if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Audio))
 if (fileBytes is null)
 if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
@@ -39,6 +40,7 @@ if (windows.Count == 0)
 if (startSample >= pcm.LongLength)
 if (cursors.AnyLivePath(retiredId))
 if (index.TryDelete(retiredId))
+if (inserted)
 ```
 
 ```csharp

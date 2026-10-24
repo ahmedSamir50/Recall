@@ -1,6 +1,7 @@
 using Recall.Core.Indexing;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
+using Recall.Core.Vectors;
 
 namespace Recall.Core.Search;
 
@@ -44,20 +45,24 @@ public sealed class PictureSearchService : IPictureSearchService
 
         var vector = new float[MediaCollections.Width];
         encoder.EmbedJpeg(jpeg, vector);
+        var vector512 = MatryoshkaVectorMath.CutAndNormalize(vector, MediaCollections.OldWidth);
 
-        var hits = new List<MediaSearchHit>();
-        foreach (var collection in new[] { MediaCollections.Image, MediaCollections.Video })
+        var lists = new List<IReadOnlyList<MediaSearchHit>>(MediaCollections.PictureCollections.Length);
+        foreach (var collection in MediaCollections.PictureCollections)
         {
-            var request = new MediaSearchRequest(collection, vector, filter, RecallIndexCaps.RawListCap);
-            hits.AddRange(index.Search(request, cancellationToken));
+            cancellationToken.ThrowIfCancellationRequested();
+            var query = MediaCollections.WidthFor(collection) == MediaCollections.OldWidth ? vector512 : vector;
+            var request = new MediaSearchRequest(collection, query, filter, RecallIndexCaps.RawListCap);
+            var hits = index.Search(request, cancellationToken);
+            lists.Add(CollapseCollection(hits));
         }
 
-        return Task.FromResult<IReadOnlyList<MediaSearchHit>>(hits
+        return Task.FromResult<IReadOnlyList<MediaSearchHit>>(AgeRrf.Fuse(lists).Take(RecallIndexCaps.FileCap).ToList());
+    }
+
+    private static IReadOnlyList<MediaSearchHit> CollapseCollection(IReadOnlyList<MediaSearchHit> hits) =>
+        hits
             .GroupBy(hit => hit.SourcePath, StringComparer.OrdinalIgnoreCase)
             .Select(group => Collapse.EarliestStart(group.ToList()))
-            .OrderByDescending(hit => hit.Score)
-            .ThenBy(hit => hit.StartSeconds)
-            .Take(RecallIndexCaps.FileCap)
-            .ToList());
-    }
+            .ToList();
 }

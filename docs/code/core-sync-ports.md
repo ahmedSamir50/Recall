@@ -17,6 +17,8 @@ public sealed class LocalOpLogWriter
 public sealed record LocalOpLogEntry(OpLogOperation Operation, string ContentId, DateTimeOffset At, bool Sent);
     public LocalOpLogWriter(string? directory = null)
     public void AppendInsert(string contentId)
+    public void AppendPin(string contentId)
+    public void AppendUnpin(string contentId)
         if (string.IsNullOrWhiteSpace(directory))
 ```
 
@@ -53,6 +55,7 @@ public enum Modality
 public enum StoredWidth
 public enum AgeCutoffYears
 public enum OpLogOperation
+public enum PinResult
 ```
 
 No branch.
@@ -247,6 +250,8 @@ No branch.
 ```csharp
 namespace Recall.Core.Ports;
 public interface IMediaVectorIndex
+public bool TryRead(string contentId, out MediaStoredVector vector);
+public sealed record MediaStoredVector(string ContentId, string CollectionName, float[] Vector, string Words, string EncoderHash, string GrantPath, string SourcePath, string StartSeconds, string EndSeconds, bool PathLive);
 public interface IVisionEmbeddingEncoder
 public interface IPictureSearchService
 public interface IAudioSearchService
@@ -258,4 +263,139 @@ public IReadOnlyList<MediaSearchHit> SearchWords(string collectionName, string q
 public Task PlayAsync(string path, double startSeconds, CancellationToken cancellationToken = default)
 ```
 
-`IMediaVectorIndex` has create, insert, delete, word search, and search over a media collection; search takes `MediaSearchRequest`; `SearchWords` returns an empty list on a blank query and narrows word matches with the grant filter. `IVisionEmbeddingEncoder` fills a caller-owned 768-wide destination from JPEG bytes. `IPictureSearchService` takes JPEG bytes and the grant list. `IAudioSearchService` takes 16 kHz mono PCM and the grant list and searches `items_audio`. `IAudioEmbeddingEncoder` embeds 16 kHz mono PCM into a 768-wide destination and exposes `IsLoaded` so the unload step can skip a closed session. `IMediaPreview` shows one media file in the app player and starts at the given seconds. No branch.
+`IMediaVectorIndex` has create, insert, delete, `TryRead`, word search, and search over a media collection; search takes `MediaSearchRequest`; `SearchWords` returns an empty list on a blank query and narrows word matches with the grant filter. `IVisionEmbeddingEncoder` fills a caller-owned 768-wide destination from JPEG bytes. `IPictureSearchService` takes JPEG bytes and the grant list. `IAudioSearchService` takes 16 kHz mono PCM and the grant list and searches long and `_old` audio collections. `IAudioEmbeddingEncoder` embeds 16 kHz mono PCM into a 768-wide destination and exposes `IsLoaded` so the unload step can skip a closed session. `IMediaPreview` shows one media file in the app player and starts at the given seconds. No branch.
+
+## src/Recall.Core/Age/AgeCutGate.cs
+
+```csharp
+namespace Recall.Core.Age;
+public static class AgeCutGate
+public static bool Passes(Modality modality, IReadOnlyList<AgeCutItem> items)
+```
+
+`if (modality == Modality.Text)` throws `RecallFault.AgeCutTextForbidden`. `if (items.Count == 0)` returns false. `if (item.Stored768.Length != MatryoshkaVectorMath.NativeWidth || item.Query768.Length != MatryoshkaVectorMath.NativeWidth)` throws `RecallFault.EmbeddingWidthUnexpected`. `if (rank >= 0 && rank < 10)` counts a recall@10 hit. `if (!useCut)` uses the full 768 vector. `if (left.Length == 0 || right.Length == 0)` yields cosine zero. Passes when full-width and 512-width recall@10 differ by at most five points.
+
+## src/Recall.Core/Age/IAgeCutDecision.cs
+
+```csharp
+namespace Recall.Core.Age;
+public interface IAgeCutDecision
+    bool TryPass(Modality modality);
+```
+
+Production type `FailClosedAgeCutDecision` loads `AgeCutCorpus` and returns false when the corpus is absent.
+
+## src/Recall.Core/Age/AgeMoveService.cs
+
+```csharp
+namespace Recall.Core.Age;
+public sealed class AgeMoveService
+public bool TryMovePath(string path, Modality modality, DateTimeOffset utcNow)
+public void Sweep(DateTimeOffset utcNow)
+```
+
+`if (string.IsNullOrWhiteSpace(path))` throws. `if (modality == Modality.Text)` returns false. `if (string.IsNullOrEmpty(encoderHash))` returns false. `if (lastWrite is null)` returns false. `if (mediaRow is null)` returns false. `if (chunks.Count == 0)` returns false. `if (string.IsNullOrEmpty(contentHash))` returns false. `if (cursors.IsPinned(path))` deletes a stray short row when both ids exist and returns false. `if (index.TryRead(longId, out _) && index.TryRead(shortId, out _))` deletes the short id while pinned. `if (hasShort)` keeps only the short row when not pinned. `if (hasLong)` deletes the long row when a short row already exists. `if (!FileAgePolicy.IsPastCutoff(lastWrite, years, utcNow))` returns false. `if (!decision.TryPass(modality))` returns false. `if (!hasLong)` returns false before staging. `if (anyMoved)` sets media width to 512.
+
+## src/Recall.Core/Age/PinService.cs
+
+```csharp
+namespace Recall.Core.Age;
+public sealed class PinService
+public PinResult Pin(string path)
+public PinResult Unpin(string path)
+```
+
+`if (string.IsNullOrWhiteSpace(path))` throws on pin and unpin. `if (modality is null)` returns `NotMedia` or removes pin on unpin. `if (mediaRow is null)` returns `NotMedia` on pin. `if (!facts.Exists(path))` pins without embed and returns `MissingFileStays`. `if (mediaRow.Width == MediaCollections.Width)` returns `AlreadyLong`. `if (!string.IsNullOrEmpty(longId))` appends pin or unpin to the op-log. `if (!cursors.IsPinned(path))` returns `NotPinned`. `if (mediaRow.Width == MediaCollections.OldWidth)` returns `UnpinReturnedShort`. `if (lastWrite is null || !FileAgePolicy.IsPastCutoff(lastWrite, years, DateTimeOffset.UtcNow))` returns `UnpinStaysLong`. `if (!decision.TryPass(modality.Value))` returns `GateFailedStaysLong`. `if (!cursors.IsPinned(row.Path))` skips resume delete when the pin row is gone. `if (chunk is null || string.IsNullOrEmpty(contentHash))` returns `NotMedia` after regrow. `if (!index.TryRead(longId, out _))` rolls back pin on failed regrow. `if (!index.TryRead(longId, out var stored))` skips a missing chunk on unpin cut. `if (MediaFileKinds.IsImage(path))` `if (MediaFileKinds.IsVideo(path))` `if (MediaFileKinds.IsAudio(path))` resolve modality. `if (chunk is null)` yields an empty long id.
+
+## src/Recall.Core/Age/AgeCutoffActions.cs
+
+```csharp
+namespace Recall.Core.Age;
+public static class AgeCutoffActions
+public static void Set(AgeCutoffPreferenceService preferences, AgeMoveService ageMove, AgeCutoffYears years, DateTimeOffset utcNow)
+```
+
+`catch (RecallFaultException ex) when (ex.Fault == RecallFault.AgeCutoffNotAllowed)` rethrows without sweeping. A successful `preferences.Set` calls `ageMove.Sweep`.
+
+## src/Recall.Core/Age/FileAgePolicy.cs
+
+```csharp
+namespace Recall.Core.Age;
+public static class FileAgePolicy
+public static bool IsPastCutoff(DateTimeOffset? lastWriteUtc, AgeCutoffYears years, DateTimeOffset utcNow)
+```
+
+Null last-write returns false. `if (lastWriteUtc is null)`. `if (years is not (AgeCutoffYears.Two or AgeCutoffYears.Five or AgeCutoffYears.Seven))` throws `RecallFault.AgeCutoffNotAllowed`. Cutoff is strict less-than `utcNow.AddYears(-(int)years)`.
+
+## src/Recall.Core/Age/AgeCutItem.cs
+
+```csharp
+namespace Recall.Core.Age;
+public readonly record struct AgeCutItem(int Id, float[] Stored768, float[] Query768)
+```
+
+Gate corpus pairs one stored and one query vector per item id.
+
+## src/Recall.Core/Age/AgeCutCorpus.cs
+
+```csharp
+namespace Recall.Core.Age;
+public static class AgeCutCorpus
+public static bool TryLoad(Modality modality, out IReadOnlyList<AgeCutItem> items)
+```
+
+`if (modality == Modality.Text)` throws `RecallFault.AgeCutTextForbidden`. Production returns an empty list and false without reading disk.
+
+## src/Recall.Core/Age/FailClosedAgeCutDecision.cs
+
+```csharp
+namespace Recall.Core.Age;
+public sealed class FailClosedAgeCutDecision : IAgeCutDecision
+public bool TryPass(Modality modality)
+```
+
+`if (modality == Modality.Text)` throws. `if (!AgeCutCorpus.TryLoad(modality, out var items))` returns false. Otherwise delegates to `AgeCutGate.Passes`.
+
+## src/Recall.Core/Age/AgeMover.cs
+
+```csharp
+namespace Recall.Core.Age;
+public readonly record struct AgeStage(...)
+public static class AgeMover
+public static void Stage(IMediaVectorIndex index, IIngestCursorStore cursors, AgeStage stage)
+public static void Finish(IMediaVectorIndex index, IIngestCursorStore cursors, string longId)
+```
+
+`if (stage.Vector768.Length != MediaCollections.Width)` throws `RecallFault.EmbeddingWidthUnexpected`. Stage cuts to 512, inserts the short row, and `CommitAgeCut`. Finish deletes the long id and `CompleteAgeCut`.
+
+## src/Recall.Core/Age/MediaWords.cs
+
+```csharp
+namespace Recall.Core.Age;
+public static class MediaWords
+public static string Join(string? ocr, string? transcript, string? keywords)
+```
+
+`if (!string.IsNullOrWhiteSpace(ocr))` `if (!string.IsNullOrWhiteSpace(transcript))` `if (!string.IsNullOrWhiteSpace(keywords))` skip blank parts and join the rest with newline in OCR, transcript, keywords order.
+
+## src/Recall.Core/Age/DiskMediaFileFacts.cs
+
+```csharp
+namespace Recall.Core.Age;
+public sealed class DiskMediaFileFacts : Ports.IMediaFileFacts
+public bool Exists(string path)
+public DateTimeOffset? LastWriteUtc(string path)
+```
+
+`catch (IOException)` and `catch (UnauthorizedAccessException)` return false or null. `if (!File.Exists(path))` returns null for last-write.
+
+## src/Recall.Core/Ports/IMediaFileFacts.cs
+
+```csharp
+namespace Recall.Core.Ports;
+public interface IMediaFileFacts
+    bool Exists(string path);
+    DateTimeOffset? LastWriteUtc(string path);
+```
+
+Disk paths for age move and pin; missing or inaccessible files read as absent.

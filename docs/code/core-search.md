@@ -3,8 +3,16 @@
 ```csharp
 namespace Recall.Core.Search;
 public sealed class TextSearchService : ITextSearchService
-    public TextSearchService(ITextEmbeddingEncoder encoder, ITextVectorIndex index, IIndexPolicy indexPolicy)
+    public TextSearchService(
+        ITextEmbeddingEncoder encoder,
+        ITextVectorIndex index,
+        IIndexPolicy indexPolicy,
+        IIngestCursorStore cursors,
+        IEncoderFileHash encoderHash,
+        IMediaVectorIndex media,
+        IVisionEmbeddingEncoder? visionEncoder = null)
     public async Task<IReadOnlyList<TextSearchHit>> FindAsync(
+    internal IReadOnlyList<TextSearchHit> SearchMediaWords(
         string query,
         IReadOnlyList<ScopeFolderGrant> grants,
         CancellationToken cancellationToken = default)
@@ -183,11 +191,21 @@ namespace Recall.Core.Indexing;
 public static class MediaCollections
 public const string Image = "items_image";
 public const string Video = "items_video";
+public const string Audio = "items_audio";
+public const string ImageOld = "items_image_old";
+public const string VideoOld = "items_video_old";
+public const string AudioOld = "items_audio_old";
 public const int Width = 768;
+public const int OldWidth = 512;
+public static readonly string[] PictureCollections = [Image, Video, ImageOld, VideoOld];
+public static readonly string[] AudioCollections = [Audio, AudioOld];
+public static readonly string[] WordCollections = [Image, Video, Audio, ImageOld, VideoOld, AudioOld];
 public static bool IsMedia(string collectionName) =>
+public static int WidthFor(string collectionName)
+public static string EncoderHashFor(string collectionName, IEncoderFileHash hashes)
 ```
 
-Picture rows live in `items_image` and video frame rows live in `items_video`. Both are 768 wide. A text collection name is rejected. No branch.
+Long collections are 768 wide; `_old` partners are 512. A text collection name is rejected. `if (string.Equals(collectionName, Image, StringComparison.Ordinal)` selects long widths. `if (string.Equals(collectionName, ImageOld, StringComparison.Ordinal)` selects 512 for `_old` names. `if (string.Equals(collectionName, Audio, StringComparison.Ordinal)` selects the audio encoder hash.
 
 ## src/Recall.Core/Indexing/MediaIndexInsert.cs
 
@@ -261,5 +279,41 @@ if (grantedPaths.Count == 0)
 if (filter.Length == 0)
 ```
 
-Empty bytes and a null grant list return no hits. No image- or video-enabled grant returns no hits without embedding. Otherwise the JPEG is embedded once, the image and video collections are searched with a text-filter build, and rows outside the enabled grants are dropped. Rows collapse per path with `Collapse.EarliestStart`, then take the file cap. No text collection is queried.
+Empty bytes and a null grant list return no hits. No image- or video-enabled grant returns no hits without embedding. Otherwise the JPEG is embedded once, each of `PictureCollections` is searched with the 768 query or a 512 cut, rows collapse per path with `Collapse.EarliestStart`, lists fuse with `AgeRrf.Fuse`, then take the file cap. No text collection is queried.
+
+
+## src/Recall.Core/Search/AudioSearchService.cs
+
+```csharp
+namespace Recall.Core.Search;
+public sealed class AudioSearchService : IAudioSearchService
+public async Task<IReadOnlyList<MediaSearchHit>> FindAsync(
+    ReadOnlyMemory<float> mono16k,
+    IReadOnlyList<ScopeFolderGrant> grants,
+    CancellationToken cancellationToken = default)
+if (mono16k.IsEmpty || grants is null)
+if (grantedPaths.Count == 0)
+if (filter.Length == 0)
+```
+
+Empty PCM or no audio grant returns no hits. Otherwise PCM is embedded once, long and `_old` audio collections are searched with the matching query width, paths outside the grant drop, per-path collapse runs, `AgeRrf.Fuse` merges, then the file cap applies.
+
+## src/Recall.Core/Search/AgeRrf.cs
+
+```csharp
+namespace Recall.Core.Search;
+public static class AgeRrf
+public static IReadOnlyList<MediaSearchHit> Fuse(IReadOnlyList<IReadOnlyList<MediaSearchHit>> lists)
+if (list.Count == 0)
+if (!seen.Add(hit.SourcePath))
+if (scores.TryGetValue(hit.SourcePath, out var existing))
+if (IsBetterRepresentative(hit, rank, listIndex, existing.Hit, existing.BestRank, existing.ListIndex))
+if (scores.Count == 0)
+if (candidateRank < currentRank)
+if (candidateRank > currentRank)
+if (candidate.StartSeconds < current.StartSeconds)
+if (candidate.StartSeconds > current.StartSeconds)
+```
+
+Fuses multiple ranked lists with the same unweighted RRF term `1 / (HybridFusion.RrfRankConstant + rank + 1)`. One hit per path within each list; representative tie-break uses lowest rank, then smaller `StartSeconds`, then earlier list index; final order is score descending, then start, then path.
 

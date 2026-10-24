@@ -881,8 +881,12 @@ namespace Recall.Core.Ingest;
 public interface IVisionFileIngest
 public sealed class VisionFileIngest
     if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Image) || !File.Exists(path))
+    if (ShouldSkipShort(path, Modality.Image))
+    if (index.TryInsert(MediaCollections.Image, insert))
     if (sampler is null || !grant.EnabledKinds.HasFlag(GrantFileKinds.Video) || !File.Exists(path))
+    if (ShouldSkipShort(path, Modality.Video))
     if (frames.Count == 0)
+    if (inserted)
 ```
 
 An image is embedded as one picture row after the image grant flag allows the file. Video frames are sampled every two seconds and stored after `FinishPath`. A missing sampler, a missing file, or a grant without the video flag writes no frame row.

@@ -29,3 +29,15 @@ public enum OpLogOperation
     Pin = 2,
     Unpin = 3
 }
+
+public enum PinResult
+{
+    Regrown = 0,
+    MissingFileStays = 1,
+    UnpinReturnedShort = 2,
+    UnpinStaysLong = 3,
+    AlreadyLong = 4,
+    GateFailedStaysLong = 5,
+    NotMedia = 6,
+    NotPinned = 7
+}
