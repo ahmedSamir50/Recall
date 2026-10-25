@@ -24,6 +24,8 @@ public sealed class OnnxOcrEngine : IOcrEngine
 
     private readonly string modelDirectory;
     private readonly IIngestCursorStore cursors;
+    private readonly IMediaVectorIndex mediaIndex;
+    private readonly TextIngestEngine textIngest;
     private readonly OcrSessionSet sessions = new();
     private readonly Dictionary<string, string> recognizedByPath = new(StringComparer.OrdinalIgnoreCase);
 
@@ -34,10 +36,12 @@ public sealed class OnnxOcrEngine : IOcrEngine
     private IReadOnlyList<string> arabicDict = [];
     private bool loaded;
 
-    public OnnxOcrEngine(string modelDirectory, IIngestCursorStore cursors)
+    public OnnxOcrEngine(string modelDirectory, IIngestCursorStore cursors, IMediaVectorIndex mediaIndex, TextIngestEngine textIngest)
     {
         this.modelDirectory = modelDirectory;
         this.cursors = cursors;
+        this.mediaIndex = mediaIndex;
+        this.textIngest = textIngest;
     }
 
     public bool DetectorLoaded => sessions.DetectorLoaded;
@@ -48,7 +52,7 @@ public sealed class OnnxOcrEngine : IOcrEngine
     {
         ArgumentNullException.ThrowIfNull(paths);
         recognizedByPath.Clear();
-        EnsureLoaded();
+        var pending = new List<string>();
         foreach (var path in paths)
         {
             if (ShouldSkipPath(path))
@@ -56,11 +60,38 @@ public sealed class OnnxOcrEngine : IOcrEngine
                 continue;
             }
 
-            var text = RecognizePath(path);
-            if (!string.IsNullOrEmpty(text))
+            pending.Add(path);
+        }
+
+        if (pending.Count == 0)
+        {
+            return;
+        }
+
+        EnsureLoaded();
+        foreach (var path in pending)
+        {
+            if (path.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
             {
-                recognizedByPath[path] = text;
+                var pageTexts = RecognizePdf(path);
+                if (pageTexts.Count == 0)
+                {
+                    continue;
+                }
+
+                recognizedByPath[path] = JoinPdfText(pageTexts);
+                PersistPdfPages(path, pageTexts);
+                continue;
             }
+
+            var text = RecognizeImagePath(path);
+            if (string.IsNullOrEmpty(text))
+            {
+                continue;
+            }
+
+            recognizedByPath[path] = text;
+            PersistImageWords(path, text);
         }
     }
 
@@ -87,13 +118,24 @@ public sealed class OnnxOcrEngine : IOcrEngine
         return pages.Count == 0;
     }
 
-    private string RecognizePath(string path)
+    private static string JoinPdfText(IReadOnlyList<PdfPageText> pages)
     {
-        if (path.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+        var builder = new System.Text.StringBuilder();
+        for (var pageIndex = 0; pageIndex < pages.Count; pageIndex++)
         {
-            return RecognizePdf(path);
+            if (pageIndex > 0)
+            {
+                builder.Append(' ');
+            }
+
+            builder.Append(pages[pageIndex].Text);
         }
 
+        return builder.ToString();
+    }
+
+    private string RecognizeImagePath(string path)
+    {
         if (!File.Exists(path))
         {
             return string.Empty;
@@ -103,31 +145,54 @@ public sealed class OnnxOcrEngine : IOcrEngine
         return RecognizeImage(bytes);
     }
 
-    private string RecognizePdf(string path)
+    private List<PdfPageText> RecognizePdf(string path)
     {
         var pages = cursors.ListOcrPages(path);
-        if (pages.Count == 0)
-        {
-            return string.Empty;
-        }
-
-        var builder = new System.Text.StringBuilder();
+        var result = new List<PdfPageText>();
         foreach (var pageNumber in pages)
         {
             var png = RenderPdfPage(path, pageNumber);
             var pageText = RecognizeImage(png);
             if (!string.IsNullOrEmpty(pageText))
             {
-                if (builder.Length > 0)
-                {
-                    builder.Append('\n');
-                }
-
-                builder.Append(pageText);
+                result.Add(new PdfPageText(pageNumber, pageText));
             }
         }
 
-        return builder.ToString();
+        return result;
+    }
+
+    private void PersistImageWords(string path, string text)
+    {
+        IngestChunkRow? matched = null;
+        var matches = 0;
+        foreach (var row in cursors.ListChunks(path))
+        {
+            if (row.Retired || row.Missing || row.Ordinal != 0)
+            {
+                continue;
+            }
+
+            matched = row;
+            matches++;
+        }
+
+        if (matches == 1)
+        {
+            mediaIndex.TrySetWords(matched!.ContentId, text);
+        }
+    }
+
+    [SuppressMessage("Performance", "VSTHRD002:Synchronously waiting on tasks or awaiters may cause deadlocks. Use await or JoinableTaskFactory.Run instead", Justification = "OCR ingest runs on the ingest Task.Run loop, not the UI thread.")]
+    private void PersistPdfPages(string path, IReadOnlyList<PdfPageText> pageTexts)
+    {
+        var row = cursors.GetFile(path);
+        if (pageTexts.Count == 0 || row is null)
+        {
+            return;
+        }
+
+        textIngest.IngestOcrPagesAsync(path, pageTexts, row.GrantPath, row.EncoderHash, CancellationToken.None).GetAwaiter().GetResult();
     }
 
     private string RecognizeImage(byte[] imageBytes)
@@ -182,15 +247,17 @@ public sealed class OnnxOcrEngine : IOcrEngine
     {
         var longSide = Math.Max(raster.Width, raster.Height);
         var scale = DetectorLongSide / (double)longSide;
-        var resizedWidth = Math.Max(1, (int)Math.Round(raster.Width * scale));
-        var resizedHeight = Math.Max(1, (int)Math.Round(raster.Height * scale));
+        var resizedWidth = AlignDetectorSide((int)Math.Round(raster.Width * scale));
+        var resizedHeight = AlignDetectorSide((int)Math.Round(raster.Height * scale));
+        var scaleX = resizedWidth / (double)raster.Width;
+        var scaleY = resizedHeight / (double)raster.Height;
         var tensor = new DenseTensor<float>([1, 3, resizedHeight, resizedWidth]);
         for (var y = 0; y < resizedHeight; y++)
         {
             for (var x = 0; x < resizedWidth; x++)
             {
-                var srcX = Math.Clamp((int)Math.Round(x / scale), 0, raster.Width - 1);
-                var srcY = Math.Clamp((int)Math.Round(y / scale), 0, raster.Height - 1);
+                var srcX = Math.Clamp((int)Math.Round(x / scaleX), 0, raster.Width - 1);
+                var srcY = Math.Clamp((int)Math.Round(y / scaleY), 0, raster.Height - 1);
                 var b = raster.GetB(srcX, srcY) / 255f;
                 var g = raster.GetG(srcX, srcY) / 255f;
                 var r = raster.GetR(srcX, srcY) / 255f;
@@ -200,7 +267,7 @@ public sealed class OnnxOcrEngine : IOcrEngine
             }
         }
 
-        return (tensor, resizedWidth, resizedHeight, scale, scale);
+        return (tensor, resizedWidth, resizedHeight, scaleX, scaleY);
     }
 
     private static OcrRaster Crop(OcrRaster source, OcrBox box)
@@ -284,22 +351,25 @@ public sealed class OnnxOcrEngine : IOcrEngine
         }
 
         var directory = Path.Combine(modelDirectory, OcrModelFiles.Directory);
-        detector = new InferenceSession(Path.Combine(directory, OcrModelFiles.Detector.LocalName));
-        englishReader = new InferenceSession(Path.Combine(directory, OcrModelFiles.EnglishReader.LocalName));
-        arabicReader = new InferenceSession(Path.Combine(directory, OcrModelFiles.ArabicReader.LocalName));
-        englishDict = OcrInferenceYaml.ReadCharacterDict(Path.Combine(directory, "inference.yml"));
-        if (englishDict.Count == 0)
-        {
-            englishDict = OcrInferenceYaml.ReadCharacterDict(Path.Combine(directory, OcrModelFiles.EnglishReader.LocalName + ".yml"));
-        }
-
-        arabicDict = OcrInferenceYaml.ReadCharacterDict(Path.Combine(directory, "arabic-inference.yml"));
-        if (arabicDict.Count == 0)
-        {
-            arabicDict = OcrInferenceYaml.ReadCharacterDict(Path.Combine(directory, OcrModelFiles.ArabicReader.LocalName + ".yml"));
-        }
+        detector = CreateSession(Path.Combine(directory, OcrModelFiles.Detector.LocalName));
+        englishReader = CreateSession(Path.Combine(directory, OcrModelFiles.EnglishReader.LocalName));
+        arabicReader = CreateSession(Path.Combine(directory, OcrModelFiles.ArabicReader.LocalName));
+        englishDict = OcrInferenceYaml.ReadCharacterDict(Path.Combine(directory, OcrModelFiles.EnglishReaderYaml.LocalName));
+        arabicDict = OcrInferenceYaml.ReadCharacterDict(Path.Combine(directory, OcrModelFiles.ArabicReaderYaml.LocalName));
 
         sessions.Load();
         loaded = true;
+    }
+
+    private static int AlignDetectorSide(int side) => Math.Max(32, (int)Math.Ceiling(side / 32.0) * 32);
+
+    private static InferenceSession CreateSession(string modelPath)
+    {
+        var options = new SessionOptions
+        {
+            EnableMemoryPattern = false,
+            EnableCpuMemArena = false,
+        };
+        return new InferenceSession(modelPath, options);
     }
 }

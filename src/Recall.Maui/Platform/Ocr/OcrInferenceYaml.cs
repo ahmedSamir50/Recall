@@ -1,40 +1,53 @@
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Recall.Maui.Platform.Ocr;
 
 internal static class OcrInferenceYaml
 {
-    private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(2);
+    private const string DictHeader = "character_dict:";
+
+    private const string EntryPrefix = "  - ";
 
     public static IReadOnlyList<string> ReadCharacterDict(string yamlPath)
     {
-        var text = File.ReadAllText(yamlPath, Encoding.UTF8);
-        var match = Regex.Match(
-            text,
-            @"character_dict\s*:\s*\[(.*?)\]",
-            RegexOptions.Singleline,
-            RegexTimeout);
-        if (!match.Success)
+        var dict = new List<string>();
+        var inDict = false;
+        foreach (var line in File.ReadLines(yamlPath, Encoding.UTF8))
         {
-            return [];
+            if (!inDict)
+            {
+                if (line.Trim() == DictHeader)
+                {
+                    inDict = true;
+                }
+
+                continue;
+            }
+
+            if (!line.StartsWith(EntryPrefix, StringComparison.Ordinal))
+            {
+                break;
+            }
+
+            dict.Add(StripQuotes(line[EntryPrefix.Length..]));
         }
 
-        var dict = new List<string>();
-        var tokens = Regex.Matches(match.Groups[1].Value, @"'((?:\\'|[^'])*)'|""((?:\\""|[^""])*)""", RegexOptions.None, RegexTimeout);
-        for (var index = 0; index < tokens.Count; index++)
+        if (dict.Count == 0)
         {
-            var item = tokens[index];
-            if (item.Groups[1].Success)
-            {
-                dict.Add(item.Groups[1].Value.Replace("\\'", "'", StringComparison.Ordinal));
-            }
-            else if (item.Groups[2].Success)
-            {
-                dict.Add(item.Groups[2].Value.Replace("\\\"", "\"", StringComparison.Ordinal));
-            }
+            throw new InvalidOperationException("OCR character dict is empty.");
         }
 
         return dict;
+    }
+
+    private static string StripQuotes(string entry)
+    {
+        if (entry.Length >= 2
+            && ((entry[0] == '\'' && entry[^1] == '\'') || (entry[0] == '"' && entry[^1] == '"')))
+        {
+            return entry[1..^1];
+        }
+
+        return entry;
     }
 }

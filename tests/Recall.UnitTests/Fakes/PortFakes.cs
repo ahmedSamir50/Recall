@@ -1075,6 +1075,27 @@ public sealed class FakeMediaVectorIndex : IMediaVectorIndex
         return OnSearch?.Invoke(request) ?? [];
     }
 
+    public bool TrySetWords(string contentId, string words)
+    {
+        ArgumentNullException.ThrowIfNull(contentId);
+        if (!stored.TryGetValue(contentId, out var entry))
+        {
+            return false;
+        }
+
+        var updated = entry.Insert with { Words = words };
+        stored[contentId] = (entry.Collection, updated);
+        for (var i = 0; i < Inserts.Count; i++)
+        {
+            if (string.Equals(Inserts[i].ContentId, contentId, StringComparison.Ordinal))
+            {
+                Inserts[i] = updated;
+            }
+        }
+
+        return true;
+    }
+
     public IReadOnlyList<MediaSearchHit> SearchWords(string collectionName, string query, string filter, int topK, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
@@ -1085,7 +1106,27 @@ public sealed class FakeMediaVectorIndex : IMediaVectorIndex
         WordsQueries.Add(query);
         WordsRequests.Add((collectionName, query, filter, topK));
         QueriedCollections.Add(collectionName);
-        return OnSearchWords?.Invoke(collectionName, query, filter, topK) ?? [];
+        if (OnSearchWords is not null)
+        {
+            return OnSearchWords.Invoke(collectionName, query, filter, topK);
+        }
+
+        var hits = new List<MediaSearchHit>();
+        foreach (var insert in Inserts)
+        {
+            if (!stored.TryGetValue(insert.ContentId, out var entry)
+                || !string.Equals(entry.Collection, collectionName, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (entry.Insert.Words.Contains(query, StringComparison.OrdinalIgnoreCase))
+            {
+                hits.Add(new MediaSearchHit(insert.ContentId, insert.SourcePath, 0, 0, 1));
+            }
+        }
+
+        return hits;
     }
 }
 

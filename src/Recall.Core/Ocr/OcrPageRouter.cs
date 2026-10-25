@@ -33,26 +33,20 @@ public static class OcrPageRouter
         var pageReaderIsArabic = arabicMean > englishMean + TieEpsilon;
 
         var builder = new StringBuilder();
-        foreach (var line in lines)
+        for (var i = 0; i < lines.Count; i++)
         {
+            var line = lines[i];
             var english = line.English ?? string.Empty;
             var arabic = line.Arabic ?? string.Empty;
+            var pageReaderScore = pageReaderIsArabic ? line.ArabicScore : line.EnglishScore;
             string chosen;
-            if (pageReaderIsArabic)
+            if (i < sampleCount || pageReaderScore < LowConfidence)
             {
-                chosen = arabic;
-                if (line.ArabicScore < LowConfidence && englishScoreBeatsArabic(line.EnglishScore, line.ArabicScore))
-                {
-                    chosen = english;
-                }
+                chosen = OcrLineChoice.Choose(english, line.EnglishScore, arabic, line.ArabicScore);
             }
             else
             {
-                chosen = english;
-                if (line.EnglishScore < LowConfidence && line.ArabicScore > line.EnglishScore + TieEpsilon)
-                {
-                    chosen = arabic;
-                }
+                chosen = pageReaderIsArabic ? arabic : english;
             }
 
             if (string.IsNullOrEmpty(chosen))
@@ -78,14 +72,11 @@ public static class OcrPageRouter
         return builder.ToString();
     }
 
-    private static bool englishScoreBeatsArabic(double englishScore, double arabicScore) =>
-        englishScore > arabicScore + TieEpsilon
-        || Math.Abs(englishScore - arabicScore) <= TieEpsilon;
-
     public static bool ContainsArabicScript(string text) =>
         text.EnumerateRunes().Any(IsArabicLetter);
 
     private static bool IsArabicLetter(Rune rune) =>
         rune.Value >= UnicodeRanges.Arabic.FirstCodePoint
         && rune.Value < UnicodeRanges.Arabic.FirstCodePoint + UnicodeRanges.Arabic.Length;
+
 }

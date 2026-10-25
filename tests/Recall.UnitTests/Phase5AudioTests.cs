@@ -1282,30 +1282,27 @@ public sealed class Phase5AudioTests
 
     private sealed class SchedulerOcrFake : Recall.Core.Ports.IOcrEngine
     {
-        private static int openCount;
         private static int createCount;
-
-        public static int OpenCount => Volatile.Read(ref openCount);
 
         public static int CreateCount => Volatile.Read(ref createCount);
 
         public static void Reset()
         {
-            Volatile.Write(ref openCount, 0);
             Volatile.Write(ref createCount, 0);
         }
 
         public SchedulerOcrFake()
         {
             Interlocked.Increment(ref createCount);
-            Interlocked.Increment(ref openCount);
         }
 
         public void RunPass(IReadOnlyList<string> paths)
         {
         }
 
-        public void Dispose() => Interlocked.Decrement(ref openCount);
+        public void Dispose()
+        {
+        }
     }
 
     private static byte[] BuildWav(ushort format, int rate, short channels, short bits, byte[] samples, bool includeData = true, bool subFormatFloat = false)

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Recall.Adapters.DependencyInjection;
 using Recall.Core.Age;
@@ -18,6 +19,7 @@ namespace Recall.Maui.DependencyInjection;
 
 public static class MauiServiceCollectionExtensions
 {
+    [SuppressMessage("Performance", "VSTHRD002:Synchronously waiting on tasks or awaiters may cause deadlocks. Use await or JoinableTaskFactory.Run instead", Justification = "The OCR factory runs on the ingest Task.Run loop, not the UI thread.")]
     public static IServiceCollection AddRecallMauiPlatform(
         this IServiceCollection services,
         TextModelDownloadOptions textModel,
@@ -105,7 +107,22 @@ public static class MauiServiceCollectionExtensions
             sp.GetService<IIngestModelSession>(),
             sp.GetService<AgeMoveService>(),
             sp.GetService<PinService>(),
-            paths => new OnnxOcrEngine(ocrModelRoot, sp.GetRequiredService<IIngestCursorStore>()))));
+            paths =>
+            {
+                if (!OcrModelFiles.IsComplete(ocrModelRoot))
+                {
+                    sp.GetRequiredService<IModelDownloadService>()
+                        .DownloadOcrModelsAsync(null, CancellationToken.None)
+                        .GetAwaiter()
+                        .GetResult();
+                }
+
+                return new OnnxOcrEngine(
+                    ocrModelRoot,
+                    sp.GetRequiredService<IIngestCursorStore>(),
+                    sp.GetRequiredService<IMediaVectorIndex>(),
+                    sp.GetRequiredService<TextIngestEngine>());
+            })));
         return services;
     }
 }

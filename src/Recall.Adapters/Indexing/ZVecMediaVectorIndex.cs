@@ -201,6 +201,36 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
         return false;
     }
 
+    public bool TrySetWords(string contentId, string words)
+    {
+        ArgumentNullException.ThrowIfNull(contentId);
+        lock (sync)
+        {
+            return TrySetWordsCore(contentId, words);
+        }
+    }
+
+    private bool TrySetWordsCore(string contentId, string words)
+    {
+        if (!TryOpenCollection(MediaCollections.Image, out var collection) || collection is null)
+        {
+            return false;
+        }
+
+        var doc = collection.Fetch(contentId, includeVector: true);
+        if (doc is null)
+        {
+            return false;
+        }
+
+        var fields = new Dictionary<string, object>(doc.Fields)
+        {
+            [WordsField] = words,
+        };
+        collection.Update(ZVecDoc.Create(doc.Id, doc.DenseVectors, doc.SparseVectors, fields));
+        return true;
+    }
+
     public bool TryDelete(string contentId)
     {
         lock (sync)

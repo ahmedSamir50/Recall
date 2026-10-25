@@ -23,9 +23,11 @@
     <PackageReference Include="FluentAssertions" />
     <ProjectReference Include="..\..\src\Recall.Maui\Recall.Maui.csproj" />
     <ProjectReference Include="..\Recall.IntegrationTests\Recall.IntegrationTests.csproj" />
+    <ProjectReference Include="..\Recall.UnitTests\Recall.UnitTests.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\Recall.IntegrationTests\Fixtures\**\*" Link="Fixtures\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="TestAssets\**\*" CopyToOutputDirectory="PreserveNewest" LinkBase="TestAssets" />
     <Content Include="..\Recall.IntegrationTests\Fixtures\talk.m4a" Link="talk.m4a" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\Recall.IntegrationTests\Fixtures\talk.m4a')" />
   </ItemGroup>
   <PropertyGroup>

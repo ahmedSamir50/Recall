@@ -1,3 +1,4 @@
+using Recall.Core.Faults;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
 
@@ -273,6 +274,13 @@ public sealed class IngestSchedulerRunner
             }
 
             throw;
+        }
+        catch (RecallFaultException)
+        {
+            foreach (var path in jobs)
+            {
+                scheduler.Enqueue(new IngestJob(IngestModel.Ocr, path));
+            }
         }
         finally
         {

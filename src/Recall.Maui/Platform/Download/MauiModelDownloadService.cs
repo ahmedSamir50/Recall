@@ -67,7 +67,9 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         [
             (OcrModelFiles.Detector.LocalName, OcrModelFiles.Detector.RemoteName, OcrModelFiles.Detector.Url, OcrModelFiles.Detector.Sha256),
             (OcrModelFiles.EnglishReader.LocalName, OcrModelFiles.EnglishReader.RemoteName, OcrModelFiles.EnglishReader.Url, OcrModelFiles.EnglishReader.Sha256),
+            (OcrModelFiles.EnglishReaderYaml.LocalName, OcrModelFiles.EnglishReaderYaml.RemoteName, OcrModelFiles.EnglishReaderYaml.Url, OcrModelFiles.EnglishReaderYaml.Sha256),
             (OcrModelFiles.ArabicReader.LocalName, OcrModelFiles.ArabicReader.RemoteName, OcrModelFiles.ArabicReader.Url, OcrModelFiles.ArabicReader.Sha256),
+            (OcrModelFiles.ArabicReaderYaml.LocalName, OcrModelFiles.ArabicReaderYaml.RemoteName, OcrModelFiles.ArabicReaderYaml.Url, OcrModelFiles.ArabicReaderYaml.Sha256),
         ];
         for (var index = 0; index < files.Length; index++)
         {

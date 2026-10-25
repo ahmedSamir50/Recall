@@ -13,6 +13,8 @@ public interface IMediaVectorIndex
 
     bool TryRead(string contentId, out MediaStoredVector vector);
 
+    bool TrySetWords(string contentId, string words);
+
     void Reconcile(IReadOnlyList<VectorLiveState> states);
 
     IReadOnlyList<MediaSearchHit> Search(MediaSearchRequest request, CancellationToken cancellationToken = default);

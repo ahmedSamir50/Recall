@@ -48,9 +48,6 @@ public sealed class TextIngestEngine
         bool codeFile,
         CancellationToken cancellationToken)
     {
-        var storedWidth = (int)WidthOnEdit.Choose(Modality.Text, indexPolicy.TextStoredWidth, pinned: false, pastCutoff: false);
-        indexPolicy.EnsureStorableWidth(Modality.Text, storedWidth);
-
         var title = Path.GetFileName(filePath);
         string documentText;
         IReadOnlyList<PdfPageText>? pdfPages = null;
@@ -79,7 +76,73 @@ public sealed class TextIngestEngine
         var prefixTokenCount = tokenCounter.CountTokens(EmbeddingTaskPrefixes.TitledPrefix(title));
         var ends = tokenCounter.TokenEnds(documentText);
         var patches = DocumentPatchPlanner.Plan(title, documentText, pdfPages, prefixTokenCount, ends);
+        var resultChunks = await InsertPatchesAsync(title, filePath, sourceHash, patches, modifiedAt, grantPath, encoderHash, codeFile, cancellationToken).ConfigureAwait(false);
+        return new TextIngestResult(sourceHash, resultChunks, ocrPageNumbers);
+    }
 
+    public async Task IngestOcrPagesAsync(
+        string filePath,
+        IReadOnlyList<PdfPageText> pages,
+        string grantPath,
+        string encoderHash,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
+        ArgumentNullException.ThrowIfNull(pages);
+        var title = Path.GetFileName(filePath);
+        var marked = new List<PdfPageText>(pages.Count);
+        var builder = new System.Text.StringBuilder();
+        for (var pageIndex = 0; pageIndex < pages.Count; pageIndex++)
+        {
+            var page = pages[pageIndex];
+            var text = pageIndex < pages.Count - 1 ? page.Text + '\f' : page.Text;
+            marked.Add(new PdfPageText(page.PageNumber, text));
+            builder.Append(text);
+        }
+
+        var documentText = builder.ToString();
+        var sourceHash = ContentIdBuilder.HashSourceContent(documentText);
+        var prefixTokenCount = tokenCounter.CountTokens(EmbeddingTaskPrefixes.TitledPrefix(title));
+        var ends = tokenCounter.TokenEnds(documentText);
+        var patches = DocumentPatchPlanner.Plan(title, documentText, marked, prefixTokenCount, ends);
+        var chunks = await InsertPatchesAsync(
+            title,
+            filePath,
+            sourceHash,
+            patches,
+            File.GetLastWriteTimeUtc(filePath),
+            grantPath,
+            encoderHash,
+            codeFile: false,
+            cancellationToken).ConfigureAwait(false);
+        var writes = new List<ChunkWrite>(chunks.Count);
+        var bm25Only = new List<Bm25OnlyRow>();
+        foreach (var chunk in chunks)
+        {
+            writes.Add(new ChunkWrite(chunk.ContentId, chunk.Ordinal, chunk.PageStart, chunk.PageEnd, chunk.CharStart, chunk.CharEnd));
+            if (!chunk.Dense)
+            {
+                bm25Only.Add(new Bm25OnlyRow(chunk.ContentId, filePath, chunk.Bm25Raw));
+            }
+        }
+
+        cursors.FinishPath(filePath, sourceHash, grantPath, encoderHash, writes, bm25Only);
+        cursors.ReplaceOcrPages(filePath, []);
+    }
+
+    private async Task<List<TextIngestChunk>> InsertPatchesAsync(
+        string title,
+        string filePath,
+        string sourceHash,
+        IReadOnlyList<PdfPatch> patches,
+        DateTimeOffset modifiedAt,
+        string grantPath,
+        string encoderHash,
+        bool codeFile,
+        CancellationToken cancellationToken)
+    {
+        var storedWidth = (int)WidthOnEdit.Choose(Modality.Text, indexPolicy.TextStoredWidth, pinned: false, pastCutoff: false);
+        indexPolicy.EnsureStorableWidth(Modality.Text, storedWidth);
         var resultChunks = new List<TextIngestChunk>();
         foreach (var patch in patches)
         {
@@ -143,7 +206,7 @@ public sealed class TextIngestEngine
                 patch.CharEnd));
         }
 
-        return new TextIngestResult(sourceHash, resultChunks, ocrPageNumbers);
+        return resultChunks;
     }
 
     private static bool IsPdfPath(string filePath) =>
