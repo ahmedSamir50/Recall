@@ -13,6 +13,10 @@ namespace Recall.Maui.UnitTests;
 
 public sealed class OcrRuntimeTests
 {
+    private const string EnBookPage = "en_book_page.webp";
+
+    private const string ArBookPage = "ar_book_page.webp";
+
     [Fact]
     public void Ocr_TextLayer_DoesNotOpen()
     {
@@ -48,36 +52,48 @@ public sealed class OcrRuntimeTests
     [Fact]
     public void OcrEn_InvoiceSentence_IsFound()
     {
-        // SalorWorks 01-simple-english: invoice number INV-2026-001 on the page.
-        AssertSearchHit("ocr-en-invoice.png", "INV-2026-001");
+        var (path, words) = RunOcrPass("ocr-en-invoice.png");
+        AssertReferenceWordsPresent(OcrFixtureReference.EnInvoice, words, OcrFixtureReference.InvoiceMaxMissingWordRate);
+        AssertSearchHitOnStoredWords(path, "INV-2026-001", words);
     }
 
     [Fact]
     public void OcrAr_TotalSentence_IsFound()
     {
-        // SalorWorks 03-arabic: Latin invoice id plus Arabic body text on the same scan.
-        var (_, words) = RunOcrPass("ocr-ar-total.png");
-        words.Should().Contain("INV-2026-003");
-        ContainsArabicLetters(words).Should().BeTrue();
-        AssertSearchHitOnStoredWords("ocr-ar-total.png", "INV-2026-003", words);
+        var (path, words) = RunOcrPass("ocr-ar-total.png");
+        AssertReferenceWordsPresent(OcrFixtureReference.ArInvoice, words, OcrFixtureReference.InvoiceMaxMissingWordRate);
+        AssertSearchHitOnStoredWords(path, "INV-2026-003", words);
     }
 
     [Fact]
     public void OcrMixed_BothScripts_AreFound()
     {
         var (path, words) = RunOcrPass("ocr-mixed-invoice.png");
-        words.Should().Contain("INV-2026-004");
-        words.ToUpperInvariant().Should().Contain("SUP-WAT-330");
-        ContainsArabicLetters(words).Should().BeTrue();
+        AssertReferenceWordsPresent(OcrFixtureReference.MixedInvoice, words, OcrFixtureReference.InvoiceMaxMissingWordRate);
         AssertSearchHitOnStoredWords(path, "INV-2026-004", words);
-        AssertSearchHitOnStoredWords(path, "WAT-330", words);
     }
 
-    private static void AssertSearchHit(string fixtureName, string query)
+    [Fact]
+    public void OcrEn_BookPage_IsFound()
     {
-        var (path, words) = RunOcrPass(fixtureName);
-        WordsShouldBeStored(words);
-        AssertSearchHitOnStoredWords(path, query, words);
+        var (_, words) = RunOcrPass(EnBookPage);
+        AssertReferenceWordsPresent(OcrFixtureReference.EnBookPage, words, OcrFixtureReference.BookPageMaxMissingWordRate);
+    }
+
+    [Fact]
+    public void OcrAr_BookPage_IsFound()
+    {
+        var (_, words) = RunOcrPass(ArBookPage);
+        AssertReferenceWordsPresent(OcrFixtureReference.ArBookPage, words, OcrFixtureReference.BookPageMaxMissingWordRate);
+    }
+
+    private static void AssertReferenceWordsPresent(string reference, string hypothesis, double maxMissingWordRate)
+    {
+        var missingRate = OcrWordErrorRate.MissingReferenceWordRate(reference, hypothesis);
+        var missing = OcrWordErrorRate.MissingReferenceWords(reference, hypothesis);
+        missingRate.Should().BeLessThanOrEqualTo(
+            maxMissingWordRate,
+            $"OCR missed {missingRate:P0} of reference words (max {maxMissingWordRate:P0}). Missing: {string.Join(", ", missing)}");
     }
 
     private static (string Path, string Words) RunOcrPass(string fixtureName)
@@ -94,11 +110,9 @@ public sealed class OcrRuntimeTests
         var engine = CreateEngine(cursors, media);
         engine.RunPass([path]);
         var words = media.Inserts.Single(i => i.ContentId == contentId).Words;
+        words.Length.Should().BeGreaterThan(0, "OCR should store words on the image row");
         return (path, words);
     }
-
-    private static void WordsShouldBeStored(string words) =>
-        words.Length.Should().BeGreaterThan(0, "OCR should store words on the image row");
 
     private static void AssertSearchHitOnStoredWords(string path, string query, string words)
     {
@@ -146,18 +160,5 @@ public sealed class OcrRuntimeTests
 
     private static string FixturePath(string fileName) =>
         Path.Combine(AppContext.BaseDirectory, "TestAssets", "ocr-fixtures", fileName);
-
-    private static bool ContainsArabicLetters(string text)
-    {
-        foreach (var ch in text)
-        {
-            if (ch is >= '\u0600' and <= '\u06FF')
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }
 #endif

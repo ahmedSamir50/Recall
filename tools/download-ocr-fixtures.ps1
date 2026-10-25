@@ -1,4 +1,4 @@
-# Downloads SalorWorks synthetic invoice PNGs used by Recall.Maui.UnitTests OCR proofs.
+# Re-download invoice PNG fixtures into Recall.Maui.UnitTests TestAssets.
 $ErrorActionPreference = 'Stop'
 $outDir = Join-Path $PSScriptRoot '..' 'tests' 'Recall.Maui.UnitTests' 'TestAssets' 'ocr-fixtures'
 $outDir = [System.IO.Path]::GetFullPath($outDir)
