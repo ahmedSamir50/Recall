@@ -13,10 +13,6 @@ namespace Recall.Maui.UnitTests;
 
 public sealed class OcrRuntimeTests
 {
-    private const string EnBookPage = "en_book_page.webp";
-
-    private const string ArBookPage = "ar_book_page.webp";
-
     [Fact]
     public void Ocr_TextLayer_DoesNotOpen()
     {
@@ -50,51 +46,75 @@ public sealed class OcrRuntimeTests
     }
 
     [Fact]
-    public void OcrEn_InvoiceSentence_IsFound()
+    public void OcrEn_Invoice_WordErrorWithinCardBudget()
     {
         var (path, words) = RunOcrPass("ocr-en-invoice.png");
-        AssertReferenceWordsPresent(OcrFixtureReference.EnInvoice, words, OcrFixtureReference.InvoiceMaxMissingWordRate);
+        AssertWordErrorWithinCard(OcrFixtureReference.EnInvoice, words);
         AssertSearchHitOnStoredWords(path, "INV-2026-001", words);
     }
 
     [Fact]
-    public void OcrAr_TotalSentence_IsFound()
+    public void OcrAr_Invoice_WordErrorWithinCardBudget()
     {
         var (path, words) = RunOcrPass("ocr-ar-total.png");
-        AssertReferenceWordsPresent(OcrFixtureReference.ArInvoice, words, OcrFixtureReference.InvoiceMaxMissingWordRate);
+        AssertWordErrorWithinCard(OcrFixtureReference.ArInvoice, words);
         AssertSearchHitOnStoredWords(path, "INV-2026-003", words);
     }
 
     [Fact]
-    public void OcrMixed_BothScripts_AreFound()
+    public void OcrMixed_Invoice_WordErrorWithinCardBudget()
     {
         var (path, words) = RunOcrPass("ocr-mixed-invoice.png");
-        AssertReferenceWordsPresent(OcrFixtureReference.MixedInvoice, words, OcrFixtureReference.InvoiceMaxMissingWordRate);
+        AssertWordErrorWithinCard(OcrFixtureReference.MixedInvoice, words);
         AssertSearchHitOnStoredWords(path, "INV-2026-004", words);
     }
 
     [Fact]
-    public void OcrEn_BookPage_IsFound()
+    public void OcrEn_BookPage_WordErrorWithinCardBudget()
     {
-        var (_, words) = RunOcrPass(EnBookPage);
-        AssertReferenceWordsPresent(OcrFixtureReference.EnBookPage, words, OcrFixtureReference.BookPageMaxMissingWordRate);
+        var (_, words) = RunOcrPass("en_book_page.webp");
+        AssertWordErrorWithinCard(OcrFixtureReference.EnBookPage, words);
     }
 
     [Fact]
-    public void OcrAr_BookPage_IsFound()
+    public void OcrAr_BookPage_WordErrorWithinCardBudget()
     {
-        var (_, words) = RunOcrPass(ArBookPage);
-        AssertReferenceWordsPresent(OcrFixtureReference.ArBookPage, words, OcrFixtureReference.BookPageMaxMissingWordRate);
+        var (_, words) = RunOcrPass("ar_book_page.webp");
+        AssertWordErrorWithinCard(OcrFixtureReference.ArBookPage, words);
     }
 
-    private static void AssertReferenceWordsPresent(string reference, string hypothesis, double maxMissingWordRate)
+    private static void AssertWordErrorWithinCard(string reference, string hypothesis)
     {
-        var missingRate = OcrWordErrorRate.MissingReferenceWordRate(reference, hypothesis);
-        var missing = OcrWordErrorRate.MissingReferenceWords(reference, hypothesis);
-        missingRate.Should().BeLessThanOrEqualTo(
-            maxMissingWordRate,
-            $"OCR missed {missingRate:P0} of reference words (max {maxMissingWordRate:P0}). Missing: {string.Join(", ", missing)}");
+        var latin = OcrWordErrorRate.MeasureScript(reference, hypothesis, OcrScript.Latin);
+        var arabic = OcrWordErrorRate.MeasureScript(reference, hypothesis, OcrScript.Arabic);
+        var pageCap = arabic.ReferenceCount > 0
+            ? OcrFixtureReference.ArabicMaxWordErrorRate
+            : OcrFixtureReference.EnglishMaxWordErrorRate;
+        var page = OcrWordErrorRate.Measure(reference, hypothesis);
+
+        var failures = new List<string>();
+        if (latin.ReferenceCount > 0 && latin.Rate > OcrFixtureReference.EnglishMaxWordErrorRate)
+        {
+            failures.Add(FormatBudget("Latin", latin, OcrFixtureReference.EnglishPrintedRecognitionAccuracy, OcrFixtureReference.EnglishMaxWordErrorRate));
+        }
+
+        if (arabic.ReferenceCount > 0 && arabic.Rate > OcrFixtureReference.ArabicMaxWordErrorRate)
+        {
+            failures.Add(FormatBudget("Arabic", arabic, OcrFixtureReference.ArabicLineRecognitionAccuracy, OcrFixtureReference.ArabicMaxWordErrorRate));
+        }
+
+        if (page.Rate > pageCap)
+        {
+            failures.Add($"page WER {page.Rate:P1} ({page.Edits}/{page.ReferenceCount} edits) exceeds {pageCap:P1}");
+        }
+
+        var preview = hypothesis.Length <= 240 ? hypothesis : hypothesis[..240];
+        failures.Should().BeEmpty($"OCR over the card budget. {string.Join(" ", failures)} OCR: {preview}");
     }
+
+    private static string FormatBudget(string script, OcrWordError error, double cardAccuracy, double maxRate) =>
+        $"{script} WER {error.Rate:P1} ({error.Edits}/{error.ReferenceCount}). " +
+        $"Card accuracy {cardAccuracy:P2}, complement {(1d - cardAccuracy):P2}, margin {OcrFixtureReference.EmbeddingMargin:P0}, cap {maxRate:P1}.";
 
     private static (string Path, string Words) RunOcrPass(string fixtureName)
     {

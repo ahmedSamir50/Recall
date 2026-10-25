@@ -1,102 +1,53 @@
 namespace Recall.Maui.UnitTests;
 
+internal enum OcrScript
+{
+    Latin,
+    Arabic,
+}
+
+internal readonly record struct OcrWordError(double Rate, int Edits, int ReferenceCount);
+
+/// <summary>
+/// Standard word error rate: token Levenshtein edits divided by the reference token count.
+/// The same normalizer runs on the reference and the hypothesis.
+/// </summary>
 internal static class OcrWordErrorRate
 {
-    /// <summary>
-    /// Fraction of reference words absent from OCR output (whole-word match; Arabic allows bounded edit distance).
-    /// </summary>
-    public static double MissingReferenceWordRate(string reference, string hypothesis)
+    public static OcrWordError Measure(string reference, string hypothesis) =>
+        MeasureTokens(Tokenize(reference), Tokenize(hypothesis));
+
+    public static OcrWordError MeasureScript(string reference, string hypothesis, OcrScript script)
     {
-        var referenceWords = Tokenize(reference);
-        if (referenceWords.Count == 0)
-        {
-            return 1d;
-        }
-
-        var normalizedHypothesis = Normalize(hypothesis);
-        var missing = 0;
-        foreach (var word in referenceWords)
-        {
-            if (!ReferenceWordPresent(word, normalizedHypothesis))
-            {
-                missing++;
-            }
-        }
-
-        return missing / (double)referenceWords.Count;
+        var referenceTokens = Tokenize(reference).Where(token => BelongsTo(token, script)).ToList();
+        var hypothesisTokens = Tokenize(hypothesis).Where(token => BelongsTo(token, script)).ToList();
+        return MeasureTokens(referenceTokens, hypothesisTokens);
     }
 
-    public static IReadOnlyList<string> MissingReferenceWords(string reference, string hypothesis)
+    private static OcrWordError MeasureTokens(List<string> reference, List<string> hypothesis)
     {
-        var referenceWords = Tokenize(reference);
-        var normalizedHypothesis = Normalize(hypothesis);
-        var missing = new List<string>();
-        foreach (var word in referenceWords)
+        if (reference.Count == 0)
         {
-            if (!ReferenceWordPresent(word, normalizedHypothesis))
-            {
-                missing.Add(word);
-            }
+            return new OcrWordError(hypothesis.Count == 0 ? 0d : 1d, hypothesis.Count, 0);
         }
 
-        return missing;
+        var edits = EditDistance(reference, hypothesis);
+        return new OcrWordError(edits / (double)reference.Count, edits, reference.Count);
     }
 
-    private static bool ReferenceWordPresent(string referenceWord, string normalizedHypothesis)
+    private static bool BelongsTo(string token, OcrScript script)
     {
-        if (normalizedHypothesis.Contains(referenceWord, StringComparison.Ordinal))
-        {
-            return true;
-        }
-
-        if (!ContainsArabic(referenceWord))
-        {
-            return false;
-        }
-
-        var maxDistance = referenceWord.Length <= 4 ? 1 : 2;
-        var minLength = Math.Max(2, referenceWord.Length - maxDistance);
-        var maxLength = referenceWord.Length + maxDistance;
-        for (var length = minLength; length <= maxLength && length <= normalizedHypothesis.Length; length++)
-        {
-            for (var start = 0; start + length <= normalizedHypothesis.Length; start++)
-            {
-                var slice = normalizedHypothesis.Substring(start, length);
-                if (EditDistance(referenceWord, slice) <= maxDistance)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private static bool ContainsArabic(string text)
-    {
-        foreach (var ch in text)
+        var arabic = false;
+        foreach (var ch in token)
         {
             if (ch is >= '\u0600' and <= '\u06FF')
             {
-                return true;
+                arabic = true;
+                break;
             }
         }
 
-        return false;
-    }
-
-    private static string Normalize(string text)
-    {
-        var builder = new System.Text.StringBuilder(text.Length);
-        foreach (var ch in text)
-        {
-            if (char.IsLetterOrDigit(ch) || ch is >= '\u0600' and <= '\u06FF')
-            {
-                builder.Append(char.ToLowerInvariant(ch));
-            }
-        }
-
-        return builder.ToString();
+        return script == OcrScript.Arabic ? arabic : !arabic;
     }
 
     private static List<string> Tokenize(string text)
@@ -105,15 +56,19 @@ internal static class OcrWordErrorRate
         var current = new System.Text.StringBuilder();
         foreach (var ch in text)
         {
-            if (char.IsLetterOrDigit(ch) || ch is >= '\u0600' and <= '\u06FF')
+            var normalized = NormalizeChar(ch);
+            if (normalized is null)
             {
-                current.Append(char.ToLowerInvariant(ch));
+                if (current.Length > 0)
+                {
+                    words.Add(current.ToString());
+                    current.Clear();
+                }
+
+                continue;
             }
-            else if (current.Length > 0)
-            {
-                words.Add(current.ToString());
-                current.Clear();
-            }
+
+            current.Append(normalized.Value);
         }
 
         if (current.Length > 0)
@@ -124,10 +79,31 @@ internal static class OcrWordErrorRate
         return words;
     }
 
-    private static int EditDistance(string left, string right)
+    private static char? NormalizeChar(char ch)
     {
-        var rows = left.Length + 1;
-        var cols = right.Length + 1;
+        if (ch is '\u0640' or >= '\u064B' and <= '\u065F' or '\u0670')
+        {
+            return null;
+        }
+
+        ch = ch switch
+        {
+            '\u0622' or '\u0623' or '\u0625' or '\u0671' => '\u0627',
+            _ => char.ToLowerInvariant(ch),
+        };
+
+        if (char.IsLetterOrDigit(ch) || ch is >= '\u0600' and <= '\u06FF')
+        {
+            return ch;
+        }
+
+        return null;
+    }
+
+    private static int EditDistance(List<string> left, List<string> right)
+    {
+        var rows = left.Count + 1;
+        var cols = right.Count + 1;
         var costs = new int[rows * cols];
         for (var i = 0; i < rows; i++)
         {
