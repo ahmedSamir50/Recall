@@ -108,8 +108,10 @@ public sealed class OcrRuntimeTests
             failures.Add($"page WER {page.Rate:P1} ({page.Edits}/{page.ReferenceCount} edits) exceeds {pageCap:P1}");
         }
 
-        var preview = hypothesis.Length <= 240 ? hypothesis : hypothesis[..240];
-        failures.Should().BeEmpty($"OCR over the card budget. {string.Join(" ", failures)} OCR: {preview}");
+        var hitRate = OcrWordErrorRate.ReferenceTokenHitRate(reference, hypothesis);
+        var preview = hypothesis.Length <= 500 ? hypothesis : hypothesis[..500];
+        failures.Should().BeEmpty(
+            $"ordered WER over the card budget. Order-free token hit rate {hitRate:P0}. {string.Join(" ", failures)} OCR: {preview}");
     }
 
     private static string FormatBudget(string script, OcrWordError error, double cardAccuracy, double maxRate) =>

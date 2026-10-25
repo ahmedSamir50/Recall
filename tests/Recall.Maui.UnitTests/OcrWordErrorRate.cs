@@ -17,6 +17,39 @@ internal static class OcrWordErrorRate
     public static OcrWordError Measure(string reference, string hypothesis) =>
         MeasureTokens(Tokenize(reference), Tokenize(hypothesis));
 
+    /// <summary>
+    /// Fraction of reference tokens found in the hypothesis, ignoring order.
+    /// </summary>
+    public static double ReferenceTokenHitRate(string reference, string hypothesis)
+    {
+        var referenceTokens = Tokenize(reference);
+        if (referenceTokens.Count == 0)
+        {
+            return 0d;
+        }
+
+        var available = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var token in Tokenize(hypothesis))
+        {
+            available.TryGetValue(token, out var count);
+            available[token] = count + 1;
+        }
+
+        var hits = 0;
+        foreach (var token in referenceTokens)
+        {
+            if (!available.TryGetValue(token, out var count) || count == 0)
+            {
+                continue;
+            }
+
+            hits++;
+            available[token] = count - 1;
+        }
+
+        return hits / (double)referenceTokens.Count;
+    }
+
     public static OcrWordError MeasureScript(string reference, string hypothesis, OcrScript script)
     {
         var referenceTokens = Tokenize(reference).Where(token => BelongsTo(token, script)).ToList();

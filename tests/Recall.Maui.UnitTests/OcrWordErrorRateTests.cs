@@ -30,6 +30,14 @@ public sealed class OcrWordErrorRateTests
     }
 
     [Fact]
+    public void ReferenceTokenHitRate_IgnoresOrder()
+    {
+        var rate = OcrWordErrorRate.ReferenceTokenHitRate("alpha beta gamma", "gamma alpha beta");
+        rate.Should().Be(1d);
+        OcrWordErrorRate.Measure("alpha beta gamma", "gamma alpha beta").Rate.Should().BeGreaterThan(0d);
+    }
+
+    [Fact]
     public void MeasureScript_KeepsOnlyThatScript()
     {
         var arabic = OcrWordErrorRate.MeasureScript("مياه water غازية", "مياه غازية", OcrScript.Arabic);
