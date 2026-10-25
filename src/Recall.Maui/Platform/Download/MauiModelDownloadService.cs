@@ -1,5 +1,6 @@
 using Recall.Core.Download;
 using Recall.Core.Faults;
+using Recall.Core.Ocr;
 using Recall.Core.Ports;
 using System.Net.Http.Headers;
 
@@ -14,6 +15,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
     private readonly AudioModelDownloadOptions audioOptions;
     private readonly string modelDirectory;
     private readonly string visionDirectory;
+    private readonly string ocrDirectory;
     private readonly object gate = new();
     private CancellationTokenSource? downloadCts;
     private CancellationTokenSource? visionDownloadCts;
@@ -47,8 +49,72 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         this.audioOptions = audioOptions;
         modelDirectory = Path.Combine(FileSystem.AppDataDirectory, options.RelativeModelDirectory);
         visionDirectory = Path.Combine(FileSystem.AppDataDirectory, visionOptions.RelativeModelDirectory);
+        ocrDirectory = Path.Combine(FileSystem.AppDataDirectory, OcrModelFiles.Directory);
         Directory.CreateDirectory(modelDirectory);
         Directory.CreateDirectory(visionDirectory);
+        Directory.CreateDirectory(ocrDirectory);
+    }
+
+    public Task DownloadOcrModelsAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return DownloadOcrFilesAsync(progress, cancellationToken);
+    }
+
+    private async Task DownloadOcrFilesAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken)
+    {
+        (string LocalName, string RemoteName, string Url, string Sha256)[] files =
+        [
+            (OcrModelFiles.Detector.LocalName, OcrModelFiles.Detector.RemoteName, OcrModelFiles.Detector.Url, OcrModelFiles.Detector.Sha256),
+            (OcrModelFiles.EnglishReader.LocalName, OcrModelFiles.EnglishReader.RemoteName, OcrModelFiles.EnglishReader.Url, OcrModelFiles.EnglishReader.Sha256),
+            (OcrModelFiles.ArabicReader.LocalName, OcrModelFiles.ArabicReader.RemoteName, OcrModelFiles.ArabicReader.Url, OcrModelFiles.ArabicReader.Sha256),
+        ];
+        for (var index = 0; index < files.Length; index++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var file = files[index];
+            await DownloadOcrFileAsync(file.Item1, file.Item2, file.Item3, file.Item4, progress, cancellationToken, index, files.Length).ConfigureAwait(false);
+        }
+    }
+
+    private async Task DownloadOcrFileAsync(
+        string localName,
+        string remoteName,
+        string baseUrl,
+        string expectedSha256,
+        IProgress<ModelDownloadProgress>? progress,
+        CancellationToken cancellationToken,
+        int completedFiles,
+        int fileCount)
+    {
+        var targetPath = Path.Combine(ocrDirectory, localName);
+        if (await ModelHashVerifier.MatchesExpectedHashAsync(targetPath, expectedSha256, cancellationToken).ConfigureAwait(false))
+        {
+            PublishProgress(progress, vision: false, completedFiles + 1, fileCount, 0, null);
+            return;
+        }
+
+        await DownloadBodyAsync(
+            remoteName,
+            new Uri(baseUrl),
+            expectedSha256,
+            ocrDirectory,
+            vision: false,
+            progress,
+            cancellationToken,
+            allowRange: true,
+            completedFiles,
+            fileCount).ConfigureAwait(false);
+        var downloadedPath = Path.Combine(ocrDirectory, remoteName);
+        if (!string.Equals(localName, remoteName, StringComparison.Ordinal) && File.Exists(downloadedPath))
+        {
+            if (File.Exists(targetPath))
+            {
+                File.Delete(targetPath);
+            }
+
+            File.Move(downloadedPath, targetPath);
+        }
     }
 
     public TextModelDownloadSnapshot GetTextDownloadSnapshot()

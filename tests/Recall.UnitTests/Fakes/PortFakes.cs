@@ -651,6 +651,14 @@ public sealed class FakeModelDownloadService : IModelDownloadService
 
     public TextModelDownloadSnapshot GetAudioDownloadSnapshot() => AudioSnapshot;
 
+    public int OcrDownloadCalls { get; private set; }
+
+    public Task DownloadOcrModelsAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
+    {
+        OcrDownloadCalls++;
+        return Task.CompletedTask;
+    }
+
     public async Task DownloadAudioModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
     {
         AudioDownloadCalls++;

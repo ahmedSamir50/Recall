@@ -25,6 +25,7 @@
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="ZVec.NET" />
     <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="UglyToad.PdfPig" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <ProjectReference Include="..\..\src\Recall.Adapters\Recall.Adapters.csproj" />
     <ProjectReference Include="..\..\src\Recall.Core\Recall.Core.csproj" />

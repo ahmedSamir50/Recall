@@ -10,7 +10,9 @@ using Recall.Core.Sync;
 using Recall.Core.Text;
 using Recall.Maui.Platform;
 using Recall.Maui.Platform.Files;
+using Recall.Core.Ocr;
 using Recall.Maui.Platform.Media;
+using Recall.Maui.Platform.Ocr;
 
 namespace Recall.Maui.DependencyInjection;
 
@@ -95,6 +97,15 @@ public static class MauiServiceCollectionExtensions
         var vectorRoot = Path.Combine(FileSystem.AppDataDirectory, textModel.RelativeVectorDirectory);
         var visionDir = Path.Combine(FileSystem.AppDataDirectory, (visionModel ?? new VisionModelDownloadOptions()).RelativeModelDirectory);
         services.AddRecallAdapters(modelDir, vectorRoot, visionDir);
+        var ocrModelRoot = FileSystem.AppDataDirectory;
+        services.Replace(ServiceDescriptor.Singleton(sp => new IngestSchedulerService(
+            sp.GetRequiredService<IngestScheduler>(),
+            sp.GetRequiredService<IngestSchedulerRunner>(),
+            sp.GetRequiredService<ScheduledIngestDispatcher>(),
+            sp.GetService<IIngestModelSession>(),
+            sp.GetService<AgeMoveService>(),
+            sp.GetService<PinService>(),
+            paths => new OnnxOcrEngine(ocrModelRoot, sp.GetRequiredService<IIngestCursorStore>()))));
         return services;
     }
 }

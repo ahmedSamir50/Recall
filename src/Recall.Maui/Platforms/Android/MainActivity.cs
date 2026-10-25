@@ -25,6 +25,7 @@ public partial class MainActivity : MauiAppCompatActivity
         base.OnCreate(savedInstanceState);
         var benchFiles = FilesDir?.AbsolutePath ?? string.Empty;
         new Thread(() => AndroidTextBenchSession.RunIfReady(benchFiles)) { IsBackground = true }.Start();
+        new Thread(() => AndroidAudioDecodeSession.RunIfReady(benchFiles)) { IsBackground = true }.Start();
         AndroidFolderPickerCoordinator.BindLauncher(
             RegisterForActivityResult(new ActivityResultContracts.OpenDocumentTree(), new TreeResultCallback()));
     }

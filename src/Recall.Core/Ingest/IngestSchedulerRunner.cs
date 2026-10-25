@@ -1,4 +1,4 @@
-using Recall.Core.Ocr;
+using Recall.Core.Ports;
 using Recall.Core.Scope;
 
 namespace Recall.Core.Ingest;
@@ -22,6 +22,8 @@ public sealed class IngestPassHooks
     public Func<string, CancellationToken, Task>? ProcessMediaJobAsync { get; init; }
 
     public Action<string>? ProcessOcrJob { get; init; }
+
+    public Func<IReadOnlyList<string>, IOcrEngine>? RunOcr { get; init; }
 
     public Action? EnsureMediaContextProbe { get; init; }
 
@@ -252,26 +254,29 @@ public sealed class IngestSchedulerRunner
             return;
         }
 
-        var index = 0;
+        IOcrEngine? engine = null;
         try
         {
-            OcrPassStub.Run(() =>
+            if (hooks.RunOcr is null)
             {
-                for (; index < jobs.Count; index++)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    hooks.ProcessOcrJob?.Invoke(jobs[index]);
-                }
-            });
+                return;
+            }
+
+            engine = hooks.RunOcr(jobs);
+            engine.RunPass(jobs);
         }
         catch (OperationCanceledException)
         {
-            for (var pending = index; pending < jobs.Count; pending++)
+            foreach (var path in jobs)
             {
-                scheduler.Enqueue(new IngestJob(IngestModel.Ocr, jobs[pending]));
+                scheduler.Enqueue(new IngestJob(IngestModel.Ocr, path));
             }
 
             throw;
+        }
+        finally
+        {
+            engine?.Dispose();
         }
     }
 

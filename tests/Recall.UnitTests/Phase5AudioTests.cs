@@ -1212,20 +1212,20 @@ public sealed class Phase5AudioTests
     [Fact]
     public async Task Scheduler_SwitchesModelOncePerPass()
     {
-        OcrPassStub.Reset();
+        SchedulerOcrFake.Reset();
         var wasOneContext = MediaContextPolicy.OneContext;
         try
         {
             MediaContextPolicy.OneContext = true;
             var sharedOpens = await RunSchedulerPassAndCollectOpensAsync(TestContext.Current.CancellationToken);
             sharedOpens.Should().Equal("text", "vision");
-            OcrPassStub.OpenCount.Should().Be(1);
+            SchedulerOcrFake.CreateCount.Should().Be(1);
 
-            OcrPassStub.Reset();
+            SchedulerOcrFake.Reset();
             MediaContextPolicy.OneContext = false;
             var splitOpens = await RunSchedulerPassAndCollectOpensAsync(TestContext.Current.CancellationToken);
             splitOpens.Should().Equal("text", "vision", "audio");
-            OcrPassStub.OpenCount.Should().Be(1);
+            SchedulerOcrFake.CreateCount.Should().Be(1);
         }
         finally
         {
@@ -1274,10 +1274,38 @@ public sealed class Phase5AudioTests
             OpenAudio = () => opens.Add("audio"),
             ProcessTextJobAsync = (_, _) => Task.CompletedTask,
             ProcessMediaJobAsync = (_, _) => Task.CompletedTask,
-            ProcessOcrJob = _ => { },
+            RunOcr = _ => new SchedulerOcrFake(),
         };
         await runner.RunReadyPassesAsync(DateTimeOffset.UtcNow.AddSeconds(31), hooks, cancellationToken);
         return opens;
+    }
+
+    private sealed class SchedulerOcrFake : Recall.Core.Ports.IOcrEngine
+    {
+        private static int openCount;
+        private static int createCount;
+
+        public static int OpenCount => Volatile.Read(ref openCount);
+
+        public static int CreateCount => Volatile.Read(ref createCount);
+
+        public static void Reset()
+        {
+            Volatile.Write(ref openCount, 0);
+            Volatile.Write(ref createCount, 0);
+        }
+
+        public SchedulerOcrFake()
+        {
+            Interlocked.Increment(ref createCount);
+            Interlocked.Increment(ref openCount);
+        }
+
+        public void RunPass(IReadOnlyList<string> paths)
+        {
+        }
+
+        public void Dispose() => Interlocked.Decrement(ref openCount);
     }
 
     private static byte[] BuildWav(ushort format, int rate, short channels, short bits, byte[] samples, bool includeData = true, bool subFormatFloat = false)

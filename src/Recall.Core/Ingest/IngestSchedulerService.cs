@@ -12,7 +12,8 @@ public sealed class IngestSchedulerService
         ScheduledIngestDispatcher dispatcher,
         IIngestModelSession? session = null,
         Age.AgeMoveService? ageMove = null,
-        Age.PinService? pin = null)
+        Age.PinService? pin = null,
+        Func<IReadOnlyList<string>, Ports.IOcrEngine>? runOcr = null)
     {
         this.scheduler = scheduler;
         this.runner = runner;
@@ -36,6 +37,7 @@ public sealed class IngestSchedulerService
             ProcessTextJobAsync = dispatcher.DispatchTextAsync,
             ProcessMediaJobAsync = dispatcher.DispatchMediaAsync,
             SweepAgedMedia = sweepAgedMedia,
+            RunOcr = runOcr,
         };
     }
 

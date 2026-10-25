@@ -1,9 +1,11 @@
+using Recall.Core.Ingest;
 using Recall.Core.Ports;
+using Recall.Core.Scope;
 using Recall.Core.Search;
 
 namespace Recall.Maui.Platform.Files;
 
-public sealed partial class MauiLocalFileOpener : ILocalFileOpener
+public sealed partial class MauiLocalFileOpener(IMediaPreview preview) : ILocalFileOpener
 {
     public bool Exists(string sourcePath)
     {
@@ -49,8 +51,23 @@ public sealed partial class MauiLocalFileOpener : ILocalFileOpener
         }
     }
 
-    public Task<LocalFileOpenResult> OpenAtAsync(string sourcePath, double startSeconds, CancellationToken cancellationToken = default) =>
-        OpenAsync(sourcePath, cancellationToken);
+    public async Task<LocalFileOpenResult> OpenAtAsync(string sourcePath, double startSeconds, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(sourcePath);
+        if (!File.Exists(sourcePath))
+        {
+            return LocalFileOpenResult.Missing;
+        }
+
+        if ((MediaFileKinds.IsAudio(sourcePath) || MediaFileKinds.IsVideo(sourcePath))
+            && MediaHitStart.Seeks(startSeconds))
+        {
+            await preview.PlayAsync(sourcePath, startSeconds, cancellationToken).ConfigureAwait(false);
+            return LocalFileOpenResult.Opened;
+        }
+
+        return await OpenAsync(sourcePath, cancellationToken).ConfigureAwait(false);
+    }
 
     private partial bool TryOpenContent(string sourcePath);
 

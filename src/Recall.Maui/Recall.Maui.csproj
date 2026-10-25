@@ -45,6 +45,7 @@
     <PackageReference Include="CommunityToolkit.Maui.MediaElement" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" />
     <AdditionalFiles Include="BannedSymbols.txt" />
   </ItemGroup>
   <ItemGroup>

@@ -16,6 +16,7 @@
     <Project Path="tests/Recall.CorpusTests/Recall.CorpusTests.csproj" />
     <Project Path="tests/Recall.IntegrationTests/Recall.IntegrationTests.csproj" />
     <Project Path="tests/Recall.UnitTests/Recall.UnitTests.csproj" />
+    <Project Path="tests/Recall.Maui.UnitTests/Recall.Maui.UnitTests.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/corpus-builder/corpus-builder.csproj" />
