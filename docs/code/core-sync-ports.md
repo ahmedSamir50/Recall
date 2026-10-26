@@ -250,6 +250,7 @@ No branch.
 ```csharp
 namespace Recall.Core.Ports;
 public interface IMediaVectorIndex
+public bool TrySetWords(string contentId, string words);
 public bool TryRead(string contentId, out MediaStoredVector vector);
 public sealed record MediaStoredVector(string ContentId, string CollectionName, float[] Vector, string Words, string EncoderHash, string GrantPath, string SourcePath, string StartSeconds, string EndSeconds, bool PathLive);
 public interface IVisionEmbeddingEncoder
@@ -263,7 +264,7 @@ public IReadOnlyList<MediaSearchHit> SearchWords(string collectionName, string q
 public Task PlayAsync(string path, double startSeconds, CancellationToken cancellationToken = default)
 ```
 
-`IMediaVectorIndex` has create, insert, delete, `TryRead`, word search, and search over a media collection; search takes `MediaSearchRequest`; `SearchWords` returns an empty list on a blank query and narrows word matches with the grant filter. `IVisionEmbeddingEncoder` fills a caller-owned 768-wide destination from JPEG bytes. `IPictureSearchService` takes JPEG bytes and the grant list. `IAudioSearchService` takes 16 kHz mono PCM and the grant list and searches long and `_old` audio collections. `IAudioEmbeddingEncoder` embeds 16 kHz mono PCM into a 768-wide destination and exposes `IsLoaded` so the unload step can skip a closed session. `IMediaPreview` shows one media file in the app player and starts at the given seconds. No branch.
+`IMediaVectorIndex` has create, insert, delete, `TrySetWords` on `items_image`, `TryRead`, word search, and search over a media collection; search takes `MediaSearchRequest`; `SearchWords` returns an empty list on a blank query and narrows word matches with the grant filter. `IVisionEmbeddingEncoder` fills a caller-owned 768-wide destination from JPEG bytes. `IPictureSearchService` takes JPEG bytes and the grant list. `IAudioSearchService` takes 16 kHz mono PCM and the grant list and searches long and `_old` audio collections. `IAudioEmbeddingEncoder` embeds 16 kHz mono PCM into a 768-wide destination and exposes `IsLoaded` so the unload step can skip a closed session. `IMediaPreview` shows one media file in the app player and starts at the given seconds. No branch.
 
 ## src/Recall.Core/Age/AgeCutGate.cs
 

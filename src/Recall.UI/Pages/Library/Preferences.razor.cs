@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Recall.Core.Age;
+using Recall.Core.Scope;
 using Recall.Core.Ports;
 using Recall.Core.Preferences;
 using Recall.Core.Vocabulary;
@@ -38,6 +39,16 @@ public partial class Preferences
     private string? folderNotice;
 
     private string? fileNotice;
+
+    private string extensionFilter = string.Empty;
+
+    private string folderFilter = string.Empty;
+
+    private string fileFilter = string.Empty;
+
+    private bool foldersOpen;
+
+    private bool secretsOpen;
 
     protected override void OnInitialized()
     {
@@ -117,6 +128,13 @@ public partial class Preferences
         SkipService.TryRemove(UserSkipKind.FileName, value);
         skips = SkipService.Load();
     }
+
+    private static IEnumerable<string> FilteredRows(IEnumerable<string> rows, string filter) =>
+        rows.Where(row => SkipListFilter.Matches(row, filter));
+
+    private void ToggleFolders() => foldersOpen = !foldersOpen;
+
+    private void ToggleSecrets() => secretsOpen = !secretsOpen;
 
     private void GoFolders() => Nav.NavigateTo("/folders");
 

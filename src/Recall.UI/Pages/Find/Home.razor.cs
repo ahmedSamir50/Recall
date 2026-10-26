@@ -47,6 +47,9 @@ public partial class Home
     [Inject]
     private IModelDownloadService ModelDownloads { get; set; } = null!;
 
+    [Inject]
+    private IngestStatusService IngestStatus { get; set; } = null!;
+
     private const string PictureWaitingKey = "Search_PictureWaiting";
 
     private const string AudioWaitingKey = "Search_AudioWaiting";
@@ -94,10 +97,34 @@ public partial class Home
 
     private IReadOnlyList<Recall.Core.Scope.ScopeFolderGrant> offers = [];
 
+    private IReadOnlyList<IngestKindCount> ingestRows = [];
+
     protected override void OnInitialized()
     {
         offers = IndexNow.ListOffers();
+        RefreshIngestRows();
     }
+
+    private void RefreshIngestRows()
+    {
+        var enabled = GrantFileKinds.None;
+        foreach (var grant in Ui.Current.Grants)
+        {
+            enabled |= grant.EnabledKinds;
+        }
+
+        ingestRows = IngestStatus.List(enabled);
+    }
+
+    public static string IngestKindLabel(GrantFileKinds kind) => kind switch
+    {
+        GrantFileKinds.Text => "Ingest_Text",
+        GrantFileKinds.Code => "Ingest_Code",
+        GrantFileKinds.Image => "Ingest_Image",
+        GrantFileKinds.Video => "Ingest_Video",
+        GrantFileKinds.Audio => "Ingest_Audio",
+        _ => "Ingest_Text",
+    };
 
     private Task OnKeyDownAsync(KeyboardEventArgs args)
     {
@@ -371,6 +398,7 @@ public partial class Home
         {
             await IndexNow.IndexAsync(path);
             offers = IndexNow.ListOffers();
+            RefreshIngestRows();
             faultKey = null;
         }
         catch (Exception ex)

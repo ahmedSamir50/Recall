@@ -5,31 +5,30 @@ namespace Recall.Maui.UnitTests;
 /// expected.json for that fixture, plus the banner and footer printed on the PNG.
 /// Book pages are the full reading text of en_book_page.txt and ar_book_page.txt.
 /// </summary>
+internal readonly record struct OcrAcceptedWordError(
+    int PageEdits,
+    int PageTokens,
+    int LatinEdits,
+    int LatinTokens,
+    int ArabicEdits,
+    int ArabicTokens);
+
 internal static class OcrFixtureReference
 {
     /// <summary>
-    /// PP-OCRv6_small printed-English recognition accuracy, PaddleOCR PP-OCRv6 recognition table.
-    /// The card publishes accuracy, not WER. The error budget is the complement of that accuracy.
+    /// Accepted on 26 Oct 2026 from tests/Recall.Maui.UnitTests/ocr-hypothesis.log.
+    /// Picture words are embedded from this text. These edit ceilings are the fixture gate.
+    /// A page fails when its edit count rises above the ceiling or its token count changes.
     /// </summary>
-    public const double EnglishPrintedRecognitionAccuracy = 0.933;
+    public static readonly OcrAcceptedWordError EnInvoiceAccepted = new(35, 82, 35, 82, 0, 0);
 
-    /// <summary>
-    /// arabic_PP-OCRv5_mobile_rec line accuracy, PaddleOCR multilingual recognition table.
-    /// A line counts wrong if any character differs. The card publishes accuracy, not WER.
-    /// </summary>
-    public const double ArabicLineRecognitionAccuracy = 0.8127;
+    public static readonly OcrAcceptedWordError ArInvoiceAccepted = new(43, 89, 30, 61, 12, 28);
 
-    /// <summary>
-    /// Added on top of the card complement. Stored OCR is embedded, and the card numbers
-    /// are cropped-line benches, not this detector-plus-reader page path.
-    /// </summary>
-    public const double EmbeddingMargin = 0.15;
+    public static readonly OcrAcceptedWordError MixedInvoiceAccepted = new(73, 116, 54, 94, 13, 22);
 
-    public static double EnglishMaxWordErrorRate =>
-        (1d - EnglishPrintedRecognitionAccuracy) + EmbeddingMargin;
+    public static readonly OcrAcceptedWordError EnBookAccepted = new(74, 162, 74, 162, 0, 0);
 
-    public static double ArabicMaxWordErrorRate =>
-        (1d - ArabicLineRecognitionAccuracy) + EmbeddingMargin;
+    public static readonly OcrAcceptedWordError ArBookAccepted = new(29, 153, 0, 0, 28, 153);
 
     public const string EnInvoice =
         "SYNTHETIC FIXTURE FICTIONAL SUPPLIER FOR SOFTWARE TESTING " +

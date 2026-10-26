@@ -46,77 +46,106 @@ public sealed class OcrRuntimeTests
     }
 
     [Fact]
-    public void OcrEn_Invoice_WordErrorWithinCardBudget()
+    public void OcrEn_Invoice_WordErrorWithinAcceptedCeiling()
     {
         var (path, words) = RunOcrPass("ocr-en-invoice.png");
-        AssertWordErrorWithinCard(OcrFixtureReference.EnInvoice, words);
+        AssertWordErrorWithinAccepted("ocr-en-invoice.png", OcrFixtureReference.EnInvoice, words, OcrFixtureReference.EnInvoiceAccepted);
         AssertSearchHitOnStoredWords(path, "INV-2026-001", words);
     }
 
     [Fact]
-    public void OcrAr_Invoice_WordErrorWithinCardBudget()
+    public void OcrAr_Invoice_WordErrorWithinAcceptedCeiling()
     {
         var (path, words) = RunOcrPass("ocr-ar-total.png");
-        AssertWordErrorWithinCard(OcrFixtureReference.ArInvoice, words);
+        AssertWordErrorWithinAccepted("ocr-ar-total.png", OcrFixtureReference.ArInvoice, words, OcrFixtureReference.ArInvoiceAccepted);
         AssertSearchHitOnStoredWords(path, "INV-2026-003", words);
     }
 
     [Fact]
-    public void OcrMixed_Invoice_WordErrorWithinCardBudget()
+    public void OcrMixed_Invoice_WordErrorWithinAcceptedCeiling()
     {
         var (path, words) = RunOcrPass("ocr-mixed-invoice.png");
-        AssertWordErrorWithinCard(OcrFixtureReference.MixedInvoice, words);
+        AssertWordErrorWithinAccepted("ocr-mixed-invoice.png", OcrFixtureReference.MixedInvoice, words, OcrFixtureReference.MixedInvoiceAccepted);
         AssertSearchHitOnStoredWords(path, "INV-2026-004", words);
     }
 
     [Fact]
-    public void OcrEn_BookPage_WordErrorWithinCardBudget()
+    public void OcrEn_BookPage_WordErrorWithinAcceptedCeiling()
     {
         var (_, words) = RunOcrPass("en_book_page.webp");
-        AssertWordErrorWithinCard(OcrFixtureReference.EnBookPage, words);
+        AssertWordErrorWithinAccepted("en_book_page.webp", OcrFixtureReference.EnBookPage, words, OcrFixtureReference.EnBookAccepted);
     }
 
     [Fact]
-    public void OcrAr_BookPage_WordErrorWithinCardBudget()
+    public void OcrAr_BookPage_WordErrorWithinAcceptedCeiling()
     {
         var (_, words) = RunOcrPass("ar_book_page.webp");
-        AssertWordErrorWithinCard(OcrFixtureReference.ArBookPage, words);
+        AssertWordErrorWithinAccepted("ar_book_page.webp", OcrFixtureReference.ArBookPage, words, OcrFixtureReference.ArBookAccepted);
     }
 
-    private static void AssertWordErrorWithinCard(string reference, string hypothesis)
+    private static readonly object LogGate = new();
+
+    private static bool logCleared;
+
+    private static void AssertWordErrorWithinAccepted(string name, string reference, string hypothesis, OcrAcceptedWordError accepted)
     {
+        WriteHypothesisLog(name, reference, hypothesis, accepted);
         var latin = OcrWordErrorRate.MeasureScript(reference, hypothesis, OcrScript.Latin);
         var arabic = OcrWordErrorRate.MeasureScript(reference, hypothesis, OcrScript.Arabic);
-        var pageCap = arabic.ReferenceCount > 0
-            ? OcrFixtureReference.ArabicMaxWordErrorRate
-            : OcrFixtureReference.EnglishMaxWordErrorRate;
         var page = OcrWordErrorRate.Measure(reference, hypothesis);
 
         var failures = new List<string>();
-        if (latin.ReferenceCount > 0 && latin.Rate > OcrFixtureReference.EnglishMaxWordErrorRate)
+        if (page.ReferenceCount != accepted.PageTokens || page.Edits > accepted.PageEdits)
         {
-            failures.Add(FormatBudget("Latin", latin, OcrFixtureReference.EnglishPrintedRecognitionAccuracy, OcrFixtureReference.EnglishMaxWordErrorRate));
+            failures.Add($"page WER {page.Rate:P1} ({page.Edits}/{page.ReferenceCount} edits) exceeds accepted {accepted.PageEdits}/{accepted.PageTokens}");
         }
 
-        if (arabic.ReferenceCount > 0 && arabic.Rate > OcrFixtureReference.ArabicMaxWordErrorRate)
+        if (accepted.LatinTokens > 0 && (latin.ReferenceCount != accepted.LatinTokens || latin.Edits > accepted.LatinEdits))
         {
-            failures.Add(FormatBudget("Arabic", arabic, OcrFixtureReference.ArabicLineRecognitionAccuracy, OcrFixtureReference.ArabicMaxWordErrorRate));
+            failures.Add($"Latin WER {latin.Rate:P1} ({latin.Edits}/{latin.ReferenceCount} edits) exceeds accepted {accepted.LatinEdits}/{accepted.LatinTokens}");
         }
 
-        if (page.Rate > pageCap)
+        if (accepted.ArabicTokens > 0 && (arabic.ReferenceCount != accepted.ArabicTokens || arabic.Edits > accepted.ArabicEdits))
         {
-            failures.Add($"page WER {page.Rate:P1} ({page.Edits}/{page.ReferenceCount} edits) exceeds {pageCap:P1}");
+            failures.Add($"Arabic WER {arabic.Rate:P1} ({arabic.Edits}/{arabic.ReferenceCount} edits) exceeds accepted {accepted.ArabicEdits}/{accepted.ArabicTokens}");
         }
 
         var hitRate = OcrWordErrorRate.ReferenceTokenHitRate(reference, hypothesis);
         var preview = hypothesis.Length <= 500 ? hypothesis : hypothesis[..500];
         failures.Should().BeEmpty(
-            $"ordered WER over the card budget. Order-free token hit rate {hitRate:P0}. {string.Join(" ", failures)} OCR: {preview}");
+            $"ordered WER over the accepted fixture ceiling. Order-free token hit rate {hitRate:P0}. {string.Join(" ", failures)} OCR: {preview}");
     }
 
-    private static string FormatBudget(string script, OcrWordError error, double cardAccuracy, double maxRate) =>
-        $"{script} WER {error.Rate:P1} ({error.Edits}/{error.ReferenceCount}). " +
-        $"Card accuracy {cardAccuracy:P2}, complement {(1d - cardAccuracy):P2}, margin {OcrFixtureReference.EmbeddingMargin:P0}, cap {maxRate:P1}.";
+    private static void WriteHypothesisLog(string name, string reference, string hypothesis, OcrAcceptedWordError accepted)
+    {
+        var page = OcrWordErrorRate.Measure(reference, hypothesis);
+        var latin = OcrWordErrorRate.MeasureScript(reference, hypothesis, OcrScript.Latin);
+        var arabic = OcrWordErrorRate.MeasureScript(reference, hypothesis, OcrScript.Arabic);
+        var hitRate = OcrWordErrorRate.ReferenceTokenHitRate(reference, hypothesis);
+        var path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "ocr-hypothesis.log"));
+        var block =
+            $"=== {name} ===" + Environment.NewLine +
+            "Reference:" + Environment.NewLine +
+            reference + Environment.NewLine + Environment.NewLine +
+            "Model returned:" + Environment.NewLine +
+            hypothesis + Environment.NewLine + Environment.NewLine +
+            $"WER: {page.Rate:P1} ({page.Edits}/{page.ReferenceCount} edits) accepted {accepted.PageEdits}/{accepted.PageTokens}" + Environment.NewLine +
+            (latin.ReferenceCount > 0 ? $"Latin WER: {latin.Rate:P1} ({latin.Edits}/{latin.ReferenceCount}) accepted {accepted.LatinEdits}/{accepted.LatinTokens}" + Environment.NewLine : string.Empty) +
+            (arabic.ReferenceCount > 0 ? $"Arabic WER: {arabic.Rate:P1} ({arabic.Edits}/{arabic.ReferenceCount}) accepted {accepted.ArabicEdits}/{accepted.ArabicTokens}" + Environment.NewLine : string.Empty) +
+            $"Token hit rate: {hitRate:P0}" + Environment.NewLine +
+            Environment.NewLine;
+
+        lock (LogGate)
+        {
+            if (!logCleared)
+            {
+                File.WriteAllText(path, string.Empty);
+                logCleared = true;
+            }
+
+            File.AppendAllText(path, block);
+        }
+    }
 
     private static (string Path, string Words) RunOcrPass(string fixtureName)
     {

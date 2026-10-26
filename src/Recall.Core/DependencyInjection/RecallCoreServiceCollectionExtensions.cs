@@ -73,6 +73,7 @@ public static class RecallCoreServiceCollectionExtensions
             sp.GetService<IVisionFileIngest>()));
         services.AddSingleton<ForegroundScanService>();
         services.AddSingleton<IIndexNowService, IndexNowService>();
+        services.AddSingleton<IngestStatusService>();
         services.AddSingleton<ScopeWatchCoordinator>();
         services.AddSingleton<DisabledScopeWatcher>();
         return services;

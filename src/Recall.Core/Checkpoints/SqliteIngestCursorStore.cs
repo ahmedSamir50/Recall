@@ -1,5 +1,7 @@
 using Microsoft.Data.Sqlite;
 using Recall.Core.Indexing;
+using Recall.Core.Ingest;
+using Recall.Core.Scope;
 using Recall.Core.Vocabulary;
 
 namespace Recall.Core.Checkpoints;
@@ -60,6 +62,42 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
 
         transaction.Commit();
         return list;
+    }
+
+    public IngestKindCount Count(GrantFileKinds kind)
+    {
+        IngestKindCountPolicy.ValidateSingleKind(kind);
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureSchema(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT path, state FROM ingest_file";
+        var finished = 0;
+        var seen = 0;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var path = reader.GetString(0);
+            if (!IngestPathKind.TryGetKind(path, out var pathKind) || pathKind != kind)
+            {
+                continue;
+            }
+
+            var state = (IngestCursorState)reader.GetInt32(1);
+            if (IngestKindCountPolicy.IsSeen(state))
+            {
+                seen++;
+            }
+
+            if (IngestKindCountPolicy.IsFinished(state))
+            {
+                finished++;
+            }
+        }
+
+        transaction.Commit();
+        return new IngestKindCount(kind, finished, seen);
     }
 
     public IReadOnlyList<IngestChunkRow> ListChunks(string path)

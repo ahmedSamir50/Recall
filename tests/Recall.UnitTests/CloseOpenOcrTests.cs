@@ -60,7 +60,7 @@ public sealed class CloseOpenOcrTests
     public void Ctc_AllBlank_IsEmpty()
     {
         var logits = new float[10];
-        CtcDecoder.Decode(logits, 5, 2, ["a"]).Should().Be(("", 0));
+        CtcDecoder.Decode(logits, 5, 2, ["a"], false).Should().Be(("", 0));
     }
 
     [Fact]
@@ -69,13 +69,13 @@ public sealed class CloseOpenOcrTests
         var logits = new float[6];
         logits[2] = 5f;
         logits[5] = 5f;
-        CtcDecoder.Decode(logits, 2, 3, ["a", "b"]).Text.Should().Be("b");
+        CtcDecoder.Decode(logits, 2, 3, ["a", "b"], false).Text.Should().Be("b");
     }
 
     [Fact]
     public void Ctc_Null_Throws()
     {
-        var act = () => CtcDecoder.Decode(null!, 1, 2, ["a"]);
+        var act = () => CtcDecoder.Decode(null!, 1, 2, ["a"], false);
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -183,6 +183,160 @@ public sealed class CloseOpenOcrTests
         index.Inserts.Should().ContainSingle();
         index.Inserts[0].RawNoteText.Should().Contain("forty two");
         cursors.ListChunks("doc.pdf").Should().ContainSingle().Which.PageStart.Should().Be(1);
+    }
+
+    [Fact]
+    public void OcrReaderResize_Narrow_PadsTo320()
+    {
+        var canvas = OcrReaderResize.Canvas(40, 30);
+        canvas.CanvasWidth.Should().Be(320);
+        canvas.ContentWidth.Should().Be(64);
+    }
+
+    [Fact]
+    public void OcrReaderResize_Wide_GrowsCanvas()
+    {
+        var canvas = OcrReaderResize.Canvas(1000, 20);
+        canvas.CanvasWidth.Should().Be(2400);
+        canvas.ContentWidth.Should().Be(2400);
+    }
+
+    [Fact]
+    public void OcrReaderResize_PastMax_CapsAt3200()
+    {
+        var canvas = OcrReaderResize.Canvas(2000, 20);
+        canvas.CanvasWidth.Should().Be(3200);
+        canvas.ContentWidth.Should().Be(3200);
+    }
+
+    [Fact]
+    public void OcrReaderResize_ZeroWidth_Throws()
+    {
+        var act = () => OcrReaderResize.Canvas(0, 10);
+        act.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("cropWidth");
+    }
+
+    [Fact]
+    public void OcrDetectorResize_Invoice_RoundsToStride()
+    {
+        var size = OcrDetectorResize.Size(1190, 1684);
+        size.Width.Should().Be(1184);
+        size.Height.Should().Be(1696);
+    }
+
+    [Fact]
+    public void OcrDetectorResize_HalfStride_RoundsToEven()
+    {
+        var size = OcrDetectorResize.Size(80, 80);
+        size.Width.Should().Be(64);
+        size.Height.Should().Be(64);
+    }
+
+    [Fact]
+    public void OcrDetectorResize_ShortSide_ScalesTo64()
+    {
+        var size = OcrDetectorResize.Size(32, 16);
+        size.Width.Should().Be(128);
+        size.Height.Should().Be(64);
+    }
+
+    [Fact]
+    public void OcrDetectorResize_Huge_CapsAt4000()
+    {
+        var size = OcrDetectorResize.Size(8000, 6000);
+        size.Width.Should().Be(4000);
+        size.Height.Should().Be(3008);
+    }
+
+    [Fact]
+    public void OcrDetectorResize_ZeroWidth_Throws()
+    {
+        var act = () => OcrDetectorResize.Size(0, 10);
+        act.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("width");
+    }
+
+    [Fact]
+    public void OcrBilinear_CenterOf2x2_IsMean()
+    {
+        var bgra = new byte[16];
+        bgra[0] = 0;
+        bgra[4] = 0;
+        bgra[8] = 0;
+        bgra[12] = 100;
+        var sample = OcrBilinear.Sample(bgra, 2, 2, 0, 0, 1, 1);
+        sample.B.Should().BeApproximately(25f, 1e-4f);
+    }
+
+    [Fact]
+    public void OcrBilinear_Null_Throws()
+    {
+        var act = () => OcrBilinear.Sample(null!, 1, 1, 0, 0, 1, 1);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void OcrBilinear_BadLength_Throws()
+    {
+        var act = () => OcrBilinear.Sample([0, 0, 0, 0], 2, 2, 0, 0, 1, 1);
+        act.Should().Throw<ArgumentException>().WithMessage("*BGRA length must equal width times height times 4.*");
+    }
+
+    [Fact]
+    public void OcrBilinear_ZeroDest_Throws()
+    {
+        var act = () => OcrBilinear.Sample(new byte[4], 1, 1, 0, 0, 0, 1);
+        act.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("dstWidth");
+    }
+
+    [Fact]
+    public void ArabicVisualOrder_SpacedVisual_IsLogical()
+    {
+        ArabicVisualOrder.ToLogical("ةيزاغ هايم").Should().Be("مياه غازية");
+    }
+
+    [Fact]
+    public void ArabicVisualOrder_LatinRun_Stays()
+    {
+        ArabicVisualOrder.ToLogical("INV-2026").Should().Be("INV-2026");
+    }
+
+    [Fact]
+    public void ArabicVisualOrder_Null_Throws()
+    {
+        var act = () => ArabicVisualOrder.ToLogical(null!);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Ctc_ExtraClass_IsSpace()
+    {
+        CtcDecoder.Decode([0f, 0f, 5f], 1, 3, ["A"], false).Text.Should().Be(" ");
+    }
+
+    [Fact]
+    public void Ctc_ClassCountMismatch_Throws()
+    {
+        var act = () => CtcDecoder.Decode([0f, 0f, 0f, 5f], 1, 4, ["A"], false);
+        act.Should().Throw<InvalidOperationException>().WithMessage("OCR class count does not match the character dict.");
+    }
+
+    [Fact]
+    public void Ctc_ArabicFlag_ReversesGroups()
+    {
+        float[] logits = [0f, 0f, 5f, 0f, 5f, 0f];
+        CtcDecoder.Decode(logits, 2, 3, ["ب"], false).Text.Should().Be(" ب");
+        CtcDecoder.Decode(logits, 2, 3, ["ب"], true).Text.Should().Be("ب ");
+    }
+
+    [Fact]
+    public void Route_TwoArabicLines_InsertsSpace()
+    {
+        OcrLinePair[] lines =
+        [
+            new OcrLinePair("", 0.1, "مرحبا", 0.9, true),
+            new OcrLinePair("", 0.1, "عالم", 0.9, true),
+        ];
+        OcrPageRouter.Route(lines).Should().Be("مرحبا عالم");
     }
 
     private sealed class FakeOcrEngine : IOcrEngine

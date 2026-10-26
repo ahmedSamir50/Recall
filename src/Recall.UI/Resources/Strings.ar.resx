@@ -53,6 +53,21 @@
   <data name="Skips_Duplicate" xml:space="preserve"><value>هذا السطر موجود.</value></data>
   <data name="Skips_BuiltIn" xml:space="preserve"><value>هذا السطر مدمج ويبقى.</value></data>
   <data name="Skips_Remove" xml:space="preserve"><value>إزالة</value></data>
+  <data name="Skips_Filter" xml:space="preserve"><value>صفِّ هذه القائمة</value></data>
+  <data name="Skips_ExtensionPlaceholder" xml:space="preserve"><value>امتداد، مثل .log</value></data>
+  <data name="Skips_FolderPlaceholder" xml:space="preserve"><value>اسم المجلد</value></data>
+  <data name="Skips_FilePlaceholder" xml:space="preserve"><value>اسم الملف</value></data>
+  <data name="Skips_Yours" xml:space="preserve"><value>أضفتها أنت</value></data>
+  <data name="Resources_Ram" xml:space="preserve"><value>الذاكرة</value></data>
+  <data name="Resources_Cpu" xml:space="preserve"><value>المعالج</value></data>
+  <data name="Resources_Gpu" xml:space="preserve"><value>الرسومات</value></data>
+  <data name="Resources_GpuAbsent" xml:space="preserve"><value>لا توجد رسومات</value></data>
+  <data name="Ingest_Heading" xml:space="preserve"><value>الملفات المفهرسة</value></data>
+  <data name="Ingest_Text" xml:space="preserve"><value>نص</value></data>
+  <data name="Ingest_Code" xml:space="preserve"><value>كود</value></data>
+  <data name="Ingest_Image" xml:space="preserve"><value>صور</value></data>
+  <data name="Ingest_Video" xml:space="preserve"><value>فيديو</value></data>
+  <data name="Ingest_Audio" xml:space="preserve"><value>صوت</value></data>
   <data name="Models_Title" xml:space="preserve"><value>حمّل النماذج على جهازك</value></data>
   <data name="Models_Lead" xml:space="preserve"><value>حمّل نموذج يعمل على جهازك مرة واحدة، وبعده يعمل البحث دون إنترنت.</value></data>
   <data name="Models_ShaNote" xml:space="preserve"><value>يتم التحقق من كل ملف بعد تحميله، وأي ملف تالف أو ناقص يُستبعد ويُعاد تحميله.</value></data>

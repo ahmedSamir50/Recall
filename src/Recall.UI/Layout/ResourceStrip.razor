@@ -1,0 +1,7 @@
+@inherits RecallComponentBase
+
+<span class="f-mono text-11 ink2 flex flex-wrap items-center gap-x-3 gap-y-1">
+    <span class="ltr"><bdi class="ltr">@T("Resources_Ram") @ramMb</bdi></span>
+    <span class="ltr"><bdi class="ltr">@T("Resources_Cpu") @cpuPercent</bdi></span>
+    <span class="ltr"><bdi class="ltr">@T("Resources_Gpu") @(gpuPercent is null ? T("Resources_GpuAbsent") : gpuPercent)</bdi></span>
+</span>

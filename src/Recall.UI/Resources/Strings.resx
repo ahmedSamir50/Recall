@@ -53,6 +53,21 @@
   <data name="Skips_Duplicate" xml:space="preserve"><value>That row is already listed.</value></data>
   <data name="Skips_BuiltIn" xml:space="preserve"><value>That row is built in and stays.</value></data>
   <data name="Skips_Remove" xml:space="preserve"><value>Remove</value></data>
+  <data name="Skips_Filter" xml:space="preserve"><value>Filter this list</value></data>
+  <data name="Skips_ExtensionPlaceholder" xml:space="preserve"><value>Extension, such as .log</value></data>
+  <data name="Skips_FolderPlaceholder" xml:space="preserve"><value>Folder name</value></data>
+  <data name="Skips_FilePlaceholder" xml:space="preserve"><value>File name</value></data>
+  <data name="Skips_Yours" xml:space="preserve"><value>Added by you</value></data>
+  <data name="Resources_Ram" xml:space="preserve"><value>RAM</value></data>
+  <data name="Resources_Cpu" xml:space="preserve"><value>CPU</value></data>
+  <data name="Resources_Gpu" xml:space="preserve"><value>GPU</value></data>
+  <data name="Resources_GpuAbsent" xml:space="preserve"><value>No GPU</value></data>
+  <data name="Ingest_Heading" xml:space="preserve"><value>Ingested files</value></data>
+  <data name="Ingest_Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Ingest_Code" xml:space="preserve"><value>Code</value></data>
+  <data name="Ingest_Image" xml:space="preserve"><value>Images</value></data>
+  <data name="Ingest_Video" xml:space="preserve"><value>Video</value></data>
+  <data name="Ingest_Audio" xml:space="preserve"><value>Audio</value></data>
   <data name="Models_Title" xml:space="preserve"><value>Download the on-device models</value></data>
   <data name="Models_Lead" xml:space="preserve"><value>A one-time download of the on-device AI. After this, search works without internet.</value></data>
   <data name="Models_ShaNote" xml:space="preserve"><value>Each downloaded file is verified before use. Damaged or incomplete files are discarded and downloaded again.</value></data>

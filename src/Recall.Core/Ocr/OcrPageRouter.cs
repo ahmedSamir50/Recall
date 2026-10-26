@@ -54,19 +54,12 @@ public static class OcrPageRouter
                 continue;
             }
 
-            if (line.ArabicScript)
+            if (builder.Length > 0 && !char.IsWhiteSpace(builder[^1]))
             {
-                builder.Append(chosen);
+                builder.Append(' ');
             }
-            else
-            {
-                if (builder.Length > 0 && !char.IsWhiteSpace(builder[^1]))
-                {
-                    builder.Append(' ');
-                }
 
-                builder.Append(chosen);
-            }
+            builder.Append(chosen);
         }
 
         return builder.ToString();

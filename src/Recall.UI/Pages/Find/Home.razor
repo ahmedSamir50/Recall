@@ -17,6 +17,16 @@
             <input @bind="query" @bind:event="oninput" aria-label="@T("Search_Placeholder")" placeholder="@T("Search_Placeholder")" @onkeydown="OnKeyDownAsync" class="w-full search-input" />
         </div>
     </div>
+    @if (ingestRows.Count > 0)
+    {
+        <section class="g2 rounded-2xl p-4 max-w-640 mx-auto mb-4">
+            <h2 class="font-semibold text-16 mb-3">@T("Ingest_Heading")</h2>
+            @foreach (var row in ingestRows)
+            {
+                <p class="text-13 ink2 mb-1"><span>@T(IngestKindLabel(row.Kind))</span> <span class="ltr">@row.Finished/@row.Seen @row.Percent%</span></p>
+            }
+        </section>
+    }
     @if (ShowPictureControl)
     {
     <section class="g2 rounded-2xl p-4 max-w-640 mx-auto mb-4">

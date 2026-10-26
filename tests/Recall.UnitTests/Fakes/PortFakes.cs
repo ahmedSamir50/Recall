@@ -84,6 +84,32 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
             .ToList();
     }
 
+    public IngestKindCount Count(GrantFileKinds kind)
+    {
+        IngestKindCountPolicy.ValidateSingleKind(kind);
+        var finished = 0;
+        var seen = 0;
+        foreach (var row in files.Values)
+        {
+            if (!IngestPathKind.TryGetKind(row.Path, out var pathKind) || pathKind != kind)
+            {
+                continue;
+            }
+
+            if (IngestKindCountPolicy.IsSeen(row.State))
+            {
+                seen++;
+            }
+
+            if (IngestKindCountPolicy.IsFinished(row.State))
+            {
+                finished++;
+            }
+        }
+
+        return new IngestKindCount(kind, finished, seen);
+    }
+
     public IReadOnlyList<IngestChunkRow> ListChunks(string path)
     {
         return chunkRows.Values

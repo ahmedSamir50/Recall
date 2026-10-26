@@ -14,6 +14,8 @@ using Recall.Maui.Platform.Files;
 using Recall.Core.Ocr;
 using Recall.Maui.Platform.Media;
 using Recall.Maui.Platform.Ocr;
+using Recall.Maui.Platform.Resources;
+using Recall.Core.Resources;
 
 namespace Recall.Maui.DependencyInjection;
 
@@ -75,6 +77,7 @@ public static class MauiServiceCollectionExtensions
         services.AddSingleton<ILocalContentProbe, MauiLocalContentProbe>();
         services.AddSingleton<IIdleDetectorService, MauiIdleDetector>();
         services.AddSingleton<IIngestCursorStore>(_ => new SqliteIngestCursorStore(Path.Combine(FileSystem.AppDataDirectory, CheckpointSql.FileName)));
+        services.Replace(ServiceDescriptor.Singleton<IResourceMeter, ProcessResourceMeter>());
         services.AddSingleton<WindowsFileScopeWatcher>();
         services.AddSingleton<IFileScopeWatcherService>(sp =>
         {

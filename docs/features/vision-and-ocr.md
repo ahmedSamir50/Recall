@@ -1,4 +1,4 @@
-Status: in-code for the mmproj download, `items_image`, `items_video`, and the two-second cadence. OCR is decided-absent.
+Status: in-code for the mmproj download, `items_image`, `items_video`, and the two-second cadence. OCR preprocess is in-code.
 
 ## Decision
 
@@ -14,8 +14,8 @@ Android, iOS, and Mac Catalyst emit one JPEG every two seconds with `FrameCadenc
 
 ## OCR
 
-Status: decided-absent
+Status: in-code
 
 Task 6.3.1 names `WindowsPdfPageRenderer`, `AndroidPdfPageRenderer`, and `ApplePdfPageRenderer` for PDF page PNG at 300 dpi. A physical Apple run is not required for those renderers.
 
-OCR stays decided-absent: no ONNX reader is constructed and no scanned page is read. The three model files are pinned in `OcrModelFiles`: PP-OCRv6 small detector, PP-OCRv6 small English reader, and the Arabic PP-OCRv5 mobile reader. A missing hash does not load a reader. `OcrLineChoice` keeps the higher reader score and keeps English on a tie within `1e-6`. `OcrSessionSet` is three booleans for Epic 6.3. Pages `BrokenArabic.NeedsOcr` flags are stored in `ocr_page` and ingest pass 3 runs `OcrPassStub` once per pass; that queue does not block audio. Real OCR is Epic 6.3 task 6.3.1 (`Microsoft.ML.OnnxRuntime` 1.31.0 and three `InferenceSession`s). The audio catalog id `embeddinggemma-2-audio` uses the same mmproj file as vision. U5 stays closed.
+OCR preprocess is in-code. Three ONNX sessions, the pinned PP-OCRv6 small detector, the pinned PP-OCRv6 small English reader, and the pinned Arabic PP-OCRv5 mobile reader, load together for one ingest pass and dispose in `finally`. The detector leaves a page alone when its short side is already at least 64 pixels, and it will not send a side longer than 4000. The reader keeps each line's aspect ratio at height 48, pads on the right with normalized gray, and uses a width from 320 through 3200. CTC blank stays class 0. The class after the yaml dictionary is a space. Arabic reader text is put into logical order with the PaddleOCR Arabic group rule, and the page router joins lines with a space. U5 stays closed. The five fixture pages are accepted. Their word-error ceilings, in edits over reference tokens, are English invoice 35/82, Arabic invoice 43/89, mixed invoice 73/116, English book 74/162, and Arabic book 29/153, with the Latin and Arabic splits in `OcrFixtureReference`. A later change that goes above a ceiling fails that page's test. These pages stay on the pinned readers. `OcrDetectorResize`, `OcrReaderResize`, `OcrBilinear`, `ArabicVisualOrder`, the CTC space class, and the space between routed lines stay as they are. Task 6.3.1 stays not-started. Task 6.3.3 stays not-started.

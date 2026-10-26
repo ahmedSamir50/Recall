@@ -1,6 +1,7 @@
 @namespace Recall.UI.Pages
 @page "/preferences"
 @inherits RecallComponentBase
+@using Recall.Core.Scope
 
 <div class="p-4 md:p-6 flex justify-center">
 <div class="w-full max-w-640">
@@ -37,91 +38,118 @@
                 <div>
                     <p class="lbl mb-2">@T("Skips_CodeExtensions")</p>
                     <p class="text-13 ink3 mb-2">@T("Skips_CodeIndexed")</p>
-                    <ul class="plain-list flex flex-col gap-1 mb-2">
-                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.CodeExtensions)
-                        {
-                            <li class="text-13 ink2">@row</li>
-                        }
-                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.ExactCodeNames)
-                        {
-                            <li class="text-13 ink2">@row</li>
-                        }
-                        @foreach (var row in skips.Extensions)
-                        {
-                            <li class="text-13 ink2 flex items-center justify-between gap-2"><span>@row</span><button type="button" class="btn btn-g" @onclick="() => RemoveExtension(row)">@T("Skips_Remove")</button></li>
-                        }
-                    </ul>
-                    <div class="flex gap-2">
-                        <input class="inp flex-1" value="@extensionDraft" @onchange="e => extensionDraft = e.Value?.ToString() ?? string.Empty" />
+                    <div class="flex gap-2 mb-2">
+                        <input class="inp flex-1" placeholder="@T("Skips_ExtensionPlaceholder")" value="@extensionDraft" @onchange="e => extensionDraft = e.Value?.ToString() ?? string.Empty" />
                         <button type="button" class="btn btn-g" @onclick="ApplyExtension">@T("Skips_Add")</button>
                     </div>
+                    <input class="inp w-full mb-2" placeholder="@T("Skips_Filter")" value="@extensionFilter" @onchange="e => extensionFilter = e.Value?.ToString() ?? string.Empty" />
+                    <div class="rounded-xl border bd p-2 mb-2 max-h-[16rem] overflow-y-auto">
+                        <div class="flex flex-wrap gap-1">
+                            @foreach (var row in FilteredRows(BuiltInSkips.CodeExtensions, extensionFilter))
+                            {
+                                <span class="text-13 ink2 px-2 py-1 rounded-lg border bd">@row</span>
+                            }
+                            @foreach (var row in FilteredRows(BuiltInSkips.ExactCodeNames, extensionFilter))
+                            {
+                                <span class="text-13 ink2 px-2 py-1 rounded-lg border bd">@row</span>
+                            }
+                        </div>
+                    </div>
+                    @if (skips.Extensions.Count > 0)
+                    {
+                        <p class="lbl mb-1">@T("Skips_Yours")</p>
+                        <ul class="plain-list flex flex-col gap-1 mb-2">
+                            @foreach (var row in FilteredRows(skips.Extensions, extensionFilter))
+                            {
+                                <li class="text-13 ink2 flex items-center justify-between gap-2"><span>@row</span><button type="button" class="btn btn-g" @onclick="() => RemoveExtension(row)">@T("Skips_Remove")</button></li>
+                            }
+                        </ul>
+                    }
                     @if (extensionNotice is not null)
                     {
                         <p class="text-13 ink3 mt-2">@T(extensionNotice)</p>
                     }
                 </div>
-                <div>
-                    <p class="lbl mb-2">@T("Skips_Folders")</p>
-                    <ul class="plain-list flex flex-col gap-1 mb-2">
-                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.SkipFolders)
-                        {
-                            <li class="text-13 ink2">@row</li>
-                        }
-                        @foreach (var row in skips.FolderNames)
-                        {
-                            <li class="text-13 ink2 flex items-center justify-between gap-2"><span>@row</span><button type="button" class="btn btn-g" @onclick="() => RemoveFolder(row)">@T("Skips_Remove")</button></li>
-                        }
-                    </ul>
-                    <div class="flex gap-2">
-                        <input class="inp flex-1" value="@folderDraft" @onchange="e => folderDraft = e.Value?.ToString() ?? string.Empty" />
+                <details open="@foldersOpen" @ontoggle="ToggleFolders">
+                    <summary class="lbl mb-2 cursor-pointer" aria-expanded="@(foldersOpen ? "true" : "false")">@T("Skips_Folders")</summary>
+                    <div class="flex gap-2 mb-2 mt-2">
+                        <input class="inp flex-1" placeholder="@T("Skips_FolderPlaceholder")" value="@folderDraft" @onchange="e => folderDraft = e.Value?.ToString() ?? string.Empty" />
                         <button type="button" class="btn btn-g" @onclick="ApplyFolder">@T("Skips_Add")</button>
                     </div>
+                    <input class="inp w-full mb-2" placeholder="@T("Skips_Filter")" value="@folderFilter" @onchange="e => folderFilter = e.Value?.ToString() ?? string.Empty" />
+                    <div class="rounded-xl border bd p-2 mb-2 max-h-[16rem] overflow-y-auto">
+                        <div class="flex flex-wrap gap-1">
+                            @foreach (var row in FilteredRows(BuiltInSkips.SkipFolders, folderFilter))
+                            {
+                                <span class="text-13 ink2 px-2 py-1 rounded-lg border bd">@row</span>
+                            }
+                        </div>
+                    </div>
+                    @if (skips.FolderNames.Count > 0)
+                    {
+                        <p class="lbl mb-1">@T("Skips_Yours")</p>
+                        <ul class="plain-list flex flex-col gap-1 mb-2">
+                            @foreach (var row in FilteredRows(skips.FolderNames, folderFilter))
+                            {
+                                <li class="text-13 ink2 flex items-center justify-between gap-2"><span>@row</span><button type="button" class="btn btn-g" @onclick="() => RemoveFolder(row)">@T("Skips_Remove")</button></li>
+                            }
+                        </ul>
+                    }
                     @if (folderNotice is not null)
                     {
                         <p class="text-13 ink3 mt-2">@T(folderNotice)</p>
                     }
-                </div>
-                <div>
-                    <p class="lbl mb-2">@T("Skips_Secrets")</p>
-                    <ul class="plain-list flex flex-col gap-1 mb-2">
-                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.SecretExtensions)
-                        {
-                            <li class="text-13 ink2">.@row</li>
-                        }
-                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.SecretNames)
-                        {
-                            <li class="text-13 ink2">@row</li>
-                        }
-                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.DatabaseExtensions)
-                        {
-                            <li class="text-13 ink2">.@row</li>
-                        }
-                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.LockNames)
-                        {
-                            <li class="text-13 ink2">@row</li>
-                        }
-                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.MinifiedSuffixes)
-                        {
-                            <li class="text-13 ink2">@row</li>
-                        }
-                        @foreach (var row in Recall.Core.Scope.BuiltInSkips.SecretDisplayRows)
-                        {
-                            <li class="text-13 ink2">@row</li>
-                        }
-                        @foreach (var row in skips.FileNames)
-                        {
-                            <li class="text-13 ink2 flex items-center justify-between gap-2"><span>@row</span><button type="button" class="btn btn-g" @onclick="() => RemoveFile(row)">@T("Skips_Remove")</button></li>
-                        }
-                    </ul>
-                    <div class="flex gap-2">
-                        <input class="inp flex-1" value="@fileDraft" @onchange="e => fileDraft = e.Value?.ToString() ?? string.Empty" />
+                </details>
+                <details open="@secretsOpen" @ontoggle="ToggleSecrets">
+                    <summary class="lbl mb-2 cursor-pointer" aria-expanded="@(secretsOpen ? "true" : "false")">@T("Skips_Secrets")</summary>
+                    <div class="flex gap-2 mb-2 mt-2">
+                        <input class="inp flex-1" placeholder="@T("Skips_FilePlaceholder")" value="@fileDraft" @onchange="e => fileDraft = e.Value?.ToString() ?? string.Empty" />
                         <button type="button" class="btn btn-g" @onclick="ApplyFile">@T("Skips_Add")</button>
                     </div>
+                    <input class="inp w-full mb-2" placeholder="@T("Skips_Filter")" value="@fileFilter" @onchange="e => fileFilter = e.Value?.ToString() ?? string.Empty" />
+                    <div class="rounded-xl border bd p-2 mb-2 max-h-[16rem] overflow-y-auto">
+                        <div class="flex flex-wrap gap-1">
+                            @foreach (var row in FilteredRows(BuiltInSkips.SecretExtensions.Select(static row => "." + row), fileFilter))
+                            {
+                                <span class="text-13 ink2 px-2 py-1 rounded-lg border bd">@row</span>
+                            }
+                            @foreach (var row in FilteredRows(BuiltInSkips.SecretNames, fileFilter))
+                            {
+                                <span class="text-13 ink2 px-2 py-1 rounded-lg border bd">@row</span>
+                            }
+                            @foreach (var row in FilteredRows(BuiltInSkips.DatabaseExtensions.Select(static row => "." + row), fileFilter))
+                            {
+                                <span class="text-13 ink2 px-2 py-1 rounded-lg border bd">@row</span>
+                            }
+                            @foreach (var row in FilteredRows(BuiltInSkips.LockNames, fileFilter))
+                            {
+                                <span class="text-13 ink2 px-2 py-1 rounded-lg border bd">@row</span>
+                            }
+                            @foreach (var row in FilteredRows(BuiltInSkips.MinifiedSuffixes, fileFilter))
+                            {
+                                <span class="text-13 ink2 px-2 py-1 rounded-lg border bd">@row</span>
+                            }
+                            @foreach (var row in FilteredRows(BuiltInSkips.SecretDisplayRows, fileFilter))
+                            {
+                                <span class="text-13 ink2 px-2 py-1 rounded-lg border bd">@row</span>
+                            }
+                        </div>
+                    </div>
+                    @if (skips.FileNames.Count > 0)
+                    {
+                        <p class="lbl mb-1">@T("Skips_Yours")</p>
+                        <ul class="plain-list flex flex-col gap-1 mb-2">
+                            @foreach (var row in FilteredRows(skips.FileNames, fileFilter))
+                            {
+                                <li class="text-13 ink2 flex items-center justify-between gap-2"><span>@row</span><button type="button" class="btn btn-g" @onclick="() => RemoveFile(row)">@T("Skips_Remove")</button></li>
+                            }
+                        </ul>
+                    }
                     @if (fileNotice is not null)
                     {
                         <p class="text-13 ink3 mt-2">@T(fileNotice)</p>
                     }
-                </div>
+                </details>
             </div>
         </div>
         <div class="flex flex-col gap-2">

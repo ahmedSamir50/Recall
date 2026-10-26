@@ -1,3 +1,5 @@
+using Recall.Core.Ingest;
+using Recall.Core.Scope;
 using Recall.Core.Vocabulary;
 
 namespace Recall.Core.Checkpoints;
@@ -97,4 +99,6 @@ public interface IIngestCursorStore
     IReadOnlyList<PinResumeRow> ListPinResumes();
 
     void CompletePinResume(string path);
+
+    IngestKindCount Count(GrantFileKinds kind);
 }

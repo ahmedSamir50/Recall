@@ -12,12 +12,6 @@ public sealed class OnnxOcrEngine : IOcrEngine
 {
     private const string OutputCountMessage = "OCR graph output count is not 1.";
 
-    private const int DetectorLongSide = 736;
-
-    private const int ReaderHeight = 48;
-
-    private const int ReaderWidth = 320;
-
     private static readonly float[] DetectorMean = [0.485f, 0.456f, 0.406f];
 
     private static readonly float[] DetectorStd = [0.229f, 0.224f, 0.225f];
@@ -208,8 +202,8 @@ public sealed class OnnxOcrEngine : IOcrEngine
         foreach (var box in boxes)
         {
             var crop = Crop(raster, box);
-            var (english, englishScore) = ReadCrop(crop, englishReader!, englishDict);
-            var (arabic, arabicScore) = ReadCrop(crop, arabicReader!, arabicDict);
+            var (english, englishScore) = ReadCrop(crop, englishReader!, englishDict, visualArabic: false);
+            var (arabic, arabicScore) = ReadCrop(crop, arabicReader!, arabicDict, visualArabic: true);
             var script = OcrPageRouter.ContainsArabicScript(arabic) || OcrPageRouter.ContainsArabicScript(english);
             lines.Add(new OcrLinePair(english, englishScore, arabic, arabicScore, script));
         }
@@ -245,10 +239,7 @@ public sealed class OnnxOcrEngine : IOcrEngine
     [SuppressMessage("Major Code Smell", "S4143:Collection elements should not be overwritten", Justification = "Each tensor channel index is distinct.")]
     private static (DenseTensor<float> Tensor, int MapWidth, int MapHeight, double ScaleX, double ScaleY) BuildDetectorInput(OcrRaster raster)
     {
-        var longSide = Math.Max(raster.Width, raster.Height);
-        var scale = DetectorLongSide / (double)longSide;
-        var resizedWidth = AlignDetectorSide((int)Math.Round(raster.Width * scale));
-        var resizedHeight = AlignDetectorSide((int)Math.Round(raster.Height * scale));
+        var (resizedWidth, resizedHeight) = OcrDetectorResize.Size(raster.Width, raster.Height);
         var scaleX = resizedWidth / (double)raster.Width;
         var scaleY = resizedHeight / (double)raster.Height;
         var tensor = new DenseTensor<float>([1, 3, resizedHeight, resizedWidth]);
@@ -256,14 +247,10 @@ public sealed class OnnxOcrEngine : IOcrEngine
         {
             for (var x = 0; x < resizedWidth; x++)
             {
-                var srcX = Math.Clamp((int)Math.Round(x / scaleX), 0, raster.Width - 1);
-                var srcY = Math.Clamp((int)Math.Round(y / scaleY), 0, raster.Height - 1);
-                var b = raster.GetB(srcX, srcY) / 255f;
-                var g = raster.GetG(srcX, srcY) / 255f;
-                var r = raster.GetR(srcX, srcY) / 255f;
-                tensor[0, 0, y, x] = (b - DetectorMean[0]) / DetectorStd[0];
-                tensor[0, 1, y, x] = (g - DetectorMean[1]) / DetectorStd[1];
-                tensor[0, 2, y, x] = (r - DetectorMean[2]) / DetectorStd[2];
+                var sample = OcrBilinear.Sample(raster.Bgra, raster.Width, raster.Height, x, y, resizedWidth, resizedHeight);
+                tensor[0, 0, y, x] = (sample.B / 255f - DetectorMean[0]) / DetectorStd[0];
+                tensor[0, 1, y, x] = (sample.G / 255f - DetectorMean[1]) / DetectorStd[1];
+                tensor[0, 2, y, x] = (sample.R / 255f - DetectorMean[2]) / DetectorStd[2];
             }
         }
 
@@ -292,7 +279,7 @@ public sealed class OnnxOcrEngine : IOcrEngine
         return new OcrRaster(width, height, bgra);
     }
 
-    private static (string Text, double Confidence) ReadCrop(OcrRaster crop, InferenceSession reader, IReadOnlyList<string> dict)
+    private static (string Text, double Confidence) ReadCrop(OcrRaster crop, InferenceSession reader, IReadOnlyList<string> dict, bool visualArabic)
     {
         var tensor = BuildReaderInput(crop);
         using var results = reader.Run([NamedOnnxValue.CreateFromTensor(OcrModelFiles.GraphInputName, tensor)]);
@@ -305,25 +292,31 @@ public sealed class OnnxOcrEngine : IOcrEngine
         var dims = output.Dimensions.ToArray();
         var timeSteps = dims.Length >= 2 ? dims[1] : 1;
         var classes = dims.Length >= 3 ? dims[2] : dict.Count + 1;
-        return CtcDecoder.Decode(output.ToArray(), timeSteps, classes, dict);
+        return CtcDecoder.Decode(output.ToArray(), timeSteps, classes, dict, visualArabic);
     }
 
     [SuppressMessage("Major Code Smell", "S4143:Collection elements should not be overwritten", Justification = "Each tensor channel index is distinct.")]
     private static DenseTensor<float> BuildReaderInput(OcrRaster crop)
     {
-        var tensor = new DenseTensor<float>([1, 3, ReaderHeight, ReaderWidth]);
-        for (var y = 0; y < ReaderHeight; y++)
+        var canvas = OcrReaderResize.Canvas(crop.Width, crop.Height);
+        var tensor = new DenseTensor<float>([1, 3, OcrReaderResize.Height, canvas.CanvasWidth]);
+        for (var y = 0; y < OcrReaderResize.Height; y++)
         {
-            for (var x = 0; x < ReaderWidth; x++)
+            for (var x = 0; x < canvas.CanvasWidth; x++)
             {
-                var srcX = crop.Width <= 1 ? 0 : x * (crop.Width - 1) / (ReaderWidth - 1);
-                var srcY = crop.Height <= 1 ? 0 : y * (crop.Height - 1) / (ReaderHeight - 1);
-                var b = crop.GetB(srcX, srcY) / 255f;
-                var g = crop.GetG(srcX, srcY) / 255f;
-                var r = crop.GetR(srcX, srcY) / 255f;
-                tensor[0, 0, y, x] = (b - 0.5f) / 0.5f;
-                tensor[0, 1, y, x] = (g - 0.5f) / 0.5f;
-                tensor[0, 2, y, x] = (r - 0.5f) / 0.5f;
+                if (x < canvas.ContentWidth)
+                {
+                    var sample = OcrBilinear.Sample(crop.Bgra, crop.Width, crop.Height, x, y, canvas.ContentWidth, OcrReaderResize.Height);
+                    tensor[0, 0, y, x] = (sample.B / 255f - 0.5f) / 0.5f;
+                    tensor[0, 1, y, x] = (sample.G / 255f - 0.5f) / 0.5f;
+                    tensor[0, 2, y, x] = (sample.R / 255f - 0.5f) / 0.5f;
+                }
+                else
+                {
+                    tensor[0, 0, y, x] = 0f;
+                    tensor[0, 1, y, x] = 0f;
+                    tensor[0, 2, y, x] = 0f;
+                }
             }
         }
 
@@ -360,8 +353,6 @@ public sealed class OnnxOcrEngine : IOcrEngine
         sessions.Load();
         loaded = true;
     }
-
-    private static int AlignDetectorSide(int side) => Math.Max(32, (int)Math.Ceiling(side / 32.0) * 32);
 
     private static InferenceSession CreateSession(string modelPath)
     {

@@ -10,6 +10,7 @@ public sealed class TextIngestEngine
         ITextTokenCounter tokenCounter,
         LocalOpLogWriter opLog,
         IIngestCursorStore cursors)
+    public async Task IngestOcrPagesAsync(string filePath, IReadOnlyList<PdfPageText> pages, string grantPath, string encoderHash, CancellationToken cancellationToken)
     public async Task<TextIngestResult> IngestFileAsync(string filePath, string rawText, DateTimeOffset modifiedAt, string grantPath, string encoderHash, bool codeFile, CancellationToken cancellationToken)
         var prefixTokenCount = tokenCounter.CountTokens(EmbeddingTaskPrefixes.TitledPrefix(title));
         var ends = tokenCounter.TokenEnds(rawText);
@@ -19,7 +20,7 @@ public sealed class TextIngestEngine
             if (index.TryInsert(insert))
 ```
 
-One tokenize per document. For a `.pdf` path the engine reads with `PdfPigPageSource`, runs `SplitPdfPages`, and passes `EmbeddablePages` into `DocumentPatchPlanner` so `page_start` and `page_end` are set. `OcrPageNumbers` on the result are written through `OcrPageWaitlist`. For other paths the joined document is the raw text and page spans stay zero. The engine counts the title prefix once, asks the token counter for the document's token ends once, and lets `DocumentPatchPlanner` place the cuts. Every patch keeps the title prefix through `EmbeddingTaskPrefixes.WrapTitledDocument` and carries its page and char spans into the chunk rows. A patch that is not dense keeps its row without a vector.
+`IngestOcrPagesAsync` joins OCR page text, runs `DocumentPatchPlanner.Plan`, inserts chunks with the page span, then clears `ListOcrPages` for that path. It does not call PdfPig. One tokenize per document. For a `.pdf` path the engine reads with `PdfPigPageSource`, runs `SplitPdfPages`, and passes `EmbeddablePages` into `DocumentPatchPlanner` so `page_start` and `page_end` are set. `OcrPageNumbers` on the result are written through `OcrPageWaitlist`. For other paths the joined document is the raw text and page spans stay zero. The engine counts the title prefix once, asks the token counter for the document's token ends once, and lets `DocumentPatchPlanner` place the cuts. Every patch keeps the title prefix through `EmbeddingTaskPrefixes.WrapTitledDocument` and carries its page and char spans into the chunk rows. A patch that is not dense keeps its row without a vector.
 
 ```csharp
 TextIngestChunk
@@ -737,6 +738,84 @@ public static void Run(Action processJobs)
 ```
 
 Counts one OCR open per scheduler pass. It does not construct an ONNX session. `Scheduler_SwitchesModelOncePerPass` locks the open count.
+
+## src/Recall.Core/Ocr/OcrReaderResize.cs
+
+```csharp
+namespace Recall.Core.Ocr;
+public readonly record struct OcrReaderCanvas(int CanvasWidth, int ContentWidth)
+public static class OcrReaderResize
+public const int Height = 48
+public const int MinCanvasWidth = 320
+public const int MaxCanvasWidth = 3200
+public static OcrReaderCanvas Canvas(int cropWidth, int cropHeight)
+if (cropWidth < 1)
+if (cropHeight < 1)
+if (canvas > MaxCanvasWidth)
+if (content > canvas)
+if (content < 1)
+```
+
+The reader keeps each line's aspect ratio at height 48, pads on the right with normalized gray, and uses a width from 320 through 3200. The five fixture pages that use this resize are accepted at the edit ceilings in `OcrFixtureReference`.
+
+## src/Recall.Core/Ocr/OcrDetectorResize.cs
+
+```csharp
+namespace Recall.Core.Ocr;
+public static class OcrDetectorResize
+public const int MinSide = 64
+public const int MaxSide = 4000
+public const int Stride = 32
+public static (int Width, int Height) Size(int width, int height)
+if (width < 1)
+if (height < 1)
+if (Math.Min(width, height) < MinSide)
+if (Math.Max(resizeWidth, resizeHeight) > MaxSide)
+```
+
+The detector leaves a page alone when its short side is already at least 64 pixels, and it will not send a side longer than 4000. An 8000 by 6000 page becomes 4000 by 3008 after the 32-pixel stride round. That size is the accepted result of `Size`.
+
+## src/Recall.Core/Ocr/OcrBilinear.cs
+
+```csharp
+namespace Recall.Core.Ocr;
+public readonly record struct OcrRgb(float B, float G, float R)
+public static class OcrBilinear
+public static OcrRgb Sample(byte[] bgra, int srcWidth, int srcHeight, int dstX, int dstY, int dstWidth, int dstHeight)
+if (srcWidth < 1)
+if (srcHeight < 1)
+if (dstWidth < 1)
+if (dstHeight < 1)
+if (dstX < 0 || dstX >= dstWidth)
+if (dstY < 0 || dstY >= dstHeight)
+if (bgra.Length != srcWidth * srcHeight * 4)
+```
+
+`Sample` supplies channel 0 as `B`, channel 1 as `G`, and channel 2 as `R`. Null `bgra` throws `ArgumentNullException`. A length other than width times height times 4 throws `ArgumentException` with message `BGRA length must equal width times height times 4.`
+
+## src/Recall.Core/Ocr/ArabicVisualOrder.cs
+
+```csharp
+namespace Recall.Core.Ocr;
+public static class ArabicVisualOrder
+public static string ToLogical(string visual)
+if (visual.Length == 0)
+```
+
+Null throws `ArgumentNullException`. Empty returns empty. Arabic reader text is put into logical order with the PaddleOCR Arabic group rule.
+
+## src/Recall.Core/Ocr/CtcDecoder.cs
+
+```csharp
+namespace Recall.Core.Ocr;
+public static class CtcDecoder
+public static (string Text, double Confidence) Decode(float[] logits, int timeSteps, int classes, IReadOnlyList<string> dict, bool visualArabic)
+if (classes != dict.Count + 1 && classes != dict.Count + 2)
+if (index == dict.Count)
+if (visualArabic)
+```
+
+The fifth parameter is `visualArabic` and the class after the dictionary is a space.
 
 ## src/Recall.Core/Ingest/WavPcm.cs
 
