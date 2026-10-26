@@ -77,6 +77,7 @@
   </ItemGroup>
   <Import Project="..\..\native\RecallEmbed.Native.props" />
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
+    <PackageReference Include="System.Drawing.Common" />
     <Content Include="Platforms\Windows\appicon.ico" Link="appicon.ico" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="@(RecallEmbedNativeDlls)" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)" />
   </ItemGroup>
