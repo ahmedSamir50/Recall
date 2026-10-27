@@ -494,4 +494,6 @@ Distribution for the Launch Addendum: builds stay on the developer machine, and 
 
 A compressed ZVec index stays off until a measured search is about two or three times faster. That switch builds a second index beside the float one and does not shrink the file.
 
+A per-file size stop for text, PDF, image, video, and audio is studied on [file size cap](features/file-size-cap.md). That page is open for end of v1: one limit per modality, derived from a measured file so one grant cannot keep adding patches, frames, or windows forever. No cap is in the tree and this board gains no task row for it.
+
 A helper process and a daily update check stay out of v1. A Windows tray, a Mac menu bar, sign-in start, and a search shortcut are studied on [desktop presence](features/desktop-presence.md) and are not in the tree. A Linux tray, sign-in start, and a search shortcut are on that same page and are not in the tree. Picture-word BM25 is task 6.2.1. Encoder-file repair is task A.2.4. Audio windows are task 5.1.3. Opening at the stored start is task 5.2.4. Keyword folding is task A.2.14. Numeric spans are task A.2.16 and are done. The dataset-folder skip is task A.2.17. The cloud-file skip is task A.2.18 and is done. The long-document slice, page cap, and broken-Arabic letter count are task 5.3.1. Task 2.2.6 is done.
