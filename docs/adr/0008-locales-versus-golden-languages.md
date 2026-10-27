@@ -2,6 +2,6 @@ Status: accepted, 15 Oct 2026.
 
 Context: two language lists were being collapsed.
 
-Decision: user-facing chrome is Arabic and English. The retrieval golden set is English, Arabic, Chinese, Hindi, and French, within ±5 recall@10 points, and that run has not been recorded.
+Decision: UI stays Arabic and English. The golden set is Arabic, English, French, Dutch, German, Spanish, and Portuguese. Chinese and Hindi are v1.5.
 
-Consequences: a docs page must not drop Chinese, Hindi, or French, and must not add them as UI locales.
+Consequences: UI locales stay Arabic and English. Chinese and Hindi are not v1 retrieval languages. French stays in the golden set and is not a UI locale.

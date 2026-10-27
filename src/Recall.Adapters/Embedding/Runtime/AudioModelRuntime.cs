@@ -16,6 +16,7 @@ public sealed class AudioModelRuntime : IAudioEmbeddingEncoder, IDisposable
     private readonly IRecallEmbedLibrary library;
     private readonly TextModelRuntime? textRuntime;
     private bool opened;
+    private bool ownsVisionContext;
     private int disposed;
 
     public AudioModelRuntime(
@@ -95,12 +96,7 @@ public sealed class AudioModelRuntime : IAudioEmbeddingEncoder, IDisposable
         LlamaNativeGate.Enter();
         try
         {
-            if (opened)
-            {
-                library.CloseAudio();
-                opened = false;
-            }
-
+            CloseOpenedContext();
             IsLoaded = false;
         }
         finally
@@ -120,12 +116,7 @@ public sealed class AudioModelRuntime : IAudioEmbeddingEncoder, IDisposable
         LlamaNativeGate.Enter();
         try
         {
-            if (opened)
-            {
-                library.CloseAudio();
-                opened = false;
-            }
-
+            CloseOpenedContext();
             IsLoaded = false;
         }
         finally
@@ -136,13 +127,35 @@ public sealed class AudioModelRuntime : IAudioEmbeddingEncoder, IDisposable
 
     private void EnsureAudioOpen()
     {
-        if (opened || MediaContextPolicy.OneContext)
+        if (opened)
         {
             return;
         }
 
         textRuntime?.GetEncoder();
         var modelPath = Path.Combine(modelDirectory, options.ModelFileName);
+        if (MediaContextPolicy.OneContext)
+        {
+            var visionCode = library.OpenVision(modelPath);
+            if (visionCode == 0)
+            {
+                ownsVisionContext = true;
+                opened = true;
+                return;
+            }
+
+            if (visionCode == 8)
+            {
+                opened = true;
+                return;
+            }
+
+            throw new InvalidOperationException(string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                OpenAudioFailedFormat,
+                visionCode));
+        }
+
         var code = library.OpenAudio(modelPath);
         if (code != 0)
         {
@@ -153,5 +166,28 @@ public sealed class AudioModelRuntime : IAudioEmbeddingEncoder, IDisposable
         }
 
         opened = true;
+    }
+
+    private void CloseOpenedContext()
+    {
+        if (!opened)
+        {
+            return;
+        }
+
+        if (MediaContextPolicy.OneContext)
+        {
+            if (ownsVisionContext)
+            {
+                library.CloseVision();
+            }
+        }
+        else
+        {
+            library.CloseAudio();
+        }
+
+        opened = false;
+        ownsVisionContext = false;
     }
 }

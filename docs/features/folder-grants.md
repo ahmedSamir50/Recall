@@ -4,9 +4,9 @@ Status: in-code
 
 `TryAddGrant` normalizes with trim, slash to backslash, trim trailing backslash. Null grant throws `ArgumentNullException`; white-space path throws `ArgumentException` and does not save. Duplicate path returns `Duplicate` and does not save. A new path that `IsChildPath` of an existing grant returns `OverlapChildOfExistingParent` and does not save. A new parent that `IsChildPath` of stored children removes those children, saves the parent, and returns `OverlapParentReplacesChildren`. Both overlap statuses use `Folders_OverlapWarning`. `RemoveGrant` drops a matching path.
 
-## Index now
+## Window-open ingest
 
-Index now is in-code. `IIndexNowService.ListOffers` hides finished grants and children of allowed parents. `IndexAsync` ingests that folder.
+When the text model is Ready, the MAUI window starts `IngestGrantedTextAsync` for every grant, including grants already marked finished. Per grant, legs run only when that modality’s download phase is Ready: text and code, then images from `ListImagesAsync`, then video frames, then audio (and video soundtracks when Audio is on). One failed file is marked Missing and the pass continues. A retry in the header runs another pass when paths are still Reading or Missing.
 
 ## Kinds
 

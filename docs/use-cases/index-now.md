@@ -2,15 +2,15 @@ Status: in-code
 
 ## Actor
 
-The person on the search page.
+The person using the app after grants exist.
 
 ## Trigger
 
-Home lists a granted folder with no finished `grant_scan` row.
+The text model is Ready and the window opens, or a prior ingest pass left paths in `Reading` or `Missing`.
 
 ## Path
 
-`IIndexNowService.ListOffers` offers that folder; a child of a grant in the list is not offered. **Index now** calls `IngestGrantAsync` for that path and reloads offers.
+`App.xaml.cs` calls `IngestGrantedTextAsync` for every grant when the window is created and the text snapshot is Ready. Finished grants are not skipped. The header `ResourceStrip` shows ingest status; when indexing stopped with unread paths, **Indexing stopped. Retry** calls `IngestGrantedTextAsync` again. Home does not offer Index now. `IIndexNowService` remains in the tree for tests and older call sites; the search page does not surface it.
 
 ## Failure
 

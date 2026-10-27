@@ -4,13 +4,15 @@ Status: in-code for the mmproj download, `items_image`, `items_video`, and the t
 
 The vision file is mmproj-embeddinggemma-2-Q8_0.gguf through in-process llama.cpp, loaded by `mtmd_init_from_file` after the text model is open. The download is hash-pinned and separate from the text GGUF. Vision unloads in `finally`; it is never kept resident with the text encoder or an audio encoder. PP-OCRv6 stays ONNX. llama.cpp does not run that detector.
 
+Photos, voice, and the helper row on Models each have their own download bar and snapshot. The helper row does not name OCR files on screen. OCR progress is stored on `GetOcrDownloadSnapshot` and does not write the text snapshot. A verified text model triggers window-open ingest for every grant; the helper download does not run OCR on pictures by itself.
+
 ## Pictures
 
 Pictures are embedded at 768 and stored in `items_image`. Rows past the age cutoff would move to `items_image_old` at 512 when the recall gate passes; production keeps 768 until `AgeCutCorpus` loads a passing set. The row has `embedding`, `words`, `path_live`, `encoder_hash`, `grant_path`, and empty `start_seconds` and `end_seconds`. A picture vector is never written into `items_text`. Find can take a JPEG inside a grant: `PictureQueryGate` reads the vision download phase, `PictureSearchService` embeds once, and dense search stays in `items_image` and `items_video`. A text query does not embed vision. The control is `Search with a picture` / `ابحث بصورة`; waiting is `The picture model is still downloading.` / `نموذج الصور ما زال يُنزَّل.`; failure is `The picture model did not download.` / `لم يكتمل تنزيل نموذج الصور.`
 
 ## Video frames
 
-Android, iOS, and Mac Catalyst emit one JPEG every two seconds with `FrameCadence.Starts` and `FrameCadence.End`. On Windows build 22000 or newer, `WindowsVideoFrameSampler` uses `MediaComposition.GetThumbnailsAsync` at a two-second interval. On an older build it throws `NotSupportedException` with `Windows frame thumbnails need Windows 11.` Frame rows go to `items_video` at 768 with that start and end. Frames of one file collapse to one card with `Collapse.EarliestStart`.
+Android, iOS, and Mac Catalyst emit one JPEG every two seconds with `FrameCadence.Starts` and `FrameCadence.End`. On Windows build 22000 or newer, `WindowsVideoFrameSampler` uses `MediaComposition.GetThumbnailsAsync` at a two-second interval. On an older build it throws `NotSupportedException` with `Windows frame thumbnails need Windows 10 or newer (build 22000 or later).` Frame rows go to `items_video` at 768 with that start and end. Frames of one file collapse to one card with `Collapse.EarliestStart`.
 
 ## OCR
 

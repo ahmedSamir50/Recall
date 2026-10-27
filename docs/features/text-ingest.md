@@ -2,7 +2,7 @@ Status: in-code
 
 ## Walk
 
-`IngestGrantedTextAsync` skips a grant only when both `Text` and `Code` are off. For each other grant it reads `GrantedTextDocument` values and calls `IngestFileAsync`.
+`IngestGrantedTextAsync` walks every grant. A grant with only pictures or media still runs the image, video, and audio legs when those kinds are on and the matching model is Ready. Text and code use `ReadAsync`; images use `ListImagesAsync`; video and audio use `ListAudioAndVideoAsync`. One thrown text file is marked Missing and later files and media legs still run.
 
 ## File
 
@@ -10,4 +10,4 @@ That method checks the storable width, hashes the raw text, and plans chunks. Fo
 
 ## Extensions
 
-Extensions in appsettings `TextIngest`: `.txt,.md,.markdown,.csv,.json,.xml,.html,.htm`. Code files use `IsSafeCodeText`. Watcher, foreground scan, and Index now call ingest. Finished same hash skips embed.
+Extensions in appsettings `TextIngest`: `.txt,.md,.markdown,.csv,.json,.xml,.html,.htm`. Code files use `IsSafeCodeText`. Watcher, foreground scan, window-open ingest, and header retry call ingest. Finished same hash skips embed for text and for vision when the bytes hash matches.

@@ -28,7 +28,7 @@ You own the four shells in the tree. linux-x64 is a v1 RID with no shell and no 
 
 - Scope manager normalizes overlaps (`D:\` plus `D:\Photos` keeps the parent and warns).
 - Events: created and modified enqueue ingest; renamed updates path metadata and re-embeds only when bytes change; deleted writes a tombstone and keeps the vector for a future sync reconcile.
-- Video: 1 JPEG frame / 2 s through the platform sampler (Android `MediaMetadataRetriever`, iOS and Mac `AVAssetImageGenerator`, Windows `FFmpegInterop`). Batch those frames through the 440M encoder.
+- Video: 1 JPEG frame / 2 s through the platform sampler (Android `MediaMetadataRetriever`, iOS and Mac `AVAssetImageGenerator`, Windows `MediaComposition.GetThumbnailsAsync`). Batch those frames through the 440M encoder.
 - Mobile audio: no microphone. If the user enables the audio file type, download the audio encoder, embed, then unload it. If they do not, record `skipped_modality=audio`.
 - Missed files: Index now, and the search page may offer to index an allowed path that is not indexed yet (canon U4). Do not add a timer sweep.
 

@@ -41,6 +41,76 @@ static int32_t recall_embed_output_width(void)
     return llama_model_n_embd(g_model);
 }
 
+static int32_t recall_embed_mtmd_token_stride(void)
+{
+    if (g_model == NULL)
+    {
+        return RECALL_EMBED_DIM;
+    }
+
+    const int32_t inp = llama_model_n_embd_inp(g_model);
+    if (inp > 0)
+    {
+        return inp;
+    }
+
+    const int32_t embd = llama_model_n_embd(g_model);
+    if (embd > 0)
+    {
+        return embd;
+    }
+
+    return RECALL_EMBED_DIM;
+}
+
+static int recall_embed_pool_mtmd_tokens(const float * embedding, size_t n_tokens, int32_t stride, float * out768)
+{
+    if (embedding == NULL || out768 == NULL || n_tokens == 0)
+    {
+        return 2;
+    }
+
+    if (stride <= 0 || stride > RECALL_EMBED_DIM)
+    {
+        return 5;
+    }
+
+    for (int32_t column = 0; column < stride; column++)
+    {
+        double sum = 0.0;
+        for (size_t token = 0; token < n_tokens; token++)
+        {
+            sum += (double) embedding[token * (size_t) stride + (size_t) column];
+        }
+
+        out768[column] = (float) (sum / (double) n_tokens);
+    }
+
+    for (int32_t column = stride; column < RECALL_EMBED_DIM; column++)
+    {
+        out768[column] = 0.0f;
+    }
+
+    double norm = 0.0;
+    for (int32_t column = 0; column < RECALL_EMBED_DIM; column++)
+    {
+        norm += (double) out768[column] * (double) out768[column];
+    }
+
+    if (norm <= 0.0)
+    {
+        return 2;
+    }
+
+    const double length = sqrt(norm);
+    for (int32_t column = 0; column < RECALL_EMBED_DIM; column++)
+    {
+        out768[column] = (float) ((double) out768[column] / length);
+    }
+
+    return 0;
+}
+
 static int recall_embed_token_count(const char * text, int32_t * count_out)
 {
     const struct llama_vocab * vocab = llama_model_get_vocab(g_model);
@@ -81,6 +151,12 @@ RECALL_EMBED_EXPORT int recall_embed_open(const char * model_path)
 
     struct llama_model_params model_params = llama_model_default_params();
     model_params.n_gpu_layers = -1;
+    const char * cpu_only = getenv("RECALL_EMBED_CPU_ONLY");
+    if (cpu_only != NULL && cpu_only[0] == '1' && cpu_only[1] == '\0')
+    {
+        model_params.n_gpu_layers = 0;
+    }
+
     model_params.load_mode = LLAMA_LOAD_MODE_MMAP;
 
     g_model = llama_model_load_from_file(model_path, model_params);
@@ -481,38 +557,11 @@ RECALL_EMBED_EXPORT int recall_embed_audio_embed(const float * samples, int32_t 
         return 2;
     }
 
-    for (int32_t column = 0; column < RECALL_EMBED_DIM; column++)
-    {
-        double sum = 0.0;
-        for (size_t token = 0; token < n_tokens; token++)
-        {
-            sum += (double) embedding[token * (size_t) RECALL_EMBED_DIM + (size_t) column];
-        }
-
-        out768[column] = (float) (sum / (double) n_tokens);
-    }
-
-    double norm = 0.0;
-    for (int32_t column = 0; column < RECALL_EMBED_DIM; column++)
-    {
-        norm += (double) out768[column] * (double) out768[column];
-    }
-
+    const int32_t stride = recall_embed_mtmd_token_stride();
+    const int pool_code = recall_embed_pool_mtmd_tokens(embedding, n_tokens, stride, out768);
     mtmd_input_chunks_free(chunks);
     mtmd_bitmap_free(bitmap);
-
-    if (norm <= 0.0)
-    {
-        return 2;
-    }
-
-    const double length = sqrt(norm);
-    for (int32_t column = 0; column < RECALL_EMBED_DIM; column++)
-    {
-        out768[column] = (float) ((double) out768[column] / length);
-    }
-
-    return 0;
+    return pool_code;
 }
 
 RECALL_EMBED_EXPORT int recall_embed_vision_embed(const unsigned char * jpeg, int32_t jpeg_len, float * out768)
@@ -611,36 +660,9 @@ RECALL_EMBED_EXPORT int recall_embed_vision_embed(const unsigned char * jpeg, in
         return 2;
     }
 
-    for (int32_t column = 0; column < RECALL_EMBED_DIM; column++)
-    {
-        double sum = 0.0;
-        for (size_t token = 0; token < n_tokens; token++)
-        {
-            sum += (double) embedding[token * (size_t) RECALL_EMBED_DIM + (size_t) column];
-        }
-
-        out768[column] = (float) (sum / (double) n_tokens);
-    }
-
-    double norm = 0.0;
-    for (int32_t column = 0; column < RECALL_EMBED_DIM; column++)
-    {
-        norm += (double) out768[column] * (double) out768[column];
-    }
-
+    const int32_t stride = recall_embed_mtmd_token_stride();
+    const int pool_code = recall_embed_pool_mtmd_tokens(embedding, n_tokens, stride, out768);
     mtmd_input_chunks_free(chunks);
     mtmd_bitmap_free(bitmap);
-
-    if (norm <= 0.0)
-    {
-        return 2;
-    }
-
-    const double length = sqrt(norm);
-    for (int32_t column = 0; column < RECALL_EMBED_DIM; column++)
-    {
-        out768[column] = (float) ((double) out768[column] / length);
-    }
-
-    return 0;
+    return pool_code;
 }
