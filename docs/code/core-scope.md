@@ -382,6 +382,18 @@ if (Volatile.Read(ref spanReady) != 0)
 if (spanReady != 0)
 ```
 
+```csharp
+if (!IngestPathKind.TryGetKind(path, out var pathKind) || pathKind != kind)
+if (IngestKindCountPolicy.IsSeen(state))
+if (IngestKindCountPolicy.IsFinished(state))
+if (enabled == GrantFileKinds.None)
+if (enabled.HasFlag(kind))
+if (!IngestPathKind.TryGetKind(path, out var pathKind) || !finishedByKind.ContainsKey(pathKind))
+if (finishedByKind.ContainsKey(kind))
+if (string.IsNullOrWhiteSpace(grantPath))
+if (!HasColumn(connection, transaction, "PRAGMA table_info(ingest_file)", "missing_status_key"))
+```
+
 ## src/Recall.Core/Scope/DisabledScopeWatcher.cs
 
 ```csharp

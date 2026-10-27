@@ -30,6 +30,11 @@ TextIngestResult
 if (IsPdfPath(filePath))
 ```
 
+```csharp
+if (IsPdfPath(filePath) && string.IsNullOrWhiteSpace(documentText))
+if (!chunk.Dense)
+```
+
 ## src/Recall.Core/Text/DocumentPatchPlanner.cs
 
 ```csharp
@@ -85,6 +90,10 @@ if (start >= pageText.Length)
 if (BrokenArabic.NeedsOcr(pageText[start..end]))
 if (bestToken >= 0)
 if (token < cutToken)
+```
+
+```csharp
+if (string.IsNullOrWhiteSpace(page.Text))
 ```
 
 ## src/Recall.Core/Text/ChunkerStamp.cs
@@ -245,6 +254,28 @@ if (media && audio is not null)
 if (result.OcrPageNumbers.Count > 0)
 ```
 
+```csharp
+if (!await pass.WaitAsync(0, cancellationToken).ConfigureAwait(false))
+if (Volatile.Read(ref pending) == 1)
+if (!runText && !runImages && !runVideos && !runAudio)
+if (runText)
+catch (OperationCanceledException)
+catch (Exception)
+if (HasCommittedPdfPages(document.Path))
+if (runImages)
+if (vision is null)
+if (runVideos)
+if (!MediaFileKinds.IsVideo(name))
+if (runAudio)
+if (!skippedModel && (runText || runImages || runVideos))
+if (result.ImageFastPathPages.Count > 0 && pageRenderer is not null)
+if (row.State != IngestCursorState.Reading)
+if (!IngestPathKind.TryGetKind(row.Path, out var pathKind) || pathKind != kind)
+if (HasCommittedPdfPages(row.Path))
+if (!failedPaths.Contains(path, StringComparer.OrdinalIgnoreCase))
+if (!chunk.Missing && !chunk.Retired && chunk.PageEnd > 0)
+```
+
 ## src/Recall.Core/Ingest/GrantedTextDocument.cs
 
 ```csharp
@@ -290,6 +321,10 @@ public sealed class DirectoryGrantedTextReader : IGrantedTextReader
 
 ```csharp
 if (MediaIngestFilter.UserSkipped(name, user) || !MediaIngestFilter.KindAllowed(kinds, name))
+```
+
+```csharp
+if (!MediaFileKinds.IsImage(name))
 ```
 
 ## src/Recall.Core/Ingest/IGrantedTextReader.cs
@@ -601,6 +636,11 @@ if (audioOpen)
 if (!scheduler.TryDequeue(IngestModel.Ocr, out var job))
 ```
 
+```csharp
+if (hooks.RunOcr is null)
+catch (RecallFaultException)
+```
+
 ## src/Recall.Core/Ingest/IngestSchedulerService.cs
 
 ```csharp
@@ -663,6 +703,11 @@ public const string LocalName = "arabic-ppocrv5-mobile-rec.onnx";
 ```
 
 The detector and English reader are PP-OCRv6 small. Arabic is the PP-OCRv5 mobile recognizer. Each `Url` is a pinned Hugging Face resolve base and carries an `S1075` suppression. `LocalNames` is exactly these three files; there is no fourth model. No branch.
+
+```csharp
+EnglishReaderYaml
+ArabicReaderYaml
+```
 
 ## src/Recall.Core/Ocr/OcrReaderGate.cs
 
@@ -793,6 +838,17 @@ if (bgra.Length != srcWidth * srcHeight * 4)
 
 `Sample` supplies channel 0 as `B`, channel 1 as `G`, and channel 2 as `R`. Null `bgra` throws `ArgumentNullException`. A length other than width times height times 4 throws `ArgumentException` with message `BGRA length must equal width times height times 4.`
 
+```csharp
+if (fx < 0)
+if (x0 >= srcWidth - 1)
+else if (x1 >= srcWidth)
+if (fy < 0)
+if (y0 >= srcHeight - 1)
+else if (y1 >= srcHeight)
+if (channel == 0)
+else if (channel == 1)
+```
+
 ## src/Recall.Core/Ocr/ArabicVisualOrder.cs
 
 ```csharp
@@ -803,6 +859,11 @@ if (visual.Length == 0)
 ```
 
 Null throws `ArgumentNullException`. Empty returns empty. Arabic reader text is put into logical order with the PaddleOCR Arabic group rule.
+
+```csharp
+if (ch is (>= 'a' and <= 'z') or (>= 'A' and <= 'Z') or (>= '0' and <= '9') or ' ' or ':' or '*' or '.' or '/' or '%' or '+' or '-')
+if (run.Length > 0)
+```
 
 ## src/Recall.Core/Ocr/CtcDecoder.cs
 
@@ -816,6 +877,19 @@ if (visualArabic)
 ```
 
 The fifth parameter is `visualArabic` and the class after the dictionary is a space.
+
+```csharp
+if (timeSteps < 1)
+if (classes < 2)
+if (logits.Length != timeSteps * classes)
+if (value > maxLogit)
+if (maxIndex != 0)
+if (id == 0)
+if (id == last)
+if (collapsed.Count == 0)
+if (index >= 0 && index < dict.Count)
+else if (index == dict.Count)
+```
 
 ## src/Recall.Core/Ingest/WavPcm.cs
 
@@ -971,5 +1045,76 @@ public sealed class VisionFileIngest
 ```
 
 An image is embedded as one picture row after the image grant flag allows the file. Video frames are sampled every two seconds and stored after `FinishPath`. A missing sampler, a missing file, or a grant without the video flag writes no frame row.
+
+```csharp
+if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
+if (index.TryRead(existingId, out _))
+catch (Exception ex) when (ex is not OperationCanceledException)
+if (pageNumber < 1)
+if (image.IsEmpty)
+if (cursors.AnyLivePath(contentId))
+```
+
+## src/Recall.Core/Ingest/IngestChromePolicy.cs
+
+```csharp
+public enum IngestChromeStatus
+public static class IngestChromePolicy
+if (passRunning
+if (unfinished)
+```
+
+## src/Recall.Core/Ingest/IngestKindCount.cs
+
+```csharp
+public readonly record struct IngestKindCount
+```
+
+## src/Recall.Core/Ingest/IngestKindCountPolicy.cs
+
+No public type.
+
+```csharp
+if (kind is GrantFileKinds.Text or GrantFileKinds.Code or GrantFileKinds.Image or GrantFileKinds.Video or GrantFileKinds.Audio)
+```
+
+## src/Recall.Core/Ingest/IngestKindLabels.cs
+
+```csharp
+public static class IngestKindLabels
+```
+
+## src/Recall.Core/Ingest/IngestPathKind.cs
+
+No public type.
+
+```csharp
+if (MediaFileKinds.IsImage(fileName))
+if (MediaFileKinds.IsVideo(fileName))
+if (MediaFileKinds.IsAudio(fileName))
+if (FileAdmission.IsCodeFile(fileName))
+```
+
+## src/Recall.Core/Ingest/IngestStatusService.cs
+
+```csharp
+public sealed class IngestStatusService
+public readonly record struct IngestMissingNote
+if (row.State == IngestCursorState.Missing && !string.IsNullOrEmpty(row.MissingStatusKey))
+```
+
+## src/Recall.Core/Ingest/IPdfPageRenderer.cs
+
+```csharp
+public interface IPdfPageRenderer
+```
+
+## src/Recall.Core/Ingest/VideoFrameFailureLabels.cs
+
+```csharp
+public static class VideoFrameFailureLabels
+if (error is NotSupportedException notSupported
+if (emptyFrames)
+```
 
 

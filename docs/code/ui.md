@@ -231,6 +231,12 @@ public partial class ModelRow
 ```
 
 
+```csharp
+if (firstRender && AutoStart && !downloadKickoffScheduled)
+if (Kind == ModelDownloadRowKind.Text && PhaseChanged.HasDelegate)
+if (Kind == ModelDownloadRowKind.Text)
+```
+
 ## src/Recall.UI/Components/Onboarding/FolderGrantPanel.razor.cs
 
 ```csharp
@@ -342,6 +348,15 @@ if (read == 0)
 if (generation != audioPickGeneration)
 catch (OperationCanceledException)
 if (pickedAudio is null || generation != audioPickGeneration)
+```
+
+```csharp
+if (generation != pictureGeneration)
+if (pickedPicture is null || generation != pictureGeneration)
+if (generation != pictureGeneration || pickedPicture is null)
+if (card.Unavailable || !card.ShowPin)
+if (Cursors.IsPinned(card.SourcePath))
+if (audioPickCts is null)
 ```
 
 ## src/Recall.UI/Pages/Find/Lattice.razor.cs

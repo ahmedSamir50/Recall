@@ -27,6 +27,10 @@ public static class TextBenchmarkHost
 ```
 
 
+```csharp
+if (samples.Count == 0)
+```
+
 ## src/Recall.Benchmarks/TextIndexBenchmarks.cs
 
 ```csharp

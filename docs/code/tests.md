@@ -480,6 +480,23 @@ public sealed class FakeAudioFileIngest
 public sealed class FakeAudioSearchService
 ```
 
+```csharp
+if (!IngestPathKind.TryGetKind(row.Path, out var pathKind) || pathKind != kind)
+if (IngestKindCountPolicy.IsSeen(row.State))
+if (IngestKindCountPolicy.IsFinished(row.State))
+if (enabled == GrantFileKinds.None)
+if (enabled.HasFlag(kind))
+if (string.IsNullOrWhiteSpace(grantPath))
+if (string.IsNullOrWhiteSpace(chunk.ContentId))
+if (chunkRows.TryGetValue(chunk.ContentId, out var existing))
+if (string.Equals(alias.Path, path, StringComparison.OrdinalIgnoreCase) && !alias.Missing && !alias.Retired)
+if (!stored.TryGetValue(contentId, out var entry))
+if (string.Equals(Inserts[i].ContentId, contentId, StringComparison.Ordinal))
+if (OnSearchWords is not null)
+if (!stored.TryGetValue(insert.ContentId, out var entry)
+if (entry.Insert.Words.Contains(query, StringComparison.OrdinalIgnoreCase))
+```
+
 ## tests/Recall.UnitTests/Fakes/PreferenceFakes.cs
 
 ```csharp
@@ -966,6 +983,10 @@ if (start < 0)
 
 Covers the Phase 4 surface with fakes and the native source contract: mmproj open codes 1, 6, 8, embed-when-closed 4, width-not-768 5, vision unload on success and throw, the 768 media schema with `QuantizeType.Undefined`, picture rows outside `items_text`, frame collapse to one card per file with the max score, grant filtering, OCR hashes and line choice, the provisional PDF caps, broken-Arabic detection, and both-locale picture waiting copy.
 
+
+```csharp
+if (directWrite >= 0)
+```
 
 ## tests/Recall.UnitTests/TextIndexOpenPolicyTests.cs
 

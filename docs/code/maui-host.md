@@ -27,6 +27,11 @@ No branch.
 if (services is null)
 if (coordinator is null || shell is null)
 ``` 
+```csharp
+if (downloads is null || !Recall.Core.Download.WindowIngestPolicy.ShouldStart(downloads.GetTextDownloadSnapshot().Phase))
+if (ingest is null)
+```
+
 ## src/Recall.Maui/MainPage.xaml.cs
 
 ```csharp
@@ -52,6 +57,10 @@ No branch.
 ```csharp
 if (kind == ScopeWatcherKind.WindowsFileSystem)
 ``` 
+```csharp
+if (!OcrModelFiles.IsComplete(ocrModelRoot))
+```
+
 ## src/Recall.Maui/Platform/Preferences/MauiAgeCutoffPreferenceStore.cs
 
 ```csharp
@@ -202,6 +211,12 @@ Text download and vision download share `RunDownloadAsync`. Vision progress and 
 if (visionDownloadInFlight is not null)
 ```
 
+```csharp
+if (ocrDownloadInFlight is not null)
+if (ocrDownloadInFlight == downloadTask)
+if (!string.Equals(localName, remoteName, StringComparison.Ordinal) && File.Exists(downloadedPath))
+```
+
 ## src/Recall.Maui/Platform/Download/TextModelConfiguration.cs
 
 ```csharp
@@ -228,6 +243,11 @@ public sealed partial class MauiLocalFileOpener : ILocalFileOpener
             if (exists)
 ```
 
+
+```csharp
+if (!File.Exists(sourcePath))
+if ((MediaFileKinds.IsAudio(sourcePath) || MediaFileKinds.IsVideo(sourcePath))
+```
 
 ## src/Recall.Maui/Platform/Files/MauiLocalFileOpener.Android.cs
 
@@ -404,6 +424,10 @@ if (snapshot is null)
 catch (IOException)
 ```
 
+```csharp
+catch (Exception)
+```
+
 ## src/Recall.Maui/Platform/Media/AndroidVideoFrameSampler.cs
 
 ```csharp
@@ -458,5 +482,9 @@ The page hosts `CommunityToolkit.Maui.MediaElement` as `Player`, sets the file a
 if (!seekAfterReady)
 if (args.NewState is not (MediaElementState.Stopped or MediaElementState.Paused))
 catch (Exception ex)
+```
+
+```csharp
+if (MediaPreviewSeekPolicy.ShouldSeek(startSeconds, Player.Duration))
 ```
 

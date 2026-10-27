@@ -347,6 +347,21 @@ public static bool TryLoad(Modality modality, out IReadOnlyList<AgeCutItem> item
 
 `if (modality == Modality.Text)` throws `RecallFault.AgeCutTextForbidden`. Production returns an empty list and false without reading disk.
 
+```csharp
+if (TryBuildItems is not null)
+if (built is null || built.Count == 0)
+if (visionEncoder is null || audioEncoder is null || videoSampler is null || audioSource is null || !Directory.Exists(DemoRoot))
+if (paths.Count == 0)
+if (ingestSession is not null && MediaContextPolicy.OneContext)
+if (vector is null || vector.Length != MediaCollections.Width)
+if (leasedVision)
+if (!Directory.Exists(folder))
+catch (IOException)
+catch (UnauthorizedAccessException)
+if (frames.Count == 0)
+if (windows.Count == 0)
+```
+
 ## src/Recall.Core/Age/FailClosedAgeCutDecision.cs
 
 ```csharp

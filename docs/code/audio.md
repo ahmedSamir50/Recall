@@ -102,6 +102,11 @@ catch (System.Runtime.InteropServices.COMException)
 if (prepared.FailureReason != TranscodeFailureReason.None)
 ```
 
+```csharp
+if (!string.IsNullOrWhiteSpace(cache))
+catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException)
+```
+
 ## src/Recall.Maui/Platform/Media/AndroidAudioSource.cs
 
 `AndroidAudioSource` finds an audio track and decodes it with `MediaCodec` to 16 kHz mono PCM.

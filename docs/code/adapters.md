@@ -200,6 +200,13 @@ One JPEG at a time. `EmbedJpeg` opens the mmproj after ensuring the text runtime
 if (openedHere && opened)
 ```
 
+```csharp
+if (openedHere && ownsVisionContext)
+if (code == 0)
+if (code == 8)
+if (ownsVisionContext)
+```
+
 ## src/Recall.Adapters/Indexing/ZVecMediaVectorIndex.cs
 
 ```csharp
@@ -245,6 +252,10 @@ if (disposed)
 Each media collection opens at `MediaCollections.WidthFor(collectionName)` (768 for long, 512 for `_old`). The schema uses HNSW cosine with the text index policy's `M` and `EfConstruction`, `QuantizeType` stays `Undefined`, and the `words` field uses the standard tokenizer with the lowercase filter. Create, insert, delete, reconcile, search, stored-field reads, and dispose take one lock so the UI thread and the thread pool cannot use the index together. Inserts are idempotent by `ContentId`; `TryDelete` scans every open collection; `Reconcile` flips only `path_live` on the ids it knows and keeps the stored `encoder_hash`, `grant_path`, and start fields. Search uses the single-query overload (a one-element multi-query is rejected by the native library), maps dense hits, and parses the stored fields with invariant culture. A missing collection is created on first use. `Dispose` closes collections and shuts the factory down.
 
 
+```csharp
+if (!TryOpenCollection(MediaCollections.Image, out var collection) || collection is null)
+```
+
 ## src/Recall.Adapters/Media/WindowsVideoFrameSampler.cs
 
 ```csharp
@@ -277,6 +288,14 @@ if (opened)
 
 ```csharp
 if (opened || MediaContextPolicy.OneContext)
+```
+
+```csharp
+if (MediaContextPolicy.OneContext)
+if (visionCode == 0)
+if (visionCode == 8)
+if (!opened)
+if (ownsVisionContext)
 ```
 
 ## src/Recall.Adapters/Embedding/MediaContextPolicy.cs

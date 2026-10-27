@@ -38,6 +38,13 @@ public static class TextModelDownloadUiPolicy
 ```
 
 
+```csharp
+ModelDownloadStart
+DownloadSnapshotSlot
+if (ocr)
+if (vision)
+```
+
 ## src/Recall.Core/Download/TextModelDownloadOptions.cs
 
 ```csharp
@@ -168,3 +175,18 @@ public static AudioDownloadJoin Decide(TextModelDownloadPhase visionPhase, bool 
 if (fileReady || visionPhase == TextModelDownloadPhase.Ready)
 if (visionPhase is TextModelDownloadPhase.Downloading or TextModelDownloadPhase.Verifying)
 ```
+
+## src/Recall.Core/Download/ModelDownloadRowKind.cs
+
+```csharp
+public enum ModelDownloadRowKind
+public static class ModelDownloadRowKindExtensions
+```
+
+## src/Recall.Core/Download/WindowIngestPolicy.cs
+
+```csharp
+public static class WindowIngestPolicy
+```
+
+Window ingest starts only after the text model download phase is ready.
