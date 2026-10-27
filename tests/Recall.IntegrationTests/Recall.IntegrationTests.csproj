@@ -1,11 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWinExe>false</UseWinExe>
+    <EnableMsixTooling>false</EnableMsixTooling>
     <RootNamespace>Recall.IntegrationTests</RootNamespace>
     <AssemblyName>Recall.IntegrationTests</AssemblyName>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
+    <IsTestProject Condition="'$(RunIntegrationTests)' == 'true'">true</IsTestProject>
+    <IsTestProject Condition="'$(RunIntegrationTests)' != 'true'">false</IsTestProject>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
     <RecallEmbedRequireNative>true</RecallEmbedRequireNative>
@@ -17,6 +22,8 @@
   <ItemGroup>
     <Content Include="TestAssets\embeddinggemma-2-text\embeddinggemma-2-Q8_0.gguf" CopyToOutputDirectory="PreserveNewest" Link="TestAssets\embeddinggemma-2-text\embeddinggemma-2-Q8_0.gguf" Condition="Exists('TestAssets\embeddinggemma-2-text\embeddinggemma-2-Q8_0.gguf')" />
     <Content Include="TestAssets\embeddinggemma-2-vision\mmproj-embeddinggemma-2-Q8_0.gguf" CopyToOutputDirectory="PreserveNewest" Link="TestAssets\embeddinggemma-2-vision\mmproj-embeddinggemma-2-Q8_0.gguf" Condition="Exists('TestAssets\embeddinggemma-2-vision\mmproj-embeddinggemma-2-Q8_0.gguf')" />
+    <Content Include="..\Recall.Maui.UnitTests\TestAssets\models\ocr\**\*" CopyToOutputDirectory="PreserveNewest" LinkBase="TestAssets\models\ocr" />
+    <Content Include="..\Recall.Maui.UnitTests\TestAssets\ocr-fixtures\**\*" CopyToOutputDirectory="PreserveNewest" LinkBase="TestAssets\ocr-fixtures" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="@(RecallEmbedNativeDlls)" CopyToOutputDirectory="PreserveNewest" Link="%(Filename)%(Extension)" />
@@ -29,5 +36,7 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <ProjectReference Include="..\..\src\Recall.Adapters\Recall.Adapters.csproj" />
     <ProjectReference Include="..\..\src\Recall.Core\Recall.Core.csproj" />
+    <ProjectReference Include="..\..\src\Recall.Maui\Recall.Maui.csproj" />
+    <ProjectReference Include="..\Recall.UnitTests\Recall.UnitTests.csproj" />
   </ItemGroup>
 </Project>

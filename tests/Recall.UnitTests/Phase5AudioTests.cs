@@ -545,9 +545,50 @@ public sealed class Phase5AudioTests
             MediaContextPolicy.OneContext = true;
             runtime.EmbedPcm(new float[16], new float[768]);
             shared.OpenAudioCalls.Should().Be(0);
+            shared.OpenVisionCalls.Should().Be(1);
             shared.EmbedAudioCalls.Should().Be(1);
             shared.CloseVisionCalls.Should().Be(0);
             runtime.IsLoaded.Should().BeTrue();
+        }
+        finally
+        {
+            MediaContextPolicy.OneContext = wasOneContext;
+        }
+    }
+
+    [Fact]
+    public void AudioEmbed_OneContext_SharedVision_CloseAudioDoesNotCloseNative()
+    {
+        var wasOneContext = MediaContextPolicy.OneContext;
+        try
+        {
+            MediaContextPolicy.OneContext = true;
+            var library = new LlamaEmbedTests.FakeRecallEmbedLibrary { OpenVisionCode = 8 };
+            using var runtime = new AudioModelRuntime("models/audio", library, new AudioModelDownloadOptions());
+            runtime.EmbedPcm(new float[16], new float[768]);
+            runtime.CloseAudio();
+            library.CloseVisionCalls.Should().Be(0);
+            library.CloseAudioCalls.Should().Be(0);
+        }
+        finally
+        {
+            MediaContextPolicy.OneContext = wasOneContext;
+        }
+    }
+
+    [Fact]
+    public void AudioEmbed_OneContext_OwnsVision_CloseAudioClosesNative()
+    {
+        var wasOneContext = MediaContextPolicy.OneContext;
+        try
+        {
+            MediaContextPolicy.OneContext = true;
+            var library = new LlamaEmbedTests.FakeRecallEmbedLibrary { OpenVisionCode = 0 };
+            using var runtime = new AudioModelRuntime("models/audio", library, new AudioModelDownloadOptions());
+            runtime.EmbedPcm(new float[16], new float[768]);
+            runtime.CloseAudio();
+            library.CloseVisionCalls.Should().Be(1);
+            library.CloseAudioCalls.Should().Be(0);
         }
         finally
         {
@@ -1189,6 +1230,11 @@ public sealed class Phase5AudioTests
             await Task.CompletedTask;
             yield break;
         }
+
+        public async IAsyncEnumerable<string> ListImagesAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            yield break;
+        }
     }
 
     private sealed class ReadCountingReader : IGrantedTextReader
@@ -1205,6 +1251,11 @@ public sealed class Phase5AudioTests
         public async IAsyncEnumerable<string> ListAudioAndVideoAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {
             await Task.CompletedTask;
+            yield break;
+        }
+
+        public async IAsyncEnumerable<string> ListImagesAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
             yield break;
         }
     }

@@ -18,14 +18,27 @@ public sealed class AndroidCompressedProofTests
             return;
         }
 
+        AdbProcess.Shell("run-as com.recall.shell true").ExitCode.Should().Be(0, "install a Debug com.recall.shell apk on the emulator before this proof");
+
         var fixture = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "Fixtures", "tone.m4a"));
         File.Exists(fixture).Should().BeTrue();
-        var push = AdbProcess.Run("adb", "push", fixture, "/sdcard/Android/data/com.recall.shell/files/tone.m4a");
-        push.ExitCode.Should().Be(0);
-        AdbProcess.Run("adb", "shell", "am", "force-stop", "com.recall.shell").ExitCode.Should().Be(0);
-        AdbProcess.Run("adb", "shell", "monkey", "-p", "com.recall.shell", "-c", "android.intent.category.LAUNCHER", "1").ExitCode.Should().Be(0);
-        await Task.Delay(TimeSpan.FromSeconds(8), TestContext.Current.CancellationToken);
-        var report = AdbProcess.Run("adb", "shell", "run-as", "com.recall.shell", "cat", "files/android-audio-decode.txt");
+        AdbProcess.Shell("am force-stop com.recall.shell").ExitCode.Should().Be(0);
+        AdbProcess.Run("adb", "push", fixture, "/data/local/tmp/recall-tone.m4a").ExitCode.Should().Be(0);
+        AdbProcess.Shell("run-as com.recall.shell mkdir -p files").ExitCode.Should().Be(0);
+        var stage = AdbProcess.Shell("run-as com.recall.shell cp /data/local/tmp/recall-tone.m4a files/tone.m4a");
+        stage.ExitCode.Should().Be(0, stage.Output);
+        AdbProcess.Shell("monkey -p com.recall.shell -c android.intent.category.LAUNCHER 1").ExitCode.Should().Be(0);
+        (int ExitCode, string Output) report = (1, string.Empty);
+        for (var attempt = 0; attempt < 60; attempt++)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
+            report = AdbProcess.Shell("run-as com.recall.shell cat files/android-audio-decode.txt");
+            if (report.ExitCode == 0 && report.Output.Contains("sampleRate=", StringComparison.Ordinal))
+            {
+                break;
+            }
+        }
+
         report.ExitCode.Should().Be(0);
         report.Output.Should().Contain("sampleRate=16000");
         var countLine = report.Output.Split('\n').FirstOrDefault(line => line.StartsWith("sampleCount=", StringComparison.Ordinal));
@@ -61,20 +74,24 @@ public sealed class AndroidCompressedProofTests
             }
         }
 
+        public static (int ExitCode, string Output) Shell(string command) =>
+            Run("adb", "shell", command);
+
         public static (int ExitCode, string Output) Run(string file, params string[] args)
         {
-            using var process = new System.Diagnostics.Process
+            var start = new System.Diagnostics.ProcessStartInfo
             {
-                StartInfo = new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = file,
-                    Arguments = string.Join(' ', args.Select(a => a.Contains(' ') ? $"\"{a}\"" : a)),
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                },
+                FileName = file,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
             };
-            process.Start();
+            foreach (var arg in args)
+            {
+                start.ArgumentList.Add(arg);
+            }
+
+            using var process = System.Diagnostics.Process.Start(start)!;
             var output = process.StandardOutput.ReadToEnd() + process.StandardError.ReadToEnd();
             process.WaitForExit();
             return (process.ExitCode, output);

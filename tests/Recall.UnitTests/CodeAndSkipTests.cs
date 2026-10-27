@@ -47,6 +47,11 @@ public sealed class CodeAndSkipTests
         {
             yield break;
         }
+
+        public async IAsyncEnumerable<string> ListImagesAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            yield break;
+        }
     }
 
     [Fact]

@@ -565,6 +565,11 @@ public sealed class PhaseAddendumTests
         {
             yield break;
         }
+
+        public async IAsyncEnumerable<string> ListImagesAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            yield break;
+        }
     }
 
     private sealed class GrantScopedVectorIndex : ITextVectorIndex

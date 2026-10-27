@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Recall.Adapters.Indexing;
+using Recall.Core.Checkpoints;
 using Recall.Core.Download;
 using Recall.Core.Indexing;
 using Recall.Core.Ingest;
@@ -118,6 +119,18 @@ public sealed class Phase4VisionTests : IDisposable
         act.Should().Throw<InvalidOperationException>();
         runtime.Runtime.IsLoaded.Should().BeFalse();
         library.CloseVisionCalls.Should().Be(1);
+    }
+
+    [Fact]
+    public void Vision_SharedContext_DoesNotCloseAfterEmbed()
+    {
+        var directory = CreateModelDirectory();
+        var library = new LlamaEmbedTests.FakeRecallEmbedLibrary { OpenVisionCode = 8 };
+        using var runtime = new VisionRuntimeHarness(directory, library);
+        runtime.Runtime.EmbedJpeg(new byte[] { 1, 2, 3 }, new float[MediaCollections.Width]);
+        library.OpenVisionCalls.Should().Be(1);
+        library.CloseVisionCalls.Should().Be(0);
+        runtime.Runtime.IsLoaded.Should().BeTrue();
     }
 
     [Fact]
@@ -245,6 +258,51 @@ public sealed class Phase4VisionTests : IDisposable
         source.Should().Contain("IVideoFrameSamplerService");
         source.Should().Contain("MediaComposition");
         source.Should().Contain("Task.Run");
+    }
+
+    [Fact]
+    public void VideoFrameFailure_WindowsBuild_IsNeedWindows11Key()
+    {
+        var key = VideoFrameFailureLabels.StatusKey(
+            new NotSupportedException(FrameCadence.WindowsMinimumBuildMessage),
+            emptyFrames: false);
+        key.Should().Be(VideoFrameFailureLabels.NeedWindows11);
+    }
+
+    [Fact]
+    public void VideoFrameFailure_EmptyFrames_IsUnavailableKey()
+    {
+        VideoFrameFailureLabels.StatusKey(null, emptyFrames: true).Should().Be(VideoFrameFailureLabels.Unavailable);
+    }
+
+    [Fact]
+    public async Task VisionVideo_EmptyFrames_MarksUnavailable()
+    {
+        var path = Path.Combine(root, "clip.mp4");
+        await File.WriteAllBytesAsync(path, [1, 2, 3], TestContext.Current.CancellationToken);
+        var grant = new ScopeFolderGrant(root, "g", GrantFileKinds.Video);
+        var cursors = new FakeIngestCursorStore();
+        var sampler = new FakeVideoFrameSamplerService { Handler = _ => [] };
+        var vision = new VisionFileIngest(
+            new FakeVisionEmbeddingEncoder(),
+            new FakeMediaVectorIndex(),
+            new FakeEncoderFileHash(),
+            cursors,
+            sampler);
+        await vision.IndexVideoFramesAsync(grant, path, TestContext.Current.CancellationToken);
+        var row = cursors.GetFile(path);
+        row.Should().NotBeNull();
+        row.State.Should().Be(IngestCursorState.Missing);
+        row.MissingStatusKey.Should().Be(VideoFrameFailureLabels.Unavailable);
+    }
+
+    [Fact]
+    public void Strings_ContainFrameFailureCopy()
+    {
+        var en = File.ReadAllText(Path.Combine(RepoRoot(), "src", "Recall.UI", "Resources", "Strings.resx"), Encoding.UTF8);
+        en.Should().Contain("Frames_NeedWindows11");
+        en.Should().Contain("Frames_Unavailable");
+        en.Should().NotContain("FFmpeg");
     }
 
     [Fact]

@@ -110,6 +110,89 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
         return new IngestKindCount(kind, finished, seen);
     }
 
+    public IReadOnlyList<IngestKindCount> CountEnabled(GrantFileKinds enabled)
+    {
+        if (enabled == GrantFileKinds.None)
+        {
+            return [];
+        }
+
+        GrantFileKinds[] order =
+        [
+            GrantFileKinds.Text,
+            GrantFileKinds.Code,
+            GrantFileKinds.Image,
+            GrantFileKinds.Video,
+            GrantFileKinds.Audio,
+        ];
+        var list = new List<IngestKindCount>();
+        foreach (var kind in order)
+        {
+            if (enabled.HasFlag(kind))
+            {
+                list.Add(Count(kind));
+            }
+        }
+
+        return list;
+    }
+
+    public IReadOnlyList<string> ListUnfinishedPaths(string grantPath)
+    {
+        if (string.IsNullOrWhiteSpace(grantPath))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(grantPath));
+        }
+
+        return ListFiles(grantPath)
+            .Where(row => row.State is IngestCursorState.Reading or IngestCursorState.Missing)
+            .Select(row => row.Path)
+            .ToList();
+    }
+
+    public void AppendLiveChunk(string path, ChunkWrite chunk)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        if (string.IsNullOrWhiteSpace(chunk.ContentId))
+        {
+            throw new ArgumentException("Content id must not be blank.", nameof(chunk));
+        }
+
+        if (chunkRows.TryGetValue(chunk.ContentId, out var existing))
+        {
+            chunkRows[chunk.ContentId] = existing with
+            {
+                Path = path,
+                Ordinal = chunk.Ordinal,
+                Missing = false,
+                Retired = false,
+                PageStart = chunk.PageStart,
+                PageEnd = chunk.PageEnd,
+                CharStart = chunk.CharStart,
+                CharEnd = chunk.CharEnd,
+            };
+        }
+        else
+        {
+            chunkRows[chunk.ContentId] = new IngestChunkRow(
+                chunk.ContentId,
+                path,
+                chunk.Ordinal,
+                false,
+                false,
+                chunk.PageStart,
+                chunk.PageEnd,
+                chunk.CharStart,
+                chunk.CharEnd);
+        }
+
+        AddAlias(chunk.ContentId, path);
+    }
+
     public IReadOnlyList<IngestChunkRow> ListChunks(string path)
     {
         return chunkRows.Values
@@ -124,7 +207,7 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
 
     public void MarkReading(string path, string contentHash, string grantPath)
     {
-        files[path] = new IngestFileRow(path, contentHash, IngestCursorState.Reading, grantPath, string.Empty);
+        files[path] = new IngestFileRow(path, contentHash, IngestCursorState.Reading, grantPath, string.Empty, string.Empty);
     }
 
     public void MarkFinished(string path, string contentHash, string grantPath, string encoderHash)
@@ -151,15 +234,16 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
         }
     }
 
-    public void MarkMissing(string path)
+    public void MarkMissing(string path, string? missingStatusKey = null)
     {
+        var statusKey = missingStatusKey ?? string.Empty;
         if (files.TryGetValue(path, out var row))
         {
-            files[path] = row with { State = IngestCursorState.Missing };
+            files[path] = row with { State = IngestCursorState.Missing, MissingStatusKey = statusKey };
         }
         else
         {
-            files[path] = new IngestFileRow(path, string.Empty, IngestCursorState.Missing, string.Empty, string.Empty);
+            files[path] = new IngestFileRow(path, string.Empty, IngestCursorState.Missing, string.Empty, string.Empty, statusKey);
         }
 
         foreach (var id in chunkRows.Keys.ToList())
@@ -677,7 +761,11 @@ public sealed class FakeModelDownloadService : IModelDownloadService
 
     public TextModelDownloadSnapshot GetAudioDownloadSnapshot() => AudioSnapshot;
 
+    public TextModelDownloadSnapshot OcrSnapshot { get; set; } = new(TextModelDownloadPhase.NotStarted, 0, null);
+
     public int OcrDownloadCalls { get; private set; }
+
+    public TextModelDownloadSnapshot GetOcrDownloadSnapshot() => OcrSnapshot;
 
     public Task DownloadOcrModelsAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
     {
@@ -740,6 +828,10 @@ public sealed class FakeTextEmbeddingEncoder : ITextEmbeddingEncoder
 
 public sealed class FakeGrantedTextIngestService : IGrantedTextIngestService
 {
+    public IReadOnlyList<string> FailedPaths { get; } = [];
+
+    public bool PassRunning => false;
+
     public int IngestGrantCalls { get; private set; }
 
     public int IngestDocumentCalls { get; private set; }
@@ -865,6 +957,12 @@ public static class IngestTestKit
         return (engine, opLog, cursors);
     }
 
+    public static (TextIngestEngine Engine, LocalOpLogWriter OpLog, FakeIngestCursorStore Cursors) CreateEngine(
+        ITextEmbeddingEncoder encoder,
+        FakeTextVectorIndex index,
+        string? oplogDir = null) =>
+        CreateEngineParts(encoder, index, oplogDir);
+
     public static GrantedTextIngestService CreateGrantedService(
         IScopeManagerService scope,
         IGrantedTextReader reader,
@@ -873,8 +971,10 @@ public static class IngestTestKit
         FakeTextVectorIndex index,
         LocalOpLogWriter opLog,
         IEncoderFileHash? encoderFileHash = null,
-        IAudioFileIngest? audio = null) =>
-        new(scope, reader, engine, cursors, index, opLog, encoderFileHash ?? new FakeEncoderFileHash(), audio);
+        IAudioFileIngest? audio = null,
+        IVisionFileIngest? vision = null,
+        IModelDownloadService? downloads = null) =>
+        new(scope, reader, engine, cursors, index, opLog, encoderFileHash ?? new FakeEncoderFileHash(), audio, scheduler: null, vision: vision, downloads: downloads);
 
     public static TextSearchService CreateSearchService(
         FakeTextEmbeddingEncoder encoder,

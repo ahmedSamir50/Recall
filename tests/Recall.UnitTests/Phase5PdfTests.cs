@@ -157,9 +157,36 @@ public sealed class Phase5PdfTests
         };
         var split = DocumentPatchPlanner.SplitPdfPages(pages);
         split.OcrPageNumbers.Should().Equal(2);
+        split.ImageFastPathPages.Should().BeEmpty();
         split.EmbeddablePages.Should().HaveCount(2);
         split.JoinedDocument.Should().Be("intro\foutro");
         split.JoinedDocument.Should().NotContain("\uFFFD");
+    }
+
+    [Fact]
+    public void SplitPdfPages_BlankPage_QueuesOcrAndSkipsText()
+    {
+        var split = DocumentPatchPlanner.SplitPdfPages(
+        [
+            new PdfPageText(1, "hello"),
+            new PdfPageText(2, "   "),
+            new PdfPageText(3, string.Empty),
+        ]);
+        split.EmbeddablePages.Select(page => page.PageNumber).Should().Equal(1);
+        split.OcrPageNumbers.Should().Equal(2, 3);
+        split.ImageFastPathPages.Should().Equal(2, 3);
+        split.JoinedDocument.Should().Be("hello");
+    }
+
+    [Fact]
+    public void AppendLiveChunk_LeavesFileReading()
+    {
+        var cursors = new FakeIngestCursorStore();
+        cursors.MarkReading("a.pdf", "hash", "grant");
+        cursors.AppendLiveChunk("a.pdf", new ChunkWrite("id", 0, 1, 1, 0, 10));
+        cursors.GetFile("a.pdf")!.State.Should().Be(IngestCursorState.Reading);
+        cursors.ListChunks("a.pdf").Should().ContainSingle(chunk => chunk.PageEnd == 1 && !chunk.Missing && !chunk.Retired);
+        cursors.AnyLivePath("id").Should().BeTrue();
     }
 
     [Fact]

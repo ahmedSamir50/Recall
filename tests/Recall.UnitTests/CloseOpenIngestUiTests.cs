@@ -89,10 +89,10 @@ public sealed class CloseOpenIngestUiTests
     }
 
     [Fact]
-    public void HomeRazor_ShowsIngestHeading()
+    public void HomeRazor_HasNoIngestHeading()
     {
         var text = File.ReadAllText(Path.Combine(RepoRoot, "src", "Recall.UI", "Pages", "Find", "Home.razor"));
-        text.Should().Contain("Ingest_Heading");
+        text.Should().NotContain("Ingest_Heading");
     }
 
     [Fact]
@@ -123,7 +123,10 @@ public sealed class CloseOpenIngestUiTests
     public void AppShell_ShowsResourceStrip()
     {
         var shell = File.ReadAllText(Path.Combine(RepoRoot, "src", "Recall.UI", "Layout", "AppShell.razor"));
-        shell.Should().Contain("<ResourceStrip />");
+        var header = shell[shell.IndexOf("<header", StringComparison.Ordinal)..shell.IndexOf("</header>", StringComparison.Ordinal)];
+        header.Should().NotContain("<ResourceStrip />");
+        var nav = shell[shell.IndexOf("<nav", StringComparison.Ordinal)..shell.IndexOf("</nav>", StringComparison.Ordinal)];
+        nav.Should().Contain("<ResourceStrip />");
         var strip = File.ReadAllText(Path.Combine(RepoRoot, "src", "Recall.UI", "Layout", "ResourceStrip.razor"));
         strip.Should().Contain("Resources_Ram");
         strip.Should().Contain("Resources_Cpu");

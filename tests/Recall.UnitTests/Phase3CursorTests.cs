@@ -391,6 +391,11 @@ public sealed class Phase3CursorTests
         {
             yield break;
         }
+
+        public async IAsyncEnumerable<string> ListImagesAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            yield break;
+        }
     }
 
     private static (ScopeGrantService Scope, CountingReader Reader, FakeTextEmbeddingEncoder Encoder, FakeTextVectorIndex Index, FakeIngestCursorStore Cursors, GrantedTextIngestService Service, string OplogDir) CreateIngest(string grantPath, GrantFileKinds kinds)

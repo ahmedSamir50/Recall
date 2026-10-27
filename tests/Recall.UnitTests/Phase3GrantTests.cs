@@ -172,12 +172,33 @@ public sealed class Phase3GrantTests
     }
 
     [Fact]
-    public void HomeRazor_IndexNow_UsesBothLanguagesAndLtrPath()
+    public void HomeRazor_HasNoIngestBlock()
     {
         var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "Recall.UI", "Pages", "Find", "Home.razor"));
-        razor.Should().Contain("Home_IndexNow");
-        razor.Should().Contain("Home_IndexNowLead");
-        razor.Should().Contain("bdi class=\"ltr\"");
+        razor.Should().NotContain("Ingest_Heading");
+        razor.Should().NotContain("Home_IndexNow");
+    }
+
+    [Fact]
+    public void HomeRazor_PictureIconInsideFind()
+    {
+        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "Recall.UI", "Pages", "Find", "Home.razor"));
+        var start = razor.IndexOf("role=\"search\"", StringComparison.Ordinal);
+        start.Should().BeGreaterThan(0);
+        var end = razor.IndexOf("</div>", start, StringComparison.Ordinal);
+        end.Should().BeGreaterThan(start);
+        var block = razor[start..end];
+        block.Should().Contain("picture-input");
+        block.Should().Contain("audio-input");
+    }
+
+    [Fact]
+    public void HomeRazor_PinKeep_OnFindCard()
+    {
+        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "Recall.UI", "Pages", "Find", "Home.razor"));
+        razor.Should().Contain("Pin_Keep");
+        razor.Should().Contain("card.ShowPin");
+        razor.Should().Contain("PinKeep(card)");
     }
 
     [Fact]
@@ -272,6 +293,11 @@ public sealed class Phase3GrantTests
         }
 
         public async IAsyncEnumerable<string> ListAudioAndVideoAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            yield break;
+        }
+
+        public async IAsyncEnumerable<string> ListImagesAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
         {
             yield break;
         }

@@ -756,10 +756,19 @@ public sealed class Phase3WatchTests
         {
             yield break;
         }
+
+        public async IAsyncEnumerable<string> ListImagesAsync(ScopeFolderGrant grant, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            yield break;
+        }
     }
 
     private sealed class ThrowFirstIngestService : IGrantedTextIngestService
     {
+        public IReadOnlyList<string> FailedPaths { get; } = [];
+
+        public bool PassRunning => false;
+
         public List<string> Succeeded { get; } = [];
 
         public Task IngestGrantedTextAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
