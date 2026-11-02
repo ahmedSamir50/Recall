@@ -10,13 +10,16 @@
             <span class="f-head font-semibold text-15">@RecallText.Get("Brand", Snapshot.Culture)</span>
         </div>
         <div class="flex-1"></div>
-        <ResourceStrip />
         <span class="hidden md:inline-flex"><PrivacyPill /></span>
         <ThemeLanguageToggles />
         <span class="w-8 h-8 rounded-full grid place-items-center text-12 font-semibold" style="background:var(--violet-bg);color:var(--violet)" aria-hidden="true">@Initials</span>
     </header>
+    <div class="g1 meter-strip shrink-0 border-b bd px-3 py-2 lg:hidden min-w-0">
+        <ResourceStrip Compact="true" />
+        <IngestMissingSidebar Compact="true" />
+    </div>
     <div class="flex flex-1 min-h-0">
-        <nav class="g1 hidden md:flex flex-col w-rail lg:w-railx shrink-0 border-e bd p-2 gap-1" aria-label="Main">
+        <nav class="g1 hidden md:flex flex-col w-rail lg:w-railx shrink-0 border-e bd p-2 gap-1 min-h-0 overflow-y-auto" aria-label="Main">
             <div class="hidden lg:flex items-center gap-2 px-3 py-2 mb-2 rounded-xl border bd text-13 font-medium">
                 <span class="w-2 h-2 rounded-full" style="background:var(--emerald)"></span>@RecallText.Get("Vault_Label", Snapshot.Culture)
             </div>
@@ -25,13 +28,21 @@
             <ShellNavLink Href="/folders" LabelKey="Nav_Folders" Icon="folder" />
             <ShellNavLink Href="/models" LabelKey="Nav_Models" Icon="chip" />
             <ShellNavLink Href="/preferences" LabelKey="Nav_Preferences" Icon="gear" />
+            <div class="hidden lg:flex flex-col gap-2 min-w-0">
+                <div class="p-2 rounded-xl border bd min-w-0">
+                    <ResourceStrip />
+                </div>
+                <IngestMissingSidebar />
+            </div>
             <div class="flex-1"></div>
             <div class="hidden lg:block p-3 rounded-xl border bd text-12">
                 <div class="flex justify-between mb-2">
                     <span class="lbl">@RecallText.Get("OnDevice_Label", Snapshot.Culture)</span>
-                    <span class="f-mono em text-11">@RecallText.Get("Status_Ready", Snapshot.Culture)</span>
+                    @if (ShellStatusKey is { } railStatusKey)
+                    {
+                        <span class="f-mono em text-11">@RecallText.Get(railStatusKey, Snapshot.Culture)</span>
+                    }
                 </div>
-                <div class="h-1 rounded-full mb-2" style="background:linear-gradient(90deg,var(--cyan-ink),var(--violet))"></div>
                 <bdi class="ltr f-mono ink3 text-11">@RecallText.Get("OnDevice_ModelsLine", Snapshot.Culture)</bdi>
             </div>
         </nav>
@@ -42,10 +53,12 @@
             <span class="w-1.5 h-1.5 rounded-full" style="background:var(--emerald)"></span>
             @RecallText.Get("Status_ItemsNone", Snapshot.Culture)
         </span>
-        <span class="am">@RecallText.Get("Status_IndexingPaused", Snapshot.Culture)</span>
         <span class="flex-1"></span>
         <bdi class="ltr">@RecallText.Get("OnDevice_ModelsLine", Snapshot.Culture)</bdi>
-        <span class="em">@RecallText.Get("Status_Ready", Snapshot.Culture)</span>
+        @if (ShellStatusKey is { } footerStatusKey)
+        {
+            <span class="em">@RecallText.Get(footerStatusKey, Snapshot.Culture)</span>
+        }
     </footer>
     <nav class="g1 md:hidden fixed bottom-0 inset-x-0 z-20 border-t bd grid grid-cols-4 pb-safe">
         <ShellTabLink Href="/" LabelKey="Nav_Search" Icon="search" />

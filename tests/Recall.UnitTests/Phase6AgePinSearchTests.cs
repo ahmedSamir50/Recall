@@ -425,7 +425,7 @@ public sealed class Phase6AgePinSearchTests
         move.TryMovePath(path, Modality.Image, utcNow).Should().BeFalse();
         index.TryRead(LongId(Modality.Image, SampleHash, 0), out _).Should().BeFalse();
         cursors.FindMediaFile(path, Modality.Image)!.Width.Should().Be(MediaCollections.OldWidth);
-        var ingest = new VisionFileIngest(new FakeVisionEmbeddingEncoder(), index, hashes, cursors, ageMove: move);
+        var ingest = new VisionFileIngest(new FakeVisionEmbeddingEncoder(), index, hashes, cursors, TestIngest.Memory(), ageMove: move);
         var grant = new ScopeFolderGrant(@"C:\G", "G", GrantFileKinds.Image);
         await ingest.IndexImageAsync(grant, path, TestContext.Current.CancellationToken);
         index.TryRead(LongId(Modality.Image, SampleHash, 0), out _).Should().BeFalse();
@@ -577,7 +577,7 @@ public sealed class Phase6AgePinSearchTests
             cursors.FinishPath(path, contentHash, Path.GetDirectoryName(path) ?? path, "vis", [new ChunkWrite(longId, 0)]);
             InsertLong(index, MediaCollections.Image, longId, path, 0);
             cursors.FindMediaFile(path, Modality.Image).Should().BeNull();
-            var ingest = new VisionFileIngest(new FakeVisionEmbeddingEncoder(), index, hashes, cursors);
+            var ingest = new VisionFileIngest(new FakeVisionEmbeddingEncoder(), index, hashes, cursors, TestIngest.Memory());
             var grant = new ScopeFolderGrant(Path.GetDirectoryName(path) ?? path, "G", GrantFileKinds.Image);
             await ingest.IndexImageAsync(grant, path, TestContext.Current.CancellationToken);
             cursors.FindMediaFile(path, Modality.Image).Should().NotBeNull();

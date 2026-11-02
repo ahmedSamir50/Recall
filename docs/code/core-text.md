@@ -18,6 +18,12 @@ public sealed class TextIngestEngine
             if (!NumericSpanPolicy.IsDense(patch.Raw, codeFile))
             if (cursors.AnyLivePath(contentId))
             if (index.TryInsert(insert))
+        if (plan.Truncated)
+        if (stop == IngestStopReason.MemoryBudget)
+        if (memory.Pressure == MemoryPressure.Hard)
+        if (!gate.IsOpen())
+        if (pending.Count >= IngestBatchChunkCount)
+        if (pending.Count == 0)
 ```
 
 `IngestOcrPagesAsync` joins OCR page text, runs `DocumentPatchPlanner.Plan`, inserts chunks with the page span, then clears `ListOcrPages` for that path. It does not call PdfPig. One tokenize per document. For a `.pdf` path the engine reads with `PdfPigPageSource`, runs `SplitPdfPages`, and passes `EmbeddablePages` into `DocumentPatchPlanner` so `page_start` and `page_end` are set. `OcrPageNumbers` on the result are written through `OcrPageWaitlist`. For other paths the joined document is the raw text and page spans stay zero. The engine counts the title prefix once, asks the token counter for the document's token ends once, and lets `DocumentPatchPlanner` place the cuts. Every patch keeps the title prefix through `EmbeddingTaskPrefixes.WrapTitledDocument` and carries its page and char spans into the chunk rows. A patch that is not dense keeps its row without a vector.
@@ -42,19 +48,22 @@ namespace Recall.Core.Text;
 public readonly record struct PdfPageText(int PageNumber, string Text);
 public readonly record struct PdfPatch(string Raw, int Ordinal, int PageStart, int PageEnd, int CharStart, int CharEnd);
 public readonly record struct PdfPageSplit(string JoinedDocument, IReadOnlyList<PdfPageText> EmbeddablePages, IReadOnlyList<int> OcrPageNumbers);
+public readonly record struct PatchPlan(IReadOnlyList<PdfPatch> Patches, bool Truncated);
 public static class DocumentPatchPlanner
+    public const int MaxPatchesPerDocument = 512;
     public const int PatchTargetTokens = 2048;
     public const int LookbackTokens = 512;
     public const int OverlapTokens = 256;
     public const int MaxOverlapTokens = 384;
     public const int HardCapTokens = 7680;
+    public const int ContextGuardTokens = 32;
     public static bool EndsPatch(int prefixedTokenCount)
     public static int OpenPage(int? page)
     public static bool IsOcrPage(string pageText)
     public static PdfPageSplit SplitPdfPages(IReadOnlyList<PdfPageText> pages)
         if (IsOcrPage(page.Text))
         if (embeddable.Count == 0)
-    public static IReadOnlyList<PdfPatch> Plan(string title, string joinedDocument, IReadOnlyList<PdfPageText>? pages, int prefixTokenCount, IReadOnlyList<int>? tokenEnds)
+    public static PatchPlan Plan(string title, string joinedDocument, IReadOnlyList<PdfPageText>? pages, int prefixTokenCount, IReadOnlyList<int>? tokenEnds)
         if (endCount == 0 || startToken + aim >= endCount)
         if (boundary < 0)
         if (cls > bestClass)
@@ -80,6 +89,10 @@ public static class DocumentPatchPlanner
         if (token > bestToken)
         if (index + 1 >= document.Length || !IsSentenceBoundary(document, index + 1))
         if (pages is null || pages.Count == 0)
+        if (patches.Count == MaxPatchesPerDocument)
+        if (cutChar <= startChar)
+        if (cutChar >= documentLength)
+        if (token < low)
 ```
 
 One planner covers notes and PDFs. The target is 2048 body tokens, the lookback is 512, and 7680 is only the ceiling. From the aim, the planner searches back to token `2048 - 512`, takes the latest boundary of the highest class, and snaps to the nearest token end at or before it. Classes, highest first: a paragraph break `\n\n`, a `\f` page break, a heading line of one to six `#` and a space, a sentence end `.`, `!`, `?`, `؟`, or `…` followed by whitespace when the word is not `e.g.`, `i.e.`, `etc.`, `vs.`, `Dr.`, `Mr.`, or `No.` and the next non-space is an ASCII capital or an Arabic letter, a line break `\n`, `؛`, `،`, and any whitespace. `3.5` is not an end. The next patch starts at a sentence start 256 to 384 tokens back, closest to 256; without one it starts at the cut. Only when one paragraph runs past 7680 does the planner cut that paragraph at a sentence end, then whitespace, still on a token end. A blank document throws `ArgumentException`, null token ends throw `ArgumentNullException`, and a negative prefix count throws `ArgumentOutOfRangeException`. A page whose words trip `BrokenArabic.NeedsOcr` is not patched. `SplitPdfPages` joins the remaining pages with `\f`, records their numbers in `OcrPageNumbers`, and leaves a `NeedsOcr` page out of the join with no extra form feed.
@@ -234,6 +247,11 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
     public GrantedTextIngestService(IScopeManagerService scope, IGrantedTextReader reader, TextIngestEngine engine)
     public async Task IngestGrantedTextAsync(CancellationToken cancellationToken = default)
             if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Text) && !grant.EnabledKinds.HasFlag(GrantFileKinds.Code))
+        if (!ObserveGate())
+        if (!ObserveGate())
+        if (result.Stop == IngestStopReason.MemoryBudget)
+        if (memory.Verdict == DeviceVerdict.BelowMinimum)
+        if (!string.IsNullOrEmpty(row.MissingStatusKey))
 ```
 
 
@@ -316,6 +334,7 @@ public sealed class DirectoryGrantedTextReader : IGrantedTextReader
         if (string.IsNullOrEmpty(relativeDir) || relativeDir == ".")
         if (!MediaFileKinds.IsAudio(name) && !MediaFileKinds.IsVideo(name))
         if (gitIgnored)
+        if (new FileInfo(entry).Length > LocalContentPolicy.MaxTextFileBytes)
 ```
 
 
@@ -373,6 +392,13 @@ public ForegroundScanService(
 public async Task ScanAsync(CancellationToken cancellationToken = default)
     if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Text) && !grant.EnabledKinds.HasFlag(GrantFileKinds.Code))
     if (change.Kind == ScopeChangeKind.Created || change.Kind == ScopeChangeKind.Modified || change.Kind == ScopeChangeKind.Renamed)
+        if (!ObserveGate())
+        if (changes.Count == 0)
+        if (change.Kind != ScopeChangeKind.Deleted)
+        if (wanted.Count > 0)
+        if (wanted.Contains(document.Path))
+        if (!ObserveGate())
+        if (memory.Verdict == DeviceVerdict.BelowMinimum)
 ``` 
 
 
@@ -1042,6 +1068,8 @@ public sealed class VisionFileIngest
     if (inserted)
     if (inserted || index.TryRead(insert.ContentId, out _))
     if (storedLong)
+        if (!memory.MayLoadFile(new FileInfo(path).Length, MemoryBudgetPolicy.ImageExpansion))
+        if (!memory.MayLoadFile(new FileInfo(path).Length, MemoryBudgetPolicy.VideoExpansion))
 ```
 
 An image is embedded as one picture row after the image grant flag allows the file. Video frames are sampled every two seconds and stored after `FinishPath`. A missing sampler, a missing file, or a grant without the video flag writes no frame row.
@@ -1062,6 +1090,7 @@ public enum IngestChromeStatus
 public static class IngestChromePolicy
 if (passRunning
 if (unfinished)
+        if (verdict == DeviceVerdict.BelowMinimum)
 ```
 
 ## src/Recall.Core/Ingest/IngestKindCount.cs
@@ -1101,6 +1130,8 @@ if (FileAdmission.IsCodeFile(fileName))
 public sealed class IngestStatusService
 public readonly record struct IngestMissingNote
 if (row.State == IngestCursorState.Missing && !string.IsNullOrEmpty(row.MissingStatusKey))
+        if (string.IsNullOrEmpty(row.MissingStatusKey))
+        if (row.State is IngestCursorState.Missing or IngestCursorState.Finished)
 ```
 
 ## src/Recall.Core/Ingest/IPdfPageRenderer.cs
@@ -1118,3 +1149,21 @@ if (emptyFrames)
 ```
 
 
+
+## src/Recall.Core/Text/IngestStopReason.cs
+
+```csharp
+namespace Recall.Core.Text;
+public enum IngestStopReason
+```
+
+`IngestStopReason` is how a patch run says it did not finish. `None` means every planned patch was stored. `MemoryBudget` means the memory gate closed at a patch boundary, the file stays `Reading`, and the next pass resumes over the stored chunks. `PatchCap` means the planner reached `MaxPatchesPerDocument`, the file finishes normally, and the tail is not processed; the reason is internal and has no user-facing sentence.
+
+## src/Recall.Core/Ingest/IngestStopKeys.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public static class IngestStopKeys
+```
+
+`IngestStopKeys` is the single home of the three status keys a stopped file can carry. `MemoryBudget` marks a file that paused and can resume; it is a cursor marker, not a sentence. `FileTooLarge` describes a whole-file guard that refused to load bytes. `DeviceTooSmall` is the blocked state of a device whose floor is above half its capacity. The strings are resx names, so a sentence lives in `Strings.resx` and `Strings.ar.resx` and never in this class.

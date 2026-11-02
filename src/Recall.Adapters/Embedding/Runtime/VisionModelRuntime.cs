@@ -11,6 +11,7 @@ public sealed class VisionModelRuntime : IVisionEmbeddingEncoder, IDisposable
     private readonly IRecallEmbedLibrary library;
     private readonly TextModelRuntime? textRuntime;
     private bool opened;
+    private bool ownsVisionContext;
     private int disposed;
 
     public VisionModelRuntime(
@@ -64,10 +65,11 @@ public sealed class VisionModelRuntime : IVisionEmbeddingEncoder, IDisposable
         }
         finally
         {
-            if (openedHere && opened)
+            if (openedHere && ownsVisionContext)
             {
                 library.CloseVision();
                 opened = false;
+                ownsVisionContext = false;
                 IsLoaded = false;
             }
 
@@ -100,13 +102,7 @@ public sealed class VisionModelRuntime : IVisionEmbeddingEncoder, IDisposable
         LlamaNativeGate.Enter();
         try
         {
-            if (opened)
-            {
-                library.CloseVision();
-                opened = false;
-            }
-
-            IsLoaded = false;
+            ReleaseVisionContext();
         }
         finally
         {
@@ -125,13 +121,7 @@ public sealed class VisionModelRuntime : IVisionEmbeddingEncoder, IDisposable
         LlamaNativeGate.Enter();
         try
         {
-            if (opened)
-            {
-                library.CloseVision();
-                opened = false;
-            }
-
-            IsLoaded = false;
+            ReleaseVisionContext();
         }
         finally
         {
@@ -144,11 +134,31 @@ public sealed class VisionModelRuntime : IVisionEmbeddingEncoder, IDisposable
         textRuntime?.GetEncoder();
         var modelPath = Path.Combine(modelDirectory, options.ModelFileName);
         var code = library.OpenVision(modelPath);
-        if (code != 0)
+        if (code == 0)
         {
-            throw new InvalidOperationException($"recall_embed vision open failed with code {code}.");
+            ownsVisionContext = true;
+            opened = true;
+            return;
         }
 
-        opened = true;
+        if (code == 8)
+        {
+            opened = true;
+            return;
+        }
+
+        throw new InvalidOperationException($"recall_embed vision open failed with code {code}.");
+    }
+
+    private void ReleaseVisionContext()
+    {
+        if (ownsVisionContext)
+        {
+            library.CloseVision();
+        }
+
+        opened = false;
+        ownsVisionContext = false;
+        IsLoaded = false;
     }
 }

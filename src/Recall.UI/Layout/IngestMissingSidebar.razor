@@ -1,0 +1,14 @@
+@inherits RecallComponentBase
+
+@if (notes.Count > 0)
+{
+    <div class="@ListClass">
+        @foreach (var note in notes)
+        {
+            <div class="ink2 mb-2 break-all">
+                <bdi class="ltr">@note.Path</bdi>
+                <span class="block mt-1">@T(note.StatusKey)</span>
+            </div>
+        }
+    </div>
+}

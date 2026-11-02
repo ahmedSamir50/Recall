@@ -14,7 +14,7 @@
   <data name="Privacy_Egress" xml:space="preserve"><value>0 KB sent</value></data>
   <data name="Onboard_Kicker" xml:space="preserve"><value>Private memory engine · v1</value></data>
   <data name="Onboard_Headline" xml:space="preserve"><value>Everything you saw, said and wrote — found in a sentence.</value></data>
-  <data name="Onboard_Lead" xml:space="preserve"><value>Recall indexes the folders you choose. Photos, voice notes, documents and code stay on this device. Nothing is uploaded.</value></data>
+  <data name="Onboard_Lead" xml:space="preserve"><value>Recall processes the folders you choose. Photos, voice notes, documents and code stay on this device. Nothing is uploaded.</value></data>
   <data name="Onboard_ChooseFolders" xml:space="preserve"><value>Choose folders</value></data>
   <data name="Onboard_PrivacyLink" xml:space="preserve"><value>How it stays private</value></data>
   <data name="Onboard_Fact1" xml:space="preserve"><value>No account</value></data>
@@ -26,16 +26,16 @@
   <data name="Btn_Back" xml:space="preserve"><value>Back</value></data>
   <data name="Btn_Continue" xml:space="preserve"><value>Continue</value></data>
   <data name="Folders_Title" xml:space="preserve"><value>Pick what Recall may read</value></data>
-  <data name="Folders_Lead" xml:space="preserve"><value>Only these folders are indexed. You can add or remove them later in Preferences.</value></data>
+  <data name="Folders_Lead" xml:space="preserve"><value>Only these folders are processed. You can add or remove them later in Preferences.</value></data>
   <data name="Folders_Add" xml:space="preserve"><value>Add folder</value></data>
   <data name="Folders_Remove" xml:space="preserve"><value>Remove folder</value></data>
   <data name="Folders_SkipNote" xml:space="preserve"><value>Skipped: system folders, other apps, anything you don't pick.</value></data>
   <data name="Folders_PickOne" xml:space="preserve"><value>Pick at least one folder</value></data>
   <data name="Folders_PermissionDenied" xml:space="preserve"><value>Recall can't read this folder</value></data>
   <data name="Folders_IosNote" xml:space="preserve"><value>New files are picked up when Recall is opened.</value></data>
-  <data name="Folders_OverlapWarning" xml:space="preserve"><value>Recall keeps the parent folder. The folder inside it is not indexed again.</value></data>
-  <data name="Home_IndexNow" xml:space="preserve"><value>Index now</value></data>
-  <data name="Home_IndexNowLead" xml:space="preserve"><value>This folder is allowed and not indexed yet.</value></data>
+  <data name="Folders_OverlapWarning" xml:space="preserve"><value>Recall keeps the parent folder. The folder inside it is not processed again.</value></data>
+  <data name="Home_IndexNow" xml:space="preserve"><value>Process now</value></data>
+  <data name="Home_IndexNowLead" xml:space="preserve"><value>This folder is allowed and not processed yet.</value></data>
   <data name="Folders_TypesLabel" xml:space="preserve"><value>File types to include</value></data>
   <data name="Folders_TypeText" xml:space="preserve"><value>Text</value></data>
   <data name="Folders_TypeImage" xml:space="preserve"><value>Images</value></data>
@@ -48,7 +48,7 @@
   <data name="Skips_Secrets" xml:space="preserve"><value>Secrets and databases</value></data>
   <data name="Skips_Add" xml:space="preserve"><value>Add another</value></data>
   <data name="Skips_Note" xml:space="preserve"><value>Recall never opens these, even inside a folder you granted.</value></data>
-  <data name="Skips_CodeIndexed" xml:space="preserve"><value>Indexed when Code is on.</value></data>
+  <data name="Skips_CodeIndexed" xml:space="preserve"><value>Processed when Code is on.</value></data>
   <data name="Skips_Empty" xml:space="preserve"><value>Type a name first.</value></data>
   <data name="Skips_Duplicate" xml:space="preserve"><value>That row is already listed.</value></data>
   <data name="Skips_BuiltIn" xml:space="preserve"><value>That row is built in and stays.</value></data>
@@ -62,12 +62,20 @@
   <data name="Resources_Cpu" xml:space="preserve"><value>CPU</value></data>
   <data name="Resources_Gpu" xml:space="preserve"><value>GPU</value></data>
   <data name="Resources_GpuAbsent" xml:space="preserve"><value>No GPU</value></data>
-  <data name="Ingest_Heading" xml:space="preserve"><value>Ingested files</value></data>
+  <data name="Resources_Mb" xml:space="preserve"><value>MB</value></data>
+  <data name="Ingest_Running" xml:space="preserve"><value>Processing</value></data>
+  <data name="Ingest_Done" xml:space="preserve"><value>Processing is up to date</value></data>
+  <data name="Ingest_Stopped" xml:space="preserve"><value>Processing stopped. Retry</value></data>
+  <data name="Models_Helpers" xml:space="preserve"><value>Extra helper models</value></data>
+  <data name="Search_ClearFile" xml:space="preserve"><value>Remove</value></data>
+  <data name="Ingest_Heading" xml:space="preserve"><value>Processed files</value></data>
   <data name="Ingest_Text" xml:space="preserve"><value>Text</value></data>
   <data name="Ingest_Code" xml:space="preserve"><value>Code</value></data>
   <data name="Ingest_Image" xml:space="preserve"><value>Images</value></data>
   <data name="Ingest_Video" xml:space="preserve"><value>Video</value></data>
   <data name="Ingest_Audio" xml:space="preserve"><value>Audio</value></data>
+  <data name="Frames_NeedWindows11" xml:space="preserve"><value>Video frames need Windows 11.</value></data>
+  <data name="Frames_Unavailable" xml:space="preserve"><value>This video has no frames Recall can read.</value></data>
   <data name="Models_Title" xml:space="preserve"><value>Download the on-device models</value></data>
   <data name="Models_Lead" xml:space="preserve"><value>A one-time download of the on-device AI. After this, search works without internet.</value></data>
   <data name="Models_ShaNote" xml:space="preserve"><value>Each downloaded file is verified before use. Damaged or incomplete files are discarded and downloaded again.</value></data>
@@ -126,9 +134,9 @@
   <data name="Vault_Label" xml:space="preserve"><value>Personal vault</value></data>
   <data name="OnDevice_Label" xml:space="preserve"><value>On-device</value></data>
   <data name="OnDevice_ModelsLine" xml:space="preserve"><value>EmbeddingGemma · text · vision · audio</value></data>
-  <data name="Status_ItemsNone" xml:space="preserve"><value>No items indexed yet</value></data>
+  <data name="Status_ItemsNone" xml:space="preserve"><value>No items processed yet</value></data>
   <data name="Status_ItemsSuffix" xml:space="preserve"><value>items</value></data>
-  <data name="Status_IndexingPaused" xml:space="preserve"><value>Indexing paused while on battery</value></data>
+  <data name="Status_IndexingPaused" xml:space="preserve"><value>Processing paused while on battery</value></data>
   <data name="Home_QueryDemo" xml:space="preserve"><value>The red scooter I saw near the Colosseum last summer</value></data>
   <data name="Home_LatencyDemo" xml:space="preserve"><value>38 ms</value></data>
   <data name="Home_ContextLabel" xml:space="preserve"><value>Understood as</value></data>
@@ -166,6 +174,7 @@
   <data name="Home_Why2" xml:space="preserve"><value>Place: within 200 m</value></data>
   <data name="Home_Why3" xml:space="preserve"><value>Voice memo on same day</value></data>
   <data name="Home_OpenFile" xml:space="preserve"><value>Open file</value></data>
+  <data name="Pin_Keep" xml:space="preserve"><value>Keep this easy to find</value></data>
   <data name="Home_ShowFolder" xml:space="preserve"><value>Show in folder</value></data>
   <data name="Home_StoredLocally" xml:space="preserve"><value>Stored locally · never uploaded</value></data>
   <data name="Home_FileLabel" xml:space="preserve"><value>File</value></data>
@@ -190,9 +199,9 @@
   <data name="Landing_Fact3Val" xml:space="preserve"><value>4</value></data>
   <data name="Landing_Fact3Lbl" xml:space="preserve"><value>kinds: photo · voice · docs · code</value></data>
   <data name="Landing_PrivacyHead" xml:space="preserve"><value>Built for privacy first</value></data>
-  <data name="Landing_PrivacyLead" xml:space="preserve"><value>No account. No cloud index. No telemetry. Every step below happens on your device.</value></data>
+  <data name="Landing_PrivacyLead" xml:space="preserve"><value>No account. No cloud processing. No telemetry. Every step below happens on your device.</value></data>
   <data name="Landing_Card1Title" xml:space="preserve"><value>Local only</value></data>
-  <data name="Landing_Card1Body" xml:space="preserve"><value>Your files are read in place from folders you pick. The index lives in an encrypted local database.</value></data>
+  <data name="Landing_Card1Body" xml:space="preserve"><value>Your files are read in place from folders you pick. What Recall keeps lives in an encrypted local database.</value></data>
   <data name="Landing_Card2Title" xml:space="preserve"><value>One search, every kind</value></data>
   <data name="Landing_Card2Body" xml:space="preserve"><value>Photos, voice memos, PDFs and code are understood by meaning — so “red scooter” finds all of them.</value></data>
   <data name="Landing_Card3Title" xml:space="preserve"><value>Verified models</value></data>
@@ -201,7 +210,7 @@
   <data name="Landing_Card4Body" xml:space="preserve"><value>Voice-memo search runs on desktop in v1. Device sync isn’t in this version.</value></data>
   <data name="Landing_StepsHead" xml:space="preserve"><value>Three steps, then it’s quiet</value></data>
   <data name="Landing_Step1Title" xml:space="preserve"><value>Choose folders</value></data>
-  <data name="Landing_Step1Body" xml:space="preserve"><value>Only what you pick is indexed.</value></data>
+  <data name="Landing_Step1Body" xml:space="preserve"><value>Only what you pick is processed.</value></data>
   <data name="Landing_Step2Title" xml:space="preserve"><value>Download models</value></data>
   <data name="Landing_Step2Body" xml:space="preserve"><value>One-time download (~2.2 GB). Checked automatically.</value></data>
   <data name="Landing_Step3Title" xml:space="preserve"><value>Ask</value></data>
@@ -237,4 +246,7 @@
   <data name="Search_AudioWaiting" xml:space="preserve"><value>The audio model is still downloading.</value></data>
   <data name="Search_AudioFailed" xml:space="preserve"><value>The audio model did not download.</value></data>
   <data name="Search_AudioOff" xml:space="preserve"><value>Audio files are off for this folder.</value></data>
+  <data name="Ingest_StoppedMemoryBudget" xml:space="preserve"><value>Processing paused for this file to keep this device responsive. It resumes when there is room.</value></data>
+  <data name="Ingest_SkippedTooLarge" xml:space="preserve"><value>This file is too large to process on this device.</value></data>
+  <data name="Ingest_DeviceTooSmall" xml:space="preserve"><value>This device does not have enough memory for on-device search. Nothing was processed.</value></data>
 </root>

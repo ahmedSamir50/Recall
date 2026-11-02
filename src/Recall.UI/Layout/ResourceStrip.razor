@@ -1,7 +1,62 @@
 @inherits RecallComponentBase
+@using Recall.Core.Download
+@using Recall.Core.Ingest
+@using Recall.Core.Ports
 
-<span class="f-mono text-11 ink2 flex flex-wrap items-center gap-x-3 gap-y-1">
-    <span class="ltr"><bdi class="ltr">@T("Resources_Ram") @ramMb</bdi></span>
-    <span class="ltr"><bdi class="ltr">@T("Resources_Cpu") @cpuPercent</bdi></span>
-    <span class="ltr"><bdi class="ltr">@T("Resources_Gpu") @(gpuPercent is null ? T("Resources_GpuAbsent") : gpuPercent)</bdi></span>
-</span>
+<div class="flex flex-col min-w-0 text-11 ink2 @(Compact ? "gap-1" : "gap-2")">
+    <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <div class="flex flex-col">
+            <span class="lbl">@T("Resources_Ram")</span>
+            <bdi class="ltr f-mono">@ramDisplay</bdi>
+        </div>
+        <div class="flex flex-col">
+            <span class="lbl">@T("Resources_Cpu")</span>
+            <bdi class="ltr f-mono">@cpuDisplay</bdi>
+        </div>
+        @if (gpuDisplay is not null)
+        {
+            <div class="flex flex-col">
+                <span class="lbl">@T("Resources_Gpu")</span>
+                <bdi class="ltr f-mono">@gpuDisplay</bdi>
+            </div>
+        }
+    </div>
+    <div class="@(Compact ? "flex flex-wrap gap-x-3 gap-y-1" : "flex flex-col gap-1")">
+        @foreach (var row in ingestRows)
+        {
+            <div class="min-w-0">
+                <span>@T(IngestKindLabels.Key(row.Kind))</span>
+                <bdi class="ltr"> @CountText(row) @PercentText(row)</bdi>
+            </div>
+        }
+    </div>
+    @if (chromeStatus == IngestChromeStatus.Blocked)
+    {
+        <div>@T("Ingest_DeviceTooSmall")</div>
+    }
+    else if (chromeStatus == IngestChromeStatus.Running)
+    {
+        <div>@T("Ingest_Running")</div>
+    }
+    else if (chromeStatus == IngestChromeStatus.Stopped)
+    {
+        @if (Compact)
+        {
+            <button type="button" class="btn btn-g text-11 text-start meter-retry" @onclick="RetryIngestAsync">@T("Ingest_Stopped")</button>
+        }
+        <div class="@PathListClass">
+            @foreach (var path in unfinishedPaths)
+            {
+                <div class="mb-1 break-all"><bdi class="ltr">@path</bdi></div>
+            }
+        </div>
+        @if (!Compact)
+        {
+            <button type="button" class="btn btn-g text-11 mt-1 text-start meter-retry" @onclick="RetryIngestAsync">@T("Ingest_Stopped")</button>
+        }
+    }
+    else
+    {
+        <div>@T("Ingest_Done")</div>
+    }
+</div>

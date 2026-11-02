@@ -74,7 +74,7 @@ public sealed class CloseOpenIngestUiTests
     public void List_TextAndImage_OmitsAudio()
     {
         var store = new FakeIngestCursorStore();
-        var service = new IngestStatusService(store);
+        var service = new IngestStatusService(store, TestIngest.Memory());
         var list = service.List(GrantFileKinds.Text | GrantFileKinds.Image);
         list.Should().HaveCount(2);
         list[0].Kind.Should().Be(GrantFileKinds.Text);
@@ -84,7 +84,7 @@ public sealed class CloseOpenIngestUiTests
     [Fact]
     public void List_None_IsEmpty()
     {
-        var service = new IngestStatusService(new FakeIngestCursorStore());
+        var service = new IngestStatusService(new FakeIngestCursorStore(), TestIngest.Memory());
         service.List(GrantFileKinds.None).Should().BeEmpty();
     }
 

@@ -131,6 +131,7 @@ namespace Recall.UI.Layout;
 public partial class AppShell
             catch (DeviceIdNotReadyException)
         if (!firstRender)
+        if (disposing)
 ```
 
 
@@ -383,6 +384,7 @@ public sealed record TextFindView(IReadOnlyList<TextFindCard> Immediate, IReadOn
     public static TextFindView Build(IReadOnlyList<TextSearchHit> hits, Func<string, bool> fileExists)
         if (exception is null)
         if (hits.Count == 0)
+        if (raw.Length <= CardExcerptChars)
 ```
 
 

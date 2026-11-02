@@ -31,6 +31,22 @@ public partial class App : Application
 		void OnWindowCreated(object? sender, EventArgs args)
 		{
 			coordinator.OnCreated(shell.Kind);
+			var downloads = services.GetService(typeof(Recall.Core.Ports.IModelDownloadService)) as Recall.Core.Ports.IModelDownloadService;
+			if (downloads is null || !Recall.Core.Download.WindowIngestPolicy.ShouldStart(downloads.GetTextDownloadSnapshot().Phase))
+			{
+				return;
+			}
+
+			_ = Task.Run(async () =>
+			{
+				var ingest = services.GetService(typeof(Recall.Core.Ports.IGrantedTextIngestService)) as Recall.Core.Ports.IGrantedTextIngestService;
+				if (ingest is null)
+				{
+					return;
+				}
+
+				await ingest.IngestGrantedTextAsync(CancellationToken.None).ConfigureAwait(false);
+			});
 		}
 
 		void OnWindowResumed(object? sender, EventArgs args)

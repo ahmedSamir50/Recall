@@ -5,6 +5,7 @@ using Recall.Core.Indexing;
 using Recall.Core.Ingest;
 using Recall.Core.Ports;
 using Recall.Core.Preferences;
+using Recall.Core.Runtime;
 using Recall.Core.Scope;
 using Recall.Core.Search;
 using Recall.Core.Sync;
@@ -150,18 +151,29 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
             .ToList();
     }
 
-    public void AppendLiveChunk(string path, ChunkWrite chunk)
+    public void AppendLiveChunk(string path, ChunkWrite chunk) => AppendLiveChunks(path, [chunk]);
+
+    public void AppendLiveChunks(string path, IReadOnlyList<ChunkWrite> chunks)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
             throw new ArgumentException("Path must not be blank.", nameof(path));
         }
 
-        if (string.IsNullOrWhiteSpace(chunk.ContentId))
+        ArgumentNullException.ThrowIfNull(chunks);
+        foreach (var chunk in chunks)
         {
-            throw new ArgumentException("Content id must not be blank.", nameof(chunk));
-        }
+            if (string.IsNullOrWhiteSpace(chunk.ContentId))
+            {
+                throw new ArgumentException("Content id must not be blank.", nameof(chunks));
+            }
 
+            AppendSingle(path, chunk);
+        }
+    }
+
+    private void AppendSingle(string path, ChunkWrite chunk)
+    {
         if (chunkRows.TryGetValue(chunk.ContentId, out var existing))
         {
             chunkRows[chunk.ContentId] = existing with
@@ -195,14 +207,31 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
 
     public IReadOnlyList<IngestChunkRow> ListChunks(string path)
     {
+        var aliasIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var alias in aliases.Values)
+        {
+            if (string.Equals(alias.Path, path, StringComparison.OrdinalIgnoreCase) && !alias.Missing && !alias.Retired)
+            {
+                aliasIds.Add(alias.ContentId);
+            }
+        }
+
         return chunkRows.Values
-            .Where(c => string.Equals(c.Path, path, StringComparison.OrdinalIgnoreCase))
+            .Where(c => string.Equals(c.Path, path, StringComparison.OrdinalIgnoreCase) || aliasIds.Contains(c.ContentId))
             .ToList();
     }
 
     public IngestChunkRow? FindChunk(string contentId)
     {
         return chunkRows.TryGetValue(contentId, out var row) ? row : null;
+    }
+
+    public void MarkStopped(string path, string statusKey)
+    {
+        if (files.TryGetValue(path, out var row))
+        {
+            files[path] = row with { State = IngestCursorState.Reading, MissingStatusKey = statusKey };
+        }
     }
 
     public void MarkReading(string path, string contentHash, string grantPath)
@@ -942,7 +971,8 @@ public static class IngestTestKit
             skips ?? new FakeUserSkipStore(),
             new FakeLocalContentProbe(),
             new RemoteFileSkipReport(),
-            new DatasetSkipReport());
+            new DatasetSkipReport(),
+            new OversizeFileSkipReport());
 
     public static (TextIngestEngine Engine, LocalOpLogWriter OpLog, FakeIngestCursorStore Cursors) CreateEngineParts(
         ITextEmbeddingEncoder encoder,
@@ -953,7 +983,7 @@ public static class IngestTestKit
         Directory.CreateDirectory(dir);
         var cursors = new FakeIngestCursorStore();
         var opLog = new LocalOpLogWriter(dir);
-        var engine = new TextIngestEngine(encoder, index, new FakeIndexPolicy(), new FakeTextTokenCounter(), opLog, cursors);
+        var engine = new TextIngestEngine(encoder, index, new FakeIndexPolicy(), new FakeTextTokenCounter(), opLog, cursors, TestIngest.Memory(), TestIngest.Gate());
         return (engine, opLog, cursors);
     }
 
@@ -974,7 +1004,7 @@ public static class IngestTestKit
         IAudioFileIngest? audio = null,
         IVisionFileIngest? vision = null,
         IModelDownloadService? downloads = null) =>
-        new(scope, reader, engine, cursors, index, opLog, encoderFileHash ?? new FakeEncoderFileHash(), audio, scheduler: null, vision: vision, downloads: downloads);
+        new(scope, reader, engine, cursors, index, opLog, encoderFileHash ?? new FakeEncoderFileHash(), TestIngest.Memory(), TestIngest.Gate(), TestIngest.Reclaimer(), audio, scheduler: null, vision: vision, downloads: downloads);
 
     public static TextSearchService CreateSearchService(
         FakeTextEmbeddingEncoder encoder,
@@ -1424,4 +1454,53 @@ public sealed class FakeAudioSearchService : IAudioSearchService
 
         return Task.FromResult(Result);
     }
+}
+
+public sealed class FakeMemoryBudget : IMemoryBudget
+{
+    public long CapacityBytes { get; set; } = 32L * 1024 * 1024 * 1024;
+
+    public long WorkingSetBytes { get; set; } = 1024L * 1024 * 1024;
+
+    public long FloorBytes { get; set; } = 2L * 1024 * 1024 * 1024;
+
+    public long ObservedFloorBytes { get; private set; }
+
+    public long EffectiveFloorBytes => Math.Max(FloorBytes, ObservedFloorBytes);
+
+    public DeviceVerdict Verdict { get; set; } = DeviceVerdict.Ok;
+
+    public MemoryPressure Pressure { get; set; } = MemoryPressure.Normal;
+
+    public int RecordObservedCalls { get; private set; }
+
+    public bool RefuseFiles { get; set; }
+
+    public long FileBytesSeen { get; private set; }
+
+    public int FileChecks { get; private set; }
+
+    public bool MayLoadFile(long fileBytes, int expansion)
+    {
+        FileChecks++;
+        FileBytesSeen = fileBytes;
+        return !RefuseFiles;
+    }
+
+    public void RecordObserved()
+    {
+        RecordObservedCalls++;
+        ObservedFloorBytes = Math.Max(FloorBytes, WorkingSetBytes);
+    }
+}
+
+public static class TestIngest
+{
+    public static FakeMemoryBudget Memory() => new();
+
+    public static MemoryGate Gate() => new();
+
+    public static IIngestResourceReclaimer Reclaimer() => new IngestResourceReclaimer();
+
+    public static IOversizeFileSkipReport Oversize() => new OversizeFileSkipReport();
 }

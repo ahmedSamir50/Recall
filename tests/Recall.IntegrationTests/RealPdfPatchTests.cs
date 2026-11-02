@@ -15,7 +15,7 @@ public sealed class RealPdfPatchTests
         using var document = PdfDocument.Open(path);
         var text = string.Concat(document.GetPages().Select(page => page.Text));
         var ends = Enumerable.Range(1, text.Length).ToList();
-        var patches = DocumentPatchPlanner.Plan("Notes", text, null, 0, ends);
+        var patches = DocumentPatchPlanner.Plan("Notes", text, null, 0, ends).Patches;
         patches.Should().NotBeEmpty();
         var firstPatchTokens = ends[patches[0].CharEnd - 1];
         firstPatchTokens.Should().BeInRange(1664, 2048);

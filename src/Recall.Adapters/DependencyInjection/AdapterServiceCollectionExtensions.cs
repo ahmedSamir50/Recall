@@ -6,6 +6,7 @@ using Recall.Core.Checkpoints;
 using Recall.Core.Download;
 using Recall.Core.Ingest;
 using Recall.Core.Ports;
+using Recall.Core.Runtime;
 using Recall.Core.Search;
 
 namespace Recall.Adapters.DependencyInjection;
@@ -58,6 +59,7 @@ public static class AdapterServiceCollectionExtensions
             sp.GetRequiredService<IMediaVectorIndex>(),
             sp.GetRequiredService<IEncoderFileHash>(),
             sp.GetRequiredService<IIngestCursorStore>(),
+            sp.GetRequiredService<IMemoryBudget>(),
             sp.GetService<IVideoFrameSamplerService>(),
             sp.GetService<AgeMoveService>()));
         services.AddSingleton<IMediaVectorIndex>(_ => new ZVecMediaVectorIndex(vectorDatabaseRoot));

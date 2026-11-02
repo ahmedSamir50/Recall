@@ -6,6 +6,8 @@ public static class FrameCadence
 
     public const int WindowsMinimumBuild = 22000;
 
+    public const int MaxFramesPerFile = 600;
+
     public const string WindowsMinimumBuildMessage = "Windows frame thumbnails need Windows 11.";
 
     public static IReadOnlyList<double> Starts(double durationSeconds)
@@ -16,7 +18,7 @@ public static class FrameCadence
         }
 
         var starts = new List<double>();
-        for (var start = 0d; start < durationSeconds; start += PeriodSeconds)
+        for (var start = 0d; start < durationSeconds && starts.Count < MaxFramesPerFile; start += PeriodSeconds)
         {
             starts.Add(start);
         }

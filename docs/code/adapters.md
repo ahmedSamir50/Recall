@@ -116,6 +116,8 @@ public sealed class LlamaTextTokenCounter : ITextTokenCounter
         if (first is >= 0xC0 and <= 0xDF)
         if (first is >= 0xE0 and <= 0xEF)
         if (first is >= 0xF0 and <= 0xF7)
+        if (local.Count == 0)
+        if (consumed <= 0)
 ```
 
 Blank text throws `ArgumentException`. Text embed, token count, vision, and audio share one process-wide `SemaphoreSlim(1, 1)` in `LlamaNativeGate`. The same thread re-enters by incrementing a thread-static depth. `TokenEnds` calls `recall_embed_token_ends` once and converts the exclusive UTF-8 byte ends into UTF-16 char ends in one pass: a 1-to-3 byte sequence adds one char, a 4-byte sequence adds two, and an end that lands inside a code point snaps forward to the next code point start.

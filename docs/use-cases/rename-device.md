@@ -10,7 +10,7 @@ Edit the display name on `/device`.
 
 ## Path
 
-Blank returns `Empty`. The same name returns `Unchanged`. Any other name returns `Saved`. The device id and the original OS name stay.
+Blank returns `Empty`. The same name returns `Unchanged`. Any other name returns `Saved`. The device id and the original OS name stay. Back on this screen returns to `/preferences`.
 
 ## Failure
 

@@ -9,13 +9,16 @@ namespace Recall.Maui.Platform;
 
 public sealed class WindowsAudioSource : IAudioSource
 {
+    private static readonly Lazy<string> CacheDirectory = new(ResolveCacheDirectoryCore);
+
     public byte[]? Read(string path) =>
         string.IsNullOrWhiteSpace(path) || !File.Exists(path) ? null : File.ReadAllBytes(path);
 
     public float[] ReadCompressed(byte[] file)
     {
-        var path = WriteTempFile(file);
-        var outputPath = Path.Combine(FileSystem.CacheDirectory, $"recall-audio-out-{Guid.NewGuid():N}.wav");
+        var cacheDirectory = CacheDirectory.Value;
+        var path = WriteTempFile(file, cacheDirectory);
+        var outputPath = Path.Combine(cacheDirectory, $"recall-audio-out-{Guid.NewGuid():N}.wav");
         try
         {
             return TranscodeBlocking(path, outputPath);
@@ -45,9 +48,10 @@ public sealed class WindowsAudioSource : IAudioSource
 
     private static async Task<float[]> TranscodeAsync(string sourcePath, string outputPath)
     {
-        Directory.CreateDirectory(FileSystem.CacheDirectory);
+        var cacheDirectory = CacheDirectory.Value;
+        Directory.CreateDirectory(cacheDirectory);
         var source = Windows.Storage.StorageFile.GetFileFromPathAsync(sourcePath).AsTask();
-        var folder = Windows.Storage.StorageFolder.GetFolderFromPathAsync(FileSystem.CacheDirectory).AsTask();
+        var folder = Windows.Storage.StorageFolder.GetFolderFromPathAsync(cacheDirectory).AsTask();
         await Task.WhenAll(source, folder).ConfigureAwait(false);
         var target = await folder.Result.CreateFileAsync(
             Path.GetFileName(outputPath),
@@ -86,13 +90,37 @@ public sealed class WindowsAudioSource : IAudioSource
         return WavPcm.Read(wav);
     }
 
-    private static string WriteTempFile(byte[] file)
+    private static string WriteTempFile(byte[] file, string cacheDirectory)
     {
-        Directory.CreateDirectory(FileSystem.CacheDirectory);
-        var path = Path.Combine(FileSystem.CacheDirectory, $"recall-audio-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(cacheDirectory);
+        var path = Path.Combine(cacheDirectory, $"recall-audio-{Guid.NewGuid():N}");
         File.WriteAllBytes(path, file);
         return path;
     }
+
+    private static string ResolveCacheDirectoryCore()
+    {
+        try
+        {
+            var cache = FileSystem.CacheDirectory;
+            if (!string.IsNullOrWhiteSpace(cache))
+            {
+                return cache;
+            }
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException)
+        {
+            return RecallAudioCacheDirectory();
+        }
+
+        return RecallAudioCacheDirectory();
+    }
+
+    private static string RecallAudioCacheDirectory() =>
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Recall",
+            "audio-cache");
 
     private static void TryDelete(string path)
     {

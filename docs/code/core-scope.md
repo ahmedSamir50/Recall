@@ -362,6 +362,9 @@ public IReadOnlyList<int> ListOcrPages(string path)
     if (string.IsNullOrWhiteSpace(fromContentId) || string.IsNullOrWhiteSpace(toContentId))
     if (string.IsNullOrWhiteSpace(longId))
     if (string.IsNullOrWhiteSpace(longId) || string.IsNullOrWhiteSpace(shortId))
+        if (chunks.Count == 0)
+        if (Volatile.Read(ref schemaReady) == 1)
+        if (version >= CheckpointSql.SchemaVersion)
 ``` 
 
 `ReplaceDocumentPatches` deletes the live `ingest_chunk` rows for one path and writes the given patch rows with their page and char spans. A blank path throws `ArgumentException` with message `Path must not be blank.`, and a null patch list throws `ArgumentNullException`. `ingest_chunk` gains `page_start`, `page_end`, `char_start`, and `char_end`, each `INTEGER NOT NULL DEFAULT 0`, added with `ALTER TABLE ingest_chunk ADD COLUMN IF NOT EXISTS`. A plain note stores 0 for both page columns. Shrink, alias, and delete keep using `ingest_chunk` only.
@@ -694,3 +697,15 @@ if (extension.Length == 0)
 
 Holds the audio, video, and image extension sets plus the shared AudioAccept filter string. Null and blank names are not media.
 
+
+## src/Recall.Core/Scope/OversizeFileSkipReport.cs
+
+```csharp
+namespace Recall.Core.Scope;
+public interface IOversizeFileSkipReport
+public sealed class OversizeFileSkipReport : IOversizeFileSkipReport
+        if (string.IsNullOrWhiteSpace(path))
+        if (!paths.Contains(path, StringComparer.OrdinalIgnoreCase))
+```
+
+`OversizeFileSkipReport` records the files the reader refused to load because they are above `LocalContentPolicy.MaxTextFileBytes`. It stores the path once, clears on demand, and never throws. It is a report, not a policy: the byte cap lives in `LocalContentPolicy`, and the same shape as `DatasetSkipReport` keeps the reader's constructor readable.

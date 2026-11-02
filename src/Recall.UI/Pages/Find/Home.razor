@@ -4,7 +4,6 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using Recall.Core.Scope
-@using Recall.Core.Ingest
 
 <div class="px-3 md:px-6 pt-4 md:pt-6 max-w-1500 mx-auto">
     <div class="g3 rounded-2xl p-2 flex flex-wrap sm:flex-nowrap items-center gap-2 mb-6">
@@ -13,74 +12,68 @@
                 <RecallIcon Name="search" Css="w-4 h-4 hidden md:block" />@T("Mode_Find")
             </span>
         </div>
-        <div class="order-first sm:order-none basis-full sm:basis-auto flex-1 min-w-0 px-2 py-2 flex items-center min-h-10 search-field" role="search">
-            <input @bind="query" @bind:event="oninput" aria-label="@T("Search_Placeholder")" placeholder="@T("Search_Placeholder")" @onkeydown="OnKeyDownAsync" class="w-full search-input" />
+        <div class="order-first sm:order-none basis-full sm:basis-auto flex-1 min-w-0 px-2 py-2 flex flex-wrap items-center gap-2 min-h-10 search-field" role="search">
+            <input @bind="query" @bind:event="oninput" aria-label="@T("Search_Placeholder")" placeholder="@T("Search_Placeholder")" @onkeydown="OnKeyDownAsync" class="search-input" />
+            @if (ShowPictureControl)
+            {
+                <span class="find-file">
+                    <InputFile id="picture-input" class="file-picker" aria-label="@T("Search_WithPicture")" OnChange="OnPictureSelectedAsync" accept="@PictureAccept" />
+                    <label class="btn btn-g p-2 shrink-0" for="picture-input" aria-label="@T("Search_WithPicture")">
+                        <RecallIcon Name="img" Css="w-5 h-5 shrink-0" />
+                    </label>
+                </span>
+            }
+            @if (ShowAudioControl)
+            {
+                <span class="find-file">
+                    <InputFile id="audio-input" class="file-picker" aria-label="@T("Search_WithAudio")" OnChange="OnAudioSelectedAsync" accept="@MediaFileKinds.AudioAccept" />
+                    <label class="btn btn-g p-2 shrink-0" for="audio-input" aria-label="@T("Search_WithAudio")">
+                        <RecallIcon Name="wav" Css="w-5 h-5 shrink-0" />
+                    </label>
+                </span>
+            }
+            @if (!string.IsNullOrWhiteSpace(pickedFileName))
+            {
+                <span class="text-13 ink2 flex items-center gap-1 min-w-0 max-w-full">
+                    <span class="truncate max-w-[12rem]">@pickedFileName</span>
+                    <button type="button" class="btn-icon shrink-0" aria-label="@T("Search_ClearFile")" @onclick="ClearPickedFileAsync">×</button>
+                </span>
+            }
+            @if (pictureKey is not null)
+            {
+                <div class="ink2 text-13 basis-full">@T(pictureKey)</div>
+            }
+            @if (audioKey is not null)
+            {
+                <div class="ink2 text-13 basis-full">@T(audioKey)</div>
+            }
         </div>
     </div>
-    @if (ingestRows.Count > 0)
+    @if (ShowPictureControl && pictureHits.Count > 0)
     {
-        <section class="g2 rounded-2xl p-4 max-w-640 mx-auto mb-4">
-            <h2 class="font-semibold text-16 mb-3">@T("Ingest_Heading")</h2>
-            @foreach (var row in ingestRows)
-            {
-                <p class="text-13 ink2 mb-1"><span>@T(IngestKindLabel(row.Kind))</span> <span class="ltr">@row.Finished/@row.Seen @row.Percent%</span></p>
-            }
-        </section>
-    }
-    @if (ShowPictureControl)
-    {
-    <section class="g2 rounded-2xl p-4 max-w-640 mx-auto mb-4">
-        <InputFile id="picture-input" class="hidden" OnChange="OnPictureSelectedAsync" accept="@PictureAccept" />
-        <label class="btn btn-g inline-flex" for="picture-input">@T("Search_WithPicture")</label>
-        @if (pictureKey is not null)
-        {
-            <p class="ink2 text-13 mt-2">@T(pictureKey)</p>
-        }
         @foreach (var hit in pictureHits)
         {
-            <div class="flex items-center gap-2 mt-2">
+            <div class="flex items-center gap-2 mt-2 max-w-640 mx-auto mb-2">
                 <span class="ltr flex-1 min-w-0 truncate"><bdi class="ltr">@hit.SourcePath</bdi></span>
                 <span class="ink2 text-13"><bdi class="ltr">@FormatSeconds(hit.StartSeconds)–@FormatSeconds(hit.EndSeconds)</bdi></span>
                 <button type="button" class="btn btn-g" @onclick="() => OpenHitAsync(hit)">@T("Home_OpenFile")</button>
             </div>
         }
-    </section>
     }
     @if (ShowAudioControl)
     {
-    <section class="g2 rounded-2xl p-4 max-w-640 mx-auto mb-4">
-        <InputFile id="audio-input" class="hidden" OnChange="OnAudioSelectedAsync" accept="@MediaFileKinds.AudioAccept" />
-        <label class="btn btn-g inline-flex" for="audio-input">@T("Search_WithAudio")</label>
         @if (AudioOff.Shown)
         {
-            <p class="ink2 text-13 mt-2">@T("Search_AudioOff")</p>
-        }
-        @if (audioKey is not null)
-        {
-            <p class="ink2 text-13 mt-2">@T(audioKey)</p>
+            <p class="ink2 text-13 mt-2 max-w-640 mx-auto mb-2">@T("Search_AudioOff")</p>
         }
         @foreach (var hit in audioHits)
         {
-            <div class="flex items-center gap-2 mt-2">
+            <div class="flex items-center gap-2 mt-2 max-w-640 mx-auto mb-2">
                 <span class="ltr flex-1 min-w-0 truncate"><bdi class="ltr">@hit.SourcePath</bdi></span>
                 <span class="ink2 text-13"><bdi class="ltr">@FormatSeconds(hit.StartSeconds)–@FormatSeconds(hit.EndSeconds)</bdi></span>
                 <button type="button" class="btn btn-g" @onclick="() => OpenHitAsync(hit)">@T("Home_OpenFile")</button>
             </div>
         }
-    </section>
-    }
-    @if (IndexNowPanel.ShouldShow(offers))
-    {
-        <section class="g2 rounded-2xl p-4 max-w-640 mx-auto mb-4">
-            <p class="ink2 text-13 mb-2">@T("Home_IndexNowLead")</p>
-            @foreach (var grant in offers)
-            {
-                <div class="flex items-center gap-2 mb-2">
-                    <bdi class="ltr">@grant.DisplayName</bdi>
-                    <button type="button" class="btn btn-g" @onclick="() => IndexNowAsync(grant.Path)">@T("Home_IndexNow")</button>
-                </div>
-            }
-        </section>
     }
     @if (!TextFindSession.ShouldQuery(query) || !hasSearched)
     {
@@ -125,7 +118,7 @@
                         <p class="ink2 text-13 mb-2">@T(card.ReasonKey)</p>
                         @if (!string.IsNullOrWhiteSpace(card.RawNote))
                         {
-                            <p class="ink2 text-13 mb-2">@card.RawNote</p>
+                            <p class="ink2 text-13 mb-2 max-h-[8rem] overflow-hidden">@card.RawNote</p>
                         }
                         @if (card.Unavailable)
                         {
@@ -134,7 +127,13 @@
                         }
                         else
                         {
-                            <button type="button" class="btn btn-g" @onclick="() => OpenAsync(card)">@T("Home_OpenFile")</button>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-g" @onclick="() => OpenAsync(card)">@T("Home_OpenFile")</button>
+                                @if (card.ShowPin)
+                                {
+                                    <button type="button" class="btn btn-g" @onclick="() => PinKeep(card)">@T("Pin_Keep")</button>
+                                }
+                            </div>
                         }
                     </article>
                 }
@@ -146,7 +145,7 @@
                         <p class="ink2 text-13 mb-2">@T(card.ReasonKey)</p>
                         @if (!string.IsNullOrWhiteSpace(card.RawNote))
                         {
-                            <p class="ink2 text-13 mb-2">@card.RawNote</p>
+                            <p class="ink2 text-13 mb-2 max-h-[8rem] overflow-hidden">@card.RawNote</p>
                         }
                         @if (card.Unavailable)
                         {
@@ -155,7 +154,13 @@
                         }
                         else
                         {
-                            <button type="button" class="btn btn-g" @onclick="() => OpenAsync(card)">@T("Home_OpenFile")</button>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-g" @onclick="() => OpenAsync(card)">@T("Home_OpenFile")</button>
+                                @if (card.ShowPin)
+                                {
+                                    <button type="button" class="btn btn-g" @onclick="() => PinKeep(card)">@T("Pin_Keep")</button>
+                                }
+                            </div>
                         }
                     </article>
                 </Virtualize>

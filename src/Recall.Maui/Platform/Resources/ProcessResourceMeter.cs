@@ -4,19 +4,49 @@ using Recall.Core.Resources;
 
 namespace Recall.Maui.Platform.Resources;
 
-public sealed class ProcessResourceMeter : IResourceMeter
+public sealed class ProcessResourceMeter : IResourceMeter, IDisposable
 {
+    private readonly object sampleGate = new();
+    private int disposed;
+#if WINDOWS
     private readonly Dictionary<string, PerformanceCounter> gpuCounters = new(StringComparer.Ordinal);
+#endif
+#if !IOS
     private bool cpuSampleReady;
     private DateTime lastWallTime = DateTime.UtcNow;
     private TimeSpan lastProcessorTime;
+#endif
 
     public ResourceSample Read()
     {
-        var workingSetBytes = ReadWorkingSetBytes();
-        var cpuPercent = ReadCpuPercent();
-        var gpuPercent = ReadGpuPercent();
-        return new ResourceSample(workingSetBytes, cpuPercent, gpuPercent);
+        lock (sampleGate)
+        {
+            ObjectDisposedException.ThrowIf(disposed != 0, this);
+            var workingSetBytes = ReadWorkingSetBytes();
+#if IOS
+            const double cpuPercent = 0;
+#else
+            var cpuPercent = ReadCpuPercent();
+#endif
+            var gpuPercent = ReadGpuPercent();
+            return new ResourceSample(workingSetBytes, cpuPercent, gpuPercent);
+        }
+    }
+
+    public void Dispose()
+    {
+        lock (sampleGate)
+        {
+            if (disposed != 0)
+            {
+                return;
+            }
+
+            disposed = 1;
+#if WINDOWS
+            DisposeGpuCounters();
+#endif
+        }
     }
 
     private static long ReadWorkingSetBytes()
@@ -34,6 +64,7 @@ public sealed class ProcessResourceMeter : IResourceMeter
         return (long)(memMb * 1048576);
     }
 
+#if !IOS
     private double ReadCpuPercent()
     {
         var process = Process.GetCurrentProcess();
@@ -58,14 +89,16 @@ public sealed class ProcessResourceMeter : IResourceMeter
         lastProcessorTime = processorTime;
         return cpuPercent;
     }
+#endif
 
+#if WINDOWS
     private double? ReadGpuPercent()
     {
-#if WINDOWS
         try
         {
             if (!PerformanceCounterCategory.Exists("GPU Engine"))
             {
+                DisposeGpuCounters();
                 return null;
             }
 
@@ -75,7 +108,15 @@ public sealed class ProcessResourceMeter : IResourceMeter
 
             if (names.Length == 0)
             {
+                DisposeGpuCounters();
                 return null;
+            }
+
+            var live = new HashSet<string>(names, StringComparer.Ordinal);
+            foreach (var name in gpuCounters.Keys.Where(name => !live.Contains(name)).ToArray())
+            {
+                gpuCounters[name].Dispose();
+                gpuCounters.Remove(name);
             }
 
             var values = new List<float>(names.Length);
@@ -96,8 +137,18 @@ public sealed class ProcessResourceMeter : IResourceMeter
         {
             return null;
         }
-#else
-        return null;
-#endif
     }
+
+    private void DisposeGpuCounters()
+    {
+        foreach (var counter in gpuCounters.Values)
+        {
+            counter.Dispose();
+        }
+
+        gpuCounters.Clear();
+    }
+#else
+    private static double? ReadGpuPercent() => null;
+#endif
 }

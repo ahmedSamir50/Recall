@@ -177,7 +177,9 @@ public sealed class CloseOpenOcrTests
             new FakeIndexPolicy(),
             new FakeTextTokenCounter(),
             new LocalOpLogWriter(Path.Combine(Path.GetTempPath(), $"recall-oplog-{Guid.NewGuid():N}.jsonl")),
-            cursors);
+            cursors,
+            TestIngest.Memory(),
+            TestIngest.Gate());
         PdfPageText[] pages = [new PdfPageText(1, "The invoice total is forty two.")];
         await engine.IngestOcrPagesAsync("doc.pdf", pages, @"C:\grant", "hash", TestContext.Current.CancellationToken);
         index.Inserts.Should().ContainSingle();

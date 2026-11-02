@@ -11,3 +11,7 @@ That method checks the storable width, hashes the raw text, and plans chunks. Fo
 ## Extensions
 
 Extensions in appsettings `TextIngest`: `.txt,.md,.markdown,.csv,.json,.xml,.html,.htm`. Code files use `IsSafeCodeText`. Watcher, foreground scan, window-open ingest, and header retry call ingest. Finished same hash skips embed for text and for vision when the bytes hash matches.
+
+## Stops
+
+A document can stop for three reasons. The planner reaching 512 patches finishes the file and leaves the tail unprocessed, with no user-facing note. The memory gate closing at a patch boundary leaves the file `Reading` with an `Ingest_StoppedMemoryBudget` marker and keeps its stored chunks live, so the next pass resumes without re-embedding. A whole-file read above the headroom, or a text file above 32 MiB, is refused with `Ingest_SkippedTooLarge` and never loaded. A device below minimum reports `Ingest_DeviceTooSmall` and runs no pass at all.

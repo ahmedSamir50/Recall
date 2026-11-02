@@ -1,7 +1,7 @@
 #if IOS || MACCATALYST
 using CoreGraphics;
 using Foundation;
-using PDFKit;
+using PdfKit;
 using UIKit;
 
 namespace Recall.Maui.Platform.Ocr;
@@ -23,18 +23,20 @@ public static class ApplePdfPageRenderer
             throw new ArgumentOutOfRangeException(nameof(pageNumber));
         }
 
-        using var page = document.GetPage(pageNumber - 1);
-        var bounds = page.GetBounds(PdfDisplayBox.MediaBox);
-        var scale = 300f / 72f;
-        var width = (int)Math.Ceiling(bounds.Width * scale);
-        var height = (int)Math.Ceiling(bounds.Height * scale);
+        using var page = document.GetPage(pageNumber - 1)
+            ?? throw new InvalidOperationException("PDF render failed.");
+        var bounds = page.GetBoundsForBox(PdfDisplayBox.Media);
+        var scale = (nfloat)(300d / 72d);
+        var width = (int)Math.Ceiling((double)bounds.Width * (300d / 72d));
+        var height = (int)Math.Ceiling((double)bounds.Height * (300d / 72d));
         using var renderer = new UIGraphicsImageRenderer(new CGSize(width, height));
         var image = renderer.CreateImage(ctx =>
         {
-            ctx.SetFillColor(UIColor.White.CGColor);
-            ctx.FillRect(new CGRect(0, 0, width, height));
-            ctx.ScaleCTM(scale, scale);
-            page.Draw(ctx.CGContext, bounds);
+            var graphics = ctx.CGContext;
+            graphics.SetFillColor(UIColor.White.CGColor);
+            graphics.FillRect(new CGRect(0, 0, width, height));
+            graphics.ScaleCTM(scale, scale);
+            page.Draw(PdfDisplayBox.Media, graphics);
         });
         using var data = image.AsPNG();
         return data?.ToArray() ?? throw new InvalidOperationException("PDF render failed.");

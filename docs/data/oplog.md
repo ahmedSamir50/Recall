@@ -7,3 +7,7 @@ Status: in-code
 ## Failure
 
 `LocalOpLogWriter.AppendInsert` rejects a blank content id. `AppendDelete` rejects a blank content id.
+
+## In-memory mirror
+
+`LocalOpLogWriter.entries` is a queue bounded at 10,000 entries. When the queue is full the oldest entry is dropped from memory before the new one is appended. The day file under `oplog/` is unaffected and stays the durable record, so a dropped in-memory entry never loses an operation that was written to disk.

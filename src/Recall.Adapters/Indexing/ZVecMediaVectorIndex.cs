@@ -349,7 +349,7 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
         var fts = new ZVecQuery
         {
             FieldName = WordsField,
-            Fts = new ZVecFtsQuery { QueryString = query, DefaultOperator = ZVecFtsDefaultOperator.And },
+            Fts = new ZVecFtsQuery { QueryString = FtsQueryString.ForZVec(query), DefaultOperator = ZVecFtsDefaultOperator.And },
         };
         var filterArgument = string.IsNullOrWhiteSpace(filter) ? null : filter;
         var docs = collection.Query(fts, topk: topK, filter: filterArgument, includeVector: false);

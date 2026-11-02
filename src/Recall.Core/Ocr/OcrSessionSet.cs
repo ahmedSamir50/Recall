@@ -15,10 +15,15 @@ public sealed class OcrSessionSet : IDisposable
         ArabicReaderLoaded = true;
     }
 
-    public void Dispose()
+    public void Unload()
     {
         DetectorLoaded = false;
         EnglishReaderLoaded = false;
         ArabicReaderLoaded = false;
+    }
+
+    public void Dispose()
+    {
+        Unload();
     }
 }

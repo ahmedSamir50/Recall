@@ -130,7 +130,9 @@ public sealed class OcrGoldenReportTests
             new FakeIndexPolicy(),
             new FakeTextTokenCounter(),
             new LocalOpLogWriter(Path.Combine(Path.GetTempPath(), $"recall-oplog-{Guid.NewGuid():N}.jsonl")),
-            cursors);
+            cursors,
+            TestIngest.Memory(),
+            TestIngest.Gate());
         return new OnnxOcrEngine(modelRoot, cursors, media, textIngest);
     }
 

@@ -252,6 +252,8 @@ ResourceSampleFormat
 
 Razor view for this path.
 
+        else if (chromeStatus == IngestChromeStatus.Running)
+        else if (chromeStatus == IngestChromeStatus.Stopped)
 ## src/Recall.UI/Layout/ResourceStrip.razor.cs
 
 ```csharp
@@ -462,5 +464,36 @@ if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
 
 ```csharp
 OcrPackLanguageTests
+```
+
+## src/Recall.UI/Layout/ShellStatusLabel.cs
+
+```csharp
+ShellStatusLabel
+```
+
+The rail and the footer use `Ingest_Running` while ingest or a model download is running, and `Status_Ready` only when that status is Done. Stopped does not say Ready.
+
+## src/Recall.UI/Components/Shell/ShellRouteMatch.cs
+
+```csharp
+ShellRouteMatch
+if (string.Equals(route, href, StringComparison.Ordinal))
+```
+
+`/device` and `/pin` keep the Preferences item active in the rail and the bottom tabs.
+
+## src/Recall.UI/Pages/Library/Pin.razor.cs
+
+```csharp
+Pin
+```
+
+Back returns to `/preferences`.
+
+## tests/Recall.UnitTests/ShellChromeTests.cs
+
+```csharp
+ShellChromeTests
 ```
 

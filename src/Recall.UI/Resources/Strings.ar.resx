@@ -14,7 +14,7 @@
   <data name="Privacy_Egress" xml:space="preserve"><value>٠ ك.ب مُرسَلة</value></data>
   <data name="Onboard_Kicker" xml:space="preserve"><value>محرّك ذاكرة خاص · الإصدار ١</value></data>
   <data name="Onboard_Headline" xml:space="preserve"><value>كل ما رأيته وقلته وكتبته — تجده بجملة واحدة.</value></data>
-  <data name="Onboard_Lead" xml:space="preserve"><value>يفهرس ريكول المجلدات التي تختارها. الصور والملاحظات الصوتية والمستندات والكود تبقى على هذا الجهاز. لا يُرفع أي شيء.</value></data>
+  <data name="Onboard_Lead" xml:space="preserve"><value>يعالج ريكول المجلدات التي تختارها. الصور والملاحظات الصوتية والمستندات والكود تبقى على هذا الجهاز. لا يُرفع أي شيء.</value></data>
   <data name="Onboard_ChooseFolders" xml:space="preserve"><value>اختر المجلدات</value></data>
   <data name="Onboard_PrivacyLink" xml:space="preserve"><value>كيف تبقى بياناتك خاصة</value></data>
   <data name="Onboard_Fact1" xml:space="preserve"><value>بلا حساب</value></data>
@@ -26,16 +26,16 @@
   <data name="Btn_Back" xml:space="preserve"><value>رجوع</value></data>
   <data name="Btn_Continue" xml:space="preserve"><value>متابعة</value></data>
   <data name="Folders_Title" xml:space="preserve"><value>اختر ما يُسمح لريكول بقراءته</value></data>
-  <data name="Folders_Lead" xml:space="preserve"><value>تُفهرس هذه المجلدات فقط. يمكنك الإضافة أو الإزالة لاحقًا من التفضيلات.</value></data>
+  <data name="Folders_Lead" xml:space="preserve"><value>تُعالَج هذه المجلدات فقط. يمكنك الإضافة أو الإزالة لاحقًا من التفضيلات.</value></data>
   <data name="Folders_Add" xml:space="preserve"><value>إضافة مجلد</value></data>
   <data name="Folders_Remove" xml:space="preserve"><value>إزالة المجلد</value></data>
   <data name="Folders_SkipNote" xml:space="preserve"><value>مُستثنى: مجلدات النظام والتطبيقات الأخرى وكل ما لا تختاره.</value></data>
   <data name="Folders_PickOne" xml:space="preserve"><value>اختر مجلدًا واحدًا على الأقل</value></data>
   <data name="Folders_PermissionDenied" xml:space="preserve"><value>لا يستطيع ريكول قراءة هذا المجلد</value></data>
   <data name="Folders_IosNote" xml:space="preserve"><value>تُلتقط الملفات الجديدة عند فتح ريكول.</value></data>
-  <data name="Folders_OverlapWarning" xml:space="preserve"><value>يبقي ريكول المجلد الأب. لا يُفهرس المجلد الذي بداخله مرة أخرى.</value></data>
-  <data name="Home_IndexNow" xml:space="preserve"><value>فهرس الآن</value></data>
-  <data name="Home_IndexNowLead" xml:space="preserve"><value>هذا المجلد مسموح ولم يُفهرس بعد.</value></data>
+  <data name="Folders_OverlapWarning" xml:space="preserve"><value>يبقي ريكول المجلد الأب. لا يُعالَج المجلد الذي بداخله مرة أخرى.</value></data>
+  <data name="Home_IndexNow" xml:space="preserve"><value>عالج الآن</value></data>
+  <data name="Home_IndexNowLead" xml:space="preserve"><value>هذا المجلد مسموح ولم يُعالَج بعد.</value></data>
   <data name="Folders_TypesLabel" xml:space="preserve"><value>اختر أنواع الملفات لكل مجلد</value></data>
   <data name="Folders_TypeText" xml:space="preserve"><value>نص</value></data>
   <data name="Folders_TypeImage" xml:space="preserve"><value>صور</value></data>
@@ -48,7 +48,7 @@
   <data name="Skips_Secrets" xml:space="preserve"><value>الأسرار وقواعد البيانات</value></data>
   <data name="Skips_Add" xml:space="preserve"><value>أضف غيرها</value></data>
   <data name="Skips_Note" xml:space="preserve"><value>لن يفتح ريكول هذه الملفات، حتى داخل مجلد سمحت به.</value></data>
-  <data name="Skips_CodeIndexed" xml:space="preserve"><value>تُفهرس عند تفعيل الكود.</value></data>
+  <data name="Skips_CodeIndexed" xml:space="preserve"><value>تُعالَج عند تفعيل الكود.</value></data>
   <data name="Skips_Empty" xml:space="preserve"><value>اكتب اسماً أولاً.</value></data>
   <data name="Skips_Duplicate" xml:space="preserve"><value>هذا السطر موجود.</value></data>
   <data name="Skips_BuiltIn" xml:space="preserve"><value>هذا السطر مدمج ويبقى.</value></data>
@@ -62,12 +62,20 @@
   <data name="Resources_Cpu" xml:space="preserve"><value>المعالج</value></data>
   <data name="Resources_Gpu" xml:space="preserve"><value>الرسومات</value></data>
   <data name="Resources_GpuAbsent" xml:space="preserve"><value>لا توجد رسومات</value></data>
-  <data name="Ingest_Heading" xml:space="preserve"><value>الملفات المفهرسة</value></data>
+  <data name="Resources_Mb" xml:space="preserve"><value>م.ب</value></data>
+  <data name="Ingest_Running" xml:space="preserve"><value>تجري المعالجة</value></data>
+  <data name="Ingest_Done" xml:space="preserve"><value>المعالجة محدثة</value></data>
+  <data name="Ingest_Stopped" xml:space="preserve"><value>توقفت المعالجة. أعد المحاولة</value></data>
+  <data name="Models_Helpers" xml:space="preserve"><value>نماذج مساعدة إضافية</value></data>
+  <data name="Search_ClearFile" xml:space="preserve"><value>إزالة</value></data>
+  <data name="Ingest_Heading" xml:space="preserve"><value>الملفات المعالَجة</value></data>
   <data name="Ingest_Text" xml:space="preserve"><value>نص</value></data>
   <data name="Ingest_Code" xml:space="preserve"><value>كود</value></data>
   <data name="Ingest_Image" xml:space="preserve"><value>صور</value></data>
   <data name="Ingest_Video" xml:space="preserve"><value>فيديو</value></data>
   <data name="Ingest_Audio" xml:space="preserve"><value>صوت</value></data>
+  <data name="Frames_NeedWindows11" xml:space="preserve"><value>لقطات الفيديو تحتاج ويندوز 11.</value></data>
+  <data name="Frames_Unavailable" xml:space="preserve"><value>لا توجد لقطات يستطيع ريكول قراءتها في هذا الفيديو.</value></data>
   <data name="Models_Title" xml:space="preserve"><value>حمّل النماذج على جهازك</value></data>
   <data name="Models_Lead" xml:space="preserve"><value>حمّل نموذج يعمل على جهازك مرة واحدة، وبعده يعمل البحث دون إنترنت.</value></data>
   <data name="Models_ShaNote" xml:space="preserve"><value>يتم التحقق من كل ملف بعد تحميله، وأي ملف تالف أو ناقص يُستبعد ويُعاد تحميله.</value></data>
@@ -126,9 +134,9 @@
   <data name="Vault_Label" xml:space="preserve"><value>الخزنة الشخصية</value></data>
   <data name="OnDevice_Label" xml:space="preserve"><value>على الجهاز</value></data>
   <data name="OnDevice_ModelsLine" xml:space="preserve"><value>EmbeddingGemma · نص · صور · صوت</value></data>
-  <data name="Status_ItemsNone" xml:space="preserve"><value>لا عناصر مُفهرسة بعد</value></data>
+  <data name="Status_ItemsNone" xml:space="preserve"><value>لا عناصر مُعالَجة بعد</value></data>
   <data name="Status_ItemsSuffix" xml:space="preserve"><value>عنصر</value></data>
-  <data name="Status_IndexingPaused" xml:space="preserve"><value>الفهرسة متوقفة أثناء العمل على البطارية</value></data>
+  <data name="Status_IndexingPaused" xml:space="preserve"><value>المعالجة متوقفة أثناء العمل على البطارية</value></data>
   <data name="Home_QueryDemo" xml:space="preserve"><value>السكوتر الأحمر الذي رأيته قرب الكولوسيوم الصيف الماضي</value></data>
   <data name="Home_LatencyDemo" xml:space="preserve"><value>٣٨ م.ث</value></data>
   <data name="Home_ContextLabel" xml:space="preserve"><value>فُهم على أنه</value></data>
@@ -166,6 +174,7 @@
   <data name="Home_Why2" xml:space="preserve"><value>المكان: ضمن ٢٠٠ م</value></data>
   <data name="Home_Why3" xml:space="preserve"><value>ملاحظة صوتية في اليوم نفسه</value></data>
   <data name="Home_OpenFile" xml:space="preserve"><value>افتح الملف</value></data>
+  <data name="Pin_Keep" xml:space="preserve"><value>أبقِ هذا سهل العثور عليه</value></data>
   <data name="Home_ShowFolder" xml:space="preserve"><value>اعرض في المجلد</value></data>
   <data name="Home_StoredLocally" xml:space="preserve"><value>مخزّن محليًا · لا يُرفع أبدًا</value></data>
   <data name="Home_FileLabel" xml:space="preserve"><value>الملف</value></data>
@@ -190,9 +199,9 @@
   <data name="Landing_Fact3Val" xml:space="preserve"><value>٤</value></data>
   <data name="Landing_Fact3Lbl" xml:space="preserve"><value>أنواع: صور · صوت · مستندات · كود</value></data>
   <data name="Landing_PrivacyHead" xml:space="preserve"><value>الخصوصية أولًا</value></data>
-  <data name="Landing_PrivacyLead" xml:space="preserve"><value>بلا حساب. بلا فهرس سحابي. بلا تتبّع. كل خطوة أدناه تحدث على جهازك.</value></data>
+  <data name="Landing_PrivacyLead" xml:space="preserve"><value>بلا حساب. بلا معالجة سحابية. بلا تتبّع. كل خطوة أدناه تحدث على جهازك.</value></data>
   <data name="Landing_Card1Title" xml:space="preserve"><value>محلي فقط</value></data>
-  <data name="Landing_Card1Body" xml:space="preserve"><value>تُقرأ ملفاتك في مكانها من المجلدات التي تختارها. يعيش الفهرس في قاعدة بيانات محلية مشفّرة.</value></data>
+  <data name="Landing_Card1Body" xml:space="preserve"><value>تُقرأ ملفاتك في مكانها من المجلدات التي تختارها. يعيش ما يخزّنه ريكول في قاعدة بيانات محلية مشفّرة.</value></data>
   <data name="Landing_Card2Title" xml:space="preserve"><value>بحث واحد لكل الأنواع</value></data>
   <data name="Landing_Card2Body" xml:space="preserve"><value>الصور والملاحظات الصوتية والمستندات والكود تُفهم بالمعنى — فابحث عن «سكوتر أحمر» وستجده أينما كان.</value></data>
   <data name="Landing_Card3Title" xml:space="preserve"><value>نماذج مضمونة</value></data>
@@ -201,7 +210,7 @@
   <data name="Landing_Card4Body" xml:space="preserve"><value>البحث في الملاحظات الصوتية على الكمبيوتر في الإصدار ١. المزامنة بين الأجهزة ليست في هذا الإصدار.</value></data>
   <data name="Landing_StepsHead" xml:space="preserve"><value>ثلاث خطوات، ثم يعمل بهدوء</value></data>
   <data name="Landing_Step1Title" xml:space="preserve"><value>اختر المجلدات</value></data>
-  <data name="Landing_Step1Body" xml:space="preserve"><value>يُفهرس ما تختاره فقط.</value></data>
+  <data name="Landing_Step1Body" xml:space="preserve"><value>يُعالَج ما تختاره فقط.</value></data>
   <data name="Landing_Step2Title" xml:space="preserve"><value>حمّل النماذج</value></data>
   <data name="Landing_Step2Body" xml:space="preserve"><value>مرة واحدة، نحو ٢٫٢ غ.ب، موثّقة.</value></data>
   <data name="Landing_Step3Title" xml:space="preserve"><value>اسأل</value></data>
@@ -237,4 +246,7 @@
   <data name="Search_AudioWaiting" xml:space="preserve"><value>لا يزال نموذج الصوت قيد التحميل.</value></data>
   <data name="Search_AudioFailed" xml:space="preserve"><value>لم يتم تنزيل نموذج الصوت.</value></data>
   <data name="Search_AudioOff" xml:space="preserve"><value>ملفات الصوت متوقفة لهذا المجلد.</value></data>
+  <data name="Ingest_StoppedMemoryBudget" xml:space="preserve"><value>توقفت معالجة هذا الملف للحفاظ على استجابة الجهاز. تستأنف عندما تتوفر مساحة.</value></data>
+  <data name="Ingest_SkippedTooLarge" xml:space="preserve"><value>هذا الملف أكبر من أن تتم معالجته على هذا الجهاز.</value></data>
+  <data name="Ingest_DeviceTooSmall" xml:space="preserve"><value>ذاكرة هذا الجهاز لا تكفي للبحث على الجهاز نفسه. لم تتم معالجة أي ملف.</value></data>
 </root>

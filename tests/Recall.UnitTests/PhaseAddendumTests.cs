@@ -393,6 +393,9 @@ public sealed class PhaseAddendumTests
                 using var delete = connection.CreateCommand();
                 delete.CommandText = "DELETE FROM ingest_chunk_path";
                 delete.ExecuteNonQuery();
+                using var reset = connection.CreateCommand();
+                reset.CommandText = "PRAGMA user_version = 0";
+                reset.ExecuteNonQuery();
             }
 
             var reopened = new SqliteIngestCursorStore(db);

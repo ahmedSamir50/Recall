@@ -7,4 +7,6 @@ public interface IGrantedTextReader
     IAsyncEnumerable<GrantedTextDocument> ReadAsync(ScopeFolderGrant grant, CancellationToken cancellationToken);
 
     IAsyncEnumerable<string> ListAudioAndVideoAsync(ScopeFolderGrant grant, CancellationToken cancellationToken);
+
+    IAsyncEnumerable<string> ListImagesAsync(ScopeFolderGrant grant, CancellationToken cancellationToken);
 }

@@ -2,6 +2,7 @@ using Recall.Core.Age;
 using Recall.Core.Checkpoints;
 using Recall.Core.Indexing;
 using Recall.Core.Ports;
+using Recall.Core.Runtime;
 using Recall.Core.Scope;
 using Recall.Core.Text;
 using Recall.Core.Vocabulary;
@@ -18,6 +19,7 @@ public sealed class AudioFileIngest : IAudioFileIngest
     private readonly IEncoderFileHash hashes;
     private readonly IGrantedTextReader reader;
     private readonly IIngestCursorStore cursors;
+    private readonly IMemoryBudget memory;
     private readonly AgeMoveService? ageMove;
 
     public AudioFileIngest(
@@ -29,6 +31,7 @@ public sealed class AudioFileIngest : IAudioFileIngest
         IEncoderFileHash hashes,
         IGrantedTextReader reader,
         IIngestCursorStore cursors,
+        IMemoryBudget memory,
         AgeMoveService? ageMove = null)
     {
         this.source = source;
@@ -39,6 +42,7 @@ public sealed class AudioFileIngest : IAudioFileIngest
         this.hashes = hashes;
         this.reader = reader;
         this.cursors = cursors;
+        this.memory = memory;
         this.ageMove = ageMove;
     }
 
@@ -70,6 +74,13 @@ public sealed class AudioFileIngest : IAudioFileIngest
 
         if (ShouldSkipShort(path))
         {
+            return;
+        }
+
+        var audioFile = new FileInfo(path);
+        if (audioFile.Exists && !memory.MayLoadFile(audioFile.Length, MemoryBudgetPolicy.AudioExpansion))
+        {
+            cursors.MarkMissing(path, IngestStopKeys.FileTooLarge);
             return;
         }
 

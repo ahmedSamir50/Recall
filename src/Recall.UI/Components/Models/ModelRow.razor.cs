@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Components;
 using Recall.Core.Catalog;
 using Recall.Core.Download;
 using Recall.Core.Ports;
-using Recall.Core.Vocabulary;
 using System.Globalization;
 
 namespace Recall.UI.Components;
@@ -12,8 +11,11 @@ public partial class ModelRow
     [Inject]
     private IModelDownloadService Downloads { get; set; } = null!;
 
+    [Parameter]
+    public ModelCatalogEntry? Entry { get; set; }
+
     [Parameter, EditorRequired]
-    public ModelCatalogEntry Entry { get; set; } = null!;
+    public ModelDownloadRowKind Kind { get; set; }
 
     [Parameter, EditorRequired]
     public string Label { get; set; } = string.Empty;
@@ -33,8 +35,6 @@ public partial class ModelRow
     private bool downloadKickoffScheduled;
     private readonly Progress<ModelDownloadProgress> progress;
 
-    private bool TextRow => Entry.Modality == Modality.Text;
-
     private string HashFailureBorderStyle => phase == TextModelDownloadPhase.HashFailed
         ? "border-color:color-mix(in srgb,var(--err) 50%,transparent)"
         : string.Empty;
@@ -48,7 +48,7 @@ public partial class ModelRow
 
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && AutoStart && TextRow && !downloadKickoffScheduled)
+        if (firstRender && AutoStart && !downloadKickoffScheduled)
         {
             downloadKickoffScheduled = true;
             _ = StartDownloadIfNeededAsync();
@@ -124,14 +124,19 @@ public partial class ModelRow
 
     private void SyncFromService()
     {
-        var snap = Downloads.GetTextDownloadSnapshot();
+        var snap = TextModelDownloadUiPolicy.SelectSnapshot(
+            Kind,
+            Downloads.GetTextDownloadSnapshot(),
+            Downloads.GetVisionDownloadSnapshot(),
+            Downloads.GetAudioDownloadSnapshot(),
+            Downloads.GetOcrDownloadSnapshot());
         phase = snap.Phase;
         bytesReceived = snap.BytesReceived;
         currentFileTotal = snap.CurrentFileTotal;
         completedFiles = snap.CompletedFiles;
         fileCount = snap.FileCount;
         fault = snap.Fault;
-        if (TextRow && PhaseChanged.HasDelegate)
+        if (Kind == ModelDownloadRowKind.Text && PhaseChanged.HasDelegate)
         {
             _ = PhaseChanged.InvokeAsync(phase);
         }
@@ -148,7 +153,7 @@ public partial class ModelRow
 
         try
         {
-            await Downloads.DownloadTextModelAsync(progress, CancellationToken.None);
+            await StartDownloadAsync();
         }
         catch (OperationCanceledException)
         {
@@ -161,6 +166,16 @@ public partial class ModelRow
         }
     }
 
+    private Task StartDownloadAsync() =>
+        TextModelDownloadUiPolicy.StartFor(Kind) switch
+        {
+            ModelDownloadStart.Text => Downloads.DownloadTextModelAsync(progress, CancellationToken.None),
+            ModelDownloadStart.Vision => Downloads.DownloadVisionModelAsync(progress, CancellationToken.None),
+            ModelDownloadStart.Audio => Downloads.DownloadAudioModelAsync(progress, CancellationToken.None),
+            ModelDownloadStart.Helpers => Downloads.DownloadOcrModelsAsync(progress, CancellationToken.None),
+            _ => Downloads.DownloadTextModelAsync(progress, CancellationToken.None),
+        };
+
     private async Task RetryAsync()
     {
         SyncFromService();
@@ -171,7 +186,14 @@ public partial class ModelRow
 
         try
         {
-            await Downloads.RetryTextDownloadAsync(progress, CancellationToken.None);
+            if (Kind == ModelDownloadRowKind.Text)
+            {
+                await Downloads.RetryTextDownloadAsync(progress, CancellationToken.None);
+            }
+            else
+            {
+                await StartDownloadAsync();
+            }
         }
         catch (OperationCanceledException)
         {

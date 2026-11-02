@@ -16,7 +16,7 @@ public partial class ShellTabLink
     [Parameter, EditorRequired]
     public string Icon { get; set; } = "search";
 
-    private bool Active => string.Equals(Ui.Current.RoutePath, Href, StringComparison.Ordinal);
+    private bool Active => ShellRouteMatch.IsActive(Ui.Current.RoutePath, Href);
 
     private string Css => Active
         ? "flex flex-col items-center gap-1 py-2 text-11 cy"

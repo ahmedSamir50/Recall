@@ -9,6 +9,9 @@ public partial class Device
     [Inject]
     private IDeviceRecordService DeviceRecord { get; set; } = null!;
 
+    [Inject]
+    private NavigationManager Nav { get; set; } = null!;
+
     private string displayName = string.Empty;
     private string originalName = string.Empty;
     private string deviceId = string.Empty;
@@ -42,4 +45,6 @@ public partial class Device
 
         displayName = DeviceRecord.GetDisplayName();
     }
+
+    private void GoPreferences() => Nav.NavigateTo("/preferences");
 }

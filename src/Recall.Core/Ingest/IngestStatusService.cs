@@ -1,44 +1,51 @@
 using Recall.Core.Checkpoints;
+using Recall.Core.Runtime;
 using Recall.Core.Scope;
 
 namespace Recall.Core.Ingest;
 
 public sealed class IngestStatusService
 {
-    private static readonly GrantFileKinds[] KindOrder =
-    [
-        GrantFileKinds.Text,
-        GrantFileKinds.Code,
-        GrantFileKinds.Image,
-        GrantFileKinds.Video,
-        GrantFileKinds.Audio,
-    ];
-
     private readonly IIngestCursorStore store;
+    private readonly IMemoryBudget memory;
 
-    public IngestStatusService(IIngestCursorStore store)
+    public IngestStatusService(IIngestCursorStore store, IMemoryBudget memory)
     {
         this.store = store;
+        this.memory = memory;
     }
 
-    public IReadOnlyList<IngestKindCount> List(GrantFileKinds enabled)
+    public DeviceVerdict Verdict => memory.Verdict;
+
+    public IReadOnlyList<IngestKindCount> List(GrantFileKinds enabled) => store.CountEnabled(enabled);
+
+    public IReadOnlyList<string> ListUnfinished(IReadOnlyList<ScopeFolderGrant> grants)
     {
-        if (enabled == GrantFileKinds.None)
+        var paths = new List<string>();
+        foreach (var grant in grants)
         {
-            return [];
+            paths.AddRange(store.ListUnfinishedPaths(grant.Path));
         }
 
-        var list = new List<IngestKindCount>();
-        foreach (var kind in KindOrder)
+        return paths;
+    }
+
+    public IReadOnlyList<IngestMissingNote> ListMissingNotes(IReadOnlyList<ScopeFolderGrant> grants)
+    {
+        var notes = new List<IngestMissingNote>();
+        foreach (var grant in grants)
         {
-            if (!enabled.HasFlag(kind))
+            foreach (var row in store.ListFiles(grant.Path))
             {
-                continue;
+                if (row.State == IngestCursorState.Missing && !string.IsNullOrEmpty(row.MissingStatusKey))
+                {
+                    notes.Add(new IngestMissingNote(row.Path, row.MissingStatusKey));
+                }
             }
-
-            list.Add(store.Count(kind));
         }
 
-        return list;
+        return notes;
     }
 }
+
+public readonly record struct IngestMissingNote(string Path, string StatusKey);

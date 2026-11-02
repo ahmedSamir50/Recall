@@ -2,8 +2,10 @@ using CommunityToolkit.Maui;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.LifecycleEvents;
+using Recall.Core.Age;
 using Recall.Core.Catalog;
 using Recall.Core.DependencyInjection;
+using Recall.Core.Ingest;
 using Recall.Core.Ports;
 using Recall.Core.Text;
 using Recall.Maui.DependencyInjection;
@@ -91,6 +93,14 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
-        return builder.Build();
+        var app = builder.Build();
+        var services = app.Services;
+        AgeCutCorpus.Configure(
+            services.GetRequiredService<IVisionEmbeddingEncoder>(),
+            services.GetRequiredService<IAudioEmbeddingEncoder>(),
+            services.GetRequiredService<IVideoFrameSamplerService>(),
+            services.GetRequiredService<IAudioSource>(),
+            services.GetRequiredService<IIngestModelSession>());
+        return app;
     }
 }

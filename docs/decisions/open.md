@@ -15,3 +15,6 @@ Status: open
 - A Linux tray, sign-in start, and search shortcut. They stay open on the desktop-presence page and are not in the tree.
 - The linux-x64 shell. .NET MAUI has no Linux target framework. Microsoft.Maui.Platforms.Linux.Gtk4 and Platform.Maui.Linux.Gtk4 are not v1 dependencies. linux-arm64 is not a v1 RID.
 - Whether hiding the desktop window keeps ScopeWatchCoordinator running. Destroying calls Stop today.
+
+- Native embedder depth is untuned. `n_threads` and `n_ubatch` in `native/recall_embed.c` are unchanged because a batching change needs a checked-in fixture (one mixed Arabic and English text, one JPEG, one audio window) and a cosine baseline at or above 0.9999, run only when the model file exists. Until that gate exists, the file is not retuned.
+- Recall@10 after a chunk-boundary change is unmeasured. `DocumentPatchPlanner` boundaries are identical for every terminating document (proven by the recorded-range test), but a golden corpus and its query set are still needed before a boundary change can be judged on retrieval numbers.

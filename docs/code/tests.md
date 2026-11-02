@@ -342,6 +342,8 @@ public sealed class FakeGrantedTextIngestService : IGrantedTextIngestService
 public type FakeEncoderFileHash
 FakeEncoderFileHash
 public sealed class FakeEncoderFileHash : IEncoderFileHash
+public sealed class FakeMemoryBudget : IMemoryBudget
+public static class TestIngest
 public type IngestTestKit
 IngestTestKit
 public static class IngestTestKit
@@ -1228,3 +1230,47 @@ public sealed class CrashRestartTests : IDisposable
 ```
 
 
+
+## tests/Recall.UnitTests/PlanProgressTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class PlanProgressTests
+```
+
+`PlanProgressTests` locks the forward-progress rule of `DocumentPatchPlanner`. One sentence followed by a boundary-free body must terminate with one patch, a twenty thousand character body must cut at the hard cap without a backward overlap, the last patch must end at the document length, and a document that exceeds `MaxPatchesPerDocument` must return exactly 512 patches with `Truncated` true. The stability test pins the exact ranges of the table control and the Arabic fixture, so a boundary shift in a terminating document goes red.
+
+## tests/Recall.UnitTests/MemoryBudgetTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class MemoryBudgetTests
+```
+
+`MemoryBudgetTests` covers the pure arithmetic: the forty, fifty, and thirty-five percent lines, the floor winning over the working set, the below-minimum, tight, and normal verdicts for the three published device classes, the file guard against the headroom, the derived minimum and recommended sizes, and the floor store round trip with its missing and corrupt arms.
+
+## tests/Recall.UnitTests/MemoryGateTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class MemoryGateTests
+```
+
+`MemoryGateTests` drives the cooldown without sleeping, because the gate takes the clock as an argument. It covers the thirty second wait, the requirement that a resume happens at or below thirty-five percent, the doubling backoff up to five minutes, the reset on a finished file, and the terminal blocked state.
+
+## tests/Recall.UnitTests/CheckpointStoreScalingTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class CheckpointStoreScalingTests
+```
+
+`CheckpointStoreScalingTests` locks the store contract: a batch writes every chunk in one transaction, one append allocates a constant amount no matter how large the table is, a memory stop keeps the chunks live and the file resumable, a finished path clears any earlier stop key, and the migration sets `user_version` to the schema version.
+## tests/Recall.UnitTests/IngestGuardTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class IngestGuardTests
+```
+
+`IngestGuardTests` covers the small guards that keep a path inside the budget: the op-log keeps ten thousand entries and drops the oldest, the frame cadence caps a video at six hundred frames, a below-minimum device is blocked and labelled, the reclaimer closes a loaded audio encoder and leaves an idle one alone, and an oversized video is marked `Ingest_SkippedTooLarge` before a single frame is embedded.

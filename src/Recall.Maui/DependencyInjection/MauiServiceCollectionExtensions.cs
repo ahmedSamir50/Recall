@@ -6,6 +6,7 @@ using Recall.Core.Checkpoints;
 using Recall.Core.Download;
 using Recall.Core.Ingest;
 using Recall.Core.Ports;
+using Recall.Core.Runtime;
 using Recall.Core.Scope;
 using Recall.Core.Sync;
 using Recall.Core.Text;
@@ -69,6 +70,7 @@ public static class MauiServiceCollectionExtensions
             sp.GetRequiredService<IEncoderFileHash>(),
             sp.GetRequiredService<IGrantedTextReader>(),
             sp.GetRequiredService<IIngestCursorStore>(),
+            sp.GetRequiredService<IMemoryBudget>(),
             sp.GetService<AgeMoveService>())));
         services.AddSingleton(new LocalOpLogWriter(Path.Combine(FileSystem.AppDataDirectory, LocalOpLogWriter.DirectoryName)));
         services.AddSingleton<IModelDownloadService, MauiModelDownloadService>();
@@ -101,7 +103,31 @@ public static class MauiServiceCollectionExtensions
         var modelDir = Path.Combine(FileSystem.AppDataDirectory, textModel.RelativeModelDirectory);
         var vectorRoot = Path.Combine(FileSystem.AppDataDirectory, textModel.RelativeVectorDirectory);
         var visionDir = Path.Combine(FileSystem.AppDataDirectory, (visionModel ?? new VisionModelDownloadOptions()).RelativeModelDirectory);
+        var textModelPath = Path.Combine(modelDir, textModel.ModelFileName);
+        services.Replace(ServiceDescriptor.Singleton<IMemoryBudget>(sp => new ProcessMemoryBudget(
+            File.Exists(textModelPath) ? new FileInfo(textModelPath).Length : 0,
+            sp.GetRequiredService<MemoryBudgetOptions>(),
+            new MemoryFloorStore(FileSystem.AppDataDirectory))));
+        services.Replace(ServiceDescriptor.Singleton<IIngestResourceReclaimer>(sp => new IngestResourceReclaimer(
+            sp.GetService<IAudioEmbeddingEncoder>())));
         services.AddRecallAdapters(modelDir, vectorRoot, visionDir);
+        services.AddSingleton<Recall.Core.Ingest.IPdfPageRenderer, Recall.Maui.Platform.Ocr.MauiPdfPageRenderer>();
+        services.Replace(ServiceDescriptor.Singleton<IGrantedTextIngestService>(sp => new GrantedTextIngestService(
+            sp.GetRequiredService<IScopeManagerService>(),
+            sp.GetRequiredService<IGrantedTextReader>(),
+            sp.GetRequiredService<TextIngestEngine>(),
+            sp.GetRequiredService<IIngestCursorStore>(),
+            sp.GetRequiredService<ITextVectorIndex>(),
+            sp.GetRequiredService<LocalOpLogWriter>(),
+            sp.GetRequiredService<IEncoderFileHash>(),
+            sp.GetRequiredService<IMemoryBudget>(),
+            sp.GetRequiredService<MemoryGate>(),
+            sp.GetRequiredService<IIngestResourceReclaimer>(),
+            sp.GetService<IAudioFileIngest>(),
+            sp.GetService<IngestScheduler>(),
+            sp.GetService<IVisionFileIngest>(),
+            sp.GetService<IModelDownloadService>(),
+            sp.GetService<Recall.Core.Ingest.IPdfPageRenderer>())));
         var ocrModelRoot = FileSystem.AppDataDirectory;
         services.Replace(ServiceDescriptor.Singleton(sp => new IngestSchedulerService(
             sp.GetRequiredService<IngestScheduler>(),

@@ -30,6 +30,10 @@ public interface ITextVectorIndex
 
 public interface IGrantedTextIngestService
 {
+    IReadOnlyList<string> FailedPaths { get; }
+
+    bool PassRunning { get; }
+
     Task IngestGrantedTextAsync(CancellationToken cancellationToken = default);
 
     Task IngestGrantAsync(string path, CancellationToken cancellationToken = default);

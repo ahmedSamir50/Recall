@@ -22,7 +22,7 @@ public sealed class IngestMediaStartTests
         var reader = new ImageListReader([@"D:\g\a.jpg"]);
         var (engine, opLog, cursors) = IngestTestKit.CreateEngine(new FakeTextEmbeddingEncoder(), new FakeTextVectorIndex());
         var vision = new RecordingVisionIngest();
-        var service = new GrantedTextIngestService(scope, reader, engine, cursors, new FakeTextVectorIndex(), opLog, new FakeEncoderFileHash(), vision: vision);
+        var service = new GrantedTextIngestService(scope, reader, engine, cursors, new FakeTextVectorIndex(), opLog, new FakeEncoderFileHash(), TestIngest.Memory(), TestIngest.Gate(), TestIngest.Reclaimer(), vision: vision);
         await service.IngestGrantAsync(grant.Path, TestContext.Current.CancellationToken);
         vision.ImageCalls.Should().Be(1);
     }
@@ -36,7 +36,7 @@ public sealed class IngestMediaStartTests
         scope.TryAddGrant(grant);
         var reader = new ImageListReader([@"D:\g\a.jpg"]);
         var (engine, opLog, cursors) = IngestTestKit.CreateEngine(new FakeTextEmbeddingEncoder(), new FakeTextVectorIndex());
-        var service = new GrantedTextIngestService(scope, reader, engine, cursors, new FakeTextVectorIndex(), opLog, new FakeEncoderFileHash());
+        var service = new GrantedTextIngestService(scope, reader, engine, cursors, new FakeTextVectorIndex(), opLog, new FakeEncoderFileHash(), TestIngest.Memory(), TestIngest.Gate(), TestIngest.Reclaimer());
         var act = async () => await service.IngestGrantAsync(grant.Path, TestContext.Current.CancellationToken);
         var ex = await act.Should().ThrowAsync<InvalidOperationException>();
         ex.Which.Message.Should().Be(GrantedTextIngestService.PictureIngestNotRegistered);
@@ -76,7 +76,7 @@ public sealed class IngestMediaStartTests
         var throwOnce = new ThrowOnceEncoder();
         var (engine, opLog, cursors) = IngestTestKit.CreateEngine(throwOnce, new FakeTextVectorIndex());
         var vision = new RecordingVisionIngest();
-        var service = new GrantedTextIngestService(scope, reader, engine, cursors, new FakeTextVectorIndex(), opLog, new FakeEncoderFileHash(), vision: vision);
+        var service = new GrantedTextIngestService(scope, reader, engine, cursors, new FakeTextVectorIndex(), opLog, new FakeEncoderFileHash(), TestIngest.Memory(), TestIngest.Gate(), TestIngest.Reclaimer(), vision: vision);
         await service.IngestGrantAsync(grant.Path, TestContext.Current.CancellationToken);
         vision.ImageCalls.Should().Be(1);
     }
@@ -108,7 +108,7 @@ public sealed class IngestMediaStartTests
         var (engine, opLog, cursors) = IngestTestKit.CreateEngine(new FakeTextEmbeddingEncoder(), new FakeTextVectorIndex());
         cursors.MarkGrantFinished(grant.Path);
         var vision = new RecordingVisionIngest();
-        var service = new GrantedTextIngestService(scope, reader, engine, cursors, new FakeTextVectorIndex(), opLog, new FakeEncoderFileHash(), vision: vision);
+        var service = new GrantedTextIngestService(scope, reader, engine, cursors, new FakeTextVectorIndex(), opLog, new FakeEncoderFileHash(), TestIngest.Memory(), TestIngest.Gate(), TestIngest.Reclaimer(), vision: vision);
         await service.IngestGrantAsync(grant.Path, TestContext.Current.CancellationToken);
         vision.ImageCalls.Should().Be(1);
     }
@@ -124,7 +124,7 @@ public sealed class IngestMediaStartTests
         var (engine, opLog, cursors) = IngestTestKit.CreateEngine(new FakeTextEmbeddingEncoder(), new FakeTextVectorIndex());
         var vision = new RecordingVisionIngest();
         var downloads = new FakeModelDownloadService { VisionSnapshot = new TextModelDownloadSnapshot(TextModelDownloadPhase.Downloading, 0, null) };
-        var service = new GrantedTextIngestService(scope, reader, engine, cursors, new FakeTextVectorIndex(), opLog, new FakeEncoderFileHash(), vision: vision, downloads: downloads);
+        var service = new GrantedTextIngestService(scope, reader, engine, cursors, new FakeTextVectorIndex(), opLog, new FakeEncoderFileHash(), TestIngest.Memory(), TestIngest.Gate(), TestIngest.Reclaimer(), vision: vision, downloads: downloads);
         await service.IngestGrantAsync(grant.Path, TestContext.Current.CancellationToken);
         vision.ImageCalls.Should().Be(0);
         cursors.GetFile(@"D:\g\a.jpg").Should().BeNull();
@@ -143,7 +143,7 @@ public sealed class IngestMediaStartTests
             cursors.MarkReading(path, hash, grant.Path);
             cursors.FinishPath(path, hash, grant.Path, "enc", [new ChunkWrite("id", 0)]);
             var encoder = new RecordingVisionEncoder();
-            var ingest = new VisionFileIngest(encoder, new FakeMediaVectorIndex(), new FakeEncoderFileHash(), cursors);
+            var ingest = new VisionFileIngest(encoder, new FakeMediaVectorIndex(), new FakeEncoderFileHash(), cursors, TestIngest.Memory());
             await ingest.IndexImageAsync(grant, path, TestContext.Current.CancellationToken);
             encoder.Calls.Should().Be(0);
         }
@@ -162,7 +162,7 @@ public sealed class IngestMediaStartTests
         scope.TryAddGrant(grant);
         var reader = new BlockingCountingReader();
         var (engine, opLog, cursors) = IngestTestKit.CreateEngine(new FakeTextEmbeddingEncoder(), new FakeTextVectorIndex());
-        var service = new GrantedTextIngestService(scope, reader, engine, cursors, new FakeTextVectorIndex(), opLog, new FakeEncoderFileHash());
+        var service = new GrantedTextIngestService(scope, reader, engine, cursors, new FakeTextVectorIndex(), opLog, new FakeEncoderFileHash(), TestIngest.Memory(), TestIngest.Gate(), TestIngest.Reclaimer());
         var first = service.IngestGrantedTextAsync(TestContext.Current.CancellationToken);
         await Task.Delay(50, TestContext.Current.CancellationToken);
         await service.IngestGrantedTextAsync(TestContext.Current.CancellationToken);
@@ -180,7 +180,7 @@ public sealed class IngestMediaStartTests
         scope.TryAddGrant(grant);
         var reader = new BlockingCountingReader();
         var (engine, opLog, cursors) = IngestTestKit.CreateEngine(new FakeTextEmbeddingEncoder(), new FakeTextVectorIndex());
-        var service = new GrantedTextIngestService(scope, reader, engine, cursors, new FakeTextVectorIndex(), opLog, new FakeEncoderFileHash());
+        var service = new GrantedTextIngestService(scope, reader, engine, cursors, new FakeTextVectorIndex(), opLog, new FakeEncoderFileHash(), TestIngest.Memory(), TestIngest.Gate(), TestIngest.Reclaimer());
         var first = service.IngestGrantedTextAsync(TestContext.Current.CancellationToken);
         await Task.Delay(50, TestContext.Current.CancellationToken);
         await service.IngestGrantedTextAsync(TestContext.Current.CancellationToken);
@@ -198,7 +198,7 @@ public sealed class IngestMediaStartTests
         cursors.MarkMissing(@"D:\g\missing.txt");
         cursors.MarkReading(@"D:\g\done.txt", "h2", grant.Path);
         cursors.FinishPath(@"D:\g\done.txt", "h2", grant.Path, "e", [new ChunkWrite("c", 0)]);
-        var status = new IngestStatusService(cursors);
+        var status = new IngestStatusService(cursors, TestIngest.Memory());
         var list = status.ListUnfinished([grant]);
         list.Should().Contain(@"D:\g\missing.txt");
         list.Should().NotContain(@"D:\g\done.txt");

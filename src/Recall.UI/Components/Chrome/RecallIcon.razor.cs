@@ -25,6 +25,7 @@ public partial class RecallIcon
             ["check"] = """<path d="m5 12 5 5L20 7"/>""",
             ["mic"] = """<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>""",
             ["img"] = """<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>""",
+            ["wav"] = """<path d="M4 10v4h3l4 3V7L7 10H4Zm10 1a3 3 0 0 1 0 2"/>""",
             ["doc"] = """<path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4M9 13h6m-6 4h6"/>""",
             ["play"] = """<path d="M8 5v14l11-7Z"/>""",
             ["alert"] = """<path d="M12 9v4m0 4h.01M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6A2 2 0 0 0 22 18L13.7 3.9a2 2 0 0 0-3.4 0Z"/>""",

@@ -14,6 +14,8 @@ public sealed class WindowsVideoFrameSampler : IVideoFrameSamplerService
 
     private const int ThumbnailHeight = 360;
 
+    private const int FrameBatchSize = 64;
+
     public IReadOnlyList<Recall.Core.Ports.VideoFrame> SampleEveryTwoSeconds(Stream media)
     {
         ArgumentNullException.ThrowIfNull(media);
@@ -22,7 +24,8 @@ public sealed class WindowsVideoFrameSampler : IVideoFrameSamplerService
             throw new NotSupportedException(FrameCadence.WindowsMinimumBuildMessage);
         }
 
-        var path = Path.Combine(FileSystem.CacheDirectory, $"recall-video-{Guid.NewGuid():N}.mp4");
+        var cacheRoot = TryCacheDirectory() ?? Path.GetTempPath();
+        var path = Path.Combine(cacheRoot, $"recall-video-{Guid.NewGuid():N}.mp4");
         try
         {
             return SampleBlocking(media, path);
@@ -57,31 +60,53 @@ public sealed class WindowsVideoFrameSampler : IVideoFrameSamplerService
         }
 
         var starts = FrameCadence.Starts(duration.TotalSeconds);
-        var snapshots = await composition
-            .GetThumbnailsAsync(
-                starts.Select(start => TimeSpan.FromSeconds(start)).ToList(),
-                ThumbnailWidth,
-                ThumbnailHeight,
-                VideoFramePrecision.NearestFrame)
-            .AsTask()
-            .ConfigureAwait(false);
         var frames = new List<Recall.Core.Ports.VideoFrame>();
-        for (var index = 0; index < snapshots.Count; index++)
+        for (var offset = 0; offset < starts.Count; offset += FrameBatchSize)
         {
-            var start = starts[index];
-            using var snapshot = snapshots[index];
-            if (snapshot is null)
+            var count = Math.Min(FrameBatchSize, starts.Count - offset);
+            var batch = new List<TimeSpan>(count);
+            for (var index = 0; index < count; index++)
             {
-                continue;
+                batch.Add(TimeSpan.FromSeconds(starts[offset + index]));
             }
 
-            using var netStream = snapshot.AsStreamForRead();
-            using var jpeg = new MemoryStream();
-            await netStream.CopyToAsync(jpeg).ConfigureAwait(false);
-            frames.Add(new VideoFrame(jpeg.ToArray(), start, FrameCadence.End(start, duration.TotalSeconds)));
+            var snapshots = await composition
+                .GetThumbnailsAsync(
+                    batch,
+                    ThumbnailWidth,
+                    ThumbnailHeight,
+                    VideoFramePrecision.NearestFrame)
+                .AsTask()
+                .ConfigureAwait(false);
+            for (var index = 0; index < snapshots.Count; index++)
+            {
+                var start = starts[offset + index];
+                using var snapshot = snapshots[index];
+                if (snapshot is null)
+                {
+                    continue;
+                }
+
+                using var netStream = snapshot.AsStreamForRead();
+                using var jpeg = new MemoryStream();
+                await netStream.CopyToAsync(jpeg).ConfigureAwait(false);
+                frames.Add(new VideoFrame(jpeg.ToArray(), start, FrameCadence.End(start, duration.TotalSeconds)));
+            }
         }
 
         return frames;
+    }
+
+    private static string? TryCacheDirectory()
+    {
+        try
+        {
+            return FileSystem.CacheDirectory;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     private static void TryDelete(string path)

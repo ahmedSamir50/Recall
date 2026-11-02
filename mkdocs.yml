@@ -82,6 +82,7 @@ nav:
       - Local notes: features/local-notes.md
       - Desktop presence: features/desktop-presence.md
       - File size cap: features/file-size-cap.md
+      - Ingest memory budget: features/ingest-memory-budget.md
       - Proof: features/proof.md
   - Code:
       - Map: code/map.md

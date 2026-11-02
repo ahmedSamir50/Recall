@@ -18,13 +18,14 @@ public sealed partial class MauiGrantedTextReader : IGrantedTextReader
         IUserSkipStore skips,
         ILocalContentProbe probe,
         IRemoteFileSkipReport remoteSkip,
-        IDatasetSkipReport datasetSkip)
+        IDatasetSkipReport datasetSkip,
+        IOversizeFileSkipReport oversize)
     {
         this.access = access;
 #if ANDROID
         this.remoteSkip = remoteSkip;
 #endif
-        files = new DirectoryGrantedTextReader(skips, probe, remoteSkip, datasetSkip);
+        files = new DirectoryGrantedTextReader(skips, probe, remoteSkip, datasetSkip, oversize);
     }
 
     public IAsyncEnumerable<GrantedTextDocument> ReadAsync(ScopeFolderGrant grant, CancellationToken cancellationToken)
@@ -50,6 +51,16 @@ public sealed partial class MauiGrantedTextReader : IGrantedTextReader
         }
 
         return files.ListAudioAndVideoAsync(grant, cancellationToken);
+    }
+
+    public IAsyncEnumerable<string> ListImagesAsync(ScopeFolderGrant grant, CancellationToken cancellationToken)
+    {
+        if (Interlocked.Exchange(ref restored, 1) == 0)
+        {
+            access.RestorePersistedAccess();
+        }
+
+        return files.ListImagesAsync(grant, cancellationToken);
     }
 
     private static IAsyncEnumerable<GrantedTextDocument> NoDocuments { get; } = new EmptyDocuments();

@@ -5,6 +5,8 @@ namespace Recall.Adapters.Embedding.Llama;
 
 public sealed class LlamaTextTokenCounter : ITextTokenCounter
 {
+    public const int WindowChars = 65_536;
+
     private readonly IRecallEmbedLibrary library;
 
     internal LlamaTextTokenCounter(IRecallEmbedLibrary library)
@@ -35,12 +37,43 @@ public sealed class LlamaTextTokenCounter : ITextTokenCounter
         LlamaNativeGate.Enter();
         try
         {
-            return ToCharEnds(text, library.TokenEnds(text));
+            return Collect(text);
         }
         finally
         {
             LlamaNativeGate.Exit();
         }
+    }
+
+    private List<int> Collect(string text)
+    {
+        var ends = new List<int>();
+        var offset = 0;
+        while (offset < text.Length)
+        {
+            var length = Math.Min(text.Length - offset, WindowChars);
+            var window = text.Substring(offset, length);
+            var local = ToCharEnds(window, library.TokenEnds(window));
+            if (local.Count == 0)
+            {
+                break;
+            }
+
+            foreach (var end in local)
+            {
+                ends.Add(offset + end);
+            }
+
+            var consumed = local[^1];
+            if (consumed <= 0)
+            {
+                break;
+            }
+
+            offset += consumed;
+        }
+
+        return ends;
     }
 
     private static IReadOnlyList<int> ToCharEnds(string text, int[] byteEnds)

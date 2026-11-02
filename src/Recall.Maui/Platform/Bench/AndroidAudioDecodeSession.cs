@@ -9,16 +9,23 @@ public static class AndroidAudioDecodeSession
     public static void RunIfReady(string appFilesDirectory)
     {
         var external = global::Android.App.Application.Context.GetExternalFilesDir(null)?.AbsolutePath;
-        var root = File.Exists(Path.Combine(external ?? string.Empty, "tone.m4a"))
-            ? external
-            : File.Exists(Path.Combine(appFilesDirectory, "tone.m4a")) ? appFilesDirectory : null;
+        string? root = null;
+        if (File.Exists(Path.Combine(external ?? string.Empty, "tone.m4a")))
+        {
+            root = external;
+        }
+        else if (File.Exists(Path.Combine(appFilesDirectory, "tone.m4a")))
+        {
+            root = appFilesDirectory;
+        }
+
         if (root is null)
         {
             return;
         }
 
         var tonePath = Path.Combine(root, "tone.m4a");
-        var reportPath = Path.Combine(root, "android-audio-decode.txt");
+        var reportPath = Path.Combine(appFilesDirectory, "android-audio-decode.txt");
         try
         {
             var source = new AndroidAudioSource();

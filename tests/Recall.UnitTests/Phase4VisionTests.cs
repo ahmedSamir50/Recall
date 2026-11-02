@@ -86,12 +86,20 @@ public sealed class Phase4VisionTests : IDisposable
     [Fact]
     public void VisionEmbed_WidthNot768_Returns5()
     {
-        var function = FunctionBody(NativeSource(), "recall_embed_vision_embed");
+        var source = NativeSource();
+        var function = FunctionBody(source, "recall_embed_vision_embed");
         var widthCheck = function.IndexOf("recall_embed_output_width() != RECALL_EMBED_DIM", StringComparison.Ordinal);
-        var firstWrite = function.IndexOf("out768[", StringComparison.Ordinal);
+        var pool = function.IndexOf("recall_embed_pool_mtmd_tokens(", StringComparison.Ordinal);
+        var directWrite = function.IndexOf("out768[", StringComparison.Ordinal);
         widthCheck.Should().BeGreaterThanOrEqualTo(0);
-        firstWrite.Should().BeGreaterThan(widthCheck);
+        pool.Should().BeGreaterThan(widthCheck);
+        if (directWrite >= 0)
+        {
+            directWrite.Should().BeGreaterThan(widthCheck);
+        }
+
         function.Should().Contain("return 5;");
+        FunctionBody(source, "recall_embed_pool_mtmd_tokens").Should().Contain("out768[");
     }
 
     [Fact]
@@ -288,6 +296,7 @@ public sealed class Phase4VisionTests : IDisposable
             new FakeMediaVectorIndex(),
             new FakeEncoderFileHash(),
             cursors,
+            TestIngest.Memory(),
             sampler);
         await vision.IndexVideoFramesAsync(grant, path, TestContext.Current.CancellationToken);
         var row = cursors.GetFile(path);

@@ -9,15 +9,17 @@ public sealed class LocalOpLogWriter
 
     public const string DayFilePattern = "yyyy-MM-dd";
 
+    public const int MaxEntriesInMemory = 10_000;
+
     private readonly string? directory;
-    private readonly List<LocalOpLogEntry> entries = [];
+    private readonly Queue<LocalOpLogEntry> entries = new();
 
     public LocalOpLogWriter(string? directory = null)
     {
         this.directory = directory;
     }
 
-    public IReadOnlyList<LocalOpLogEntry> Entries => entries;
+    public IReadOnlyList<LocalOpLogEntry> Entries => [.. entries];
 
     public void AppendInsert(string contentId)
     {
@@ -46,7 +48,12 @@ public sealed class LocalOpLogWriter
     private void AppendOperation(OpLogOperation operation, string contentId)
     {
         var entry = new LocalOpLogEntry(operation, contentId, DateTimeOffset.UtcNow, Sent: false);
-        entries.Add(entry);
+        if (entries.Count >= MaxEntriesInMemory)
+        {
+            entries.Dequeue();
+        }
+
+        entries.Enqueue(entry);
         if (string.IsNullOrWhiteSpace(directory))
         {
             return;

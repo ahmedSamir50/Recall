@@ -193,7 +193,7 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
     public IReadOnlyList<TextSearchHit> Search(TextSearchRequest request, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var rankConstant = HybridFusion.RrfRankConstant;
+        const int rankConstant = HybridFusion.RrfRankConstant;
         TextVectorIndexGuard.EnsureHybridQueryUsesRrf(rankConstant, indexPolicy);
         var topK = request.TopK;
         var filter = string.IsNullOrWhiteSpace(request.Filter) ? null : request.Filter;
@@ -208,7 +208,7 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
             var fts = new ZVecQuery
             {
                 FieldName = FtsKeyField,
-                Fts = new ZVecFtsQuery { QueryString = request.Query, DefaultOperator = ZVecFtsDefaultOperator.And },
+                Fts = new ZVecFtsQuery { QueryString = FtsQueryString.ForZVec(request.Query), DefaultOperator = ZVecFtsDefaultOperator.And },
             };
             var reranker = new ZVecRrfReranker { TopN = topK, RankConstant = rankConstant };
             return MapDocsStatic(collection.Query([dense, fts], topk: topK, reranker: reranker, filter: filter, includeVector: false));
@@ -228,7 +228,7 @@ public sealed class ZVecTextVectorIndex : ITextVectorIndex, IDisposable
         var ftsOnly = new ZVecQuery
         {
             FieldName = FtsKeyField,
-            Fts = new ZVecFtsQuery { QueryString = request.Query, DefaultOperator = ZVecFtsDefaultOperator.And },
+            Fts = new ZVecFtsQuery { QueryString = FtsQueryString.ForZVec(request.Query), DefaultOperator = ZVecFtsDefaultOperator.And },
         };
             return MapDocsStatic(collection.Query(ftsOnly, topk: topK, filter: filter, includeVector: false));
     }

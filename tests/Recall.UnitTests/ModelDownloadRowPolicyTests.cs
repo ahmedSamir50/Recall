@@ -2,6 +2,7 @@ using FluentAssertions;
 using Recall.Core.Download;
 using Recall.Core.Ocr;
 using Recall.Core.Ingest;
+using Recall.Core.Runtime;
 using Recall.Core.Scope;
 using Recall.Core.Vocabulary;
 using Recall.UI.Layout;
@@ -104,22 +105,22 @@ public sealed class ModelDownloadRowPolicyTests
 
     [Fact]
     public void ChromeStatus_PassRunning_IsRunning() =>
-        IngestChromePolicy.Status(true, TextModelDownloadPhase.Ready, TextModelDownloadPhase.Ready, TextModelDownloadPhase.Ready, false)
+        IngestChromePolicy.Status(true, TextModelDownloadPhase.Ready, TextModelDownloadPhase.Ready, TextModelDownloadPhase.Ready, false, DeviceVerdict.Ok)
             .Should().Be(IngestChromeStatus.Running);
 
     [Fact]
     public void ChromeStatus_VisionDownloading_IsRunning() =>
-        IngestChromePolicy.Status(false, TextModelDownloadPhase.Ready, TextModelDownloadPhase.Downloading, TextModelDownloadPhase.Ready, false)
+        IngestChromePolicy.Status(false, TextModelDownloadPhase.Ready, TextModelDownloadPhase.Downloading, TextModelDownloadPhase.Ready, false, DeviceVerdict.Ok)
             .Should().Be(IngestChromeStatus.Running);
 
     [Fact]
     public void ChromeStatus_Unfinished_IsStopped() =>
-        IngestChromePolicy.Status(false, TextModelDownloadPhase.Ready, TextModelDownloadPhase.Ready, TextModelDownloadPhase.Ready, true)
+        IngestChromePolicy.Status(false, TextModelDownloadPhase.Ready, TextModelDownloadPhase.Ready, TextModelDownloadPhase.Ready, true, DeviceVerdict.Ok)
             .Should().Be(IngestChromeStatus.Stopped);
 
     [Fact]
     public void ChromeStatus_Idle_IsDone() =>
-        IngestChromePolicy.Status(false, TextModelDownloadPhase.Ready, TextModelDownloadPhase.Ready, TextModelDownloadPhase.Ready, false)
+        IngestChromePolicy.Status(false, TextModelDownloadPhase.Ready, TextModelDownloadPhase.Ready, TextModelDownloadPhase.Ready, false, DeviceVerdict.Ok)
             .Should().Be(IngestChromeStatus.Done);
 
     [Fact]

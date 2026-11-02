@@ -1,5 +1,6 @@
 using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Maui.Views;
+using Recall.Core.Media;
 
 namespace Recall.Maui.Platform.Media;
 
@@ -67,7 +68,11 @@ public partial class MediaPreviewPage : ContentPage
         {
             try
             {
-                await Player.SeekTo(TimeSpan.FromSeconds(startSeconds), CancellationToken.None);
+                if (MediaPreviewSeekPolicy.ShouldSeek(startSeconds, Player.Duration))
+                {
+                    await Player.SeekTo(TimeSpan.FromSeconds(startSeconds), CancellationToken.None);
+                }
+
                 Player.Play();
             }
             catch (Exception ex)

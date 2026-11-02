@@ -13,5 +13,6 @@
 - [ADR 0013: GitHub remote](0013-github-remote.md)
 - [ADR 0014: Linux RID](0014-linux-rid.md)
 - [ADR 0015: Proof hosts](0015-proof-hosts.md)
+- [ADR 0016: Ingest memory ceiling](0016-ingest-memory-ceiling.md)
 
 An open item is not an ADR.

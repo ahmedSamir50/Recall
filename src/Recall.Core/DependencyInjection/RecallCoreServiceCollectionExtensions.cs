@@ -8,6 +8,7 @@ using Recall.Core.Ingest;
 using Recall.Core.Locale;
 using Recall.Core.Ports;
 using Recall.Core.Preferences;
+using Recall.Core.Runtime;
 using Recall.Core.Scope;
 using Recall.Core.Search;
 using Recall.Core.Sync;
@@ -39,6 +40,14 @@ public static class RecallCoreServiceCollectionExtensions
         services.AddSingleton<IEncoderFileHash, DefaultEncoderFileHash>();
         services.AddSingleton<IRemoteFileSkipReport, RemoteFileSkipReport>();
         services.AddSingleton<IDatasetSkipReport, DatasetSkipReport>();
+        services.AddSingleton<IOversizeFileSkipReport, OversizeFileSkipReport>();
+        services.AddSingleton(new MemoryBudgetOptions());
+        services.AddSingleton<MemoryGate>();
+        services.AddSingleton<IIngestResourceReclaimer, IngestResourceReclaimer>();
+        services.AddSingleton<IMemoryBudget>(sp => new ProcessMemoryBudget(
+            0,
+            sp.GetRequiredService<MemoryBudgetOptions>(),
+            new MemoryFloorStore(null)));
         services.AddSingleton<IIdleDetectorService, DisabledIdleDetectorService>();
         services.AddSingleton<ITextSearchService, TextSearchService>();
         services.AddSingleton<TextIngestEngine>();

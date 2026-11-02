@@ -12,7 +12,10 @@ public static class WindowsPdfPageRenderer
     private const double Scale = 300d / 96d;
 
     [SuppressMessage("Performance", "VSTHRD002:Synchronously waiting on tasks or awaiters may cause deadlocks. Use await or JoinableTaskFactory.Run instead", Justification = "PDF render is synchronous and runs off the UI thread.")]
-    public static byte[] Render(string path, int pageNumber)
+    public static byte[] Render(string path, int pageNumber) => Render(path, pageNumber, Scale);
+
+    [SuppressMessage("Performance", "VSTHRD002:Synchronously waiting on tasks or awaiters may cause deadlocks. Use await or JoinableTaskFactory.Run instead", Justification = "PDF render is synchronous and runs off the UI thread.")]
+    public static byte[] Render(string path, int pageNumber, double renderScale)
     {
         ArgumentNullException.ThrowIfNull(path);
         if (pageNumber < 1)
@@ -20,7 +23,8 @@ public static class WindowsPdfPageRenderer
             throw new ArgumentOutOfRangeException(nameof(pageNumber));
         }
 
-        var file = StorageFile.GetFileFromPathAsync(path).AsTask().GetAwaiter().GetResult();
+        var fullPath = Path.GetFullPath(path);
+        var file = StorageFile.GetFileFromPathAsync(fullPath).AsTask().GetAwaiter().GetResult();
         var document = PdfDocument.LoadFromFileAsync(file).AsTask().GetAwaiter().GetResult();
         if (pageNumber > document.PageCount)
         {
@@ -31,8 +35,8 @@ public static class WindowsPdfPageRenderer
         using var stream = new InMemoryRandomAccessStream();
         var options = new PdfPageRenderOptions
         {
-            DestinationWidth = (uint)Math.Max(1, page.Size.Width * Scale),
-            DestinationHeight = (uint)Math.Max(1, page.Size.Height * Scale),
+            DestinationWidth = (uint)Math.Max(1, page.Size.Width * renderScale),
+            DestinationHeight = (uint)Math.Max(1, page.Size.Height * renderScale),
         };
         page.RenderToStreamAsync(stream, options).AsTask().GetAwaiter().GetResult();
         stream.Seek(0);

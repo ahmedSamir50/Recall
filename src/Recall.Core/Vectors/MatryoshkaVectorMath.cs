@@ -39,9 +39,24 @@ public static class MatryoshkaVectorMath
         }
 
         var slice = new float[storedWidth];
-        full768[..storedWidth].CopyTo(slice);
-        L2Normalize(slice);
+        CutAndNormalize(full768, slice);
         return slice;
+    }
+
+    public static void CutAndNormalize(ReadOnlySpan<float> full768, Span<float> destination)
+    {
+        if (full768.Length != NativeWidth)
+        {
+            throw new RecallFaultException(RecallFault.EmbeddingWidthUnexpected);
+        }
+
+        if (destination.Length <= 0 || destination.Length > NativeWidth)
+        {
+            throw new RecallFaultException(RecallFault.TextWidthNot512);
+        }
+
+        full768[..destination.Length].CopyTo(destination);
+        L2Normalize(destination);
     }
 
     public static double L2Length(ReadOnlySpan<float> vector)

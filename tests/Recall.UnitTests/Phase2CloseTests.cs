@@ -38,7 +38,7 @@ public sealed class Phase2CloseTests
     [Fact]
     public void Plan_UnderAim_IsOnePatch()
     {
-        var patches = DocumentPatchPlanner.Plan("Notes", "mars", null, 0, Enumerable.Range(1, 5).ToList());
+        var patches = DocumentPatchPlanner.Plan("Notes", "mars", null, 0, Enumerable.Range(1, 5).ToList()).Patches;
         patches.Should().HaveCount(1);
         patches[0].Ordinal.Should().Be(0);
         patches[0].Raw.Should().Be("mars");
@@ -47,14 +47,14 @@ public sealed class Phase2CloseTests
     [Fact]
     public void Plan_BlankContent_Throws()
     {
-        var act = () => DocumentPatchPlanner.Plan("Notes", " ", null, 0, Enumerable.Range(1, 5).ToList());
+        var act = () => DocumentPatchPlanner.Plan("Notes", " ", null, 0, Enumerable.Range(1, 5).ToList()).Patches;
         act.Should().Throw<ArgumentException>();
     }
 
     [Fact]
     public void Plan_NullEnds_Throws()
     {
-        var act = () => DocumentPatchPlanner.Plan("Notes", "mars", null, 0, null!);
+        var act = () => DocumentPatchPlanner.Plan("Notes", "mars", null, 0, null!).Patches;
         act.Should().Throw<ArgumentNullException>();
     }
 

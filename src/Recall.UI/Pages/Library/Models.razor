@@ -1,6 +1,7 @@
 @namespace Recall.UI.Pages
 @page "/models"
 @inherits RecallComponentBase
+@using Recall.Core.Download
 
 <div class="p-4 md:p-6 flex justify-center">
     <section class="g2 rounded-2xl w-full max-w-640 p-5 rise">
@@ -9,8 +10,9 @@
         <ul class="plain-list flex flex-col gap-3 mb-5">
             @foreach (var entry in ModelCatalog.All)
             {
-                <ModelRow Entry="entry" Label="@ModelLabel(entry.Modality)" AutoStart="true" />
+                <ModelRow Entry="entry" Kind="@ModelDownloadRowKindExtensions.FromModality(entry.Modality)" Label="@ModelLabel(entry.Modality)" AutoStart="true" />
             }
+            <ModelRow Kind="ModelDownloadRowKind.Helpers" Label="@T("Models_Helpers")" AutoStart="true" />
         </ul>
         <p><span class="hint">@T("Models_ShaNote")</span></p>
     </section>

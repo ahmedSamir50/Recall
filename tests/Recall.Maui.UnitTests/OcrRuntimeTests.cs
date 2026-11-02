@@ -192,7 +192,9 @@ public sealed class OcrRuntimeTests
             new FakeIndexPolicy(),
             new FakeTextTokenCounter(),
             new LocalOpLogWriter(Path.Combine(Path.GetTempPath(), $"recall-oplog-{Guid.NewGuid():N}.jsonl")),
-            cursors);
+            cursors,
+            TestIngest.Memory(),
+            TestIngest.Gate());
     }
 
     private static string CopyModelTree()

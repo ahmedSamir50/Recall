@@ -20,6 +20,7 @@ public sealed record LocalOpLogEntry(OpLogOperation Operation, string ContentId,
     public void AppendPin(string contentId)
     public void AppendUnpin(string contentId)
         if (string.IsNullOrWhiteSpace(directory))
+        if (entries.Count >= MaxEntriesInMemory)
 ```
 
 
@@ -102,6 +103,7 @@ public static class MatryoshkaVectorMath
             throw new RecallFaultException(RecallFault.EmbeddingWidthUnexpected);
         if (storedWidth <= 0 || storedWidth > NativeWidth)
             throw new RecallFaultException(RecallFault.TextWidthNot512);
+        if (destination.Length <= 0 || destination.Length > NativeWidth)
 ```
 
 
@@ -451,3 +453,119 @@ public sealed class ProxyLogEgressProbe : IEgressProbe
             if (IsLocalAddress(record.Address))
             if (record.ByteCount > 0)
 ```
+
+## src/Recall.Core/Runtime/MemoryPressure.cs
+
+```csharp
+namespace Recall.Core.Runtime;
+public enum MemoryPressure
+```
+
+`MemoryPressure` is the classifier the gate reads. `Normal` is below forty percent of capacity once the floor is counted. `Soft` is forty to fifty percent, where the file in hand finishes and no new file starts. `Hard` is fifty percent and above, where the file stops at the next patch boundary and the gate cools down.
+
+## src/Recall.Core/Runtime/DeviceVerdict.cs
+
+```csharp
+namespace Recall.Core.Runtime;
+public enum DeviceVerdict
+```
+
+`DeviceVerdict` is decided before the encoder opens. `BelowMinimum` means the floor alone is above half of capacity, so the app blocks instead of loading the model. `Tight` means the floor is above forty percent, so ingest runs one file at a time and skips media. `Ok` is the normal case.
+
+## src/Recall.Core/Runtime/MemoryBudgetOptions.cs
+
+```csharp
+namespace Recall.Core.Runtime;
+public sealed class MemoryBudgetOptions
+```
+
+`MemoryBudgetOptions` holds the settings the gate needs: the declared compute scratch, the safety reserve, the cooldown and its maximum, and the large-buffer threshold that decides when a cooldown may compact the heap. The scratch default is an upper bound from context geometry until a measured value replaces it in the docs.
+
+## src/Recall.Core/Runtime/MemoryBudgetPolicy.cs
+
+```csharp
+namespace Recall.Core.Runtime;
+public static class MemoryBudgetPolicy
+    public static long LimitBytes(long capacityBytes) =>
+    public static long HeadroomBytes(long capacityBytes, long workingSetBytes) =>
+    public static long FloorBytes(long modelWeightsBytes, long computeScratchBytes, long reserveBytes, long frameworkBaseBytes) =>
+    public static DeviceVerdict Verdict(long capacityBytes, long floorBytes)
+        if (capacityBytes <= 0)
+        if (floor * 100 > capacityBytes * HardPercent)
+    public static MemoryPressure Classify(long capacityBytes, long workingSetBytes, long floorBytes)
+        if (capacityBytes <= 0)
+        if (effective * 100 >= capacityBytes * HardPercent)
+    public static bool MayResume(long capacityBytes, long workingSetBytes, long floorBytes) =>
+    public static bool MayLoadFile(long fileBytes, int expansion, long capacityBytes, long workingSetBytes) =>
+    public static long MinimumSupportedBytes(long floorBytes) =>
+    public static long RecommendedBytes(long floorBytes) =>
+```
+
+`MemoryBudgetPolicy` is pure arithmetic so every branch is a unit test. `LimitBytes` is half of capacity. `HeadroomBytes` is that limit minus the working set. `FloorBytes` is the cost of having the app open: weights plus scratch plus reserve plus the framework base. `Verdict` compares the floor with the forty and fifty percent lines, which is what blocks a small device before the model loads. `Classify` uses the larger of the working set and the floor, so the model's own cost cannot be hidden. `MayResume` uses the thirty-five percent line so the gate does not flap. `MayLoadFile` refuses a file whose expanded size is above the headroom. `MinimumSupportedBytes` and `RecommendedBytes` publish what a device needs.
+
+## src/Recall.Core/Runtime/IMemoryBudget.cs
+
+```csharp
+namespace Recall.Core.Runtime;
+public interface IMemoryBudget
+```
+
+`IMemoryBudget` is the only way ingest asks about memory. It reports capacity, the live working set, the declared floor, the effective floor, the device verdict, the pressure class, whether a file may load, and it records the observed floor once per process. Core owns the interface, so no MAUI type reaches the gate.
+
+## src/Recall.Core/Runtime/ProcessMemoryBudget.cs
+
+```csharp
+namespace Recall.Core.Runtime;
+public sealed class ProcessMemoryBudget : IMemoryBudget
+    public ProcessMemoryBudget(long modelWeightsBytes, MemoryBudgetOptions options, MemoryFloorStore floors, long? frameworkBaseBytes)
+    public void RecordObserved()
+        if (Interlocked.Exchange(ref observed, 1) != 0)
+        if (measured > EffectiveFloorBytes)
+```
+
+`ProcessMemoryBudget` reads capacity from the GC and the working set from the process, then adds the model weights the composition root measured. `EffectiveFloorBytes` is the larger of the declared floor and the stored observation, so the gate only ever tightens. `RecordObserved` runs once per process, writes only when the measured floor is above the stored one, and never throws when the file cannot be written.
+
+## src/Recall.Core/Runtime/MemoryFloorStore.cs
+
+```csharp
+namespace Recall.Core.Runtime;
+public sealed class MemoryFloorStore
+public sealed record MemoryFloorRecord(long ObservedFloorBytes);
+    public long LoadObserved()
+        if (path is null || !File.Exists(path))
+        catch (Exception error) when (error is IOException or JsonException or UnauthorizedAccessException)
+    public void SaveObserved(long bytes)
+        if (path is null || bytes <= 0)
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+```
+
+`MemoryFloorStore` is the small file that lets a device remember what the encoder actually cost. A missing, corrupt, or unreadable file returns zero so the declared floor wins. A write failure is ignored, because a floor that cannot be saved is not a reason to stop ingest.
+
+## src/Recall.Core/Runtime/MemoryGate.cs
+
+```csharp
+namespace Recall.Core.Runtime;
+public enum MemoryGateState
+public sealed class MemoryGate
+    public void Observe(MemoryPressure pressure, long capacityBytes, long workingSetBytes, long floorBytes, DateTimeOffset now)
+            if (state == MemoryGateState.Blocked)
+            if (state == MemoryGateState.Open)
+                    if (pressure == MemoryPressure.Hard)
+            if (now < nextAttemptAt)
+            if (MemoryBudgetPolicy.MayResume(capacityBytes, workingSetBytes, floorBytes))
+    public void EnterHard(DateTimeOffset now)
+            if (state == MemoryGateState.Open)
+```
+
+`MemoryGate` is a state machine, not a timer, so tests pass the clock in. `Open` moves to `Cooling` on a hard reading with a thirty second wait. `Cooling` re-probes only after that wait, resumes only at or below thirty-five percent, and otherwise doubles the backoff up to five minutes. A finished file resets the backoff. `Blocked` is terminal for the process and never opens.
+
+## src/Recall.Core/Runtime/IngestResourceReclaimer.cs
+
+```csharp
+namespace Recall.Core.Runtime;
+public interface IIngestResourceReclaimer
+public sealed class IngestResourceReclaimer : IIngestResourceReclaimer
+        if (audio is { IsLoaded: true })
+```
+
+`IngestResourceReclaimer` is the one release step the cooldown is allowed to take on encoders. It closes the audio encoder when it is loaded, because mobile audio is unloaded after a job by canon. It does not touch the text encoder, and vision needs nothing because `VisionModelRuntime` closes its own context per image.

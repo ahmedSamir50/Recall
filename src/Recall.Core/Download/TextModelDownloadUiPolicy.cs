@@ -1,7 +1,64 @@
 namespace Recall.Core.Download;
 
+public enum ModelDownloadStart
+{
+    Text = 0,
+    Vision = 1,
+    Audio = 2,
+    Helpers = 3,
+}
+
+public enum DownloadSnapshotSlot
+{
+    Text = 0,
+    Vision = 1,
+    Ocr = 2,
+}
+
 public static class TextModelDownloadUiPolicy
 {
+    public static TextModelDownloadSnapshot SelectSnapshot(
+        ModelDownloadRowKind kind,
+        TextModelDownloadSnapshot text,
+        TextModelDownloadSnapshot vision,
+        TextModelDownloadSnapshot audio,
+        TextModelDownloadSnapshot helpers) =>
+        kind switch
+        {
+            ModelDownloadRowKind.Text => text,
+            ModelDownloadRowKind.Vision => vision,
+            ModelDownloadRowKind.Audio => audio,
+            ModelDownloadRowKind.Helpers => helpers,
+            _ => text,
+        };
+
+    public static ModelDownloadStart StartFor(ModelDownloadRowKind kind) =>
+        kind switch
+        {
+            ModelDownloadRowKind.Text => ModelDownloadStart.Text,
+            ModelDownloadRowKind.Vision => ModelDownloadStart.Vision,
+            ModelDownloadRowKind.Audio => ModelDownloadStart.Audio,
+            ModelDownloadRowKind.Helpers => ModelDownloadStart.Helpers,
+            _ => ModelDownloadStart.Text,
+        };
+
+    public static DownloadSnapshotSlot SlotFor(bool vision, bool ocr)
+    {
+        if (ocr)
+        {
+            return DownloadSnapshotSlot.Ocr;
+        }
+
+        if (vision)
+        {
+            return DownloadSnapshotSlot.Vision;
+        }
+
+        return DownloadSnapshotSlot.Text;
+    }
+
+    public static TextModelDownloadSnapshot MirrorAudio(TextModelDownloadSnapshot vision) => vision;
+
     public static bool ShouldAutoStartDownload(TextModelDownloadPhase phase) =>
         phase == TextModelDownloadPhase.NotStarted;
 

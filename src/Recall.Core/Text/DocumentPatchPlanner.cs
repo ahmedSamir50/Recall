@@ -9,10 +9,15 @@ public readonly record struct PdfPatch(string Raw, int Ordinal, int PageStart, i
 public readonly record struct PdfPageSplit(
     string JoinedDocument,
     IReadOnlyList<PdfPageText> EmbeddablePages,
-    IReadOnlyList<int> OcrPageNumbers);
+    IReadOnlyList<int> OcrPageNumbers,
+    IReadOnlyList<int> ImageFastPathPages);
+
+public readonly record struct PatchPlan(IReadOnlyList<PdfPatch> Patches, bool Truncated);
 
 public static class DocumentPatchPlanner
 {
+    public const int MaxPatchesPerDocument = 512;
+
     public const int PatchTargetTokens = 2048;
 
     public const int LookbackTokens = 512;
@@ -22,6 +27,8 @@ public static class DocumentPatchPlanner
     public const int MaxOverlapTokens = 384;
 
     public const int HardCapTokens = 7680;
+
+    public const int ContextGuardTokens = 32;
 
     public static bool EndsPatch(int prefixedTokenCount) => prefixedTokenCount >= HardCapTokens;
 
@@ -95,8 +102,16 @@ public static class DocumentPatchPlanner
         ArgumentNullException.ThrowIfNull(pages);
         var embeddable = new List<PdfPageText>();
         var ocrPageNumbers = new List<int>();
+        var imageFastPathPages = new List<int>();
         foreach (var page in pages)
         {
+            if (string.IsNullOrWhiteSpace(page.Text))
+            {
+                ocrPageNumbers.Add(page.PageNumber);
+                imageFastPathPages.Add(page.PageNumber);
+                continue;
+            }
+
             if (IsOcrPage(page.Text))
             {
                 ocrPageNumbers.Add(page.PageNumber);
@@ -109,7 +124,7 @@ public static class DocumentPatchPlanner
 
         if (embeddable.Count == 0)
         {
-            return new PdfPageSplit(string.Empty, embeddable, ocrPageNumbers);
+            return new PdfPageSplit(string.Empty, embeddable, ocrPageNumbers, imageFastPathPages);
         }
 
         for (var index = 0; index < embeddable.Count - 1; index++)
@@ -124,10 +139,10 @@ public static class DocumentPatchPlanner
             builder.Append(page.Text);
         }
 
-        return new PdfPageSplit(builder.ToString(), embeddable, ocrPageNumbers);
+        return new PdfPageSplit(builder.ToString(), embeddable, ocrPageNumbers, imageFastPathPages);
     }
 
-    public static IReadOnlyList<PdfPatch> Plan(
+    public static PatchPlan Plan(
         string title,
         string joinedDocument,
         IReadOnlyList<PdfPageText>? pages,
@@ -140,7 +155,7 @@ public static class DocumentPatchPlanner
         return PlanCore(joinedDocument, pages, prefixTokenCount, [.. tokenEnds]);
     }
 
-    private static List<PdfPatch> PlanCore(
+    private static PatchPlan PlanCore(
         string document,
         IReadOnlyList<PdfPageText>? pages,
         int prefixTokenCount,
@@ -151,11 +166,18 @@ public static class DocumentPatchPlanner
         var patches = new List<PdfPatch>();
         var ordinal = 0;
         var startChar = 0;
+        var truncated = false;
         var documentLength = document.Length;
         var endCount = ends.Length;
         var aim = Math.Max(1, PatchTargetTokens - prefixTokenCount);
         while (startChar < documentLength)
         {
+            if (patches.Count == MaxPatchesPerDocument)
+            {
+                truncated = true;
+                break;
+            }
+
             var startToken = LargestToken(ends, startChar) + 1;
             if (endCount == 0 || startToken + aim >= endCount)
             {
@@ -166,12 +188,24 @@ public static class DocumentPatchPlanner
             var lo = Math.Max(startToken + aim - LookbackTokens, startToken + 1);
             var hi = Math.Min(startToken + aim, endCount - 1);
             var (cutChar, cutToken) = CutPiece(document, ends, lo, hi, startToken, prefixTokenCount, endCount);
+            if (cutChar <= startChar)
+            {
+                cutChar = documentLength;
+                cutToken = endCount == 0 ? 0 : endCount - 1;
+            }
+
             patches.Add(BuildPatch(document, pages, pageStarts, ordinal, startChar, cutChar));
             ordinal++;
-            startChar = OverlapStart(sentenceStarts, cutToken, cutChar);
+            if (cutChar >= documentLength)
+            {
+                break;
+            }
+
+            var next = OverlapStart(sentenceStarts, cutToken, cutChar);
+            startChar = next > startChar && next < cutChar ? next : cutChar;
         }
 
-        return patches;
+        return new PatchPlan(patches, truncated);
     }
 
     private static (int CutChar, int CutToken) CutPiece(
@@ -185,9 +219,10 @@ public static class DocumentPatchPlanner
     {
         var boundary = FindBoundary(document, ends, lo, hi);
         var reach = hi;
-        while (boundary < 0 && reach < endCount - 1 && !EndsPatch(reach - startToken + prefixTokenCount))
+        var ceiling = Math.Min(endCount - 1, startToken + Math.Max(1, HardCapTokens - prefixTokenCount - ContextGuardTokens));
+        while (boundary < 0 && reach < ceiling && !EndsPatch(reach - startToken + prefixTokenCount))
         {
-            reach = Math.Min(reach + LookbackTokens, endCount - 1);
+            reach = Math.Min(reach + LookbackTokens, ceiling);
             boundary = FindBoundary(document, ends, lo, reach);
         }
 
@@ -421,6 +456,11 @@ public static class DocumentPatchPlanner
         for (var index = sentenceStarts.Count - 1; index >= 0; index--)
         {
             var (position, token) = sentenceStarts[index];
+            if (token < low)
+            {
+                return fallback;
+            }
+
             if (token < cutToken)
             {
                 return position;

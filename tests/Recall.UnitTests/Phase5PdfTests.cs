@@ -44,7 +44,7 @@ public sealed class Phase5PdfTests
     {
         var document = new string('x', 2038) + " " + new string('y', 2962);
         var ends = Enumerable.Range(0, 3001).ToList();
-        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 10, ends);
+        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 10, ends).Patches;
         patches[0].CharEnd.Should().Be(2038);
         patches[0].Raw.Should().Be(new string('x', 2038));
         patches[0].CharEnd.Should().NotBe(7680);
@@ -58,7 +58,7 @@ public sealed class Phase5PdfTests
             .ToList();
         var document = string.Concat(pages.Select(page => page.Text).Select((text, index) => index == 0 ? text : "\f" + text));
         var ends = Enumerable.Range(0, document.Length + 1).ToList();
-        var patches = DocumentPatchPlanner.Plan("Notes", document, pages, 0, ends);
+        var patches = DocumentPatchPlanner.Plan("Notes", document, pages, 0, ends).Patches;
         patches.Should().ContainSingle();
         patches[0].PageStart.Should().Be(1);
         patches[0].PageEnd.Should().Be(11);
@@ -69,7 +69,7 @@ public sealed class Phase5PdfTests
     {
         var document = new string('a', 1884) + "\n\n" + new string('b', 94) + ". " + "C" + new string('y', 417);
         var ends = Enumerable.Range(0, document.Length + 1).ToList();
-        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 0, ends);
+        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 0, ends).Patches;
         patches.Count.Should().BeGreaterThan(1);
         patches[0].CharEnd.Should().Be(1886);
         patches[0].Raw.Should().EndWith("\n");
@@ -80,7 +80,7 @@ public sealed class Phase5PdfTests
     {
         var document = new string('x', 1900) + "؟ C" + new string('y', 499);
         var ends = Enumerable.Range(0, document.Length + 1).ToList();
-        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 0, ends);
+        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 0, ends).Patches;
         patches.Count.Should().BeGreaterThan(1);
         patches[0].CharEnd.Should().Be(1901);
         patches[0].Raw.Should().EndWith("؟");
@@ -91,7 +91,7 @@ public sealed class Phase5PdfTests
     {
         var document = new string('a', 1700) + " " + new string('b', 1700);
         var ends = Enumerable.Range(0, document.Length + 1).ToList();
-        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 0, ends);
+        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 0, ends).Patches;
         patches.Should().HaveCount(2);
         patches[0].CharEnd.Should().Be(1700);
         patches[0].Raw.Contains(' ').Should().BeFalse();
@@ -105,7 +105,7 @@ public sealed class Phase5PdfTests
     {
         var document = BuildSentences(30);
         var ends = Enumerable.Range(0, document.Length + 1).ToList();
-        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 0, ends);
+        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 0, ends).Patches;
         var start = patches[1].CharStart;
         document[start - 2].Should().Be('.');
         document[start - 1].Should().Be(' ');
@@ -119,7 +119,7 @@ public sealed class Phase5PdfTests
     {
         var document = BuildSentences(30);
         var ends = Enumerable.Range(0, document.Length + 1).ToList();
-        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 0, ends);
+        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 0, ends).Patches;
         patches[1].CharStart.Should().BeGreaterThan(0);
         patches[1].CharStart.Should().BeLessThan(document.Length);
     }
@@ -129,7 +129,7 @@ public sealed class Phase5PdfTests
     {
         var document = new string('x', 1880) + " 3.5 e.g. now Done. Next" + new string('y', 499);
         var ends = Enumerable.Range(0, document.Length + 1).ToList();
-        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 0, ends);
+        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 0, ends).Patches;
         patches.Count.Should().BeGreaterThan(1);
         patches[0].CharEnd.Should().Be(1899);
         patches[0].Raw.Should().EndWith("Done.");
@@ -140,7 +140,7 @@ public sealed class Phase5PdfTests
     {
         var document = new string('x', 100);
         var ends = Enumerable.Range(0, document.Length + 1).ToList();
-        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 0, ends);
+        var patches = DocumentPatchPlanner.Plan("Notes", document, null, 0, ends).Patches;
         patches.Should().ContainSingle();
         patches[0].Raw.Should().Be(document);
         patches[0].CharEnd.Should().Be(100);

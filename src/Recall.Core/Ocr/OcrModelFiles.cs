@@ -79,6 +79,15 @@ public static class OcrModelFiles
         public const string Sha256 = "21368419e6c016c31db55d316d59e11c128e1913e6e6fe10287084710043d3a6";
     }
 
+    public static readonly (string LocalName, string RemoteName, string Url, string Sha256)[] Pack =
+    [
+        (Detector.LocalName, Detector.RemoteName, Detector.Url, Detector.Sha256),
+        (EnglishReader.LocalName, EnglishReader.RemoteName, EnglishReader.Url, EnglishReader.Sha256),
+        (EnglishReaderYaml.LocalName, EnglishReaderYaml.RemoteName, EnglishReaderYaml.Url, EnglishReaderYaml.Sha256),
+        (ArabicReader.LocalName, ArabicReader.RemoteName, ArabicReader.Url, ArabicReader.Sha256),
+        (ArabicReaderYaml.LocalName, ArabicReaderYaml.RemoteName, ArabicReaderYaml.Url, ArabicReaderYaml.Sha256),
+    ];
+
     public static bool IsComplete(string appDataDirectory)
     {
         var directory = Path.Combine(appDataDirectory, Directory);

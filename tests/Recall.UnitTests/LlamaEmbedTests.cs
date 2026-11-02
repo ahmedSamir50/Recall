@@ -9,6 +9,24 @@ namespace Recall.UnitTests;
 public sealed class LlamaEmbedTests
 {
     [Fact]
+    public void TokenEnds_LongText_CoversEveryCharacterDespiteTheNativeCap()
+    {
+        var library = new FakeRecallEmbedLibrary
+        {
+            TokenEndsFactory = text => Enumerable.Range(1, Math.Min(7680, text.Length / 4)).Select(i => i * 4).ToArray(),
+        };
+        var counter = new LlamaTextTokenCounter(library);
+        var text = new string('a', 200_000);
+
+        var ends = counter.TokenEnds(text);
+
+        ends.Count.Should().BeGreaterThan(7680);
+        ends[^1].Should().Be(text.Length);
+        ends.Should().BeInAscendingOrder();
+        library.TokenEndsCalls.Should().BeGreaterThan(1);
+    }
+
+    [Fact]
     public async Task Embed_Blank_Throws()
     {
         var library = new FakeRecallEmbedLibrary();
@@ -274,6 +292,8 @@ public sealed class LlamaEmbedTests
 
         public int[] TokenEndResult { get; set; } = [];
 
+        public Func<string, int[]>? TokenEndsFactory { get; set; }
+
         public int TokenEndsCalls { get; private set; }
 
         public int[] TokenEnds(string text)
@@ -284,7 +304,7 @@ public sealed class LlamaEmbedTests
                 throw new InvalidOperationException(string.Format(System.Globalization.CultureInfo.InvariantCulture, RecallEmbedResults.TokenEndsFailedFormat, TokenEndsCode));
             }
 
-            return TokenEndResult;
+            return TokenEndsFactory is null ? TokenEndResult : TokenEndsFactory(text);
         }
 
         public int Embed(string text, float[] destination768)

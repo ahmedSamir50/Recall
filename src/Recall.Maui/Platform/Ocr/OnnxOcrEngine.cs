@@ -40,6 +40,10 @@ public sealed class OnnxOcrEngine : IOcrEngine
 
     public bool DetectorLoaded => sessions.DetectorLoaded;
 
+    public bool EnglishReaderLoaded => sessions.EnglishReaderLoaded;
+
+    public bool ArabicReaderLoaded => sessions.ArabicReaderLoaded;
+
     public IReadOnlyDictionary<string, string> RecognizedByPath => recognizedByPath;
 
     public void RunPass(IReadOnlyList<string> paths)
@@ -62,34 +66,56 @@ public sealed class OnnxOcrEngine : IOcrEngine
             return;
         }
 
-        EnsureLoaded();
-        foreach (var path in pending)
+        try
         {
-            if (path.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+            OcrRunProgress.BeginPass(pending.Count);
+            EnsureLoaded();
+            for (var index = 0; index < pending.Count; index++)
             {
-                var pageTexts = RecognizePdf(path);
-                if (pageTexts.Count == 0)
+                var path = pending[index];
+                OcrRunProgress.BeginPath(index + 1, pending.Count, path);
+                if (path.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                 {
+                    var pageTexts = RecognizePdf(path);
+                    if (pageTexts.Count == 0)
+                    {
+                        OcrRunProgress.EndPath(index + 1, pending.Count, path, 0);
+                        continue;
+                    }
+
+                    var joined = JoinPdfText(pageTexts);
+                    recognizedByPath[path] = joined;
+                    PersistPdfPages(path, pageTexts);
+                    OcrRunProgress.EndPath(index + 1, pending.Count, path, joined.Length);
                     continue;
                 }
 
-                recognizedByPath[path] = JoinPdfText(pageTexts);
-                PersistPdfPages(path, pageTexts);
-                continue;
+                var text = RecognizeImagePath(path);
+                if (string.IsNullOrEmpty(text))
+                {
+                    OcrRunProgress.EndPath(index + 1, pending.Count, path, 0);
+                    continue;
+                }
+
+                recognizedByPath[path] = text;
+                PersistImageWords(path, text);
+                OcrRunProgress.EndPath(index + 1, pending.Count, path, text.Length);
             }
 
-            var text = RecognizeImagePath(path);
-            if (string.IsNullOrEmpty(text))
-            {
-                continue;
-            }
-
-            recognizedByPath[path] = text;
-            PersistImageWords(path, text);
+            OcrRunProgress.EndPass(recognizedByPath.Count);
+        }
+        finally
+        {
+            UnloadInferenceSessions();
         }
     }
 
     public void Dispose()
+    {
+        UnloadInferenceSessions();
+    }
+
+    private void UnloadInferenceSessions()
     {
         detector?.Dispose();
         englishReader?.Dispose();
@@ -98,7 +124,7 @@ public sealed class OnnxOcrEngine : IOcrEngine
         englishReader = null;
         arabicReader = null;
         loaded = false;
-        sessions.Dispose();
+        sessions.Unload();
     }
 
     private bool ShouldSkipPath(string path)
@@ -361,6 +387,19 @@ public sealed class OnnxOcrEngine : IOcrEngine
             EnableMemoryPattern = false,
             EnableCpuMemArena = false,
         };
+        var threadText = Environment.GetEnvironmentVariable("RECALL_OCR_INTRA_OP_THREADS");
+        if (int.TryParse(threadText, out var threads) && threads > 0)
+        {
+            options.IntraOpNumThreads = threads;
+            options.InterOpNumThreads = 1;
+        }
+        else
+        {
+            var cores = Environment.ProcessorCount;
+            options.IntraOpNumThreads = Math.Clamp(cores / 2, 1, 4);
+            options.InterOpNumThreads = 1;
+        }
+
         return new InferenceSession(modelPath, options);
     }
 }

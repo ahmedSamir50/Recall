@@ -16,7 +16,7 @@ public partial class ShellNavLink
     [Parameter, EditorRequired]
     public string Icon { get; set; } = "search";
 
-    private bool Active => string.Equals(Ui.Current.RoutePath, Href, StringComparison.Ordinal);
+    private bool Active => ShellRouteMatch.IsActive(Ui.Current.RoutePath, Href);
 
     private string Css => Active
         ? "nav-link flex items-center gap-3 h-10 px-3 rounded-xl text-14 w-full text-start nav-active cy font-medium"

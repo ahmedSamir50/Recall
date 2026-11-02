@@ -1,6 +1,7 @@
 #if ANDROID
 using Android.Graphics;
 using Android.Graphics.Pdf;
+using Android.OS;
 
 namespace Recall.Maui.Platform.Ocr;
 
@@ -14,7 +15,8 @@ public static class AndroidPdfPageRenderer
             throw new ArgumentOutOfRangeException(nameof(pageNumber));
         }
 
-        using var descriptor = ParcelFileDescriptor.Open(new Java.IO.File(path), ParcelFileDescriptor.ModeReadOnly);
+        using var descriptor = ParcelFileDescriptor.Open(new Java.IO.File(path), ParcelFileMode.ReadOnly)
+            ?? throw new InvalidOperationException("PDF render failed.");
         using var renderer = new PdfRenderer(descriptor);
         if (pageNumber > renderer.PageCount)
         {

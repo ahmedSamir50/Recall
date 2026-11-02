@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Recall.Core.Download;
 using Recall.Core.Faults;
 using Recall.Core.Ocr;
@@ -9,7 +10,7 @@ namespace Recall.Maui.Platform;
 public sealed class MauiModelDownloadService : IModelDownloadService
 {
     private readonly IHttpClientFactory httpClientFactory;
-    private readonly IGrantedTextIngestService ingest;
+    private readonly Lazy<IGrantedTextIngestService> ingest;
     private readonly TextModelDownloadOptions options;
     private readonly VisionModelDownloadOptions visionOptions;
     private readonly AudioModelDownloadOptions audioOptions;
@@ -22,28 +23,31 @@ public sealed class MauiModelDownloadService : IModelDownloadService
     private Task? visionDownloadInFlight;
     private int lastPublishedPercent = -1;
     private int lastPublishedVisionPercent = -1;
+    private int lastPublishedOcrPercent = -1;
+    private Task? ocrDownloadInFlight;
     private TextModelDownloadSnapshot snapshot = new(TextModelDownloadPhase.NotStarted, 0, null);
     private TextModelDownloadSnapshot visionSnapshot = new(TextModelDownloadPhase.NotStarted, 0, null);
     private TextModelDownloadSnapshot audioSnapshot = new(TextModelDownloadPhase.NotStarted, 0, null);
+    private TextModelDownloadSnapshot ocrSnapshot = new(TextModelDownloadPhase.NotStarted, 0, null);
 
     public MauiModelDownloadService(
         IHttpClientFactory httpClientFactory,
-        IGrantedTextIngestService ingest,
+        IServiceProvider services,
         TextModelDownloadOptions options,
         VisionModelDownloadOptions visionOptions)
-        : this(httpClientFactory, ingest, options, visionOptions, new AudioModelDownloadOptions())
+        : this(httpClientFactory, services, options, visionOptions, new AudioModelDownloadOptions())
     {
     }
 
     public MauiModelDownloadService(
         IHttpClientFactory httpClientFactory,
-        IGrantedTextIngestService ingest,
+        IServiceProvider services,
         TextModelDownloadOptions options,
         VisionModelDownloadOptions visionOptions,
         AudioModelDownloadOptions audioOptions)
     {
         this.httpClientFactory = httpClientFactory;
-        this.ingest = ingest;
+        ingest = new Lazy<IGrantedTextIngestService>(services.GetRequiredService<IGrantedTextIngestService>);
         this.options = options;
         this.visionOptions = visionOptions;
         this.audioOptions = audioOptions;
@@ -55,27 +59,96 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         Directory.CreateDirectory(ocrDirectory);
     }
 
-    public Task DownloadOcrModelsAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
+    public TextModelDownloadSnapshot GetOcrDownloadSnapshot()
+    {
+        lock (gate)
+        {
+            return ocrSnapshot;
+        }
+    }
+
+    public async Task DownloadOcrModelsAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return DownloadOcrFilesAsync(progress, cancellationToken);
+        Task downloadTask;
+        lock (gate)
+        {
+            if (ocrDownloadInFlight is not null)
+            {
+                downloadTask = ocrDownloadInFlight;
+            }
+            else
+            {
+                downloadTask = DownloadOcrFilesAsync(progress, cancellationToken);
+                ocrDownloadInFlight = downloadTask;
+            }
+        }
+
+        try
+        {
+            await downloadTask.ConfigureAwait(false);
+        }
+        finally
+        {
+            lock (gate)
+            {
+                if (ocrDownloadInFlight == downloadTask)
+                {
+                    ocrDownloadInFlight = null;
+                }
+            }
+        }
     }
 
     private async Task DownloadOcrFilesAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken)
     {
-        (string LocalName, string RemoteName, string Url, string Sha256)[] files =
-        [
-            (OcrModelFiles.Detector.LocalName, OcrModelFiles.Detector.RemoteName, OcrModelFiles.Detector.Url, OcrModelFiles.Detector.Sha256),
-            (OcrModelFiles.EnglishReader.LocalName, OcrModelFiles.EnglishReader.RemoteName, OcrModelFiles.EnglishReader.Url, OcrModelFiles.EnglishReader.Sha256),
-            (OcrModelFiles.EnglishReaderYaml.LocalName, OcrModelFiles.EnglishReaderYaml.RemoteName, OcrModelFiles.EnglishReaderYaml.Url, OcrModelFiles.EnglishReaderYaml.Sha256),
-            (OcrModelFiles.ArabicReader.LocalName, OcrModelFiles.ArabicReader.RemoteName, OcrModelFiles.ArabicReader.Url, OcrModelFiles.ArabicReader.Sha256),
-            (OcrModelFiles.ArabicReaderYaml.LocalName, OcrModelFiles.ArabicReaderYaml.RemoteName, OcrModelFiles.ArabicReaderYaml.Url, OcrModelFiles.ArabicReaderYaml.Sha256),
-        ];
-        for (var index = 0; index < files.Length; index++)
+        lock (gate)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var file = files[index];
-            await DownloadOcrFileAsync(file.Item1, file.Item2, file.Item3, file.Item4, progress, cancellationToken, index, files.Length).ConfigureAwait(false);
+            lastPublishedOcrPercent = -1;
+            ocrSnapshot = ocrSnapshot with { Phase = TextModelDownloadPhase.Downloading, Fault = null, CompletedFiles = 0, FileCount = OcrModelFiles.Pack.Length };
+        }
+
+        try
+        {
+            for (var index = 0; index < OcrModelFiles.Pack.Length; index++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var file = OcrModelFiles.Pack[index];
+                await DownloadOcrFileAsync(file.LocalName, file.RemoteName, file.Url, file.Sha256, progress, cancellationToken, index, OcrModelFiles.Pack.Length).ConfigureAwait(false);
+            }
+
+            lock (gate)
+            {
+                ocrSnapshot = ocrSnapshot with { Phase = TextModelDownloadPhase.Ready, Fault = null };
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            lock (gate)
+            {
+                ocrSnapshot = ocrSnapshot with { Phase = TextModelDownloadPhase.Cancelled };
+            }
+        }
+        catch (RecallFaultException fault) when (fault.Fault == RecallFault.DownloadHashMismatch)
+        {
+            lock (gate)
+            {
+                ocrSnapshot = ocrSnapshot with { Phase = TextModelDownloadPhase.HashFailed, Fault = TextModelDownloadFault.HashMismatch };
+            }
+        }
+        catch (RecallFaultException fault) when (fault.Fault == RecallFault.DownloadIncomplete)
+        {
+            lock (gate)
+            {
+                ocrSnapshot = ocrSnapshot with { Phase = TextModelDownloadPhase.Interrupted, Fault = TextModelDownloadFault.Incomplete };
+            }
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException)
+        {
+            lock (gate)
+            {
+                ocrSnapshot = ocrSnapshot with { Phase = TextModelDownloadPhase.Interrupted, Fault = TextModelDownloadFault.Transport };
+            }
         }
     }
 
@@ -92,7 +165,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         var targetPath = Path.Combine(ocrDirectory, localName);
         if (await ModelHashVerifier.MatchesExpectedHashAsync(targetPath, expectedSha256, cancellationToken).ConfigureAwait(false))
         {
-            PublishProgress(progress, vision: false, completedFiles + 1, fileCount, 0, null);
+            PublishProgress(progress, vision: false, ocr: true, completedFiles + 1, fileCount, 0, null);
             return;
         }
 
@@ -102,6 +175,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             expectedSha256,
             ocrDirectory,
             vision: false,
+            ocr: true,
             progress,
             cancellationToken,
             allowRange: true,
@@ -169,7 +243,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
                     [(visionOptions.ModelFileName, visionOptions.ModelBaseUri, visionOptions.ModelSha256)],
                     visionDirectory,
                     vision: true,
-                    ingestAfter: false,
+                    ingestAfter: true,
                     progress,
                     cancellationToken);
                 visionDownloadInFlight = downloadTask;
@@ -220,6 +294,10 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         }
 
         CopyVisionSnapshotToAudio();
+        await TextModelReadyIngest.ReadGrantsAsync(
+            GetAudioDownloadSnapshot().Phase,
+            ingest.Value,
+            cancellationToken).ConfigureAwait(false);
     }
 
     private async Task AwaitVisionInFlightAsync()
@@ -272,11 +350,14 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             visionDownloadCts?.Dispose();
             visionDownloadCts = null;
             visionDownloadInFlight = null;
+            ocrDownloadInFlight = null;
             lastPublishedPercent = -1;
             lastPublishedVisionPercent = -1;
+            lastPublishedOcrPercent = -1;
             snapshot = new TextModelDownloadSnapshot(TextModelDownloadPhase.NotStarted, 0, null);
             visionSnapshot = new TextModelDownloadSnapshot(TextModelDownloadPhase.NotStarted, 0, null);
             audioSnapshot = new TextModelDownloadSnapshot(TextModelDownloadPhase.NotStarted, 0, null);
+            ocrSnapshot = new TextModelDownloadSnapshot(TextModelDownloadPhase.NotStarted, 0, null);
         }
 
         ClearDirectory(modelDirectory);
@@ -337,7 +418,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             SetSnapshot(vision, current => current with { Phase = TextModelDownloadPhase.Ready, Fault = null });
             if (ingestAfter)
             {
-                await TextModelReadyIngest.ReadGrantsAsync(TextModelDownloadPhase.Ready, ingest, token).ConfigureAwait(false);
+                await TextModelReadyIngest.ReadGrantsAsync(TextModelDownloadPhase.Ready, ingest.Value, token).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException)
@@ -372,12 +453,12 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         var targetPath = Path.Combine(directory, fileName);
         if (await ModelHashVerifier.MatchesExpectedHashAsync(targetPath, expectedSha256, cancellationToken).ConfigureAwait(false))
         {
-            PublishProgress(progress, vision, completedFiles + 1, fileCount, 0, null);
+            PublishProgress(progress, vision, ocr: false, completedFiles + 1, fileCount, 0, null);
             return;
         }
 
-        await DownloadBodyAsync(fileName, baseUri, expectedSha256, directory, vision, progress, cancellationToken, allowRange: true, completedFiles, fileCount).ConfigureAwait(false);
-        PublishProgress(progress, vision, completedFiles + 1, fileCount, 0, null);
+        await DownloadBodyAsync(fileName, baseUri, expectedSha256, directory, vision, ocr: false, progress, cancellationToken, allowRange: true, completedFiles, fileCount).ConfigureAwait(false);
+        PublishProgress(progress, vision, ocr: false, completedFiles + 1, fileCount, 0, null);
     }
 
     private async Task DownloadBodyAsync(
@@ -386,6 +467,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         string expectedSha256,
         string directory,
         bool vision,
+        bool ocr,
         IProgress<ModelDownloadProgress>? progress,
         CancellationToken cancellationToken,
         bool allowRange,
@@ -418,7 +500,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         var status = (int)response.StatusCode;
         if (status == DownloadTransfer.StatusRangeNotSatisfiable)
         {
-            SetSnapshot(vision, TextModelDownloadUiPolicy.MarkVerifying);
+            SetSnapshot(vision, ocr, TextModelDownloadUiPolicy.MarkVerifying);
 
             if (await ModelHashVerifier.MatchesExpectedHashAsync(partialPath, expectedSha256, cancellationToken).ConfigureAwait(false))
             {
@@ -429,7 +511,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             TryDelete(partialPath);
             if (allowRange)
             {
-                await DownloadBodyAsync(fileName, baseUri, expectedSha256, directory, vision, progress, cancellationToken, allowRange: false, completedFiles, fileCount).ConfigureAwait(false);
+                await DownloadBodyAsync(fileName, baseUri, expectedSha256, directory, vision, ocr, progress, cancellationToken, allowRange: false, completedFiles, fileCount).ConfigureAwait(false);
                 return;
             }
 
@@ -463,7 +545,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             {
                 await file.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
                 totalRead += read;
-                PublishProgress(progress, vision, completedFiles, fileCount, totalRead, expectedTotal);
+                PublishProgress(progress, vision, ocr, completedFiles, fileCount, totalRead, expectedTotal);
             }
 
             await file.FlushAsync(cancellationToken).ConfigureAwait(false);
@@ -473,7 +555,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
             }
         }
 
-        SetSnapshot(vision, TextModelDownloadUiPolicy.MarkVerifying);
+        SetSnapshot(vision, ocr, TextModelDownloadUiPolicy.MarkVerifying);
 
         if (!await ModelHashVerifier.MatchesExpectedHashAsync(partialPath, expectedSha256, cancellationToken).ConfigureAwait(false))
         {
@@ -487,6 +569,7 @@ public sealed class MauiModelDownloadService : IModelDownloadService
     private void PublishProgress(
         IProgress<ModelDownloadProgress>? progress,
         bool vision,
+        bool ocr,
         int completedFiles,
         int fileCount,
         long bytesReceived,
@@ -494,41 +577,63 @@ public sealed class MauiModelDownloadService : IModelDownloadService
     {
         var percent = TextModelDownloadUiPolicy.ComputeOverallPercent(completedFiles, fileCount, bytesReceived, totalBytes);
         var shouldPublish = false;
+        var slot = TextModelDownloadUiPolicy.SlotFor(vision, ocr);
         lock (gate)
         {
-            if (vision)
+            switch (slot)
             {
-                visionSnapshot = visionSnapshot with
-                {
-                    Phase = TextModelDownloadPhase.Downloading,
-                    BytesReceived = bytesReceived,
-                    CompletedFiles = completedFiles,
-                    FileCount = fileCount,
-                    CurrentFileTotal = totalBytes,
-                    Fault = null,
-                };
-                shouldPublish = TextModelDownloadUiPolicy.ShouldPublishProgress(lastPublishedVisionPercent, percent);
-                if (shouldPublish)
-                {
-                    lastPublishedVisionPercent = percent;
-                }
-            }
-            else
-            {
-                snapshot = snapshot with
-                {
-                    Phase = TextModelDownloadPhase.Downloading,
-                    BytesReceived = bytesReceived,
-                    CompletedFiles = completedFiles,
-                    FileCount = fileCount,
-                    CurrentFileTotal = totalBytes,
-                    Fault = null,
-                };
-                shouldPublish = TextModelDownloadUiPolicy.ShouldPublishProgress(lastPublishedPercent, percent);
-                if (shouldPublish)
-                {
-                    lastPublishedPercent = percent;
-                }
+                case DownloadSnapshotSlot.Ocr:
+                    ocrSnapshot = ocrSnapshot with
+                    {
+                        Phase = TextModelDownloadPhase.Downloading,
+                        BytesReceived = bytesReceived,
+                        CompletedFiles = completedFiles,
+                        FileCount = fileCount,
+                        CurrentFileTotal = totalBytes,
+                        Fault = null,
+                    };
+                    shouldPublish = TextModelDownloadUiPolicy.ShouldPublishProgress(lastPublishedOcrPercent, percent);
+                    if (shouldPublish)
+                    {
+                        lastPublishedOcrPercent = percent;
+                    }
+
+                    break;
+                case DownloadSnapshotSlot.Vision:
+                    visionSnapshot = visionSnapshot with
+                    {
+                        Phase = TextModelDownloadPhase.Downloading,
+                        BytesReceived = bytesReceived,
+                        CompletedFiles = completedFiles,
+                        FileCount = fileCount,
+                        CurrentFileTotal = totalBytes,
+                        Fault = null,
+                    };
+                    audioSnapshot = TextModelDownloadUiPolicy.MirrorAudio(visionSnapshot);
+                    shouldPublish = TextModelDownloadUiPolicy.ShouldPublishProgress(lastPublishedVisionPercent, percent);
+                    if (shouldPublish)
+                    {
+                        lastPublishedVisionPercent = percent;
+                    }
+
+                    break;
+                default:
+                    snapshot = snapshot with
+                    {
+                        Phase = TextModelDownloadPhase.Downloading,
+                        BytesReceived = bytesReceived,
+                        CompletedFiles = completedFiles,
+                        FileCount = fileCount,
+                        CurrentFileTotal = totalBytes,
+                        Fault = null,
+                    };
+                    shouldPublish = TextModelDownloadUiPolicy.ShouldPublishProgress(lastPublishedPercent, percent);
+                    if (shouldPublish)
+                    {
+                        lastPublishedPercent = percent;
+                    }
+
+                    break;
             }
         }
 
@@ -540,20 +645,29 @@ public sealed class MauiModelDownloadService : IModelDownloadService
         progress?.Report(new ModelDownloadProgress(bytesReceived, totalBytes, completedFiles, fileCount));
     }
 
-    private void SetSnapshot(bool vision, Func<TextModelDownloadSnapshot, TextModelDownloadSnapshot> update)
+    private void SetSnapshot(bool vision, bool ocr, Func<TextModelDownloadSnapshot, TextModelDownloadSnapshot> update)
     {
         lock (gate)
         {
-            if (vision)
+            var slot = TextModelDownloadUiPolicy.SlotFor(vision, ocr);
+            switch (slot)
             {
-                visionSnapshot = update(visionSnapshot);
-            }
-            else
-            {
-                snapshot = update(snapshot);
+                case DownloadSnapshotSlot.Ocr:
+                    ocrSnapshot = update(ocrSnapshot);
+                    break;
+                case DownloadSnapshotSlot.Vision:
+                    visionSnapshot = update(visionSnapshot);
+                    audioSnapshot = TextModelDownloadUiPolicy.MirrorAudio(visionSnapshot);
+                    break;
+                default:
+                    snapshot = update(snapshot);
+                    break;
             }
         }
     }
+
+    private void SetSnapshot(bool vision, Func<TextModelDownloadSnapshot, TextModelDownloadSnapshot> update) =>
+        SetSnapshot(vision, ocr: false, update);
 
     private static void ClearDirectory(string directory)
     {

@@ -1,5 +1,7 @@
 using Recall.Core.Checkpoints;
+using Recall.Core.Ingest;
 using Recall.Core.Ports;
+using Recall.Core.Runtime;
 using Recall.Core.Search;
 using Recall.Core.Sync;
 using Recall.Core.Vectors;
@@ -12,16 +14,25 @@ public sealed record TextIngestChunk(string ContentId, int Ordinal, bool Dense =
 public sealed record TextIngestResult(
     string ContentHash,
     IReadOnlyList<TextIngestChunk> Chunks,
-    IReadOnlyList<int> OcrPageNumbers);
+    IReadOnlyList<int> OcrPageNumbers)
+{
+    public IReadOnlyList<int> ImageFastPathPages { get; init; } = [];
+
+    public IngestStopReason Stop { get; init; }
+}
 
 public sealed class TextIngestEngine
 {
+    public const int IngestBatchChunkCount = 64;
+
     private readonly ITextEmbeddingEncoder encoder;
     private readonly ITextVectorIndex index;
     private readonly IIndexPolicy indexPolicy;
     private readonly ITextTokenCounter tokenCounter;
     private readonly LocalOpLogWriter opLog;
     private readonly IIngestCursorStore cursors;
+    private readonly IMemoryBudget memory;
+    private readonly MemoryGate gate;
 
     public TextIngestEngine(
         ITextEmbeddingEncoder encoder,
@@ -29,7 +40,9 @@ public sealed class TextIngestEngine
         IIndexPolicy indexPolicy,
         ITextTokenCounter tokenCounter,
         LocalOpLogWriter opLog,
-        IIngestCursorStore cursors)
+        IIngestCursorStore cursors,
+        IMemoryBudget memory,
+        MemoryGate gate)
     {
         this.encoder = encoder;
         this.index = index;
@@ -37,6 +50,8 @@ public sealed class TextIngestEngine
         this.tokenCounter = tokenCounter;
         this.opLog = opLog;
         this.cursors = cursors;
+        this.memory = memory;
+        this.gate = gate;
     }
 
     public async Task<TextIngestResult> IngestFileAsync(
@@ -52,6 +67,7 @@ public sealed class TextIngestEngine
         string documentText;
         IReadOnlyList<PdfPageText>? pdfPages = null;
         IReadOnlyList<int> ocrPageNumbers = [];
+        IReadOnlyList<int> imageFastPathPages = [];
         if (IsPdfPath(filePath))
         {
             await using var stream = new FileStream(
@@ -66,18 +82,36 @@ public sealed class TextIngestEngine
             documentText = split.JoinedDocument;
             pdfPages = split.EmbeddablePages;
             ocrPageNumbers = split.OcrPageNumbers;
+            imageFastPathPages = split.ImageFastPathPages;
         }
         else
         {
             documentText = rawText;
         }
 
+        if (IsPdfPath(filePath) && string.IsNullOrWhiteSpace(documentText))
+        {
+            return new TextIngestResult(ContentIdBuilder.HashSourceContent(string.Empty), [], ocrPageNumbers)
+            {
+                ImageFastPathPages = imageFastPathPages,
+            };
+        }
+
         var sourceHash = ContentIdBuilder.HashSourceContent(documentText);
         var prefixTokenCount = tokenCounter.CountTokens(EmbeddingTaskPrefixes.TitledPrefix(title));
         var ends = tokenCounter.TokenEnds(documentText);
-        var patches = DocumentPatchPlanner.Plan(title, documentText, pdfPages, prefixTokenCount, ends);
-        var resultChunks = await InsertPatchesAsync(title, filePath, sourceHash, patches, modifiedAt, grantPath, encoderHash, codeFile, cancellationToken).ConfigureAwait(false);
-        return new TextIngestResult(sourceHash, resultChunks, ocrPageNumbers);
+        var plan = DocumentPatchPlanner.Plan(title, documentText, pdfPages, prefixTokenCount, ends);
+        var (chunks, stop) = await InsertPatchesAsync(title, filePath, sourceHash, plan.Patches, modifiedAt, grantPath, encoderHash, codeFile, cancellationToken).ConfigureAwait(false);
+        if (plan.Truncated)
+        {
+            stop = IngestStopReason.PatchCap;
+        }
+
+        return new TextIngestResult(sourceHash, chunks, ocrPageNumbers)
+        {
+            ImageFastPathPages = imageFastPathPages,
+            Stop = stop,
+        };
     }
 
     public async Task IngestOcrPagesAsync(
@@ -104,17 +138,23 @@ public sealed class TextIngestEngine
         var sourceHash = ContentIdBuilder.HashSourceContent(documentText);
         var prefixTokenCount = tokenCounter.CountTokens(EmbeddingTaskPrefixes.TitledPrefix(title));
         var ends = tokenCounter.TokenEnds(documentText);
-        var patches = DocumentPatchPlanner.Plan(title, documentText, marked, prefixTokenCount, ends);
-        var chunks = await InsertPatchesAsync(
+        var plan = DocumentPatchPlanner.Plan(title, documentText, marked, prefixTokenCount, ends);
+        var (chunks, stop) = await InsertPatchesAsync(
             title,
             filePath,
             sourceHash,
-            patches,
+            plan.Patches,
             File.GetLastWriteTimeUtc(filePath),
             grantPath,
             encoderHash,
             codeFile: false,
             cancellationToken).ConfigureAwait(false);
+        if (stop == IngestStopReason.MemoryBudget)
+        {
+            cursors.MarkStopped(filePath, IngestStopKeys.MemoryBudget);
+            return;
+        }
+
         var writes = new List<ChunkWrite>(chunks.Count);
         var bm25Only = new List<Bm25OnlyRow>();
         foreach (var chunk in chunks)
@@ -126,11 +166,10 @@ public sealed class TextIngestEngine
             }
         }
 
-        cursors.FinishPath(filePath, sourceHash, grantPath, encoderHash, writes, bm25Only);
-        cursors.ReplaceOcrPages(filePath, []);
+        cursors.FinishPath(filePath, sourceHash, grantPath, encoderHash, writes, bm25Only);        cursors.ReplaceOcrPages(filePath, []);
     }
 
-    private async Task<List<TextIngestChunk>> InsertPatchesAsync(
+    private async Task<(List<TextIngestChunk> Chunks, IngestStopReason Stop)> InsertPatchesAsync(
         string title,
         string filePath,
         string sourceHash,
@@ -144,13 +183,26 @@ public sealed class TextIngestEngine
         var storedWidth = (int)WidthOnEdit.Choose(Modality.Text, indexPolicy.TextStoredWidth, pinned: false, pastCutoff: false);
         indexPolicy.EnsureStorableWidth(Modality.Text, storedWidth);
         var resultChunks = new List<TextIngestChunk>();
+        var pending = new List<ChunkWrite>(IngestBatchChunkCount);
+        var stop = IngestStopReason.None;
         foreach (var patch in patches)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (memory.Pressure == MemoryPressure.Hard)
+            {
+                gate.EnterHard(DateTimeOffset.UtcNow);
+            }
+
+            if (!gate.IsOpen())
+            {
+                stop = IngestStopReason.MemoryBudget;
+                break;
+            }
+
             var contentId = ContentIdBuilder.Build(Modality.Text, sourceHash, StoredWidth.W512, patch.Ordinal);
             if (!NumericSpanPolicy.IsDense(patch.Raw, codeFile))
             {
-                resultChunks.Add(new TextIngestChunk(
+                var sparse = new TextIngestChunk(
                     contentId,
                     patch.Ordinal,
                     false,
@@ -158,26 +210,28 @@ public sealed class TextIngestEngine
                     patch.PageEnd,
                     patch.CharStart,
                     patch.CharEnd,
-                    patch.Raw));
+                    patch.Raw);
+                resultChunks.Add(sparse);
+                RememberChunk(filePath, pending, sparse);
                 continue;
             }
 
             if (cursors.AnyLivePath(contentId))
             {
-                resultChunks.Add(new TextIngestChunk(
+                var skipped = new TextIngestChunk(
                     contentId,
                     patch.Ordinal,
                     true,
                     patch.PageStart,
                     patch.PageEnd,
                     patch.CharStart,
-                    patch.CharEnd));
-                cursors.AddAlias(contentId, filePath);
+                    patch.CharEnd);
+                resultChunks.Add(skipped);
+                RememberChunk(filePath, pending, skipped);
                 continue;
             }
 
-            var full768 = await encoder.EmbedPrefixedTextAsync(EmbeddingTaskPrefixes.WrapTitledDocument(title, patch.Raw), cancellationToken).ConfigureAwait(false);
-            var vector512 = MatryoshkaVectorMath.CutAndNormalize(full768.Span, storedWidth);
+            var vector512 = await CutStoredAsync(title, patch.Raw, storedWidth, cancellationToken).ConfigureAwait(false);
             var folded = string.Join(' ', KeywordFold.Tokens(KeywordFold.Fold(patch.Raw)));
             var insert = new TextIndexInsert(
                 contentId,
@@ -196,17 +250,48 @@ public sealed class TextIngestEngine
                 opLog.AppendInsert(contentId);
             }
 
-            resultChunks.Add(new TextIngestChunk(
+            var stored = new TextIngestChunk(
                 contentId,
                 patch.Ordinal,
                 true,
                 patch.PageStart,
                 patch.PageEnd,
                 patch.CharStart,
-                patch.CharEnd));
+                patch.CharEnd);
+            resultChunks.Add(stored);
+            RememberChunk(filePath, pending, stored);
         }
 
-        return resultChunks;
+        FlushChunks(filePath, pending);
+        return (resultChunks, stop);
+    }
+
+    private async Task<ReadOnlyMemory<float>> CutStoredAsync(string title, string raw, int storedWidth, CancellationToken cancellationToken)
+    {
+        var full768 = await encoder.EmbedPrefixedTextAsync(EmbeddingTaskPrefixes.WrapTitledDocument(title, raw), cancellationToken).ConfigureAwait(false);
+        var stored = new float[storedWidth];
+        MatryoshkaVectorMath.CutAndNormalize(full768.Span, stored);
+        return stored;
+    }
+
+    private void RememberChunk(string filePath, List<ChunkWrite> pending, TextIngestChunk chunk)
+    {
+        pending.Add(new ChunkWrite(chunk.ContentId, chunk.Ordinal, chunk.PageStart, chunk.PageEnd, chunk.CharStart, chunk.CharEnd));
+        if (pending.Count >= IngestBatchChunkCount)
+        {
+            FlushChunks(filePath, pending);
+        }
+    }
+
+    private void FlushChunks(string filePath, List<ChunkWrite> pending)
+    {
+        if (pending.Count == 0)
+        {
+            return;
+        }
+
+        cursors.AppendLiveChunks(filePath, pending);
+        pending.Clear();
     }
 
     private static bool IsPdfPath(string filePath) =>

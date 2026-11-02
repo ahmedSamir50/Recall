@@ -53,7 +53,7 @@ public sealed class ReviewFixTests
         var pattern = new string('a', 30) + emoji + new string('b', 30) + "\n";
         var content = string.Concat(Enumerable.Repeat(pattern, 50));
         var ends = Enumerable.Range(0, content.Length + 1).ToList();
-        var pieces = DocumentPatchPlanner.Plan("Notes", content, null, 0, ends);
+        var pieces = DocumentPatchPlanner.Plan("Notes", content, null, 0, ends).Patches;
         pieces.Count.Should().BeGreaterThan(1);
         foreach (var piece in pieces)
         {

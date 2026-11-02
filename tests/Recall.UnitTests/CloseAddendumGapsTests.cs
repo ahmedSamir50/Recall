@@ -433,7 +433,7 @@ public sealed class CloseAddendumGapsTests
         var grant = new ScopeFolderGrant(root, "g", GrantFileKinds.Text);
         var probe = new PathStateProbe();
         var remote = new RemoteFileSkipReport();
-        var reader = new DirectoryGrantedTextReader(new FakeUserSkipStore(), probe, remote, new DatasetSkipReport());
+        var reader = new DirectoryGrantedTextReader(new FakeUserSkipStore(), probe, remote, new DatasetSkipReport(), new OversizeFileSkipReport());
         var names = new List<string>();
         await foreach (var doc in reader.ReadAsync(grant, CancellationToken.None))
         {

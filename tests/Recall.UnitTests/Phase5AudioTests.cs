@@ -1202,7 +1202,8 @@ public sealed class Phase5AudioTests
             report,
             new FakeEncoderFileHash { AudioHash = "audio-hash" },
             new EmptyAudioListReader(),
-            cursors);
+            cursors,
+            TestIngest.Memory());
         return (ingest, source, siblings, encoder, index, report, cursors);
     }
 

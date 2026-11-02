@@ -623,7 +623,7 @@ public sealed class Phase3WatchTests
             var ingest = new FakeGrantedTextIngestService();
             var applier = new ScopeChangeApplier(cursors, ingest, opLog);
             var reader = IngestTestKit.CreateDirectoryReader(skips);
-            var scan = new ForegroundScanService(scope, reader, cursors, applier);
+            var scan = new ForegroundScanService(scope, reader, cursors, applier, TestIngest.Memory(), TestIngest.Gate());
             var watcher = new FakeFileScopeWatcherService();
             var idle = new FakeIdleDetectorService { Current = IdleSignal.Busy };
             var coordinator = new ScopeWatchCoordinator(watcher, scope, scan, applier, skips, idle, new FakeLocalContentProbe(), new RemoteFileSkipReport());
@@ -671,7 +671,7 @@ public sealed class Phase3WatchTests
             var throwing = new ThrowFirstIngestService();
             var applier = new ScopeChangeApplier(cursors, throwing, opLog);
             var reader = IngestTestKit.CreateDirectoryReader(skips);
-            var scan = new ForegroundScanService(scope, reader, cursors, applier);
+            var scan = new ForegroundScanService(scope, reader, cursors, applier, TestIngest.Memory(), TestIngest.Gate());
             var watcher = new FakeFileScopeWatcherService();
             var coordinator = new ScopeWatchCoordinator(watcher, scope, scan, applier, skips, new FakeIdleDetectorService(), new FakeLocalContentProbe(), new RemoteFileSkipReport());
             try
@@ -740,7 +740,7 @@ public sealed class Phase3WatchTests
         var ingest = new FakeGrantedTextIngestService();
         var applier = new ScopeChangeApplier(cursors, ingest, opLog);
         var reader = new EmptyReader();
-        var scan = new ForegroundScanService(scope, reader, cursors, applier);
+        var scan = new ForegroundScanService(scope, reader, cursors, applier, TestIngest.Memory(), TestIngest.Gate());
         return new ScopeWatchCoordinator(watcher, scope, scan, applier, skips, new FakeIdleDetectorService(), new FakeLocalContentProbe(), new RemoteFileSkipReport());
     }
 

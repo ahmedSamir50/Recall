@@ -66,8 +66,8 @@ internal static class OcrRasterDecoder
         using var data = Foundation.NSData.FromArray(imageBytes);
         using var image = UIKit.UIImage.LoadFromData(data) ?? throw new InvalidOperationException("Image decode failed.");
         using var cg = image.CGImage ?? throw new InvalidOperationException("Image decode failed.");
-        var width = cg.Width;
-        var height = cg.Height;
+        var width = (int)cg.Width;
+        var height = (int)cg.Height;
         var bytes = new byte[width * height * 4];
         using var context = new CoreGraphics.CGBitmapContext(
             bytes,

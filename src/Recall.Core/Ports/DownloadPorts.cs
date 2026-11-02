@@ -21,6 +21,8 @@ public interface IModelDownloadService
     Task DownloadAudioModelAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default);
 
     Task DownloadOcrModelsAsync(IProgress<ModelDownloadProgress>? progress, CancellationToken cancellationToken = default);
+
+    TextModelDownloadSnapshot GetOcrDownloadSnapshot();
 }
 
 public interface ISecureStorageService

@@ -366,8 +366,8 @@ public sealed class Phase3CursorTests
         source.Should().Contain("@grant");
         source.Should().Contain("@id");
         source.Should().Contain("@ordinal");
-        source.Should().Contain("@missing");
-        source.Should().Contain("@retired");
+        CheckpointSql.BackfillChunkPath.Should().Contain("INSERT OR IGNORE INTO ingest_chunk_path");
+        CheckpointSql.BackfillChunkPath.Should().NotContain("+");
     }
 
     private sealed class CountingReader : IGrantedTextReader

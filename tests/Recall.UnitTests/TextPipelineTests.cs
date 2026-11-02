@@ -67,6 +67,25 @@ public sealed class TextPipelineTests
         MatryoshkaVectorMath.L2Length(full).Should().BeApproximately(1d, 1e-5);
         var cut = MatryoshkaVectorMath.CutAndNormalize(full, 512);
         MatryoshkaVectorMath.L2Length(cut).Should().BeApproximately(1d, 1e-5);
+        var into = new float[512];
+        MatryoshkaVectorMath.CutAndNormalize(full, into);
+        MatryoshkaVectorMath.L2Length(into).Should().BeApproximately(1d, 1e-5);
+    }
+
+    [Fact]
+    public void Matryoshka_SpanDestination_RejectsBadWidths()
+    {
+        var full = new float[768];
+        full[0] = 1f;
+        var actEmpty = () => MatryoshkaVectorMath.CutAndNormalize(full, Span<float>.Empty);
+        actEmpty.Should().Throw<RecallFaultException>().Which.Fault.Should().Be(RecallFault.TextWidthNot512);
+        var tooWide = new float[769];
+        var actWide = () => MatryoshkaVectorMath.CutAndNormalize(full, tooWide);
+        actWide.Should().Throw<RecallFaultException>().Which.Fault.Should().Be(RecallFault.TextWidthNot512);
+        var shortFull = new float[4];
+        var dest = new float[512];
+        var actShort = () => MatryoshkaVectorMath.CutAndNormalize(shortFull, dest);
+        actShort.Should().Throw<RecallFaultException>().Which.Fault.Should().Be(RecallFault.EmbeddingWidthUnexpected);
     }
 
     [Fact]

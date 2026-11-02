@@ -1,5 +1,6 @@
 using Recall.Core.Checkpoints;
 using Recall.Core.Ports;
+using Recall.Core.Runtime;
 using Recall.Core.Scope;
 using Recall.Core.Text;
 
@@ -11,17 +12,23 @@ public sealed class ForegroundScanService
     private readonly IGrantedTextReader reader;
     private readonly IIngestCursorStore cursors;
     private readonly ScopeChangeApplier applier;
+    private readonly IMemoryBudget memory;
+    private readonly MemoryGate gate;
 
     public ForegroundScanService(
         IScopeManagerService scope,
         IGrantedTextReader reader,
         IIngestCursorStore cursors,
-        ScopeChangeApplier applier)
+        ScopeChangeApplier applier,
+        IMemoryBudget memory,
+        MemoryGate gate)
     {
         this.scope = scope;
         this.reader = reader;
         this.cursors = cursors;
         this.applier = applier;
+        this.memory = memory;
+        this.gate = gate;
     }
 
     public async Task ScanAsync(CancellationToken cancellationToken = default)
@@ -33,28 +40,72 @@ public sealed class ForegroundScanService
                 continue;
             }
 
-            var documents = new List<GrantedTextDocument>();
-            await foreach (var document in reader.ReadAsync(grant, cancellationToken).ConfigureAwait(false))
+            if (!ObserveGate())
             {
-                documents.Add(document);
+                return;
             }
 
-            var current = documents
-                .Select(d => new WatchedFile(d.Path, ContentIdBuilder.HashSourceContent(d.Text)))
-                .ToList();
+            var current = new List<WatchedFile>();
+            await foreach (var document in reader.ReadAsync(grant, cancellationToken).ConfigureAwait(false))
+            {
+                current.Add(new WatchedFile(document.Path, ContentIdBuilder.HashSourceContent(document.Text)));
+            }
+
             var stored = cursors.ListFiles(grant.Path);
             var changes = ForegroundGrantDiff.Diff(current, stored);
-            var byPath = documents.ToDictionary(d => d.Path, StringComparer.OrdinalIgnoreCase);
+            if (changes.Count == 0)
+            {
+                continue;
+            }
+
+            var wanted = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var change in changes)
             {
-                GrantedTextDocument? document = null;
-                if (change.Kind == ScopeChangeKind.Created || change.Kind == ScopeChangeKind.Modified || change.Kind == ScopeChangeKind.Renamed)
+                if (change.Kind != ScopeChangeKind.Deleted)
                 {
-                    byPath.TryGetValue(change.Path, out document);
+                    wanted.Add(change.Path);
+                }
+            }
+
+            var documents = new Dictionary<string, GrantedTextDocument>(StringComparer.OrdinalIgnoreCase);
+            if (wanted.Count > 0)
+            {
+                await foreach (var document in reader.ReadAsync(grant, cancellationToken).ConfigureAwait(false))
+                {
+                    if (wanted.Contains(document.Path))
+                    {
+                        documents[document.Path] = document;
+                    }
+                }
+            }
+
+            foreach (var change in changes)
+            {
+                if (!ObserveGate())
+                {
+                    return;
                 }
 
+                documents.TryGetValue(change.Path, out var document);
                 await applier.ApplyAsync(change, grant, document, cancellationToken).ConfigureAwait(false);
             }
         }
+    }
+
+    private bool ObserveGate()
+    {
+        if (memory.Verdict == DeviceVerdict.BelowMinimum)
+        {
+            gate.Block();
+            return false;
+        }
+
+        gate.Observe(
+            memory.Pressure,
+            memory.CapacityBytes,
+            memory.WorkingSetBytes,
+            memory.EffectiveFloorBytes,
+            DateTimeOffset.UtcNow);
+        return gate.IsOpen();
     }
 }

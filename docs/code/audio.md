@@ -41,6 +41,7 @@ if (startSample >= pcm.LongLength)
 if (cursors.AnyLivePath(retiredId))
 if (index.TryDelete(retiredId))
 if (inserted)
+        if (audioFile.Exists && !memory.MayLoadFile(audioFile.Length, MemoryBudgetPolicy.AudioExpansion))
 ```
 
 ```csharp

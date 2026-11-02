@@ -13,7 +13,7 @@ public enum IngestCursorDecision
     Skip = 1,
 }
 
-public sealed record IngestFileRow(string Path, string ContentHash, IngestCursorState State, string GrantPath, string EncoderHash);
+public sealed record IngestFileRow(string Path, string ContentHash, IngestCursorState State, string GrantPath, string EncoderHash, string MissingStatusKey = "");
 
 public sealed record IngestAliasRow(string ContentId, string Path, bool Missing, bool Retired);
 

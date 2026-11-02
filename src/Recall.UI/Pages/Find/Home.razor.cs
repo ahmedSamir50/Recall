@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
+using Recall.Core.Age;
+using Recall.Core.Checkpoints;
 using Recall.Core.Ingest;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
 using Recall.Core.Search;
+using Recall.Core.Text;
 using Recall.UI.Localization;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
@@ -19,9 +22,6 @@ public partial class Home
 
     [Inject]
     private ILocalFileOpener Opener { get; set; } = null!;
-
-    [Inject]
-    private IIndexNowService IndexNow { get; set; } = null!;
 
     [Inject]
     private IRemoteFileSkipReport RemoteSkips { get; set; } = null!;
@@ -48,7 +48,10 @@ public partial class Home
     private IModelDownloadService ModelDownloads { get; set; } = null!;
 
     [Inject]
-    private IngestStatusService IngestStatus { get; set; } = null!;
+    private PinService Pins { get; set; } = null!;
+
+    [Inject]
+    private IIngestCursorStore Cursors { get; set; } = null!;
 
     private const string PictureWaitingKey = "Search_PictureWaiting";
 
@@ -87,44 +90,17 @@ public partial class Home
 
     private int audioPickGeneration;
 
+    private int pictureGeneration;
+
     private CancellationTokenSource? audioPickCts;
+
+    private string? pickedFileName;
 
     private string? faultKey;
 
     private TextFindView view = TextFindView.Empty;
 
     private bool hasSearched;
-
-    private IReadOnlyList<Recall.Core.Scope.ScopeFolderGrant> offers = [];
-
-    private IReadOnlyList<IngestKindCount> ingestRows = [];
-
-    protected override void OnInitialized()
-    {
-        offers = IndexNow.ListOffers();
-        RefreshIngestRows();
-    }
-
-    private void RefreshIngestRows()
-    {
-        var enabled = GrantFileKinds.None;
-        foreach (var grant in Ui.Current.Grants)
-        {
-            enabled |= grant.EnabledKinds;
-        }
-
-        ingestRows = IngestStatus.List(enabled);
-    }
-
-    public static string IngestKindLabel(GrantFileKinds kind) => kind switch
-    {
-        GrantFileKinds.Text => "Ingest_Text",
-        GrantFileKinds.Code => "Ingest_Code",
-        GrantFileKinds.Image => "Ingest_Image",
-        GrantFileKinds.Video => "Ingest_Video",
-        GrantFileKinds.Audio => "Ingest_Audio",
-        _ => "Ingest_Text",
-    };
 
     private Task OnKeyDownAsync(KeyboardEventArgs args)
     {
@@ -163,6 +139,23 @@ public partial class Home
         }
     }
 
+    private async Task ClearPickedFileAsync()
+    {
+        pictureGeneration++;
+        audioPickGeneration++;
+        await CancelAudioPickAsync().ConfigureAwait(false);
+
+        pickedPicture = null;
+        pickedAudio = null;
+        pictureHits = [];
+        audioHits = [];
+        pictureKey = null;
+        audioKey = null;
+        pickedFileName = null;
+        pictureDownloadStarted = false;
+        audioDownloadStarted = false;
+    }
+
     [SuppressMessage("Major Code Smell", "S5693:Limit the content length of HTTP requests", Justification = "The picture read stream is capped at 32 MiB.")]
     private async Task OnPictureSelectedAsync(InputFileChangeEventArgs args)
     {
@@ -172,11 +165,24 @@ public partial class Home
             return;
         }
 
+        var generation = ++pictureGeneration;
+        audioPickGeneration++;
+        await CancelAudioPickAsync().ConfigureAwait(false);
+
+        pickedAudio = null;
+        audioHits = [];
+        audioKey = null;
+        pickedFileName = file.Name;
         await using var stream = file.OpenReadStream(maxAllowedSize: 32L * 1024 * 1024);
         using var buffer = new MemoryStream();
         await stream.CopyToAsync(buffer);
+        if (generation != pictureGeneration)
+        {
+            return;
+        }
+
         pickedPicture = buffer.ToArray();
-        await RunPictureSearchAsync();
+        await RunPictureSearchAsync(generation);
     }
 
     [SuppressMessage("Major Code Smell", "S5693:Limit the content length of HTTP requests", Justification = "The audio read stream is capped at 1024 MiB.")]
@@ -188,27 +194,36 @@ public partial class Home
             return;
         }
 
+        pictureGeneration++;
+        pickedPicture = null;
+        pictureHits = [];
+        pictureKey = null;
+        pickedFileName = file.Name;
+
         var generation = ++audioPickGeneration;
-        if (audioPickCts is not null)
-        {
-            await audioPickCts.CancelAsync().ConfigureAwait(false);
-            audioPickCts.Dispose();
-        }
+        await CancelAudioPickAsync().ConfigureAwait(false);
         audioPickCts = new CancellationTokenSource();
         var token = audioPickCts.Token;
 
-        await using var stream = file.OpenReadStream(maxAllowedSize: 1024L * 1024 * 1024, cancellationToken: token);
         var bytes = new byte[file.Size];
-        var offset = 0;
-        while (offset < bytes.Length)
+        try
         {
-            var read = await stream.ReadAsync(bytes.AsMemory(offset), token).ConfigureAwait(false);
-            if (read == 0)
+            await using var stream = file.OpenReadStream(maxAllowedSize: 1024L * 1024 * 1024, cancellationToken: token);
+            var offset = 0;
+            while (offset < bytes.Length)
             {
-                break;
-            }
+                var read = await stream.ReadAsync(bytes.AsMemory(offset), token).ConfigureAwait(false);
+                if (read == 0)
+                {
+                    break;
+                }
 
-            offset += read;
+                offset += read;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            return;
         }
 
         if (generation != audioPickGeneration)
@@ -218,12 +233,18 @@ public partial class Home
 
         try
         {
-            pickedAudio = await Task.Run(
+            var pcm = await Task.Run(
                 () =>
                     WavPcm.IsWav(bytes)
                         ? WavPcm.Read(bytes)
                         : AudioSource.ReadCompressed(bytes),
                 token).ConfigureAwait(false);
+            if (generation != audioPickGeneration)
+            {
+                return;
+            }
+
+            pickedAudio = pcm;
         }
         catch (OperationCanceledException)
         {
@@ -231,6 +252,11 @@ public partial class Home
         }
         catch (Exception)
         {
+            if (generation != audioPickGeneration)
+            {
+                return;
+            }
+
             pickedAudio = null;
             audioKey = "Search_Fault";
             audioDownloadStarted = false;
@@ -267,6 +293,11 @@ public partial class Home
                 }
                 catch (Exception)
                 {
+                    if (generation != audioPickGeneration)
+                    {
+                        return;
+                    }
+
                     audioKey = "Search_AudioFailed";
                     audioDownloadStarted = false;
                     return;
@@ -313,6 +344,11 @@ public partial class Home
         }
         catch (Exception)
         {
+            if (generation != audioPickGeneration)
+            {
+                return;
+            }
+
             audioKey = "Search_Fault";
             audioDownloadStarted = false;
         }
@@ -333,9 +369,9 @@ public partial class Home
         }
     }
 
-    private async Task RunPictureSearchAsync()
+    private async Task RunPictureSearchAsync(int generation)
     {
-        if (pickedPicture is null)
+        if (pickedPicture is null || generation != pictureGeneration)
         {
             return;
         }
@@ -355,12 +391,27 @@ public partial class Home
                 }
                 catch (Exception)
                 {
+                    if (generation != pictureGeneration)
+                    {
+                        return;
+                    }
+
                     pictureKey = "Search_PictureFailed";
                     return;
                 }
             }
 
+            if (generation != pictureGeneration || pickedPicture is null)
+            {
+                return;
+            }
+
             decision = PictureQueryGate.Decide(ModelDownloads.GetVisionDownloadSnapshot().Phase);
+        }
+
+        if (generation != pictureGeneration || pickedPicture is null)
+        {
+            return;
         }
 
         if (decision == PictureQueryDecision.Wait)
@@ -377,6 +428,11 @@ public partial class Home
         try
         {
             var hits = await Pictures.FindAsync(pickedPicture, Ui.Current.Grants);
+            if (generation != pictureGeneration)
+            {
+                return;
+            }
+
             pictureHits = hits;
             if (hits.Count == 0)
             {
@@ -385,6 +441,11 @@ public partial class Home
         }
         catch (Exception)
         {
+            if (generation != pictureGeneration)
+            {
+                return;
+            }
+
             pictureKey = "Search_Fault";
         }
     }
@@ -392,19 +453,20 @@ public partial class Home
     private static string FormatSeconds(double seconds) =>
         seconds.ToString("0.##", CultureInfo.InvariantCulture);
 
-    private async Task IndexNowAsync(string path)
+    private void PinKeep(TextFindCard card)
     {
-        try
+        if (card.Unavailable || !card.ShowPin)
         {
-            await IndexNow.IndexAsync(path);
-            offers = IndexNow.ListOffers();
-            RefreshIngestRows();
-            faultKey = null;
+            return;
         }
-        catch (Exception ex)
+
+        if (Cursors.IsPinned(card.SourcePath))
         {
-            faultKey = TextFindSession.FaultKey(ex);
+            Pins.Unpin(card.SourcePath);
+            return;
         }
+
+        Pins.Pin(card.SourcePath);
     }
 
     private async Task OpenAsync(TextFindCard card)
@@ -433,5 +495,17 @@ public partial class Home
                 view.Deferred.Select(c => c.SourcePath == card.SourcePath ? unavailable : c).ToList(),
                 view.HasHits);
         }
+    }
+
+    private async Task CancelAudioPickAsync()
+    {
+        if (audioPickCts is null)
+        {
+            return;
+        }
+
+        await audioPickCts.CancelAsync().ConfigureAwait(false);
+        audioPickCts.Dispose();
+        audioPickCts = null;
     }
 }

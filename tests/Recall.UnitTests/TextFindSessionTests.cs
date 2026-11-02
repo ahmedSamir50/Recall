@@ -67,6 +67,59 @@ public sealed class TextFindSessionTests
     }
 
     [Fact]
+    public void Build_NoteAt480_StaysWhole()
+    {
+        // Arrange
+        var raw = new string('n', 480);
+        var hits = new List<TextSearchHit>
+        {
+            new("id-1", "/notes/a.txt", "a.txt", DateTimeOffset.UtcNow, TextMatchReason.DenseAndFullText, 1.0, RawNote: raw),
+        };
+
+        // Act
+        var view = TextFindSession.Build(hits, _ => true);
+
+        // Assert
+        view.Immediate[0].RawNote.Should().Be(raw);
+        view.Immediate[0].RawNote.Length.Should().Be(480);
+    }
+
+    [Fact]
+    public void Build_NoteLongerThan480_StopsAt480WithEllipsis()
+    {
+        // Arrange
+        var raw = new string('n', 481);
+        var hits = new List<TextSearchHit>
+        {
+            new("id-1", "/notes/a.txt", "a.txt", DateTimeOffset.UtcNow, TextMatchReason.DenseAndFullText, 1.0, RawNote: raw),
+        };
+
+        // Act
+        var view = TextFindSession.Build(hits, _ => true);
+
+        // Assert
+        view.Immediate[0].RawNote.Length.Should().Be(480);
+        view.Immediate[0].RawNote.Should().EndWith("\u2026");
+        view.Immediate[0].RawNote[..479].Should().Be(new string('n', 479));
+    }
+
+    [Fact]
+    public void Build_EmptyNote_StaysEmpty()
+    {
+        // Arrange
+        var hits = new List<TextSearchHit>
+        {
+            new("id-1", "/notes/a.txt", "a.txt", DateTimeOffset.UtcNow, TextMatchReason.DenseAndFullText, 1.0, RawNote: string.Empty),
+        };
+
+        // Act
+        var view = TextFindSession.Build(hits, _ => true);
+
+        // Assert
+        view.Immediate[0].RawNote.Should().BeEmpty();
+    }
+
+    [Fact]
     public void Build_LocalTime_UsesInvariantDigits()
     {
         var hits = new List<TextSearchHit>

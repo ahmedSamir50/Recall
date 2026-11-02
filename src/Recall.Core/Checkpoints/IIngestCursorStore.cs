@@ -26,7 +26,7 @@ public interface IIngestCursorStore
 
     void RenamePath(string previousPath, string nextPath);
 
-    void MarkMissing(string path);
+    void MarkMissing(string path, string? missingStatusKey = null);
 
     void RetirePath(string path);
 
@@ -68,6 +68,8 @@ public interface IIngestCursorStore
 
     void FinishPath(string path, string contentHash, string grantPath, string encoderHash, IReadOnlyList<ChunkWrite> chunks, IReadOnlyList<Bm25OnlyRow>? bm25Only = null);
 
+    void MarkStopped(string path, string statusKey);
+
     void ReplaceDocumentPatches(string path, IReadOnlyList<ChunkWrite> patches);
 
     void ReplaceOcrPages(string path, IReadOnlyList<int> pageNumbers);
@@ -101,4 +103,12 @@ public interface IIngestCursorStore
     void CompletePinResume(string path);
 
     IngestKindCount Count(GrantFileKinds kind);
+
+    IReadOnlyList<IngestKindCount> CountEnabled(GrantFileKinds enabled);
+
+    IReadOnlyList<string> ListUnfinishedPaths(string grantPath);
+
+    void AppendLiveChunk(string path, ChunkWrite chunk);
+
+    void AppendLiveChunks(string path, IReadOnlyList<ChunkWrite> chunks);
 }

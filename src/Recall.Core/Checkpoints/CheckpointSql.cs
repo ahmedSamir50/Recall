@@ -13,11 +13,26 @@ public static class CheckpointSql
     public const string CreateChunkPathIndex =
         "CREATE INDEX IF NOT EXISTS ix_ingest_chunk_path ON ingest_chunk(path)";
 
+    public const string CreateFileGrantStateIndex =
+        "CREATE INDEX IF NOT EXISTS ix_ingest_file_grant_state ON ingest_file(grant_path, state)";
+
     public const string CreateGrantTable =
         "CREATE TABLE IF NOT EXISTS grant_scan(grant_path TEXT PRIMARY KEY, state INTEGER NOT NULL)";
 
     public const string CreateChunkPathTable =
         "CREATE TABLE IF NOT EXISTS ingest_chunk_path(content_id TEXT NOT NULL, path TEXT NOT NULL, missing INTEGER NOT NULL, retired INTEGER NOT NULL, PRIMARY KEY(content_id, path))";
+
+    public const string CreateChunkPathPathIndex =
+        "CREATE INDEX IF NOT EXISTS ix_ingest_chunk_path_path ON ingest_chunk_path(path)";
+
+    public const int SchemaVersion = 1;
+
+    public const string BackfillChunkPath =
+        "INSERT OR IGNORE INTO ingest_chunk_path(content_id, path, missing, retired) SELECT content_id, path, missing, retired FROM ingest_chunk";
+
+    public const string ReadUserVersion = "PRAGMA user_version";
+
+    public const string WriteUserVersionV1 = "PRAGMA user_version = 1";
 
     public const string CreatePendingTable =
         "CREATE TABLE IF NOT EXISTS pending_reconcile(content_id TEXT PRIMARY KEY)";
@@ -56,5 +71,5 @@ public static class CheckpointSql
         "CREATE TABLE IF NOT EXISTS pin_resume(path TEXT PRIMARY KEY, long_id TEXT NOT NULL, short_id TEXT NOT NULL)";
 
     public const string EnsureSchema =
-        CreateFileTable + ";" + CreateChunkTable + ";" + CreateChunkPathIndex + ";" + CreateGrantTable + ";" + CreateChunkPathTable + ";" + CreatePendingTable + ";" + CreateBm25OnlyTable + ";" + CreateOcrPageTable + ";" + CreateMediaFileTable + ";" + CreateAgeCutPendingTable + ";" + CreateIngestPinTable + ";" + CreatePinResumeTable;
+        CreateFileTable + ";" + CreateChunkTable + ";" + CreateChunkPathIndex + ";" + CreateGrantTable + ";" + CreateChunkPathTable + ";" + CreateChunkPathPathIndex + ";" + CreatePendingTable + ";" + CreateBm25OnlyTable + ";" + CreateOcrPageTable + ";" + CreateMediaFileTable + ";" + CreateAgeCutPendingTable + ";" + CreateIngestPinTable + ";" + CreatePinResumeTable;
 }

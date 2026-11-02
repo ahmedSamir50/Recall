@@ -149,12 +149,12 @@ public sealed class Phase3GrantTests
         var root = FindRepoRoot();
         var en = ReadResx(Path.Combine(root, "src", "Recall.UI", "Resources", "Strings.resx"));
         var ar = ReadResx(Path.Combine(root, "src", "Recall.UI", "Resources", "Strings.ar.resx"));
-        en["Folders_OverlapWarning"].Should().Be("Recall keeps the parent folder. The folder inside it is not indexed again.");
-        ar["Folders_OverlapWarning"].Should().Be("يبقي ريكول المجلد الأب. لا يُفهرس المجلد الذي بداخله مرة أخرى.");
-        en["Home_IndexNow"].Should().Be("Index now");
-        ar["Home_IndexNow"].Should().Be("فهرس الآن");
-        en["Home_IndexNowLead"].Should().Be("This folder is allowed and not indexed yet.");
-        ar["Home_IndexNowLead"].Should().Be("هذا المجلد مسموح ولم يُفهرس بعد.");
+        en["Folders_OverlapWarning"].Should().Be("Recall keeps the parent folder. The folder inside it is not processed again.");
+        ar["Folders_OverlapWarning"].Should().Be("يبقي ريكول المجلد الأب. لا يُعالَج المجلد الذي بداخله مرة أخرى.");
+        en["Home_IndexNow"].Should().Be("Process now");
+        ar["Home_IndexNow"].Should().Be("عالج الآن");
+        en["Home_IndexNowLead"].Should().Be("This folder is allowed and not processed yet.");
+        ar["Home_IndexNowLead"].Should().Be("هذا المجلد مسموح ولم يُعالَج بعد.");
     }
 
     [Fact]
