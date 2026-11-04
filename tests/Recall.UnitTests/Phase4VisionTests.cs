@@ -484,6 +484,44 @@ public sealed class Phase4VisionTests : IDisposable
     }
 
     [Fact]
+    public void Union_BilingualLine_KeepsBothScripts_LatinFirst()
+    {
+        OcrLineChoice.Union("Example Grocery Trading LLC", 0.9, "شركة البقالة النموذجية", 0.2)
+            .Should().Be("Example Grocery Trading LLC شركة البقالة النموذجية");
+        OcrLineChoice.Union("Sparkling Water", 0.9, "مياه غازية Water", 0.2)
+            .Should().Be("Sparkling Water مياه غازية", "the Arabic read's Latin tokens are dropped");
+    }
+
+    [Fact]
+    public void Union_ArabicFirstLine_PutsArabicFirst()
+    {
+        OcrLineChoice.Union("Invoice", 0.2, "فاتورة ضريبية", 0.9)
+            .Should().Be("فاتورة ضريبية Invoice");
+    }
+
+    [Fact]
+    public void Union_NeutralTokens_FollowHigherConfidenceRead()
+    {
+        OcrLineChoice.Union("Total 60.00", 0.9, "60.00 مجموع", 0.2)
+            .Should().Be("Total 60.00 مجموع");
+        OcrLineChoice.Union("Total 60.00", 0.2, "60.00 مجموع", 0.9)
+            .Should().Be("60.00 مجموع Total");
+    }
+
+    [Fact]
+    public void Union_OneReadEmpty_UsesOtherRead()
+    {
+        OcrLineChoice.Union("hello", 0.9, "", 0.1).Should().Be("hello");
+        OcrLineChoice.Union("", 0.9, "مرحبا", 0.1).Should().Be("مرحبا");
+    }
+
+    [Fact]
+    public void Union_BothEmpty_FallsBackToChoose()
+    {
+        OcrLineChoice.Union("", 0.5, "", 0.4).Should().BeEmpty();
+    }
+
+    [Fact]
     public void NeedsOcr_ThreeReplacementChars_IsTrue()
     {
         BrokenArabic.NeedsOcr("مر\uFFFD\uFFFD\uFFFD").Should().BeTrue();

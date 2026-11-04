@@ -1,8 +1,10 @@
 #if WINDOWS
+using System.Collections.Concurrent;
 using FluentAssertions;
 using Recall.Core.Checkpoints;
 using Recall.Core.Indexing;
 using Recall.Core.Ocr;
+using Recall.Core.Runtime;
 using Recall.Core.Search;
 using Recall.Core.Sync;
 using Recall.Core.Text;
@@ -14,18 +16,18 @@ namespace Recall.Maui.UnitTests;
 public sealed class OcrRuntimeTests
 {
     [Fact]
-    public void Ocr_TextLayer_DoesNotOpen()
+    public async Task Ocr_TextLayer_DoesNotOpen()
     {
         var cursors = new FakeIngestCursorStore();
         var media = new FakeMediaVectorIndex();
         var textIngest = CreateTextIngest(cursors);
-        var engine = new OnnxOcrEngine(Path.Combine(Path.GetTempPath(), $"ocr-empty-{Guid.NewGuid():N}"), cursors, media, textIngest);
-        engine.RunPass(["text.pdf"]);
+        var engine = new OnnxOcrEngine(Path.Combine(Path.GetTempPath(), $"ocr-empty-{Guid.NewGuid():N}"), cursors, media, textIngest, TestIngest.Memory());
+        await engine.RunPassAsync(["text.pdf"], TestContext.Current.CancellationToken);
         engine.RecognizedByPath.Should().BeEmpty();
     }
 
     [Fact]
-    public void OcrImage_Words_UseChunkOrdinalZero()
+    public async Task OcrImage_Words_UseChunkOrdinalZero()
     {
         var path = FixturePath("ocr-en-invoice.png");
         var contentId = "image-chunk-0";
@@ -41,46 +43,172 @@ public sealed class OcrRuntimeTests
             MediaCollections.Image,
             new MediaIndexInsert(contentId, path, Path.GetFileName(path), string.Empty, new float[768], "enc", true, @"C:\grant", string.Empty, string.Empty));
         var engine = CreateEngine(cursors, media);
-        engine.RunPass([path]);
+        await engine.RunPassAsync([path], TestContext.Current.CancellationToken);
         media.Inserts.Should().ContainSingle(i => i.ContentId == contentId && i.Words.Length > 0);
     }
 
     [Fact]
-    public void OcrEn_Invoice_WordErrorWithinAcceptedCeiling()
+    public async Task OcrEn_Invoice_WordErrorWithinAcceptedCeiling()
     {
-        var (path, words) = RunOcrPass("ocr-en-invoice.png");
+        var (path, words) = await RunOcrPassAsync("ocr-en-invoice.png");
         AssertWordErrorWithinAccepted("ocr-en-invoice.png", OcrFixtureReference.EnInvoice, words, OcrFixtureReference.EnInvoiceAccepted);
         AssertSearchHitOnStoredWords(path, "INV-2026-001", words);
     }
 
     [Fact]
-    public void OcrAr_Invoice_WordErrorWithinAcceptedCeiling()
+    public async Task OcrAr_Invoice_WordErrorWithinAcceptedCeiling()
     {
-        var (path, words) = RunOcrPass("ocr-ar-total.png");
+        var (path, words) = await RunOcrPassAsync("ocr-ar-total.png");
         AssertWordErrorWithinAccepted("ocr-ar-total.png", OcrFixtureReference.ArInvoice, words, OcrFixtureReference.ArInvoiceAccepted);
         AssertSearchHitOnStoredWords(path, "INV-2026-003", words);
     }
 
     [Fact]
-    public void OcrMixed_Invoice_WordErrorWithinAcceptedCeiling()
+    public async Task OcrMixed_Invoice_WordErrorWithinAcceptedCeiling()
     {
-        var (path, words) = RunOcrPass("ocr-mixed-invoice.png");
+        var (path, words) = await RunOcrPassAsync("ocr-mixed-invoice.png");
         AssertWordErrorWithinAccepted("ocr-mixed-invoice.png", OcrFixtureReference.MixedInvoice, words, OcrFixtureReference.MixedInvoiceAccepted);
         AssertSearchHitOnStoredWords(path, "INV-2026-004", words);
     }
 
     [Fact]
-    public void OcrEn_BookPage_WordErrorWithinAcceptedCeiling()
+    public async Task OcrEn_BookPage_WordErrorWithinAcceptedCeiling()
     {
-        var (_, words) = RunOcrPass("en_book_page.webp");
+        var (_, words) = await RunOcrPassAsync("en_book_page.webp");
         AssertWordErrorWithinAccepted("en_book_page.webp", OcrFixtureReference.EnBookPage, words, OcrFixtureReference.EnBookAccepted);
     }
 
     [Fact]
-    public void OcrAr_BookPage_WordErrorWithinAcceptedCeiling()
+    public async Task OcrAr_BookPage_WordErrorWithinAcceptedCeiling()
     {
-        var (_, words) = RunOcrPass("ar_book_page.webp");
+        var (_, words) = await RunOcrPassAsync("ar_book_page.webp");
         AssertWordErrorWithinAccepted("ar_book_page.webp", OcrFixtureReference.ArBookPage, words, OcrFixtureReference.ArBookAccepted);
+    }
+
+    [Fact]
+    public async Task Provider_DefaultsToCpu_WhenDirectMlMissing()
+    {
+        var previous = Environment.GetEnvironmentVariable("RECALL_OCR_EXECUTION_PROVIDER");
+        Environment.SetEnvironmentVariable("RECALL_OCR_EXECUTION_PROVIDER", "directml");
+        try
+        {
+            using var engine = await RunEnginePassAsync("ocr-en-invoice.png");
+            engine.Provider.Should().Be(
+                OcrExecutionProvider.Cpu,
+                "a DirectML session that cannot be created falls back to the same session on CPU without throwing");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("RECALL_OCR_EXECUTION_PROVIDER", previous);
+        }
+    }
+
+    [Fact]
+    public void Threads_GpuProvider_UsesOne()
+    {
+        OnnxOcrEngine.ThreadCountFor(OcrExecutionProvider.DirectMl, 16).Should().Be(1);
+        OnnxOcrEngine.ThreadCountFor(OcrExecutionProvider.DirectMl, 1).Should().Be(1);
+    }
+
+    [Fact]
+    public void Threads_CpuProvider_UsesCoresMinusOne()
+    {
+        OnnxOcrEngine.ThreadCountFor(OcrExecutionProvider.Cpu, 8).Should().Be(7);
+        OnnxOcrEngine.ThreadCountFor(OcrExecutionProvider.Cpu, 2).Should().Be(1);
+        OnnxOcrEngine.ThreadCountFor(OcrExecutionProvider.Cpu, 64).Should().Be(8, "the CPU thread count is capped at 8");
+    }
+
+    [Fact]
+    public async Task Route_LowConfidence_TriesOtherReader()
+    {
+        var lines = new List<OcrLineRead>();
+        foreach (var fixture in new[] { "ocr-mixed-invoice.png", "ocr-en-invoice.png", "ar_book_page.webp" })
+        {
+            using var engine = await RunEnginePassAsync(fixture);
+            lines.AddRange(engine.LineReads);
+        }
+
+        var lowConfidence = lines.Where(l => l.Confidence < OnnxOcrEngine.LowConfidence).ToList();
+        lowConfidence.Should().NotBeEmpty("the fixtures must contain a line below LowConfidence");
+        lowConfidence.Should().OnlyContain(
+            l => l.EnglishCalls == 1 && l.ArabicCalls == 1,
+            "a line below LowConfidence is cross-read by both readers");
+    }
+
+    [Fact]
+    public void ParallelPages_JoinInPageOrder()
+    {
+        var pages = new ConcurrentDictionary<int, string>();
+        for (var pageNumber = 5; pageNumber >= 1; pageNumber--)
+        {
+            pages[pageNumber] = $"page-{pageNumber}";
+        }
+
+        var joined = OnnxOcrEngine.JoinInPageOrder(pages);
+        joined.Select(p => p.PageNumber).Should().Equal(1, 2, 3, 4, 5);
+        joined.Select(p => p.Text).Should().Equal("page-1", "page-2", "page-3", "page-4", "page-5");
+    }
+
+    [Fact]
+    public void ParallelPages_ReduceToOneUnderHard()
+    {
+        var previous = Environment.GetEnvironmentVariable("RECALL_OCR_PAGE_WORKERS");
+        Environment.SetEnvironmentVariable("RECALL_OCR_PAGE_WORKERS", null);
+        try
+        {
+            var cursors = new FakeIngestCursorStore();
+            var memory = TestIngest.Memory();
+            using var engine = new OnnxOcrEngine(
+                Path.Combine(Path.GetTempPath(), $"ocr-workers-{Guid.NewGuid():N}"),
+                cursors,
+                new FakeMediaVectorIndex(),
+                CreateTextIngest(cursors),
+                memory);
+            engine.PageWorkers.Should().Be(OnnxOcrEngine.OcrPageWorkers);
+            memory.Pressure = MemoryPressure.Hard;
+            engine.PageWorkers.Should().Be(1, "the hard memory pressure branch forces a single page worker");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("RECALL_OCR_PAGE_WORKERS", previous);
+        }
+    }
+
+    [Fact]
+    public async Task Sessions_SurvivePass_AndUnloadOnIdle()
+    {
+        var path = FixturePath("ocr-en-invoice.png");
+        File.Exists(path).Should().BeTrue($"fixture missing: {path}");
+        var cursors = new FakeIngestCursorStore();
+        cursors.FinishPath(path, "hash", @"C:\grant", "enc", [new ChunkWrite("cid-residency", 0, 0, 0, 0, 0)]);
+        var media = new FakeMediaVectorIndex();
+        media.TryInsert(
+            MediaCollections.Image,
+            new MediaIndexInsert("cid-residency", path, Path.GetFileName(path), string.Empty, new float[768], "enc", true, @"C:\grant", string.Empty, string.Empty));
+        using var engine = CreateEngine(cursors, media);
+        await engine.RunPassAsync([path], TestContext.Current.CancellationToken);
+        var detector = engine.Sessions.Detector;
+        detector.Should().NotBeNull("the first pass loads the three sessions");
+        await engine.RunPassAsync([path], TestContext.Current.CancellationToken);
+        engine.Sessions.Detector.Should().BeSameAs(detector, "the second pass reuses the resident sessions");
+        engine.UnloadIfIdle(DateTimeOffset.UtcNow.AddMinutes(3)).Should().BeTrue();
+        engine.Sessions.Loaded.Should().BeFalse("the idle unload disposes the three sessions");
+    }
+
+    private static async Task<OnnxOcrEngine> RunEnginePassAsync(string fixtureName, FakeMemoryBudget? memory = null)
+    {
+        var path = FixturePath(fixtureName);
+        File.Exists(path).Should().BeTrue($"fixture missing: {path}");
+        var contentId = $"cid-{fixtureName}";
+        var cursors = new FakeIngestCursorStore();
+        cursors.FinishPath(path, "hash", @"C:\grant", "enc", [new ChunkWrite(contentId, 0, 0, 0, 0, 0)]);
+        var media = new FakeMediaVectorIndex();
+        media.TryInsert(
+            MediaCollections.Image,
+            new MediaIndexInsert(contentId, path, Path.GetFileName(path), string.Empty, new float[768], "enc", true, @"C:\grant", string.Empty, string.Empty));
+        var engine = CreateEngine(cursors, media, memory);
+        await engine.RunPassAsync([path], TestContext.Current.CancellationToken);
+        return engine;
     }
 
     private static readonly object LogGate = new();
@@ -147,7 +275,7 @@ public sealed class OcrRuntimeTests
         }
     }
 
-    private static (string Path, string Words) RunOcrPass(string fixtureName)
+    private static async Task<(string Path, string Words)> RunOcrPassAsync(string fixtureName)
     {
         var path = FixturePath(fixtureName);
         File.Exists(path).Should().BeTrue($"fixture missing: {path}");
@@ -159,7 +287,7 @@ public sealed class OcrRuntimeTests
             MediaCollections.Image,
             new MediaIndexInsert(contentId, path, Path.GetFileName(path), string.Empty, new float[768], "enc", true, @"C:\grant", string.Empty, string.Empty));
         var engine = CreateEngine(cursors, media);
-        engine.RunPass([path]);
+        await engine.RunPassAsync([path], TestContext.Current.CancellationToken);
         var words = media.Inserts.Single(i => i.ContentId == contentId).Words;
         words.Length.Should().BeGreaterThan(0, "OCR should store words on the image row");
         return (path, words);
@@ -177,11 +305,11 @@ public sealed class OcrRuntimeTests
             $"query '{query}' missed stored OCR text (length {words.Length})");
     }
 
-    private static OnnxOcrEngine CreateEngine(FakeIngestCursorStore cursors, FakeMediaVectorIndex media)
+    private static OnnxOcrEngine CreateEngine(FakeIngestCursorStore cursors, FakeMediaVectorIndex media, FakeMemoryBudget? memory = null)
     {
         var modelRoot = CopyModelTree();
         var textIngest = CreateTextIngest(cursors);
-        return new OnnxOcrEngine(modelRoot, cursors, media, textIngest);
+        return new OnnxOcrEngine(modelRoot, cursors, media, textIngest, memory ?? TestIngest.Memory());
     }
 
     private static TextIngestEngine CreateTextIngest(FakeIngestCursorStore cursors)

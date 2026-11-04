@@ -1,95 +1,140 @@
 #if WINDOWS
-using Recall.Core.Ocr;
-using Recall.IntegrationTests.Infrastructure;
+using System.Globalization;
+using System.Security.Cryptography;
+using System.Text;
 using Recall.Maui.Platform.Ocr;
 
 namespace Recall.IntegrationTests;
 
-internal readonly record struct OcrGoldenPage(byte[] Png, string GroundTruth, bool IsPhone);
+internal readonly record struct OcrGoldenPage(byte[] Png, string GroundTruth, bool IsPhone, string Language);
 
 internal static class OcrGoldenCatalog
 {
-    // Synthetic note slices: half A4 keeps CER stable while 80-page golden finishes in minutes, not hours.
-    private const int GoldenTextWidth = 1240;
-    private const int GoldenTextHeight = 1754;
+    public const string ManifestName = "manifest.csv";
+
+    public const string RootVariable = "RECALL_OCR_GOLDEN";
+
+    public const string FetchCommand = "tools/fetch-ocr-golden.ps1";
+
+    public static string Root
+    {
+        get
+        {
+            var configured = Environment.GetEnvironmentVariable(RootVariable);
+            if (!string.IsNullOrWhiteSpace(configured))
+            {
+                return configured;
+            }
+
+            return Path.GetFullPath(Path.Combine(FindRepoRoot(), "artifacts", "ocr-golden"));
+        }
+    }
 
     public static IReadOnlyList<OcrGoldenPage> Build()
     {
-        DemoDatasetPaths.RequireRoot();
+        var root = Root;
+        var manifest = Path.Combine(root, ManifestName);
+        if (!File.Exists(manifest))
+        {
+            throw new InvalidOperationException($"OCR golden corpus missing at {root}; run {FetchCommand}");
+        }
+
         var pages = new List<OcrGoldenPage>();
-        AddRenderedSlices(
-            pages,
-            DemoDatasetPaths.Combine("notes", "ar_long_حي_بن_يقظان_ابن_طفيل.txt"),
-            29,
-            isPhone: false);
-        pages.Add(RenderImage(
-            DemoDatasetPaths.Combine("images", "sign_ar_shop_alexandria.jpg"),
-            DemoDatasetPaths.Combine("ground_truth", "images", "sign_ar_shop_alexandria.gt.txt"),
-            isPhone: true));
+        var header = true;
+        foreach (var line in File.ReadLines(manifest))
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
 
-        AddRenderedSlices(
-            pages,
-            DemoDatasetPaths.Combine("notes", "en_long_jekyll_and_hyde_stevenson.txt"),
-            28,
-            isPhone: false);
-        pages.Add(RenderPdfPage(
-            DemoDatasetPaths.Combine("pdf_scanned", "en_phone_blood_test_report.pdf"),
-            DemoDatasetPaths.Combine("ground_truth", "pdf_scanned", "en_phone_blood_test_report.gt.txt"),
-            isPhone: true));
-        pages.Add(RenderImage(
-            DemoDatasetPaths.Combine("images", "receipt_en_supermarket.png"),
-            DemoDatasetPaths.Combine("ground_truth", "images", "receipt_en_supermarket.gt.txt"),
-            isPhone: true));
+            if (header)
+            {
+                header = false;
+                continue;
+            }
 
-        var european = string.Concat(
-            File.ReadAllText(DemoDatasetPaths.Combine("notes", "fr_recette_ratatouille.md")),
-            File.ReadAllText(DemoDatasetPaths.Combine("notes", "de_fahrrad_reparatur.md")),
-            File.ReadAllText(DemoDatasetPaths.Combine("notes", "es_viaje_granada.md")));
-        AddRenderedSlicesFromText(pages, european, 18, isPhone: false);
-        pages.Add(RenderPdfPage(
-            DemoDatasetPaths.Combine("pdf_scanned", "de_clean_fitnessstudio_kuendigung.pdf"),
-            DemoDatasetPaths.Combine("ground_truth", "pdf_scanned", "de_clean_fitnessstudio_kuendigung.gt.txt"),
-            isPhone: false));
-        pages.Add(RenderImage(
-            DemoDatasetPaths.Combine("images", "plaque_fr_rue_de_richelieu.jpg"),
-            DemoDatasetPaths.Combine("ground_truth", "images", "plaque_fr_rue_de_richelieu.gt.txt"),
-            isPhone: true));
+            var fields = SplitCsv(line);
+            if (fields.Count < 6)
+            {
+                throw new InvalidOperationException($"OCR golden manifest row is short: {line}");
+            }
+
+            var relative = fields[0];
+            var language = fields[1];
+            var isPhone = bool.Parse(fields[2]);
+            var sourceUrl = fields[4];
+            var expectedHash = fields[5];
+            var path = Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar));
+            if (!File.Exists(path))
+            {
+                throw new InvalidOperationException($"OCR golden page missing at {path}; run {FetchCommand}");
+            }
+
+            var groundTruthPath = Path.ChangeExtension(path, ".gt.txt");
+            if (!File.Exists(groundTruthPath))
+            {
+                throw new InvalidOperationException($"OCR golden ground truth missing at {groundTruthPath}; run {FetchCommand}");
+            }
+
+            var bytes = File.ReadAllBytes(path);
+            var actualHash = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+            if (!string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    $"OCR golden page {relative} sha256 {actualHash} does not match the manifest {expectedHash} from {sourceUrl}; run {FetchCommand}");
+            }
+
+            var png = path.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+                ? WindowsPdfPageRenderer.Render(path, 1)
+                : bytes;
+            pages.Add(new OcrGoldenPage(png, File.ReadAllText(groundTruthPath).Trim(), isPhone, language));
+        }
 
         return pages;
     }
 
-    private static void AddRenderedSlices(List<OcrGoldenPage> pages, string textPath, int count, bool isPhone)
+    private static List<string> SplitCsv(string line)
     {
-        var text = File.ReadAllText(textPath);
-        AddRenderedSlicesFromText(pages, text, count, isPhone);
-    }
-
-    private static void AddRenderedSlicesFromText(List<OcrGoldenPage> pages, string text, int count, bool isPhone)
-    {
-        foreach (var slice in OcrGoldenPages.SplitEqual(text, count))
+        var fields = new List<string>();
+        var builder = new StringBuilder();
+        var quoted = false;
+        foreach (var character in line)
         {
-            pages.Add(new OcrGoldenPage(WindowsTextPageRenderer.Render(slice, GoldenTextWidth, GoldenTextHeight), slice, isPhone));
-        }
-    }
+            if (character == '"')
+            {
+                quoted = !quoted;
+                continue;
+            }
 
-    private static OcrGoldenPage RenderPdfPage(string pdfPath, string gtPath, bool isPhone)
-    {
-        if (!File.Exists(pdfPath) || !File.Exists(gtPath))
-        {
-            throw new FileNotFoundException($"Golden PDF pair missing: {pdfPath}");
-        }
-        var png = WindowsPdfPageRenderer.Render(pdfPath, 1);
-        return new OcrGoldenPage(png, File.ReadAllText(gtPath).Trim(), isPhone);
-    }
+            if (character == ',' && !quoted)
+            {
+                fields.Add(builder.ToString());
+                builder.Clear();
+                continue;
+            }
 
-    private static OcrGoldenPage RenderImage(string imagePath, string gtPath, bool isPhone)
-    {
-        if (!File.Exists(imagePath) || !File.Exists(gtPath))
-        {
-            throw new FileNotFoundException($"Golden image pair missing: {imagePath}");
+            builder.Append(character);
         }
 
-        return new OcrGoldenPage(File.ReadAllBytes(imagePath), File.ReadAllText(gtPath).Trim(), isPhone);
+        fields.Add(builder.ToString());
+        return fields;
+    }
+
+    private static string FindRepoRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+            {
+                return directory.FullName;
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new InvalidOperationException($"Recall.slnx not found above {AppContext.BaseDirectory}; set {RootVariable} to the corpus root.");
     }
 }
 #endif

@@ -258,7 +258,7 @@ RECALL_EMBED_EXPORT int recall_embed_token_ends(const char * text, int32_t * end
         return 3;
     }
 
-    const int32_t cap = n_tokens < RECALL_EMBED_MAX_TOKENS ? n_tokens : RECALL_EMBED_MAX_TOKENS;
+    const int32_t cap = n_tokens;
     const int32_t limit = ends_capacity < cap ? ends_capacity : cap;
     char piece[256];
     int32_t end = 0;

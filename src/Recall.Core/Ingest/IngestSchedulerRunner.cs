@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Recall.Core.Faults;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
@@ -35,54 +36,138 @@ public sealed class IngestPassHooks
 
 public sealed class IngestSchedulerRunner
 {
-    private readonly IngestScheduler scheduler;
+    public const int TextSlice = 64;
 
-    public IngestSchedulerRunner(IngestScheduler scheduler)
+    public const int MediaSlice = 32;
+
+    public const int OcrSlice = 64;
+
+    public static readonly TimeSpan PassBudget = TimeSpan.FromSeconds(120);
+
+    private readonly IngestScheduler scheduler;
+    private readonly IngestPassMetrics metrics;
+    private readonly IIngestPreemption preemption;
+    private readonly TimeProvider time;
+
+    public IngestSchedulerRunner(
+        IngestScheduler scheduler,
+        IngestPassMetrics? metrics = null,
+        IIngestPreemption? preemption = null,
+        TimeProvider? time = null)
     {
         this.scheduler = scheduler;
+        this.metrics = metrics ?? new IngestPassMetrics();
+        this.preemption = preemption ?? new IngestPreemption();
+        this.time = time ?? TimeProvider.System;
     }
 
     public async Task RunReadyPassesAsync(DateTimeOffset now, IngestPassHooks hooks, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(hooks);
         cancellationToken.ThrowIfCancellationRequested();
-        await RunTextPassAsync(now, hooks, cancellationToken).ConfigureAwait(false);
-        cancellationToken.ThrowIfCancellationRequested();
-        await RunMediaPassAsync(now, hooks, cancellationToken).ConfigureAwait(false);
-        cancellationToken.ThrowIfCancellationRequested();
-        RunOcrPass(now, hooks, cancellationToken);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, preemption.Token);
+        var passToken = linked.Token;
+        var pass = new PassState(this.time.GetTimestamp());
+
+        while (!BudgetSpent(pass))
+        {
+            var worked = false;
+            var text = await RunTextSliceAsync(now, hooks, pass, passToken, cancellationToken).ConfigureAwait(false);
+            worked |= text.Worked;
+            if (text.Stop)
+            {
+                return;
+            }
+
+            var media = await RunMediaSliceAsync(now, hooks, pass, passToken, cancellationToken).ConfigureAwait(false);
+            worked |= media.Worked;
+            if (media.Stop)
+            {
+                return;
+            }
+
+            var ocr = await RunOcrSliceAsync(now, hooks, pass, passToken, cancellationToken).ConfigureAwait(false);
+            worked |= ocr.Worked;
+            if (ocr.Stop)
+            {
+                return;
+            }
+
+            if (!worked)
+            {
+                return;
+            }
+        }
     }
 
-    private async Task RunTextPassAsync(DateTimeOffset now, IngestPassHooks hooks, CancellationToken cancellationToken)
+    private bool BudgetSpent(PassState pass) =>
+        this.time.GetElapsedTime(pass.BudgetStart) >= PassBudget;
+
+    private async Task<SliceOutcome> RunTextSliceAsync(
+        DateTimeOffset now,
+        IngestPassHooks hooks,
+        PassState pass,
+        CancellationToken passToken,
+        CancellationToken cancellationToken)
     {
         if (!scheduler.ShouldOpen(IngestModel.Text, now))
         {
-            return;
+            return default;
         }
 
-        cancellationToken.ThrowIfCancellationRequested();
+        var jobs = new List<string>();
+        var processed = 0;
+        var openWatch = new Stopwatch();
+        var totalWatch = Stopwatch.StartNew();
         var opened = false;
         try
         {
+            while (jobs.Count < TextSlice && !BudgetSpent(pass) && scheduler.TryDequeue(IngestModel.Text, out var job))
+            {
+                jobs.Add(job.Path);
+            }
+
+            if (jobs.Count == 0)
+            {
+                return default;
+            }
+
             if (hooks.OpenText is not null)
             {
+                openWatch.Start();
                 hooks.OpenText();
+                openWatch.Stop();
                 opened = true;
             }
 
-            while (scheduler.QueueCount(IngestModel.Text) > 0)
+            foreach (var path in jobs)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                if (!scheduler.TryDequeue(IngestModel.Text, out var job))
+                if (BudgetSpent(pass))
                 {
                     break;
                 }
 
+                passToken.ThrowIfCancellationRequested();
                 if (hooks.ProcessTextJobAsync is not null)
                 {
-                    await hooks.ProcessTextJobAsync(job.Path, cancellationToken).ConfigureAwait(false);
+                    await hooks.ProcessTextJobAsync(path, passToken).ConfigureAwait(false);
                 }
+
+                processed++;
             }
+
+            Requeue(IngestModel.Text, jobs.Skip(processed));
+            return new SliceOutcome(processed > 0, false);
+        }
+        catch (OperationCanceledException)
+        {
+            Requeue(IngestModel.Text, jobs.Skip(processed));
+            if (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+
+            return new SliceOutcome(processed > 0, true);
         }
         finally
         {
@@ -90,36 +175,42 @@ public sealed class IngestSchedulerRunner
             {
                 hooks.CloseText?.Invoke();
             }
+
+            openWatch.Stop();
+            totalWatch.Stop();
+            metrics.Record(new IngestPassMetric(IngestModel.Text, processed, openWatch.ElapsedMilliseconds, totalWatch.ElapsedMilliseconds));
         }
     }
 
 #pragma warning disable S3267 // foreach is clearer than LINQ for ordered media passes
-    private async Task RunMediaPassAsync(DateTimeOffset now, IngestPassHooks hooks, CancellationToken cancellationToken)
+    private async Task<SliceOutcome> RunMediaSliceAsync(
+        DateTimeOffset now,
+        IngestPassHooks hooks,
+        PassState pass,
+        CancellationToken passToken,
+        CancellationToken cancellationToken)
     {
         if (!scheduler.ShouldOpen(IngestModel.Media, now))
         {
-            return;
+            return default;
         }
 
-        cancellationToken.ThrowIfCancellationRequested();
-        hooks.SweepAgedMedia?.Invoke(now);
-        hooks.EnsureMediaContextProbe?.Invoke();
+        if (!pass.MediaSwept)
+        {
+            pass.MediaSwept = true;
+            hooks.SweepAgedMedia?.Invoke(now);
+            hooks.EnsureMediaContextProbe?.Invoke();
+        }
 
         var jobs = new List<string>();
-        while (scheduler.QueueCount(IngestModel.Media) > 0)
+        while (jobs.Count < MediaSlice && !BudgetSpent(pass) && scheduler.TryDequeue(IngestModel.Media, out var job))
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (!scheduler.TryDequeue(IngestModel.Media, out var job))
-            {
-                break;
-            }
-
             jobs.Add(job.Path);
         }
 
         if (jobs.Count == 0)
         {
-            return;
+            return default;
         }
 
         var visionJobs = new List<string>();
@@ -145,9 +236,12 @@ public sealed class IngestSchedulerRunner
             }
         }
 
+        var pending = new List<string>(jobs);
         var oneContext = MediaContextPolicy.OneContext;
         var visionOpen = false;
         var audioOpen = false;
+        var openWatch = new Stopwatch();
+        var totalWatch = Stopwatch.StartNew();
         try
         {
             if (oneContext)
@@ -155,11 +249,13 @@ public sealed class IngestSchedulerRunner
                 hooks.BeginMediaLeg?.Invoke(IngestMediaLeg.Shared);
                 if (hooks.OpenVision is not null)
                 {
+                    openWatch.Start();
                     hooks.OpenVision();
+                    openWatch.Stop();
                     visionOpen = true;
                 }
 
-                await ProcessMediaAsync(hooks, jobs, cancellationToken).ConfigureAwait(false);
+                await ProcessMediaAsync(hooks, jobs, pending, pass, passToken).ConfigureAwait(false);
             }
             else
             {
@@ -168,11 +264,13 @@ public sealed class IngestSchedulerRunner
                     hooks.BeginMediaLeg?.Invoke(IngestMediaLeg.Vision);
                     if (hooks.OpenVision is not null)
                     {
+                        openWatch.Start();
                         hooks.OpenVision();
+                        openWatch.Stop();
                         visionOpen = true;
                     }
 
-                    await ProcessMediaAsync(hooks, visionJobs, cancellationToken).ConfigureAwait(false);
+                    await ProcessMediaAsync(hooks, visionJobs, pending, pass, passToken).ConfigureAwait(false);
                     if (visionOpen)
                     {
                         hooks.CloseVision?.Invoke();
@@ -182,26 +280,32 @@ public sealed class IngestSchedulerRunner
 
                 if (audioJobs.Count > 0)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    passToken.ThrowIfCancellationRequested();
                     hooks.BeginMediaLeg?.Invoke(IngestMediaLeg.Audio);
                     if (hooks.OpenAudio is not null)
                     {
+                        openWatch.Start();
                         hooks.OpenAudio();
+                        openWatch.Stop();
                         audioOpen = true;
                     }
 
-                    await ProcessMediaAsync(hooks, audioJobs, cancellationToken).ConfigureAwait(false);
+                    await ProcessMediaAsync(hooks, audioJobs, pending, pass, passToken).ConfigureAwait(false);
                 }
             }
+
+            Requeue(IngestModel.Media, pending);
+            return new SliceOutcome(jobs.Count - pending.Count > 0, false);
         }
         catch (OperationCanceledException)
         {
-            foreach (var path in jobs)
+            Requeue(IngestModel.Media, pending);
+            if (cancellationToken.IsCancellationRequested)
             {
-                scheduler.Enqueue(new IngestJob(IngestModel.Media, path));
+                throw;
             }
 
-            throw;
+            return new SliceOutcome(jobs.Count - pending.Count > 0, true);
         }
         finally
         {
@@ -214,78 +318,121 @@ public sealed class IngestSchedulerRunner
             {
                 hooks.CloseVision?.Invoke();
             }
+
+            openWatch.Stop();
+            totalWatch.Stop();
+            metrics.Record(new IngestPassMetric(IngestModel.Media, jobs.Count - pending.Count, openWatch.ElapsedMilliseconds, totalWatch.ElapsedMilliseconds));
         }
     }
 
-    private static async Task ProcessMediaAsync(IngestPassHooks hooks, List<string> paths, CancellationToken cancellationToken)
+    private async Task ProcessMediaAsync(IngestPassHooks hooks, List<string> paths, List<string> pending, PassState pass, CancellationToken cancellationToken)
     {
         foreach (var path in paths)
         {
+            if (BudgetSpent(pass))
+            {
+                break;
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
             if (hooks.ProcessMediaJobAsync is not null)
             {
                 await hooks.ProcessMediaJobAsync(path, cancellationToken).ConfigureAwait(false);
             }
+
+            pending.Remove(path);
         }
     }
 #pragma warning restore S3267
 
-    private void RunOcrPass(DateTimeOffset now, IngestPassHooks hooks, CancellationToken cancellationToken)
+    private async Task<SliceOutcome> RunOcrSliceAsync(
+        DateTimeOffset now,
+        IngestPassHooks hooks,
+        PassState pass,
+        CancellationToken passToken,
+        CancellationToken cancellationToken)
     {
         if (!scheduler.ShouldOpen(IngestModel.Ocr, now))
         {
-            return;
+            return default;
         }
 
-        cancellationToken.ThrowIfCancellationRequested();
+        var runOcr = hooks.RunOcr;
+        if (runOcr is null)
+        {
+            return default;
+        }
+
         var jobs = new List<string>();
-        while (scheduler.QueueCount(IngestModel.Ocr) > 0)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (!scheduler.TryDequeue(IngestModel.Ocr, out var job))
-            {
-                break;
-            }
-
-            jobs.Add(job.Path);
-        }
-
-        if (jobs.Count == 0)
-        {
-            return;
-        }
-
+        var pending = new List<string>();
         IOcrEngine? engine = null;
+        var openWatch = new Stopwatch();
+        var totalWatch = Stopwatch.StartNew();
         try
         {
-            if (hooks.RunOcr is null)
+            while (jobs.Count < OcrSlice && !BudgetSpent(pass) && scheduler.TryDequeue(IngestModel.Ocr, out var job))
             {
-                return;
+                jobs.Add(job.Path);
             }
 
-            engine = hooks.RunOcr(jobs);
-            engine.RunPass(jobs);
+            if (jobs.Count == 0)
+            {
+                return default;
+            }
+
+            pending.AddRange(jobs);
+            openWatch.Start();
+            engine = runOcr(jobs);
+            openWatch.Stop();
+            await engine.RunPassAsync(jobs, passToken).ConfigureAwait(false);
+            pending.Clear();
+            return new SliceOutcome(true, false);
         }
         catch (OperationCanceledException)
         {
-            foreach (var path in jobs)
+            Requeue(IngestModel.Ocr, pending);
+            if (cancellationToken.IsCancellationRequested)
             {
-                scheduler.Enqueue(new IngestJob(IngestModel.Ocr, path));
+                throw;
             }
 
-            throw;
+            return new SliceOutcome(jobs.Count - pending.Count > 0, true);
         }
         catch (RecallFaultException)
         {
-            foreach (var path in jobs)
-            {
-                scheduler.Enqueue(new IngestJob(IngestModel.Ocr, path));
-            }
+            Requeue(IngestModel.Ocr, pending);
+            return new SliceOutcome(false, false);
         }
         finally
         {
             engine?.Dispose();
+            openWatch.Stop();
+            totalWatch.Stop();
+            metrics.Record(new IngestPassMetric(IngestModel.Ocr, jobs.Count - pending.Count, openWatch.ElapsedMilliseconds, totalWatch.ElapsedMilliseconds));
         }
     }
 
+    private void Requeue(IngestModel model, IEnumerable<string> paths)
+    {
+        foreach (var path in paths)
+        {
+            scheduler.Enqueue(new IngestJob(model, path));
+        }
+    }
+
+    private sealed class PassState
+    {
+        public PassState(long budgetStart)
+        {
+            BudgetStart = budgetStart;
+        }
+
+        public long BudgetStart { get; }
+
+        public bool MediaSwept { get; set; }
+    }
+
+    private readonly record struct SliceOutcome(bool Worked, bool Stop);
 }
+
+

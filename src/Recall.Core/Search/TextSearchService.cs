@@ -1,5 +1,6 @@
 using Recall.Core.Checkpoints;
 using Recall.Core.Indexing;
+using Recall.Core.Ingest;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
 using Recall.Core.Text;
@@ -15,6 +16,7 @@ public sealed class TextSearchService : ITextSearchService
     private readonly IIngestCursorStore cursors;
     private readonly IEncoderFileHash encoderHash;
     private readonly IMediaVectorIndex media;
+    private readonly IIngestPreemption preemption;
 
     private readonly IVisionEmbeddingEncoder? visionEncoder;
 
@@ -25,7 +27,8 @@ public sealed class TextSearchService : ITextSearchService
         IIngestCursorStore cursors,
         IEncoderFileHash encoderHash,
         IMediaVectorIndex media,
-        IVisionEmbeddingEncoder? visionEncoder = null)
+        IVisionEmbeddingEncoder? visionEncoder = null,
+        IIngestPreemption? preemption = null)
     {
         this.encoder = encoder;
         this.index = index;
@@ -34,6 +37,7 @@ public sealed class TextSearchService : ITextSearchService
         this.encoderHash = encoderHash;
         this.media = media ?? throw new ArgumentNullException(nameof(media));
         this.visionEncoder = visionEncoder;
+        this.preemption = preemption ?? new IngestPreemption();
     }
 
     private void ReconcilePending(IReadOnlyList<ScopeFolderGrant> grants)
@@ -87,31 +91,39 @@ public sealed class TextSearchService : ITextSearchService
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        ReconcilePending(grants);
-
-        var textHits = new List<TextSearchHit>();
-        if (grantedPaths.Count > 0)
+        preemption.SearchStarted();
+        try
         {
-            textHits.AddRange(await FindTextAsync(query, grantedPaths, grants, cancellationToken).ConfigureAwait(false));
-        }
+            ReconcilePending(grants);
 
-        var tryMedia = mediaGrantPaths.Count > 0 && textHits.Count < RecallIndexCaps.FileCap;
-        var ranked = new List<TextSearchHit>(textHits);
-        if (tryMedia)
-        {
-            var present = new HashSet<string>(textHits.Select(h => h.SourcePath), StringComparer.OrdinalIgnoreCase);
-            foreach (var hit in SearchMediaWords(query, mediaGrantPaths, RecallIndexCaps.FileCap - textHits.Count, cancellationToken))
+            var textHits = new List<TextSearchHit>();
+            if (grantedPaths.Count > 0)
             {
-                if (!present.Add(hit.SourcePath))
-                {
-                    continue;
-                }
-
-                ranked.Add(hit);
+                textHits.AddRange(await FindTextAsync(query, grantedPaths, grants, cancellationToken).ConfigureAwait(false));
             }
-        }
 
-        return ranked.Take(RecallIndexCaps.FileCap).ToList();
+            var tryMedia = mediaGrantPaths.Count > 0 && textHits.Count < RecallIndexCaps.FileCap;
+            var ranked = new List<TextSearchHit>(textHits);
+            if (tryMedia)
+            {
+                var present = new HashSet<string>(textHits.Select(h => h.SourcePath), StringComparer.OrdinalIgnoreCase);
+                foreach (var hit in SearchMediaWords(query, mediaGrantPaths, RecallIndexCaps.FileCap - textHits.Count, cancellationToken))
+                {
+                    if (!present.Add(hit.SourcePath))
+                    {
+                        continue;
+                    }
+
+                    ranked.Add(hit);
+                }
+            }
+
+            return ranked.Take(RecallIndexCaps.FileCap).ToList();
+        }
+        finally
+        {
+            preemption.SearchFinished();
+        }
     }
 
     private async Task<IReadOnlyList<TextSearchHit>> FindTextAsync(

@@ -43,16 +43,18 @@ public static class CtcDecoder
                 }
             }
 
-            var expSum = 0d;
-            for (var c = 0; c < classes; c++)
-            {
-                expSum += Math.Exp(logits[offset + c] - maxLogit);
-            }
-
-            var prob = 1d / expSum;
             if (maxIndex != 0)
             {
-                confidences.Add(prob);
+                // Both reader graphs end in Softmax, so a row already holds the class probabilities and
+                // the top-1 softmax probability of the step is the row maximum. Normalizing by the row
+                // sum absorbs the graph's float drift and keeps the value inside (0, 1].
+                var sum = 0d;
+                for (var c = 0; c < classes; c++)
+                {
+                    sum += logits[offset + c];
+                }
+
+                confidences.Add(sum > 0 ? Math.Clamp(maxLogit / sum, 0d, 1d) : 0d);
             }
 
             ids.Add(maxIndex);

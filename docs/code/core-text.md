@@ -664,6 +664,7 @@ if (!scheduler.TryDequeue(IngestModel.Ocr, out var job))
 
 ```csharp
 if (hooks.RunOcr is null)
+if (runOcr is null)
 catch (RecallFaultException)
 ```
 
@@ -746,19 +747,14 @@ if (string.IsNullOrWhiteSpace(sha256))
 
 A blank SHA-256 returns false. Any other value loads only when it equals the detector, English reader, or Arabic reader hash. The gate never constructs an inference session.
 
-## src/Recall.Core/Ocr/OcrSessionSet.cs
+## src/Recall.Core/Ocr/OcrExecutionProvider.cs
 
 ```csharp
 namespace Recall.Core.Ocr;
-public sealed class OcrSessionSet : IDisposable
-public bool DetectorLoaded { get; private set; }
-public bool EnglishReaderLoaded { get; private set; }
-public bool ArabicReaderLoaded { get; private set; }
-public void Load()
-public void Dispose()
+public enum OcrExecutionProvider
 ```
 
-`Load` marks the detector, English reader, and Arabic reader as loaded. `Dispose` clears all three. No branch.
+`Cpu = 0` and `DirectMl = 1`. The engine reports which provider actually created the sessions. No branch.
 
 ## src/Recall.Core/Ocr/OcrLineChoice.cs
 
@@ -766,13 +762,29 @@ public void Dispose()
 namespace Recall.Core.Ocr;
 public static class OcrLineChoice
 public static string Choose(string? englishText, double englishScore, string? arabicText, double arabicScore)
+public static string Union(string? englishText, double englishScore, string? arabicText, double arabicScore)
 if (english.Length == 0 && arabic.Length == 0)
 if (englishText is null)
 if (arabicText is null)
-if (arabicScore > englishScore + 1e-6)
+if (arabicScore > englishScore + TieEpsilon)
+if (IsArabicScript(token))
+if (englishIsPrimary || IsLatinScript(token))
+if (IsLatinScript(token))
+if (!englishIsPrimary || IsArabicScript(token))
+if (latinKept.Count == 0 && arabicKept.Count == 0)
+if (arabicKept.Count == 0)
+if (latinKept.Count == 0)
+if (string.IsNullOrEmpty(text))
+if (char.IsWhiteSpace(text[i]))
+if (start >= 0)
+if (start < 0)
+if (IsArabicLetter(rune))
+if (IsLatinLetter(rune))
 ```
 
-Null text becomes an empty string. Two empty lines return empty. One empty line returns the other reader's text. Otherwise Arabic wins only when its score exceeds English by more than `1e-6`; a tie keeps English.
+`Choose` is the whole-line pick used when only one read is wanted. Null text becomes an empty string. Two empty lines return empty. One empty line returns the other reader's text. Otherwise Arabic wins only when its score exceeds English by more than `TieEpsilon`; a tie keeps English.
+
+`Union` merges the two reads of one line by script instead of picking one. Arabic-script tokens are kept from the Arabic read and Latin-script tokens from the English read; a token of the other read's script is dropped. Digits, punctuation, and anything script-neutral follow the higher-confidence read. The kept Arabic and Latin blocks are joined with the script of the line's first script-bearing character first, so a Latin-led bilingual line reads Latin then Arabic and an Arabic-led line reads Arabic then Latin. A line where only one read keeps tokens uses that read. A line where neither keeps a token falls back to `Choose`. Tokens are whitespace-separated runs of the decoded text.
 
 ## src/Recall.Core/Ocr/BrokenArabic.cs
 

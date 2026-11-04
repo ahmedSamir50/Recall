@@ -8,14 +8,18 @@ public sealed class IngestStatusService
 {
     private readonly IIngestCursorStore store;
     private readonly IMemoryBudget memory;
+    private readonly IngestPassMetrics metrics;
 
-    public IngestStatusService(IIngestCursorStore store, IMemoryBudget memory)
+    public IngestStatusService(IIngestCursorStore store, IMemoryBudget memory, IngestPassMetrics? metrics = null)
     {
         this.store = store;
         this.memory = memory;
+        this.metrics = metrics ?? new IngestPassMetrics();
     }
 
     public DeviceVerdict Verdict => memory.Verdict;
+
+    public IReadOnlyList<IngestPassMetric> Metrics => metrics.Snapshot();
 
     public IReadOnlyList<IngestKindCount> List(GrantFileKinds enabled) => store.CountEnabled(enabled);
 

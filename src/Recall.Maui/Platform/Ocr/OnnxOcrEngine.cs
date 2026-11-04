@@ -1,15 +1,32 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
+using System.Text.Unicode;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using Recall.Core.Checkpoints;
 using Recall.Core.Ocr;
 using Recall.Core.Ports;
+using Recall.Core.Runtime;
 using Recall.Core.Text;
 
 namespace Recall.Maui.Platform.Ocr;
 
+public readonly record struct OcrLineRead(int EnglishCalls, int ArabicCalls, int Reads, double FirstConfidence, double Confidence, bool Arabic);
+
 public sealed class OnnxOcrEngine : IOcrEngine
 {
+    public const double LowConfidence = 0.6;
+
+    public const double ArabicLetterShare = 0.5;
+
+    public const int OcrPageWorkers = 2;
+
+    public const int MaxCpuThreads = 8;
+
+    public static readonly TimeSpan OcrIdleUnload = TimeSpan.FromMinutes(2);
+
     private const string OutputCountMessage = "OCR graph output count is not 1.";
 
     private static readonly float[] DetectorMean = [0.485f, 0.456f, 0.406f];
@@ -20,36 +37,92 @@ public sealed class OnnxOcrEngine : IOcrEngine
     private readonly IIngestCursorStore cursors;
     private readonly IMediaVectorIndex mediaIndex;
     private readonly TextIngestEngine textIngest;
+    private readonly IMemoryBudget memory;
     private readonly OcrSessionSet sessions = new();
     private readonly Dictionary<string, string> recognizedByPath = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<OcrLineRead> lineReads = [];
+    private readonly object lineReadGate = new();
 
-    private InferenceSession? detector;
-    private InferenceSession? englishReader;
-    private InferenceSession? arabicReader;
     private IReadOnlyList<string> englishDict = [];
     private IReadOnlyList<string> arabicDict = [];
-    private bool loaded;
+    private long lastJobTicks = DateTimeOffset.UtcNow.UtcTicks;
+    private int activeJobs;
+    private Timer? idleTimer;
 
-    public OnnxOcrEngine(string modelDirectory, IIngestCursorStore cursors, IMediaVectorIndex mediaIndex, TextIngestEngine textIngest)
+    public OnnxOcrEngine(
+        string modelDirectory,
+        IIngestCursorStore cursors,
+        IMediaVectorIndex mediaIndex,
+        TextIngestEngine textIngest,
+        IMemoryBudget memory)
     {
         this.modelDirectory = modelDirectory;
         this.cursors = cursors;
         this.mediaIndex = mediaIndex;
         this.textIngest = textIngest;
+        this.memory = memory;
     }
 
-    public bool DetectorLoaded => sessions.DetectorLoaded;
+    public OcrExecutionProvider Provider { get; private set; } = OcrExecutionProvider.Cpu;
 
-    public bool EnglishReaderLoaded => sessions.EnglishReaderLoaded;
+    public bool DetectorLoaded => sessions.Detector is not null;
 
-    public bool ArabicReaderLoaded => sessions.ArabicReaderLoaded;
+    public bool EnglishReaderLoaded => sessions.EnglishReader is not null;
+
+    public bool ArabicReaderLoaded => sessions.ArabicReader is not null;
+
+    public OcrSessionSet Sessions => sessions;
 
     public IReadOnlyDictionary<string, string> RecognizedByPath => recognizedByPath;
 
-    public void RunPass(IReadOnlyList<string> paths)
+    public IReadOnlyList<OcrLineRead> LineReads
+    {
+        get
+        {
+            lock (lineReadGate)
+            {
+                return [.. lineReads];
+            }
+        }
+    }
+
+    public int PageWorkers
+    {
+        get
+        {
+            var text = Environment.GetEnvironmentVariable("RECALL_OCR_PAGE_WORKERS");
+            var workers = int.TryParse(text, out var parsed) && parsed > 0 ? parsed : OcrPageWorkers;
+            return memory.Pressure == MemoryPressure.Hard ? 1 : workers;
+        }
+    }
+
+    public static int ThreadCountFor(OcrExecutionProvider provider, int cores)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cores);
+        return provider == OcrExecutionProvider.DirectMl ? 1 : Math.Clamp(cores - 1, 1, MaxCpuThreads);
+    }
+
+    public static List<PdfPageText> JoinInPageOrder(IReadOnlyDictionary<int, string> pageTexts)
+    {
+        ArgumentNullException.ThrowIfNull(pageTexts);
+        var ordered = new List<PdfPageText>(pageTexts.Count);
+        foreach (var pageNumber in pageTexts.Keys.Order())
+        {
+            ordered.Add(new PdfPageText(pageNumber, pageTexts[pageNumber]));
+        }
+
+        return ordered;
+    }
+
+    public async Task RunPassAsync(IReadOnlyList<string> paths, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(paths);
         recognizedByPath.Clear();
+        lock (lineReadGate)
+        {
+            lineReads.Clear();
+        }
+
         var pending = new List<string>();
         foreach (var path in paths)
         {
@@ -66,17 +139,21 @@ public sealed class OnnxOcrEngine : IOcrEngine
             return;
         }
 
+        Interlocked.Increment(ref activeJobs);
+        Interlocked.Exchange(ref lastJobTicks, DateTimeOffset.UtcNow.UtcTicks);
         try
         {
             OcrRunProgress.BeginPass(pending.Count);
             EnsureLoaded();
+            StartIdleTimer();
             for (var index = 0; index < pending.Count; index++)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var path = pending[index];
                 OcrRunProgress.BeginPath(index + 1, pending.Count, path);
                 if (path.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                 {
-                    var pageTexts = RecognizePdf(path);
+                    var pageTexts = await RecognizePdfAsync(path, cancellationToken).ConfigureAwait(false);
                     if (pageTexts.Count == 0)
                     {
                         OcrRunProgress.EndPath(index + 1, pending.Count, path, 0);
@@ -106,41 +183,43 @@ public sealed class OnnxOcrEngine : IOcrEngine
         }
         finally
         {
-            UnloadInferenceSessions();
+            Interlocked.Exchange(ref lastJobTicks, DateTimeOffset.UtcNow.UtcTicks);
+            Interlocked.Decrement(ref activeJobs);
         }
     }
 
-    public void Dispose()
+    public bool UnloadIfIdle(DateTimeOffset now)
     {
-        UnloadInferenceSessions();
-    }
-
-    private void UnloadInferenceSessions()
-    {
-        detector?.Dispose();
-        englishReader?.Dispose();
-        arabicReader?.Dispose();
-        detector = null;
-        englishReader = null;
-        arabicReader = null;
-        loaded = false;
-        sessions.Unload();
-    }
-
-    private bool ShouldSkipPath(string path)
-    {
-        if (!path.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+        if (Volatile.Read(ref activeJobs) > 0)
         {
             return false;
         }
 
-        var pages = cursors.ListOcrPages(path);
-        return pages.Count == 0;
+        if (!sessions.Loaded)
+        {
+            return false;
+        }
+
+        var lastJob = new DateTimeOffset(Interlocked.Read(ref lastJobTicks), TimeSpan.Zero);
+        if (now - lastJob < OcrIdleUnload)
+        {
+            return false;
+        }
+
+        UnloadInferenceSessions();
+        return true;
+    }
+
+    public void Dispose()
+    {
+        idleTimer?.Dispose();
+        idleTimer = null;
+        UnloadInferenceSessions();
     }
 
     private static string JoinPdfText(IReadOnlyList<PdfPageText> pages)
     {
-        var builder = new System.Text.StringBuilder();
+        var builder = new StringBuilder();
         for (var pageIndex = 0; pageIndex < pages.Count; pageIndex++)
         {
             if (pageIndex > 0)
@@ -154,6 +233,83 @@ public sealed class OnnxOcrEngine : IOcrEngine
         return builder.ToString();
     }
 
+    private static OcrExecutionProvider PreferredProvider()
+    {
+        var text = Environment.GetEnvironmentVariable("RECALL_OCR_EXECUTION_PROVIDER");
+        if (string.Equals(text, "cpu", StringComparison.OrdinalIgnoreCase))
+        {
+            return OcrExecutionProvider.Cpu;
+        }
+
+        return OperatingSystem.IsWindows() ? OcrExecutionProvider.DirectMl : OcrExecutionProvider.Cpu;
+    }
+
+    private static int IntraOpThreads(OcrExecutionProvider provider)
+    {
+        var threadText = Environment.GetEnvironmentVariable("RECALL_OCR_INTRA_OP_THREADS");
+        if (int.TryParse(threadText, out var threads) && threads > 0)
+        {
+            return threads;
+        }
+
+        return ThreadCountFor(provider, Environment.ProcessorCount);
+    }
+
+    private static bool IsProviderUnavailable(Exception exception) =>
+        exception is OnnxRuntimeException or DllNotFoundException or EntryPointNotFoundException;
+
+    private static bool ScriptOf(string text)
+    {
+        var arabic = 0;
+        var latin = 0;
+        foreach (var rune in text.EnumerateRunes())
+        {
+            if (IsArabicLetter(rune))
+            {
+                arabic++;
+            }
+            else if (IsLatinLetter(rune))
+            {
+                latin++;
+            }
+        }
+
+        var letters = arabic + latin;
+        return letters > 0 && arabic / (double)letters > ArabicLetterShare;
+    }
+
+    private static bool IsArabicLetter(Rune rune) =>
+        rune.Value >= UnicodeRanges.Arabic.FirstCodePoint
+        && rune.Value < UnicodeRanges.Arabic.FirstCodePoint + UnicodeRanges.Arabic.Length;
+
+    private static bool IsLatinLetter(Rune rune) =>
+        (rune.Value >= 'A' && rune.Value <= 'Z')
+        || (rune.Value >= 'a' && rune.Value <= 'z')
+        || (rune.Value >= 0x00C0 && rune.Value <= 0x024F);
+
+    private void StartIdleTimer()
+    {
+        idleTimer ??= new Timer(_ => UnloadIfIdle(DateTimeOffset.UtcNow), null, OcrIdleUnload, OcrIdleUnload);
+    }
+
+    private void UnloadInferenceSessions()
+    {
+        sessions.Dispose();
+        englishDict = [];
+        arabicDict = [];
+    }
+
+    private bool ShouldSkipPath(string path)
+    {
+        if (!path.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var pages = cursors.ListOcrPages(path);
+        return pages.Count == 0;
+    }
+
     private string RecognizeImagePath(string path)
     {
         if (!File.Exists(path))
@@ -162,24 +318,44 @@ public sealed class OnnxOcrEngine : IOcrEngine
         }
 
         var bytes = File.ReadAllBytes(path);
-        return RecognizeImage(bytes);
+        return RecognizeImage(bytes, out _, out _);
     }
 
-    private List<PdfPageText> RecognizePdf(string path)
+    private async Task<List<PdfPageText>> RecognizePdfAsync(string path, CancellationToken cancellationToken)
     {
         var pages = cursors.ListOcrPages(path);
-        var result = new List<PdfPageText>();
-        foreach (var pageNumber in pages)
+        var pageTexts = new ConcurrentDictionary<int, string>();
+        var options = new ParallelOptions
         {
+            MaxDegreeOfParallelism = PageWorkers,
+            CancellationToken = cancellationToken,
+        };
+#if WINDOWS
+        using var document = WindowsPdfDocument.Open(path);
+#endif
+        await Parallel.ForEachAsync(pages, options, (pageNumber, token) =>
+        {
+            token.ThrowIfCancellationRequested();
+            var renderWatch = Stopwatch.StartNew();
+#if WINDOWS
+            var png = document.Render(pageNumber);
+#else
             var png = RenderPdfPage(path, pageNumber);
-            var pageText = RecognizeImage(png);
+#endif
+            renderWatch.Stop();
+            var inferWatch = Stopwatch.StartNew();
+            var pageText = RecognizeImage(png, out var detectorMs, out var readerMs);
+            inferWatch.Stop();
+            OcrRunProgress.Message(
+                $"ocr page {pageNumber} render={renderWatch.ElapsedMilliseconds}ms detector={detectorMs}ms reader={readerMs}ms infer={inferWatch.ElapsedMilliseconds}ms");
             if (!string.IsNullOrEmpty(pageText))
             {
-                result.Add(new PdfPageText(pageNumber, pageText));
+                pageTexts[pageNumber] = pageText;
             }
-        }
 
-        return result;
+            return ValueTask.CompletedTask;
+        }).ConfigureAwait(false);
+        return JoinInPageOrder(pageTexts);
     }
 
     private void PersistImageWords(string path, string text)
@@ -215,32 +391,75 @@ public sealed class OnnxOcrEngine : IOcrEngine
         textIngest.IngestOcrPagesAsync(path, pageTexts, row.GrantPath, row.EncoderHash, CancellationToken.None).GetAwaiter().GetResult();
     }
 
-    private string RecognizeImage(byte[] imageBytes)
+    private string RecognizeImage(byte[] imageBytes, out long detectorMs, out long readerMs)
     {
         var raster = OcrRasterDecoder.Decode(imageBytes);
+        var detectorWatch = Stopwatch.StartNew();
         var boxes = DetectBoxes(raster);
+        detectorWatch.Stop();
+        detectorMs = detectorWatch.ElapsedMilliseconds;
+        readerMs = 0;
         if (boxes.Count == 0)
         {
             return string.Empty;
         }
 
-        var lines = new List<OcrLinePair>();
+        var readerWatch = Stopwatch.StartNew();
+        var texts = new List<string>(boxes.Count);
         foreach (var box in boxes)
         {
-            var crop = Crop(raster, box);
-            var (english, englishScore) = ReadCrop(crop, englishReader!, englishDict, visualArabic: false);
-            var (arabic, arabicScore) = ReadCrop(crop, arabicReader!, arabicDict, visualArabic: true);
-            var script = OcrPageRouter.ContainsArabicScript(arabic) || OcrPageRouter.ContainsArabicScript(english);
-            lines.Add(new OcrLinePair(english, englishScore, arabic, arabicScore, script));
+            texts.Add(ReadLine(Crop(raster, box)));
         }
 
-        return OcrPageRouter.Route(lines);
+        readerWatch.Stop();
+        readerMs = readerWatch.ElapsedMilliseconds;
+        return JoinLines(texts);
+    }
+
+    private static string JoinLines(IReadOnlyList<string> texts)
+    {
+        var builder = new StringBuilder();
+        foreach (var text in texts)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                continue;
+            }
+
+            if (builder.Length > 0 && !char.IsWhiteSpace(builder[^1]))
+            {
+                builder.Append(' ');
+            }
+
+            builder.Append(text);
+        }
+
+        return builder.ToString();
+    }
+
+    private string ReadLine(OcrRaster crop)
+    {
+        var (english, englishScore) = ReadCrop(crop, sessions.EnglishReader!, englishDict, visualArabic: false);
+        var (arabic, arabicScore) = ReadCrop(crop, sessions.ArabicReader!, arabicDict, visualArabic: true);
+        var chosen = OcrLineChoice.Union(english, englishScore, arabic, arabicScore);
+        var score = Math.Max(englishScore, arabicScore);
+        var arabicLine = chosen.Length > 0 ? ScriptOf(chosen) : arabicScore > englishScore;
+        RecordLineRead(englishCalls: 1, arabicCalls: 1, reads: 2, firstConfidence: score, confidence: score, arabic: arabicLine);
+        return chosen;
+    }
+
+    private void RecordLineRead(int englishCalls, int arabicCalls, int reads, double firstConfidence, double confidence, bool arabic)
+    {
+        lock (lineReadGate)
+        {
+            lineReads.Add(new OcrLineRead(englishCalls, arabicCalls, reads, firstConfidence, confidence, arabic));
+        }
     }
 
     private IReadOnlyList<OcrBox> DetectBoxes(OcrRaster raster)
     {
         var (tensor, mapWidth, mapHeight, scaleX, scaleY) = BuildDetectorInput(raster);
-        using var results = detector!.Run([NamedOnnxValue.CreateFromTensor(OcrModelFiles.GraphInputName, tensor)]);
+        using var results = sessions.Detector!.Run([NamedOnnxValue.CreateFromTensor(OcrModelFiles.GraphInputName, tensor)]);
         if (results.Count != 1)
         {
             throw new InvalidOperationException(OutputCountMessage);
@@ -349,11 +568,10 @@ public sealed class OnnxOcrEngine : IOcrEngine
         return tensor;
     }
 
+#if !WINDOWS
     private static byte[] RenderPdfPage(string path, int pageNumber)
     {
-#if WINDOWS
-        return WindowsPdfPageRenderer.Render(path, pageNumber);
-#elif ANDROID
+#if ANDROID
         return AndroidPdfPageRenderer.Render(path, pageNumber);
 #elif IOS || MACCATALYST
         return ApplePdfPageRenderer.Render(path, pageNumber);
@@ -361,45 +579,38 @@ public sealed class OnnxOcrEngine : IOcrEngine
         throw new PlatformNotSupportedException();
 #endif
     }
+#endif
 
     private void EnsureLoaded()
     {
-        if (loaded)
+        if (sessions.Loaded)
         {
             return;
         }
 
         var directory = Path.Combine(modelDirectory, OcrModelFiles.Directory);
-        detector = CreateSession(Path.Combine(directory, OcrModelFiles.Detector.LocalName));
-        englishReader = CreateSession(Path.Combine(directory, OcrModelFiles.EnglishReader.LocalName));
-        arabicReader = CreateSession(Path.Combine(directory, OcrModelFiles.ArabicReader.LocalName));
+        CreateSession(directory);
         englishDict = OcrInferenceYaml.ReadCharacterDict(Path.Combine(directory, OcrModelFiles.EnglishReaderYaml.LocalName));
         arabicDict = OcrInferenceYaml.ReadCharacterDict(Path.Combine(directory, OcrModelFiles.ArabicReaderYaml.LocalName));
-
-        sessions.Load();
-        loaded = true;
     }
 
-    private static InferenceSession CreateSession(string modelPath)
+    private void CreateSession(string directory)
     {
-        var options = new SessionOptions
+        var provider = PreferredProvider();
+        var threads = IntraOpThreads(provider);
+        try
         {
-            EnableMemoryPattern = false,
-            EnableCpuMemArena = false,
-        };
-        var threadText = Environment.GetEnvironmentVariable("RECALL_OCR_INTRA_OP_THREADS");
-        if (int.TryParse(threadText, out var threads) && threads > 0)
-        {
-            options.IntraOpNumThreads = threads;
-            options.InterOpNumThreads = 1;
+            sessions.Load(directory, provider, threads);
+            Provider = provider;
         }
-        else
+        catch (Exception exception) when (provider == OcrExecutionProvider.DirectMl && IsProviderUnavailable(exception))
         {
-            var cores = Environment.ProcessorCount;
-            options.IntraOpNumThreads = Math.Clamp(cores / 2, 1, 4);
-            options.InterOpNumThreads = 1;
+            OcrRunProgress.Message($"ocr provider fallback: {exception.GetType().Name}: {exception.Message}");
+            sessions.Dispose();
+            sessions.Load(directory, OcrExecutionProvider.Cpu, IntraOpThreads(OcrExecutionProvider.Cpu));
+            Provider = OcrExecutionProvider.Cpu;
         }
 
-        return new InferenceSession(modelPath, options);
+        OcrRunProgress.Message($"ocr sessions provider={Provider} intraOp={IntraOpThreads(Provider)} pageWorkers={PageWorkers}");
     }
 }

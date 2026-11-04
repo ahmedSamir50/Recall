@@ -1,4 +1,5 @@
 #if WINDOWS
+using System.Diagnostics;
 using FluentAssertions;
 using Recall.Core.Checkpoints;
 using Recall.Core.Indexing;
@@ -14,23 +15,30 @@ namespace Recall.IntegrationTests;
 
 public sealed class OcrGoldenReportTests
 {
+    public static readonly TimeSpan GoldenTimeCeiling = TimeSpan.FromMinutes(5);
+
     private const double CleanCeiling = 0.05;
     private const double PhoneCeiling = 0.10;
+    private const int GoldenScanPages = 80;
+    private const int GoldenPhonePages = 4;
 
-    [Fact(Skip = "Skipping test Long running already proven")]
-    public void OcrGolden_Page28_ArabicSlice_CerWithinCleanCeiling()
+    [Fact]
+    public async Task OcrGolden_Page28_ArabicSlice_CerWithinCleanCeiling()
     {
-        AssertGoldenPageCer(28, CleanCeiling);
+        var pages = OcrGoldenCatalog.Build();
+        pages[28].Language.Should().Be("ar", "page 28 is the Arabic slice the manifest orders first");
+        await AssertGoldenPageCerAsync(28, CleanCeiling);
     }
 
-    [Fact(Skip = "Skipping test Long running already proven")]
-    public void OcrGolden_EightyPages_CerWithinCeiling()
+    [Fact]
+    public async Task OcrGolden_EightyPages_CerWithinCeiling()
     {
         Environment.SetEnvironmentVariable("RECALL_OCR_PROGRESS", "1");
         OcrRunProgress.Message("golden catalog build start");
         var pages = OcrGoldenCatalog.Build();
         OcrRunProgress.Message($"golden catalog build done pages={pages.Count}");
-        pages.Should().HaveCount(80);
+        pages.Count(page => !page.IsPhone).Should().Be(GoldenScanPages, "the golden gate covers eighty real scan pages");
+        pages.Count(page => page.IsPhone).Should().Be(GoldenPhonePages, "the four demo phone captures keep the phone ceiling on real photos");
 
         var tempDir = Path.Combine(Path.GetTempPath(), $"recall-golden-{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempDir);
@@ -41,7 +49,7 @@ public sealed class OcrGoldenReportTests
             {
                 var page = pages[index];
                 var path = Path.Combine(tempDir, $"page-{index:D3}.png");
-                File.WriteAllBytes(path, page.Png);
+                await File.WriteAllBytesAsync(path, page.Png, TestContext.Current.CancellationToken);
                 paths.Add(path);
             }
 
@@ -49,8 +57,11 @@ public sealed class OcrGoldenReportTests
             var media = new FakeMediaVectorIndex();
             OcrRunProgress.Message("ocr run start");
             using var engine = CreateEngine(cursors, media);
-            engine.RunPass(paths);
-            OcrRunProgress.Message("ocr run end; cer check start");
+            var watch = Stopwatch.StartNew();
+            await engine.RunPassAsync(paths, TestContext.Current.CancellationToken);
+            watch.Stop();
+            OcrRunProgress.Message($"ocr run end elapsed={watch.ElapsedMilliseconds}ms; cer check start");
+            watch.Elapsed.Should().BeLessThan(GoldenTimeCeiling, $"the eighty-page gate must finish inside {GoldenTimeCeiling}");
 
             for (var index = 0; index < pages.Count; index++)
             {
@@ -78,29 +89,27 @@ public sealed class OcrGoldenReportTests
         }
     }
 
-    private static void AssertGoldenPageCer(int pageIndex, double ceiling)
+    private static async Task AssertGoldenPageCerAsync(int pageIndex, double ceiling)
     {
-        DemoDatasetPaths.RequireRoot();
         var pages = OcrGoldenCatalog.Build();
-        pages.Should().HaveCount(80);
         var page = pages[pageIndex];
         var tempDir = Path.Combine(Path.GetTempPath(), $"recall-golden-p{pageIndex}-{Guid.NewGuid():N}");
         Directory.CreateDirectory(tempDir);
         var path = Path.Combine(tempDir, $"page-{pageIndex:D3}.png");
-        File.WriteAllBytes(path, page.Png);
+        await File.WriteAllBytesAsync(path, page.Png);
         try
         {
             var cursors = new FakeIngestCursorStore();
             var media = new FakeMediaVectorIndex();
             using var engine = CreateEngine(cursors, media);
-            engine.RunPass([path]);
+            await engine.RunPassAsync([path], TestContext.Current.CancellationToken);
             engine.RecognizedByPath.Should().ContainKey(path);
             var hypothesis = engine.RecognizedByPath[path];
             var cer = Recall.Core.Ocr.OcrCharacterErrorRate.MeasureGolden(page.GroundTruth, hypothesis);
             if (cer.Rate > ceiling)
             {
                 var dump = Path.Combine(Path.GetTempPath(), $"recall-ocr-golden-p{pageIndex}.txt");
-                File.WriteAllText(dump, $"REF:\n{page.GroundTruth}\n\nHYP:\n{hypothesis}\n\nNREF:\n{Recall.Core.Ocr.OcrCharacterErrorRate.NormalizeGolden(page.GroundTruth)}\n\nNHYP:\n{Recall.Core.Ocr.OcrCharacterErrorRate.NormalizeGolden(hypothesis)}");
+                await File.WriteAllTextAsync(dump, $"REF:\n{page.GroundTruth}\n\nHYP:\n{hypothesis}\n\nNREF:\n{Recall.Core.Ocr.OcrCharacterErrorRate.NormalizeGolden(page.GroundTruth)}\n\nNHYP:\n{Recall.Core.Ocr.OcrCharacterErrorRate.NormalizeGolden(hypothesis)}");
             }
 
             cer.Rate.Should().BeLessThanOrEqualTo(ceiling, $"page {pageIndex} CER {cer.Rate:P1}");
@@ -133,7 +142,7 @@ public sealed class OcrGoldenReportTests
             cursors,
             TestIngest.Memory(),
             TestIngest.Gate());
-        return new OnnxOcrEngine(modelRoot, cursors, media, textIngest);
+        return new OnnxOcrEngine(modelRoot, cursors, media, textIngest, TestIngest.Memory());
     }
 
     private static string CopyModelTree()

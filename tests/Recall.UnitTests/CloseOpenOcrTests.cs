@@ -331,6 +331,57 @@ public sealed class CloseOpenOcrTests
     }
 
     [Fact]
+    public void Decode_Confidence_IsProbability()
+    {
+        float[] logits = [0.05f, 0.90f, 0.05f];
+        var (text, confidence) = CtcDecoder.Decode(logits, 1, 3, ["A"], false);
+        text.Should().Be("A");
+        confidence.Should().BeGreaterThan(0, "a clear winner carries real probability mass");
+        confidence.Should().BeLessThanOrEqualTo(1);
+        confidence.Should().BeApproximately(0.90, 1e-6, "the reader graph ends in Softmax, so the top-1 probability is the row maximum");
+    }
+
+    [Fact]
+    public void Decode_OneHotStep_ConfidenceIsOne()
+    {
+        float[] logits = [0f, 1f, 0f];
+        var (text, confidence) = CtcDecoder.Decode(logits, 1, 3, ["A"], false);
+        text.Should().Be("A");
+        confidence.Should().BeApproximately(1.0, 1e-6);
+    }
+
+    [Fact]
+    public void Decode_UniformStep_ConfidenceIsOneOverClasses()
+    {
+        // A strictly uniform row is a tie, and ties resolve to class 0 (blank), so no step would be
+        // decoded and the confidence would be 0. A 1e-7 nudge on a non-blank class keeps the step
+        // decodable while the top-1 probability stays within 1e-6 of 1/classes.
+        const int classes = 4;
+        const float uniform = 1f / classes;
+        float[] logits = [uniform, uniform + 1e-7f, uniform, uniform];
+        var (_, confidence) = CtcDecoder.Decode(logits, 1, classes, ["A", "B"], false);
+        confidence.Should().BeApproximately(1.0 / classes, 1e-6);
+    }
+
+    [Fact]
+    public void Decode_Text_Unchanged()
+    {
+        // Text captured from CtcDecoder.Decode before the confidence scale was fixed.
+        // Steps: A, A (duplicate), blank, B, space class, B, blank.
+        float[] logits =
+        [
+            0.05f, 0.85f, 0.05f, 0.05f,
+            0.05f, 0.80f, 0.10f, 0.05f,
+            0.90f, 0.04f, 0.03f, 0.03f,
+            0.05f, 0.05f, 0.80f, 0.10f,
+            0.05f, 0.05f, 0.10f, 0.80f,
+            0.05f, 0.05f, 0.85f, 0.05f,
+            0.85f, 0.05f, 0.05f, 0.05f,
+        ];
+        CtcDecoder.Decode(logits, 7, 4, ["A", "B"], false).Text.Should().Be("AB B");
+    }
+
+    [Fact]
     public void Route_TwoArabicLines_InsertsSpace()
     {
         OcrLinePair[] lines =
@@ -368,10 +419,11 @@ public sealed class CloseOpenOcrTests
             Interlocked.Increment(ref openCount);
         }
 
-        public void RunPass(IReadOnlyList<string> paths)
+        public Task RunPassAsync(IReadOnlyList<string> paths, CancellationToken cancellationToken)
         {
             RunPassCalls++;
             LastPathCount = paths.Count;
+            return Task.CompletedTask;
         }
 
         public void Dispose()

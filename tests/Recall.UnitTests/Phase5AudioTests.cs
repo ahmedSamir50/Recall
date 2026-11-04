@@ -1348,9 +1348,7 @@ public sealed class Phase5AudioTests
             Interlocked.Increment(ref createCount);
         }
 
-        public void RunPass(IReadOnlyList<string> paths)
-        {
-        }
+        public Task RunPassAsync(IReadOnlyList<string> paths, CancellationToken cancellationToken) => Task.CompletedTask;
 
         public void Dispose()
         {

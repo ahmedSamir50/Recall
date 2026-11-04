@@ -49,6 +49,8 @@ public static class RecallCoreServiceCollectionExtensions
             sp.GetRequiredService<MemoryBudgetOptions>(),
             new MemoryFloorStore(null)));
         services.AddSingleton<IIdleDetectorService, DisabledIdleDetectorService>();
+        services.AddSingleton<IIngestPreemption, IngestPreemption>();
+        services.AddSingleton<IngestPassMetrics>();
         services.AddSingleton<ITextSearchService, TextSearchService>();
         services.AddSingleton<TextIngestEngine>();
         services.AddSingleton<IGrantedTextIngestService, GrantedTextIngestService>();

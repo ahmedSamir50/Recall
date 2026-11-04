@@ -150,7 +150,8 @@ public static class MauiServiceCollectionExtensions
                     ocrModelRoot,
                     sp.GetRequiredService<IIngestCursorStore>(),
                     sp.GetRequiredService<IMediaVectorIndex>(),
-                    sp.GetRequiredService<TextIngestEngine>());
+                    sp.GetRequiredService<TextIngestEngine>(),
+                    sp.GetRequiredService<IMemoryBudget>());
             })));
         return services;
     }

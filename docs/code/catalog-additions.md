@@ -75,6 +75,14 @@ if (!Enabled)
 if (second <= 0 || second == lastHeartbeatSecond || second % 15 != 0)
 ```
 
+## src/Recall.Core/Ingest/IngestPassMetrics.cs
+
+```csharp
+IngestPassMetric
+IngestPassMetrics
+if (count < MetricRingSize)
+```
+
 ## src/Recall.Core/Ports/IOcrEngine.cs
 
 ```csharp
@@ -185,31 +193,55 @@ No public type.
 
 ```csharp
 OnnxOcrEngine
+OcrLineRead
 if (ShouldSkipPath(path))
 if (pending.Count == 0)
 if (path.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
 if (pageTexts.Count == 0)
 if (string.IsNullOrEmpty(text))
-if (!path.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+if (Volatile.Read(ref activeJobs) > 0)
+if (sessions.Loaded)
+if (!sessions.Loaded)
+if (now - lastJob < OcrIdleUnload)
 if (pageIndex > 0)
+if (string.Equals(text, "cpu", StringComparison.OrdinalIgnoreCase))
+if (int.TryParse(threadText, out var threads) && threads > 0)
+if (IsArabicLetter(rune))
+else if (IsLatinLetter(rune))
+if (!path.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
 if (!File.Exists(path))
 if (!string.IsNullOrEmpty(pageText))
 if (row.Retired || row.Missing || row.Ordinal != 0)
 if (matches == 1)
 if (pageTexts.Count == 0 || row is null)
 if (boxes.Count == 0)
+if (string.IsNullOrEmpty(line.Text))
+if (builder.Length > 0 && !char.IsWhiteSpace(builder[^1]))
+if (score < LowConfidence)
+if (otherScore > score)
 if (results.Count != 1)
 if (x < canvas.ContentWidth)
-if (loaded)
-if (int.TryParse(threadText, out var threads) && threads > 0)
+catch (Exception exception) when (provider == OcrExecutionProvider.DirectMl && IsProviderUnavailable(exception))
 ```
+
+The engine keeps the three sessions resident between passes (`Sessions`), unloads them after `OcrIdleUnload` with no job, and disposes them on `Dispose`. `Provider` records the provider that actually created the sessions; a DirectML failure retries the same sessions on CPU. PDF pages run through `Parallel.ForEachAsync` with `PageWorkers` (one under hard memory pressure) and are joined by page number. Each line is read once by the reader its script selects, and is cross-read only below `LowConfidence`.
+
+## src/Recall.Maui/Platform/Ocr/OcrSessionSet.cs
+
+```csharp
+OcrSessionSet
+if (provider == OcrExecutionProvider.DirectMl && OperatingSystem.IsWindows())
+```
+
+`Load` creates the detector, English reader, and Arabic reader `InferenceSession`s with one thread policy for all three and appends the DirectML provider at device 0 on Windows. `Dispose` disposes all three and clears them.
 
 ## src/Recall.Maui/Platform/Ocr/WindowsPdfPageRenderer.cs
 
 ```csharp
 WindowsPdfPageRenderer
+WindowsPdfDocument
 if (pageNumber < 1)
-if (pageNumber > document.PageCount)
+if (pageNumber < 1 || pageNumber > PageCount)
 ```
 
 ## src/Recall.Maui/Platform/Ocr/WindowsTextPageRenderer.cs

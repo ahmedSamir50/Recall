@@ -7,19 +7,21 @@ public readonly record struct OcrLinePair(string English, double EnglishScore, s
 
 public static class OcrPageRouter
 {
+    public const int RouteProbeLines = 3;
+
     private const double LowConfidence = 0.6;
 
     private const double TieEpsilon = 1e-6;
 
-    public static string Route(IReadOnlyList<OcrLinePair> lines)
+    public static bool PageReaderIsArabic(IReadOnlyList<OcrLinePair> lines)
     {
         ArgumentNullException.ThrowIfNull(lines);
         if (lines.Count == 0)
         {
-            return string.Empty;
+            return false;
         }
 
-        var sampleCount = Math.Min(3, lines.Count);
+        var sampleCount = Math.Min(RouteProbeLines, lines.Count);
         var englishMean = 0d;
         var arabicMean = 0d;
         for (var i = 0; i < sampleCount; i++)
@@ -30,7 +32,19 @@ public static class OcrPageRouter
 
         englishMean /= sampleCount;
         arabicMean /= sampleCount;
-        var pageReaderIsArabic = arabicMean > englishMean + TieEpsilon;
+        return arabicMean > englishMean + TieEpsilon;
+    }
+
+    public static string Route(IReadOnlyList<OcrLinePair> lines)
+    {
+        ArgumentNullException.ThrowIfNull(lines);
+        if (lines.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var sampleCount = Math.Min(RouteProbeLines, lines.Count);
+        var pageReaderIsArabic = PageReaderIsArabic(lines);
 
         var builder = new StringBuilder();
         for (var i = 0; i < lines.Count; i++)

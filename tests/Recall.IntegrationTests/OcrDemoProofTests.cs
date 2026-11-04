@@ -16,8 +16,10 @@ namespace Recall.IntegrationTests;
 
 public sealed class OcrDemoProofTests
 {
-    [Fact(Skip = "Skipping test Long running already proven")]
-    public void Ocr_ThreeScannedPdfs_SearchHitsGroundTruthWord()
+    public static readonly TimeSpan PdfTimeCeiling = TimeSpan.FromMinutes(2);
+
+    [Fact]
+    public async Task Ocr_ThreeScannedPdfs_SearchHitsGroundTruthWord()
     {
         Environment.SetEnvironmentVariable("RECALL_OCR_PROGRESS", "1");
         DemoDatasetPaths.RequireRoot();
@@ -45,7 +47,11 @@ public sealed class OcrDemoProofTests
         }
 
         using var engine = CreateEngine(cursors, media);
-        engine.RunPass(pdfPaths);
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        await engine.RunPassAsync(pdfPaths, TestContext.Current.CancellationToken);
+        watch.Stop();
+        OcrRunProgress.Message($"three pdf proof elapsed={watch.ElapsedMilliseconds}ms");
+        watch.Elapsed.Should().BeLessThan(PdfTimeCeiling, $"the three-PDF proof must finish inside {PdfTimeCeiling}");
 
         foreach (var (pdfRelative, gtRelative) in triples)
         {
@@ -61,7 +67,7 @@ public sealed class OcrDemoProofTests
     }
 
     [Fact]
-    public void Ocr_DemoPhoto_KeepsVisionVector_AndSearchHitsWord()
+    public async Task Ocr_DemoPhoto_KeepsVisionVector_AndSearchHitsWord()
     {
         DemoDatasetPaths.RequireRoot();
         var imagePath = DemoDatasetPaths.Combine("images", "sign_ar_shop_alexandria.jpg");
@@ -79,7 +85,7 @@ public sealed class OcrDemoProofTests
             MediaCollections.Image,
             new MediaIndexInsert(contentId, imagePath, Path.GetFileName(imagePath), string.Empty, visionVector, "enc", true, @"C:\grant", string.Empty, string.Empty));
         using var engine = CreateEngine(cursors, media);
-        engine.RunPass([imagePath]);
+        await engine.RunPassAsync([imagePath], TestContext.Current.CancellationToken);
         var row = media.Inserts.Single(i => i.ContentId == contentId);
         row.Words.Should().NotBeNullOrWhiteSpace();
         row.Vector768.Span[0].Should().Be(0.25f);
@@ -88,33 +94,33 @@ public sealed class OcrDemoProofTests
     }
 
     [Fact]
-    public void Ocr_DemoEnglishPage_ReturnsWordsFromPinnedReader()
+    public async Task Ocr_DemoEnglishPage_ReturnsWordsFromPinnedReader()
     {
         DemoDatasetPaths.RequireRoot();
         var pdfPath = DemoDatasetPaths.Combine("pdf_scanned", "en_phone_blood_test_report.pdf");
-        AssertPdfOcrReturnsWords(pdfPath);
+        await AssertPdfOcrReturnsWordsAsync(pdfPath);
     }
 
     [Fact]
-    public void Ocr_DemoArabicPage_ReturnsWordsFromPinnedReader()
+    public async Task Ocr_DemoArabicPage_ReturnsWordsFromPinnedReader()
     {
         DemoDatasetPaths.RequireRoot();
         var pdfPath = DemoDatasetPaths.Combine("pdf_scanned", "ar_phone_ac_maintenance_receipt.pdf");
-        AssertPdfOcrReturnsWords(pdfPath);
+        await AssertPdfOcrReturnsWordsAsync(pdfPath);
     }
 
     [Fact]
-    public void OcrEngine_Dispose_UnloadsThreeSessions()
+    public async Task OcrEngine_Dispose_UnloadsThreeSessions()
     {
         var cursors = new FakeIngestCursorStore();
         var media = new FakeMediaVectorIndex();
         var engine = CreateEngine(cursors, media);
         var path = FixturePath("ocr-en-invoice.png");
         cursors.FinishPath(path, "hash", @"C:\grant", "enc", [new ChunkWrite("cid", 0, 0, 0, 0, 0)]);
-        engine.RunPass([path]);
-        engine.DetectorLoaded.Should().BeFalse();
-        engine.EnglishReaderLoaded.Should().BeFalse();
-        engine.ArabicReaderLoaded.Should().BeFalse();
+        await engine.RunPassAsync([path], TestContext.Current.CancellationToken);
+        engine.DetectorLoaded.Should().BeTrue("A7 keeps the three sessions resident between passes");
+        engine.EnglishReaderLoaded.Should().BeTrue();
+        engine.ArabicReaderLoaded.Should().BeTrue();
         engine.Dispose();
         engine.DetectorLoaded.Should().BeFalse();
         engine.EnglishReaderLoaded.Should().BeFalse();
@@ -153,7 +159,7 @@ public sealed class OcrDemoProofTests
         FakeOcrEngine.CreateCount.Should().Be(0);
     }
 
-    private static void AssertPdfOcrReturnsWords(string pdfPath)
+    private static async Task AssertPdfOcrReturnsWordsAsync(string pdfPath)
     {
         File.Exists(pdfPath).Should().BeTrue();
         var cursors = new FakeIngestCursorStore();
@@ -161,7 +167,7 @@ public sealed class OcrDemoProofTests
         cursors.ReplaceOcrPages(pdfPath, [1]);
         var media = new FakeMediaVectorIndex();
         using var engine = CreateEngine(cursors, media);
-        engine.RunPass([pdfPath]);
+        await engine.RunPassAsync([pdfPath], TestContext.Current.CancellationToken);
         engine.RecognizedByPath[pdfPath].Should().NotBeNullOrWhiteSpace();
     }
 
@@ -204,7 +210,7 @@ public sealed class OcrDemoProofTests
             cursors,
             TestIngest.Memory(),
             TestIngest.Gate());
-        return new OnnxOcrEngine(modelRoot, cursors, media, textIngest);
+        return new OnnxOcrEngine(modelRoot, cursors, media, textIngest, TestIngest.Memory());
     }
 
     private static string CopyModelTree()
@@ -245,9 +251,7 @@ public sealed class OcrDemoProofTests
             Interlocked.Increment(ref openCount);
         }
 
-        public void RunPass(IReadOnlyList<string> paths)
-        {
-        }
+        public Task RunPassAsync(IReadOnlyList<string> paths, CancellationToken cancellationToken) => Task.CompletedTask;
 
         public void Dispose()
         {
