@@ -14,5 +14,7 @@
 - [ADR 0014: Linux RID](0014-linux-rid.md)
 - [ADR 0015: Proof hosts](0015-proof-hosts.md)
 - [ADR 0016: Ingest memory ceiling](0016-ingest-memory-ceiling.md)
+- [ADR 0017: OCR throughput and residency](0017-ocr-throughput.md)
+- [ADR 0018: OCR line merge and thread split](0018-ocr-merge-and-threads.md)
 
 An open item is not an ADR.

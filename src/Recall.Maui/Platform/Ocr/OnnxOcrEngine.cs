@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Unicode;
 using Microsoft.ML.OnnxRuntime;
@@ -24,6 +26,8 @@ public sealed class OnnxOcrEngine : IOcrEngine
     public const int OcrPageWorkers = 2;
 
     public const int MaxCpuThreads = 8;
+
+    public const int LineReadRingSize = 2048;
 
     public static readonly TimeSpan OcrIdleUnload = TimeSpan.FromMinutes(2);
 
@@ -244,15 +248,17 @@ public sealed class OnnxOcrEngine : IOcrEngine
         return OperatingSystem.IsWindows() ? OcrExecutionProvider.DirectMl : OcrExecutionProvider.Cpu;
     }
 
-    private static int IntraOpThreads(OcrExecutionProvider provider)
+    public static int IntraOpThreads(OcrExecutionProvider provider, int cores, int pageWorkers)
     {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cores);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(pageWorkers);
         var threadText = Environment.GetEnvironmentVariable("RECALL_OCR_INTRA_OP_THREADS");
         if (int.TryParse(threadText, out var threads) && threads > 0)
         {
             return threads;
         }
 
-        return ThreadCountFor(provider, Environment.ProcessorCount);
+        return Math.Max(1, (ThreadCountFor(provider, cores) + pageWorkers - 1) / pageWorkers);
     }
 
     private static bool IsProviderUnavailable(Exception exception) =>
@@ -441,7 +447,7 @@ public sealed class OnnxOcrEngine : IOcrEngine
     {
         var (english, englishScore) = ReadCrop(crop, sessions.EnglishReader!, englishDict, visualArabic: false);
         var (arabic, arabicScore) = ReadCrop(crop, sessions.ArabicReader!, arabicDict, visualArabic: true);
-        var chosen = OcrLineChoice.Union(english, englishScore, arabic, arabicScore);
+        var chosen = OcrLineChoice.Merge(english, englishScore, arabic, arabicScore);
         var score = Math.Max(englishScore, arabicScore);
         var arabicLine = chosen.Length > 0 ? ScriptOf(chosen) : arabicScore > englishScore;
         RecordLineRead(englishCalls: 1, arabicCalls: 1, reads: 2, firstConfidence: score, confidence: score, arabic: arabicLine);
@@ -453,12 +459,15 @@ public sealed class OnnxOcrEngine : IOcrEngine
         lock (lineReadGate)
         {
             lineReads.Add(new OcrLineRead(englishCalls, arabicCalls, reads, firstConfidence, confidence, arabic));
+            if (lineReads.Count > LineReadRingSize)
+            {
+                lineReads.RemoveAt(0);
+            }
         }
     }
 
     private IReadOnlyList<OcrBox> DetectBoxes(OcrRaster raster)
-    {
-        var (tensor, mapWidth, mapHeight, scaleX, scaleY) = BuildDetectorInput(raster);
+    {        var (tensor, mapWidth, mapHeight, scaleX, scaleY) = BuildDetectorInput(raster);
         using var results = sessions.Detector!.Run([NamedOnnxValue.CreateFromTensor(OcrModelFiles.GraphInputName, tensor)]);
         if (results.Count != 1)
         {
@@ -466,7 +475,7 @@ public sealed class OnnxOcrEngine : IOcrEngine
         }
 
         var output = results[0].AsTensor<float>();
-        var map = output.ToArray();
+        var map = ReadContiguousMap(output, mapWidth * mapHeight);
         var boxes = DbBoxExtractor.Extract(map, mapWidth, mapHeight);
         var scaled = new List<OcrBox>();
         foreach (var box in boxes)
@@ -481,6 +490,23 @@ public sealed class OnnxOcrEngine : IOcrEngine
         return scaled;
     }
 
+    /// <summary>
+    /// The detector map is read straight from the session's backing array when the result is a
+    /// dense tensor over the exact expected element count, and copied only when it is not.
+    /// </summary>
+    private static float[] ReadContiguousMap(Tensor<float> output, int expectedLength)
+    {
+        if (output is DenseTensor<float> dense
+            && MemoryMarshal.TryGetArray<float>(dense.Buffer, out var segment)
+            && segment.Offset == 0
+            && segment.Count == expectedLength
+            && segment.Array is not null)        {
+            return segment.Array;
+        }
+
+        return output.ToArray();
+    }
+
     [SuppressMessage("Major Code Smell", "S4143:Collection elements should not be overwritten", Justification = "Each tensor channel index is distinct.")]
     private static (DenseTensor<float> Tensor, int MapWidth, int MapHeight, double ScaleX, double ScaleY) BuildDetectorInput(OcrRaster raster)
     {
@@ -488,14 +514,21 @@ public sealed class OnnxOcrEngine : IOcrEngine
         var scaleX = resizedWidth / (double)raster.Width;
         var scaleY = resizedHeight / (double)raster.Height;
         var tensor = new DenseTensor<float>([1, 3, resizedHeight, resizedWidth]);
+        var span = tensor.Buffer.Span;
+        var plane = resizedHeight * resizedWidth;
+        var mean = new Vector3(DetectorMean[0], DetectorMean[1], DetectorMean[2]);
+        var std = new Vector3(DetectorStd[0], DetectorStd[1], DetectorStd[2]);
         for (var y = 0; y < resizedHeight; y++)
         {
+            var rowBase = y * resizedWidth;
             for (var x = 0; x < resizedWidth; x++)
             {
-                var sample = OcrBilinear.Sample(raster.Bgra, raster.Width, raster.Height, x, y, resizedWidth, resizedHeight);
-                tensor[0, 0, y, x] = (sample.B / 255f - DetectorMean[0]) / DetectorStd[0];
-                tensor[0, 1, y, x] = (sample.G / 255f - DetectorMean[1]) / DetectorStd[1];
-                tensor[0, 2, y, x] = (sample.R / 255f - DetectorMean[2]) / DetectorStd[2];
+                var sample = OcrBilinear.SampleUnchecked(raster.Bgra, raster.Width, raster.Height, x, y, resizedWidth, resizedHeight);
+                var norm = (new Vector3(sample.B, sample.G, sample.R) / 255f - mean) / std;
+                var base0 = rowBase + x;
+                span[base0] = norm.X;
+                span[plane + base0] = norm.Y;
+                span[2 * plane + base0] = norm.Z;
             }
         }
 
@@ -545,23 +578,27 @@ public sealed class OnnxOcrEngine : IOcrEngine
     {
         var canvas = OcrReaderResize.Canvas(crop.Width, crop.Height);
         var tensor = new DenseTensor<float>([1, 3, OcrReaderResize.Height, canvas.CanvasWidth]);
+        var span = tensor.Buffer.Span;
+        var rowWidth = canvas.CanvasWidth;
+        var plane = OcrReaderResize.Height * rowWidth;
+        var padding = rowWidth - canvas.ContentWidth;
+        var half = new Vector3(0.5f);
         for (var y = 0; y < OcrReaderResize.Height; y++)
         {
-            for (var x = 0; x < canvas.CanvasWidth; x++)
+            var rowBase = y * rowWidth;
+            for (var x = 0; x < canvas.ContentWidth; x++)
             {
-                if (x < canvas.ContentWidth)
-                {
-                    var sample = OcrBilinear.Sample(crop.Bgra, crop.Width, crop.Height, x, y, canvas.ContentWidth, OcrReaderResize.Height);
-                    tensor[0, 0, y, x] = (sample.B / 255f - 0.5f) / 0.5f;
-                    tensor[0, 1, y, x] = (sample.G / 255f - 0.5f) / 0.5f;
-                    tensor[0, 2, y, x] = (sample.R / 255f - 0.5f) / 0.5f;
-                }
-                else
-                {
-                    tensor[0, 0, y, x] = 0f;
-                    tensor[0, 1, y, x] = 0f;
-                    tensor[0, 2, y, x] = 0f;
-                }
+                var sample = OcrBilinear.SampleUnchecked(crop.Bgra, crop.Width, crop.Height, x, y, canvas.ContentWidth, OcrReaderResize.Height);
+                var norm = (new Vector3(sample.B, sample.G, sample.R) / 255f - half) / half;
+                span[rowBase + x] = norm.X;
+                span[plane + rowBase + x] = norm.Y;
+                span[2 * plane + rowBase + x] = norm.Z;
+            }
+
+            for (var planeIndex = 0; planeIndex < 3; planeIndex++)
+            {
+                var zeroRow = span.Slice(planeIndex * plane + rowBase + canvas.ContentWidth, padding);
+                zeroRow.Clear();
             }
         }
 
@@ -597,7 +634,7 @@ public sealed class OnnxOcrEngine : IOcrEngine
     private void CreateSession(string directory)
     {
         var provider = PreferredProvider();
-        var threads = IntraOpThreads(provider);
+        var threads = IntraOpThreads(provider, Environment.ProcessorCount, PageWorkers);
         try
         {
             sessions.Load(directory, provider, threads);
@@ -607,10 +644,11 @@ public sealed class OnnxOcrEngine : IOcrEngine
         {
             OcrRunProgress.Message($"ocr provider fallback: {exception.GetType().Name}: {exception.Message}");
             sessions.Dispose();
-            sessions.Load(directory, OcrExecutionProvider.Cpu, IntraOpThreads(OcrExecutionProvider.Cpu));
+            threads = IntraOpThreads(OcrExecutionProvider.Cpu, Environment.ProcessorCount, PageWorkers);
+            sessions.Load(directory, OcrExecutionProvider.Cpu, threads);
             Provider = OcrExecutionProvider.Cpu;
         }
 
-        OcrRunProgress.Message($"ocr sessions provider={Provider} intraOp={IntraOpThreads(Provider)} pageWorkers={PageWorkers}");
+        OcrRunProgress.Message($"ocr sessions provider={Provider} intraOp={threads} pageWorkers={PageWorkers}");
     }
 }

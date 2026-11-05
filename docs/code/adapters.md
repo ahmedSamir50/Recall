@@ -100,7 +100,7 @@ public sealed class TextModelRuntime : IDisposable
 
 `IsModelReady` is `File.Exists` of `options.ModelFileName` only. `EnsureLoaded` throws `RecallFaultException(RecallFault.TextModelNotReady)` when the GGUF is missing. `Open` runs once; a non-zero code throws `InvalidOperationException` with message `recall_embed open failed with code CODE.` `Dispose` takes `LlamaNativeGate`, disposes the encoder, and calls `Close` once when this runtime opened the model. It does not dispose the shared gate.
 
-`recall_embed_open` return codes used from C#: 0 success; 1 null argument; 2 model load failed; 3 tokenize failed; 4 more than 7680 tokens; 5 encode or decode failed; 6 null embedding pointer from native; 7 output width is not 768; 8 already open; 9 not open. `recall_embed_count_tokens` writes the token count and returns 0; a non-zero count code throws through `RecallEmbedResults.RequireCount`. `recall_embed_token_ends` tokenizes once, walks `llama_token_to_piece`, and writes each exclusive UTF-8 end up to `RECALL_EMBED_MAX_TOKENS`; a non-zero code throws `InvalidOperationException` with message `recall_embed token ends failed with code CODE.`
+`recall_embed_open` return codes used from C#: 0 success; 1 null argument; 2 model load failed; 3 tokenize failed; 4 more than 7680 tokens; 5 encode or decode failed; 6 null embedding pointer from native; 7 output width is not 768; 8 already open; 9 not open. `recall_embed_count_tokens` writes the token count and returns 0; a non-zero count code throws through `RecallEmbedResults.RequireCount`. `recall_embed_token_ends` tokenizes once, walks `llama_token_to_piece`, and writes each exclusive UTF-8 end for every token in the text (`cap = n_tokens`); a non-zero code throws `InvalidOperationException` with message `recall_embed token ends failed with code CODE.` The 7,680-entry `RECALL_EMBED_MAX_TOKENS` cap was removed on 4 November 2026: one call on a 204,838-byte document returns 39,285 ends and a last end of 204,838.
 
 
 ## src/Recall.Adapters/Embedding/Llama/LlamaTextTokenCounter.cs
@@ -120,7 +120,7 @@ public sealed class LlamaTextTokenCounter : ITextTokenCounter
         if (consumed <= 0)
 ```
 
-Blank text throws `ArgumentException`. Text embed, token count, vision, and audio share one process-wide `SemaphoreSlim(1, 1)` in `LlamaNativeGate`. The same thread re-enters by incrementing a thread-static depth. `TokenEnds` calls `recall_embed_token_ends` once and converts the exclusive UTF-8 byte ends into UTF-16 char ends in one pass: a 1-to-3 byte sequence adds one char, a 4-byte sequence adds two, and an end that lands inside a code point snaps forward to the next code point start.
+Blank text throws `ArgumentException`. Text embed, token count, vision, and audio share one process-wide `SemaphoreSlim(1, 1)` in `LlamaNativeGate`. The same thread re-enters by incrementing a thread-static depth. `TokenEnds` walks the text in `WindowChars = 65,536` character windows and calls `recall_embed_token_ends` once per window, then converts the exclusive UTF-8 byte ends into UTF-16 char ends in one pass: a 1-to-3 byte sequence adds one char, a 4-byte sequence adds two, and an end that lands inside a code point snaps forward to the next code point start. With the native cap removed the loop is a safety net, so a 204,838-byte document is four calls for the whole map instead of one call per 7,680 tokens.
 
 
 ## src/Recall.Adapters/InternalsVisibleTo.cs

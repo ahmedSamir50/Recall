@@ -522,6 +522,32 @@ public sealed class Phase4VisionTests : IDisposable
     }
 
     [Fact]
+    public void Merge_MonoScriptEnglish_DropsArabicGarbage()
+    {
+        OcrLineChoice.Merge("hello world", 0.9, "مرحبا", 0.3).Should().Be("hello world");
+    }
+
+    [Fact]
+    public void Merge_MonoScriptArabic_DropsLatinGarbage()
+    {
+        OcrLineChoice.Merge("kjgf", 0.3, "مرحبا بالعالم", 0.9).Should().Be("مرحبا بالعالم");
+    }
+
+    [Fact]
+    public void Merge_MixedLine_KeepsBothScripts()
+    {
+        OcrLineChoice.Merge("Sparkling Water", 0.65, "مياه غازية", 0.75)
+            .Should().Contain("Sparkling Water").And.Contain("مياه غازية");
+    }
+
+    [Fact]
+    public void Merge_BoundaryGap_IsUnion()
+    {
+        OcrLineChoice.Merge("Sparkling Water", 0.5, "مياه غازية", 0.3)
+            .Should().Contain("Sparkling Water").And.Contain("مياه غازية");
+    }
+
+    [Fact]
     public void NeedsOcr_ThreeReplacementChars_IsTrue()
     {
         BrokenArabic.NeedsOcr("مر\uFFFD\uFFFD\uFFFD").Should().BeTrue();

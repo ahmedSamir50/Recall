@@ -291,6 +291,33 @@ public sealed class CloseOpenOcrTests
     }
 
     [Fact]
+    public void OcrBilinear_Vectorized_WithinTolerance()
+    {
+        const int srcWidth = 12;
+        const int srcHeight = 7;
+        var bgra = new byte[srcWidth * srcHeight * 4];
+        for (var i = 0; i < bgra.Length; i++)
+        {
+            bgra[i] = (byte)((i * 31 + 17) % 256);
+        }
+
+        foreach (var (dstWidth, dstHeight) in new[] { (23, 11), (6, 3), (1, 5), (12, 7), (33, 19) })
+        {
+            for (var y = 0; y < dstHeight; y++)
+            {
+                for (var x = 0; x < dstWidth; x++)
+                {
+                    var vectorized = OcrBilinear.Sample(bgra, srcWidth, srcHeight, x, y, dstWidth, dstHeight);
+                    var reference = OcrBilinear.SampleScalarReference(bgra, srcWidth, srcHeight, x, y, dstWidth, dstHeight);
+                    reference.B.Should().BeApproximately(vectorized.B, 1e-4f, $"B at dst ({x},{y}) of ({dstWidth},{dstHeight})");
+                    reference.G.Should().BeApproximately(vectorized.G, 1e-4f, $"G at dst ({x},{y}) of ({dstWidth},{dstHeight})");
+                    reference.R.Should().BeApproximately(vectorized.R, 1e-4f, $"R at dst ({x},{y}) of ({dstWidth},{dstHeight})");
+                }
+            }
+        }
+    }
+
+    [Fact]
     public void ArabicVisualOrder_SpacedVisual_IsLogical()
     {
         ArabicVisualOrder.ToLogical("ةيزاغ هايم").Should().Be("مياه غازية");

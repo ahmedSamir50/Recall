@@ -7,6 +7,24 @@ public static class OcrLineChoice
 {
     private const double TieEpsilon = 1e-6;
 
+    public const double MixedConfidenceGap = 0.2;
+
+    /// <summary>
+    /// Chooses one reader for a mono-script line and merges the two readers for a genuinely mixed
+    /// line. When the scores are far apart, one script clearly dominates and the losing reader's
+    /// output is nearest-glyph garbage, so <see cref="Choose"/> drops it. When the scores are close,
+    /// both readers found real text in their own script, so <see cref="Union"/> keeps both.
+    /// </summary>
+    public static string Merge(string? englishText, double englishScore, string? arabicText, double arabicScore)
+    {
+        if (Math.Abs(englishScore - arabicScore) > MixedConfidenceGap)
+        {
+            return Choose(englishText, englishScore, arabicText, arabicScore);
+        }
+
+        return Union(englishText, englishScore, arabicText, arabicScore);
+    }
+
     public static string Choose(string? englishText, double englishScore, string? arabicText, double arabicScore)
     {
         var english = englishText ?? string.Empty;

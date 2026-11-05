@@ -48,6 +48,8 @@ A full multi-patch file measured 2,708.8 MB of working set, so the observed floo
 
 A hard reading does not throw. The pass returns, the gate enters `Cooling` for thirty seconds, and the existing scheduler re-triggers it. Resume needs the pressure at or below 35%, which is why the gate cannot flap. A failed re-probe doubles the backoff to a maximum of five minutes, and a finished file resets it.
 
+OCR pages run in parallel at `OcrPageWorkers = 2` (`RECALL_OCR_PAGE_WORKERS`), and each worker holds one 300 DPI page of about 35 MB. A `Hard` reading forces the worker count to `1` for that pass, so the parallel branch cannot raise peak memory on a device that is already tight. The three OCR sessions stay resident between passes and unload after two idle minutes.
+
 ## Releasing what is held
 
 In order: flush the pending chunk batch, drop the document string, the token ends, the patch plan and the chunk list, close the audio encoder only if it is loaded, never unload the text encoder, compact the large object heap once when a dropped buffer was above 8 MB, then re-probe.

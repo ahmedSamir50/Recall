@@ -66,3 +66,54 @@ The warm embed is 35-46 ms on the Vulkan backend for a ~900-token text; the desk
 | Peak working set during the run | not reached | 2,708.8 MB |
 
 The single-embed peak above is 1,370.6 MB; a full 31-patch file peaked at 2,708.8 MB because the working set keeps pages the OS has not trimmed yet. The gate uses the larger of the declared floor and the recorded observation, so a device tightens itself after its first real file. The 32-token context guard keeps every patch, plus its title prefix, inside the 7,680-token context.
+
+## OCR, measured 4 November 2026
+
+The per-page split on the demo English phone report, Windows, CPU provider, 8 intra-op threads, 2 page workers, 300 DPI render. The command was the integration test `Ocr_DemoEnglishPage_ReturnsWordsFromPinnedReader` with `RECALL_OCR_PROGRESS=1`, and the numbers are its own progress lines.
+
+| Stage | Value |
+|---|---|
+| render | 272 ms |
+| detector | 1,472 ms |
+| reader | 588 ms |
+| infer (detector + reader) | 2,105 ms |
+| characters stored | 153 |
+
+The detector is the cost, because `OcrDetectorResize.MaxSide = 4000` sends a 300 DPI page at about 8.7 MP while the model was benchmarked at about 0.92 MP. Capping the long side at 1280 was measured and reverted: it kept four of the five WER fixtures green and broke the Arabic invoice at 50.0% Arabic WER (14/28 edits) against an accepted 12/28.
+
+### Provider probe, outside the repository
+
+`Microsoft.Windows.AI.MachineLearning` 2.1.70 (ONNX Runtime 1.24.20260504.1 inside the package) binds `ppocrv6-small-det.onnx` and runs a `[1,3,960,960]` tensor. The app's `Microsoft.ML.OnnxRuntime` 1.31 native DLL has no DirectML entry point and throws `EntryPointNotFoundException`, so the shipped Windows default is CPU.
+
+| Provider | Adapter | min / mean / max ms | Note |
+|---|---|---|---|
+| CPU (WinML ORT 1.24) | - | 150.0 / 161.4 / 184.3 | baseline |
+| DirectML | 0, Intel UHD | 205.7 / 209.9 / 219.9 | slower than CPU; `nvidia-smi` 0% |
+| DirectML | 1, NVIDIA RTX A4500 | 16.8 / 18.1 / 21.5 | `nvidia-smi` 14%, +418 MB GPU memory |
+
+### Native token map
+
+`recall_embed_token_ends` now uses `cap = n_tokens`. One call on a 204,838-byte document returns 39,285 ends and a last end of 204,838, against the old 7,680-entry cap. The integration test is `LlamaEmbedIntegrationTests.TokenEnds_RealLibrary_OneCall`.
+
+### OCR corpus and the 80-page gate
+
+The corpus is local and git-ignored under `artifacts/ocr-golden/`: 80 validated Wikisource scans (30 Arabic, 30 English, 7 French, 7 German, 6 Spanish) plus the four demo phone captures, fetched 4 November 2026 by `tools/fetch-ocr-golden.ps1`. `manifest.csv` carries `path,language,isPhone,mixed,sourceUrl,sha256`; `OcrGoldenCatalog` verifies every hash and fails with the fetch command named when the corpus is missing.
+
+| Proof | Ceiling | Result |
+|---|---|---|
+| `Ocr_ThreeScannedPdfs_SearchHitsGroundTruthWord` | 2 minutes | passed, 16.2 s |
+| `OcrGolden_Page28_ArabicSlice_CerWithinCleanCeiling` | 5% clean | failed, page 28 CER 79.1% |
+| `OcrGolden_EightyPages_CerWithinCeiling` | 5 minutes | exceeded, 84 of 84 pages in 696.5 s |
+
+The gate run was killed at its 5-minute cap with 48 of 84 pages done (297.7 s). A separate measurement run without the cap finished all 84 pages in 696.5 s, so the pass is 2.3 times over the ceiling. 15 of 84 pages are inside the 5% clean ceiling; 69 are not.
+
+| Language | Pages | Mean CER | Min | Max | Within 5% |
+|---|---|---|---|---|---|
+| Arabic | 31 | 63.9% | 20.0% | 87.9% | 0 |
+| English | 32 | 16.4% | 1.1% | 98.1% | 11 |
+| French | 8 | 17.6% | 3.8% | 84.8% | 3 |
+| German | 7 | 8.2% | 3.9% | 11.4% | 0 |
+| Spanish | 6 | 137.8% | 66.1% | 468.5% | 0 |
+
+Arabic is the largest gap: the hypothesis for an Arabic page comes back with Latin characters, so the page is reaching the English reader. The Spanish pages are legislative records whose tables do not survive the wikitext ground-truth extraction, which is why CER goes above 100%. Task 6.3.3 stays `partial` and the failing pages are listed in the run output.
+

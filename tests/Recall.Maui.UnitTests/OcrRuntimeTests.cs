@@ -119,6 +119,23 @@ public sealed class OcrRuntimeTests
     }
 
     [Fact]
+    public void Threads_CpuProvider_SplitsAcrossWorkers()
+    {
+        var previous = Environment.GetEnvironmentVariable("RECALL_OCR_INTRA_OP_THREADS");
+        Environment.SetEnvironmentVariable("RECALL_OCR_INTRA_OP_THREADS", null);
+        try
+        {
+            OnnxOcrEngine.IntraOpThreads(OcrExecutionProvider.Cpu, 8, 2).Should().Be(4, "the per-session budget splits across two page workers without oversubscribing");
+            OnnxOcrEngine.IntraOpThreads(OcrExecutionProvider.Cpu, 2, 2).Should().Be(1, "the split never drops a session below one intra-op thread");
+            OnnxOcrEngine.IntraOpThreads(OcrExecutionProvider.DirectMl, 8, 2).Should().Be(1, "a GPU session keeps one intra-op thread");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("RECALL_OCR_INTRA_OP_THREADS", previous);
+        }
+    }
+
+    [Fact]
     public async Task Route_LowConfidence_TriesOtherReader()
     {
         var lines = new List<OcrLineRead>();

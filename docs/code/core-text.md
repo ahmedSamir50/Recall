@@ -645,7 +645,9 @@ public sealed class IngestSchedulerRunner
         if (jobs.Count == 0)
 ```
 
-Pass order is text, media, then OCR. Media opens vision and audio once per pass, or one shared vision context when `MediaContextPolicy.OneContext` is true. OCR pass 3 calls `OcrPassStub.Run` once for the drained paths.
+Pass order is text, media, then OCR, and the loop repeats with slices instead of draining one queue: `TextSlice = 64`, `MediaSlice = 32`, `OcrSlice = 64`, `PassBudget = 120 s`. Media opens vision and audio once per pass, or one shared vision context when `MediaContextPolicy.OneContext` is true. The pass token is linked with `IIngestPreemption.Token`, so a search in flight cancels the slice; the cancelled slice is re-enqueued and the pass returns instead of throwing. A spent budget also returns with the queued jobs left in place. One `IngestPassMetric` is recorded per slice with the open time and the slice time.
+
+
 
 ```csharp
 if (hooks.OpenText is not null)
@@ -667,6 +669,38 @@ if (hooks.RunOcr is null)
 if (runOcr is null)
 catch (RecallFaultException)
 ```
+
+## src/Recall.Core/Ingest/IIngestPreemption.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public interface IIngestPreemption
+public sealed class IngestPreemption : IIngestPreemption, IDisposable
+public bool IsSearching => Volatile.Read(ref searching) > 0;
+public CancellationToken Token
+public void SearchStarted()
+public void SearchFinished()
+        if (searching == 0)
+                if (source.IsCancellationRequested)
+                source.Cancel();
+        if (searching == 0 && source.IsCancellationRequested)
+```
+
+`TextSearchService.FindAsync` calls `SearchStarted` before the work and `SearchFinished` in `finally`. While a search is in flight the token is cancelled; the last `SearchFinished` replaces the cancelled source with a fresh one, so the next pass starts uncancelled. A search therefore cancels OCR between documents, never mid-embed.
+
+## src/Recall.Core/Ingest/IngestPassMetrics.cs
+
+```csharp
+namespace Recall.Core.Ingest;
+public readonly record struct IngestPassMetric(IngestModel Model, int Jobs, long OpenMs, long TotalMs);
+public sealed class IngestPassMetrics
+public const int MetricRingSize = 64;
+public void Record(IngestPassMetric metric)
+public IReadOnlyList<IngestPassMetric> Snapshot()
+public void Clear()
+```
+
+The ring keeps the last 64 slices, oldest first. `IngestStatusService.Metrics` returns `Snapshot()`. The tests assert counts, never milliseconds.
 
 ## src/Recall.Core/Ingest/IngestSchedulerService.cs
 
@@ -761,6 +795,8 @@ public enum OcrExecutionProvider
 ```csharp
 namespace Recall.Core.Ocr;
 public static class OcrLineChoice
+public static string Merge(string? englishText, double englishScore, string? arabicText, double arabicScore)
+if (Math.Abs(englishScore - arabicScore) > MixedConfidenceGap)
 public static string Choose(string? englishText, double englishScore, string? arabicText, double arabicScore)
 public static string Union(string? englishText, double englishScore, string? arabicText, double arabicScore)
 if (english.Length == 0 && arabic.Length == 0)
@@ -783,6 +819,8 @@ if (IsLatinLetter(rune))
 ```
 
 `Choose` is the whole-line pick used when only one read is wanted. Null text becomes an empty string. Two empty lines return empty. One empty line returns the other reader's text. Otherwise Arabic wins only when its score exceeds English by more than `TieEpsilon`; a tie keeps English.
+
+`Merge` is the whole-line decision the engine makes per read line. When the two readers' scores are farther apart than `MixedConfidenceGap` (`0.2`), one script clearly dominates and the losing reader's output is nearest-glyph garbage on mono-script text, so `Merge` delegates to `Choose`. When the scores sit within the gap, both readers found real text in their own script and `Merge` delegates to `Union`, which keeps both scripts. Both branches are covered by the boundary test in `Phase4VisionTests`.
 
 `Union` merges the two reads of one line by script instead of picking one. Arabic-script tokens are kept from the Arabic read and Latin-script tokens from the English read; a token of the other read's script is dropped. Digits, punctuation, and anything script-neutral follow the higher-confidence read. The kept Arabic and Latin blocks are joined with the script of the line's first script-bearing character first, so a Latin-led bilingual line reads Latin then Arabic and an Arabic-led line reads Arabic then Latin. A line where only one read keeps tokens uses that read. A line where neither keeps a token falls back to `Choose`. Tokens are whitespace-separated runs of the decoded text.
 
@@ -1179,3 +1217,5 @@ public static class IngestStopKeys
 ```
 
 `IngestStopKeys` is the single home of the three status keys a stopped file can carry. `MemoryBudget` marks a file that paused and can resume; it is a cursor marker, not a sentence. `FileTooLarge` describes a whole-file guard that refused to load bytes. `DeviceTooSmall` is the blocked state of a device whose floor is above half its capacity. The strings are resx names, so a sentence lives in `Strings.resx` and `Strings.ar.resx` and never in this class.
+
+

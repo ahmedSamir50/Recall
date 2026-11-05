@@ -217,14 +217,14 @@ if (pageTexts.Count == 0 || row is null)
 if (boxes.Count == 0)
 if (string.IsNullOrEmpty(line.Text))
 if (builder.Length > 0 && !char.IsWhiteSpace(builder[^1]))
-if (score < LowConfidence)
-if (otherScore > score)
+if (lineReads.Count > LineReadRingSize)
+if (output is DenseTensor<float> dense
 if (results.Count != 1)
 if (x < canvas.ContentWidth)
 catch (Exception exception) when (provider == OcrExecutionProvider.DirectMl && IsProviderUnavailable(exception))
 ```
 
-The engine keeps the three sessions resident between passes (`Sessions`), unloads them after `OcrIdleUnload` with no job, and disposes them on `Dispose`. `Provider` records the provider that actually created the sessions; a DirectML failure retries the same sessions on CPU. PDF pages run through `Parallel.ForEachAsync` with `PageWorkers` (one under hard memory pressure) and are joined by page number. Each line is read once by the reader its script selects, and is cross-read only below `LowConfidence`.
+The engine keeps the three sessions resident between passes (`Sessions`), unloads them after `OcrIdleUnload` with no job, and disposes them on `Dispose`. `Provider` records the provider that actually created the sessions; a DirectML failure retries the same sessions on CPU. The per-session intra-op thread budget is `IntraOpThreads(provider, cores, pageWorkers)` — the ceiling split of the CPU thread budget over `PageWorkers`, with `RECALL_OCR_INTRA_OP_THREADS` still overriding it. PDF pages run through `Parallel.ForEachAsync` with `PageWorkers` (one under hard memory pressure) and are joined by page number. Every line is read by both readers and decided by `OcrLineChoice.Merge`; the pass keeps at most `LineReadRingSize` `OcrLineRead` entries. The detector map is read straight from the session's backing array when it is contiguous (`ReadContiguousMap`), and the input builders resample through the unchecked `OcrBilinear` path with packed normalize arithmetic.
 
 ## src/Recall.Maui/Platform/Ocr/OcrSessionSet.cs
 
