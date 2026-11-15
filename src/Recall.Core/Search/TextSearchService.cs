@@ -102,12 +102,11 @@ public sealed class TextSearchService : ITextSearchService
                 textHits.AddRange(await FindTextAsync(query, grantedPaths, grants, cancellationToken).ConfigureAwait(false));
             }
 
-            var tryMedia = mediaGrantPaths.Count > 0 && textHits.Count < RecallIndexCaps.FileCap;
-            var ranked = new List<TextSearchHit>(textHits);
-            if (tryMedia)
+            var ranked = new List<TextSearchHit>(textHits.Take(RecallIndexCaps.GroupCap));
+            if (mediaGrantPaths.Count > 0)
             {
                 var present = new HashSet<string>(textHits.Select(h => h.SourcePath), StringComparer.OrdinalIgnoreCase);
-                foreach (var hit in SearchMediaWords(query, mediaGrantPaths, RecallIndexCaps.FileCap - textHits.Count, cancellationToken))
+                foreach (var hit in SearchMediaWords(query, mediaGrantPaths, RecallIndexCaps.GroupCap, cancellationToken))
                 {
                     if (!present.Add(hit.SourcePath))
                     {
@@ -118,7 +117,7 @@ public sealed class TextSearchService : ITextSearchService
                 }
             }
 
-            return ranked.Take(RecallIndexCaps.FileCap).ToList();
+            return ranked;
         }
         finally
         {
@@ -184,7 +183,7 @@ public sealed class TextSearchService : ITextSearchService
             .Select(Collapse.MaxRrf)
             .OrderByDescending(h => h.Score)
             .ThenBy(h => h.Ordinal)
-            .Take(RecallIndexCaps.FileCap)
+            .Take(RecallIndexCaps.GroupCap)
             .ToList();
     }
 
@@ -233,7 +232,7 @@ public sealed class TextSearchService : ITextSearchService
                 hit.SourcePath,
                 Path.GetFileName(hit.SourcePath),
                 LastWriteUtc(hit.SourcePath),
-                TextMatchReason.FullText,
+                TextMatchReason.WordsOnMedia,
                 hit.Score,
                 0,
                 "",

@@ -67,6 +67,8 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
     private readonly Dictionary<string, AgeCutPending> ageCuts = new(StringComparer.Ordinal);
     private readonly HashSet<string> pins = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, PinResumeRow> pinResumes = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<IngestLogEntry> log = new();
+    private IngestLastRun lastRun = new(null, string.Empty, string.Empty, null);
 
     public bool AllowWrite { get; set; } = true;
 
@@ -146,7 +148,7 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
         }
 
         return ListFiles(grantPath)
-            .Where(row => row.State is IngestCursorState.Reading or IngestCursorState.Missing)
+            .Where(row => row.State is IngestCursorState.Reading or IngestCursorState.Missing or IngestCursorState.Paused)
             .Select(row => row.Path)
             .ToList();
     }
@@ -228,11 +230,48 @@ public sealed class FakeIngestCursorStore : IIngestCursorStore
 
     public void MarkStopped(string path, string statusKey)
     {
-        if (files.TryGetValue(path, out var row))
+        if (files.TryGetValue(path, out var row) && row.State != IngestCursorState.Finished)
         {
-            files[path] = row with { State = IngestCursorState.Reading, MissingStatusKey = statusKey };
+            files[path] = row with { State = IngestCursorState.Paused, MissingStatusKey = statusKey };
+            log.Add(new IngestLogEntry(DateTimeOffset.UtcNow, statusKey, Path.GetFileName(path)));
         }
     }
+
+    public void FinishExisting(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        if (!files.TryGetValue(path, out var row))
+        {
+            throw new InvalidOperationException("The path has no ingest row.");
+        }
+
+        if (!chunkRows.Values.Any(chunk => string.Equals(chunk.Path, path, StringComparison.OrdinalIgnoreCase) && !chunk.Missing && !chunk.Retired))
+        {
+            throw new InvalidOperationException("The path has no live chunk.");
+        }
+
+        files[path] = row with { State = IngestCursorState.Finished, MissingStatusKey = string.Empty };
+    }
+
+    public void AppendLog(IngestLogEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        log.Add(entry);
+        if (log.Count > 200)
+        {
+            log.RemoveAt(0);
+        }
+    }
+
+    public IReadOnlyList<IngestLogEntry> ListLog() => log.AsReadOnly();
+
+    public IngestLastRun ReadLastRun() => lastRun;
+
+    public void WriteLastRun(IngestLastRun run) => lastRun = run;
 
     public void MarkReading(string path, string contentHash, string grantPath)
     {
@@ -1278,7 +1317,7 @@ public sealed class FakeMediaVectorIndex : IMediaVectorIndex
 
             if (entry.Insert.Words.Contains(query, StringComparison.OrdinalIgnoreCase))
             {
-                hits.Add(new MediaSearchHit(insert.ContentId, insert.SourcePath, 0, 0, 1));
+                hits.Add(new MediaSearchHit(insert.ContentId, insert.SourcePath, 0, 0, 1, 1));
             }
         }
 

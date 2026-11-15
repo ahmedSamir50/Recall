@@ -2,6 +2,7 @@ using Recall.Core.Checkpoints;
 using Recall.Core.Download;
 using Recall.Core.Ocr;
 using Recall.Core.Ports;
+using Recall.Core.Preferences;
 using Recall.Core.Runtime;
 using Recall.Core.Scope;
 using Recall.Core.Sync;
@@ -28,6 +29,9 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
     private readonly IMemoryBudget memory;
     private readonly MemoryGate gate;
     private readonly IIngestResourceReclaimer reclaimer;
+    private readonly IGpuTemperature gpuTemperature;
+    private readonly IIngestPreemption preemption;
+    private readonly RetryDelayPreferenceService retryDelay;
     private readonly SemaphoreSlim pass = new(1, 1);
     private int pending;
     private readonly object failureGate = new();
@@ -48,7 +52,10 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
         IngestScheduler? scheduler = null,
         IVisionFileIngest? vision = null,
         IModelDownloadService? downloads = null,
-        IPdfPageRenderer? pageRenderer = null)
+        IPdfPageRenderer? pageRenderer = null,
+        IGpuTemperature? gpuTemperature = null,
+        IIngestPreemption? preemption = null,
+        RetryDelayPreferenceService? retryDelay = null)
     {
         this.scope = scope;
         this.reader = reader;
@@ -65,6 +72,9 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
         this.vision = vision;
         this.downloads = downloads;
         this.pageRenderer = pageRenderer;
+        this.gpuTemperature = gpuTemperature ?? new NullGpuTemperature();
+        this.preemption = preemption ?? new IngestPreemption();
+        this.retryDelay = retryDelay ?? new RetryDelayPreferenceService(new MemoryRetryDelayPreferenceStore());
     }
 
     public IReadOnlyList<string> FailedPaths
@@ -144,7 +154,10 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
             return;
         }
 
-        if (!ObserveGate())
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, preemption.Token);
+        var passToken = linked.Token;
+
+        if (!ObserveGate(null))
         {
             return;
         }
@@ -153,19 +166,20 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
 
         if (runText)
         {
-            await foreach (var document in reader.ReadAsync(grant, cancellationToken).ConfigureAwait(false))
+            await foreach (var document in reader.ReadAsync(grant, passToken).ConfigureAwait(false))
             {
-                if (!ObserveGate())
+                if (!ObserveGate(document.Path))
                 {
                     return;
                 }
 
                 try
                 {
-                    await IngestDocumentAsync(grant, document, cancellationToken).ConfigureAwait(false);
+                    await IngestDocumentAsync(grant, document, passToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
+                    HandlePathCancellation(document.Path);
                     throw;
                 }
                 catch (Exception)
@@ -184,19 +198,25 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
 
         if (runImages)
         {
-            await foreach (var imagePath in reader.ListImagesAsync(grant, cancellationToken).ConfigureAwait(false))
+            await foreach (var imagePath in reader.ListImagesAsync(grant, passToken).ConfigureAwait(false))
             {
                 if (vision is null)
                 {
                     throw new InvalidOperationException(PictureIngestNotRegistered);
                 }
 
+                if (!ObserveGate(imagePath))
+                {
+                    return;
+                }
+
                 try
                 {
-                    await vision.IndexImageAsync(grant, imagePath, cancellationToken).ConfigureAwait(false);
+                    await vision.IndexImageAsync(grant, imagePath, passToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
+                    HandlePathCancellation(imagePath);
                     throw;
                 }
                 catch (Exception)
@@ -208,7 +228,7 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
 
         if (runVideos)
         {
-            await foreach (var mediaPath in reader.ListAudioAndVideoAsync(grant, cancellationToken).ConfigureAwait(false))
+            await foreach (var mediaPath in reader.ListAudioAndVideoAsync(grant, passToken).ConfigureAwait(false))
             {
                 var name = Path.GetFileName(mediaPath);
                 if (!MediaFileKinds.IsVideo(name))
@@ -221,12 +241,18 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
                     throw new InvalidOperationException(PictureIngestNotRegistered);
                 }
 
+                if (!ObserveGate(mediaPath))
+                {
+                    return;
+                }
+
                 try
                 {
-                    await vision.IndexVideoFramesAsync(grant, mediaPath, cancellationToken).ConfigureAwait(false);
+                    await vision.IndexVideoFramesAsync(grant, mediaPath, passToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
+                    HandlePathCancellation(mediaPath);
                     throw;
                 }
                 catch (Exception)
@@ -238,7 +264,7 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
 
         if (runAudio)
         {
-            await audio!.IndexGrantAsync(grant, cancellationToken).ConfigureAwait(false);
+            await audio!.IndexGrantAsync(grant, passToken).ConfigureAwait(false);
         }
 
         if (runText)
@@ -297,9 +323,19 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
                     opLog.AppendDelete(chunk.ContentId);
                 }
             }
+
+            row = cursors.GetFile(document.Path);
         }
-        else if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
+
+        var hasLiveChunks = HasLiveChunks(document.Path);
+        var decision = IngestCursorPolicy.Decide(row, contentHash, hasLiveChunks);
+        if (decision == IngestCursorDecision.Skip)
         {
+            if (row is { State: IngestCursorState.Paused or IngestCursorState.Reading })
+            {
+                cursors.FinishExisting(document.Path);
+            }
+
             return;
         }
 
@@ -317,6 +353,7 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
         if (result.Stop == IngestStopReason.MemoryBudget)
         {
             cursors.MarkStopped(document.Path, IngestStopKeys.MemoryBudget);
+            WriteStoppedLastRun(document.Path, IngestStopKeys.MemoryBudget);
             reclaimer.ReleaseOptionalEncoders();
             RecordStopped(document.Path);
             return;
@@ -362,6 +399,7 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
         }
 
         cursors.FinishPath(document.Path, result.ContentHash, grant.Path, encoderHash, writes, bm25Only);
+        WriteLastCompleted();
         memory.RecordObserved();
         gate.OnFileCompleted();
 
@@ -380,7 +418,7 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
         }
     }
 
-    private bool ObserveGate()
+    private bool ObserveGate(string? currentPath)
     {
         if (memory.Verdict == DeviceVerdict.BelowMinimum)
         {
@@ -394,19 +432,28 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
             memory.WorkingSetBytes,
             memory.EffectiveFloorBytes,
             DateTimeOffset.UtcNow);
-        return gate.IsOpen();
+
+        if (!gate.IsOpen())
+        {
+            return false;
+        }
+
+        if (GpuCooldownPolicy.Blocks(gpuTemperature.ReadCelsius()) && !string.IsNullOrEmpty(currentPath))
+        {
+            cursors.MarkStopped(currentPath, IngestStopKeys.GpuTemperature);
+            WriteStoppedLastRun(currentPath, IngestStopKeys.GpuTemperature);
+            RecordStopped(currentPath);
+            return false;
+        }
+
+        return true;
     }
 
     private void CloseLeftoverReading(ScopeFolderGrant grant, GrantFileKinds kind)
     {
         foreach (var row in cursors.ListFiles(grant.Path))
         {
-            if (row.State != IngestCursorState.Reading)
-            {
-                continue;
-            }
-
-            if (!string.IsNullOrEmpty(row.MissingStatusKey))
+            if (row.State is not (IngestCursorState.Reading or IngestCursorState.Paused))
             {
                 continue;
             }
@@ -421,9 +468,66 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
                 continue;
             }
 
-            cursors.MarkMissing(row.Path);
-            RecordFailure(row.Path);
+            var hasChunks = HasLiveChunks(row.Path);
+            var exists = File.Exists(row.Path);
+            switch (LeftoverPolicy.Decide(hasChunks, exists))
+            {
+                case LeftoverAction.Finish:
+                    cursors.FinishExisting(row.Path);
+                    break;
+                case LeftoverAction.Missing:
+                    cursors.MarkMissing(row.Path);
+                    RecordFailure(row.Path);
+                    break;
+                case LeftoverAction.Pause:
+                    cursors.MarkStopped(row.Path, IngestStopKeys.Interrupted);
+                    WriteStoppedLastRun(row.Path, IngestStopKeys.Interrupted);
+                    RecordStopped(row.Path);
+                    break;
+            }
         }
+    }
+
+    private void HandlePathCancellation(string path)
+    {
+        var row = cursors.GetFile(path);
+        var state = IngestCancellation.PauseOnlyReading(row?.State ?? IngestCursorState.Reading);
+        if (state == IngestCursorState.Paused)
+        {
+            cursors.MarkStopped(path, IngestStopKeys.SearchCancel);
+            WriteStoppedLastRun(path, IngestStopKeys.SearchCancel);
+            RecordStopped(path);
+        }
+    }
+
+    private bool HasLiveChunks(string path)
+    {
+        foreach (var chunk in cursors.ListChunks(path))
+        {
+            if (!chunk.Missing && !chunk.Retired)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void WriteLastCompleted()
+    {
+        var previous = cursors.ReadLastRun();
+        cursors.WriteLastRun(previous with { LastCompletedUtc = DateTimeOffset.UtcNow, LastStoppedPath = string.Empty, LastStoppedReasonKey = string.Empty });
+    }
+
+    private void WriteStoppedLastRun(string path, string reasonKey)
+    {
+        var previous = cursors.ReadLastRun();
+        cursors.WriteLastRun(previous with
+        {
+            LastStoppedPath = path,
+            LastStoppedReasonKey = reasonKey,
+            NextRetryUtc = IngestRetryClock.Next(DateTimeOffset.UtcNow, retryDelay.Get()),
+        });
     }
 
     private void RecordFailure(string path)

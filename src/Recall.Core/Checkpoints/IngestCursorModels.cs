@@ -5,6 +5,7 @@ public enum IngestCursorState
     Reading = 1,
     Finished = 2,
     Missing = 3,
+    Paused = 4,
 }
 
 public enum IngestCursorDecision
@@ -25,9 +26,17 @@ public sealed record IngestChunkRow(string ContentId, string Path, int Ordinal, 
 
 public sealed record GrantScanRow(string GrantPath, IngestCursorState State);
 
+public sealed record IngestLogEntry(DateTimeOffset At, string ReasonKey, string FileName);
+
+public sealed record IngestLastRun(
+    DateTimeOffset? LastCompletedUtc,
+    string LastStoppedPath,
+    string LastStoppedReasonKey,
+    DateTimeOffset? NextRetryUtc);
+
 public static class IngestCursorPolicy
 {
-    public static IngestCursorDecision Decide(IngestFileRow? row, string contentHash)
+    public static IngestCursorDecision Decide(IngestFileRow? row, string contentHash, bool hasLiveChunks)
     {
         if (string.IsNullOrWhiteSpace(contentHash))
         {
@@ -39,9 +48,17 @@ public static class IngestCursorPolicy
             return IngestCursorDecision.Read;
         }
 
-        if (row.State == IngestCursorState.Reading)
+        if (row.State == IngestCursorState.Finished
+            && string.Equals(row.ContentHash, contentHash, StringComparison.Ordinal))
         {
-            return IngestCursorDecision.Read;
+            return IngestCursorDecision.Skip;
+        }
+
+        if ((row.State is IngestCursorState.Paused or IngestCursorState.Reading)
+            && string.Equals(row.ContentHash, contentHash, StringComparison.Ordinal)
+            && hasLiveChunks)
+        {
+            return IngestCursorDecision.Skip;
         }
 
         if (row.State == IngestCursorState.Missing)
@@ -49,10 +66,9 @@ public static class IngestCursorPolicy
             return IngestCursorDecision.Read;
         }
 
-        if (row.State == IngestCursorState.Finished
-            && string.Equals(row.ContentHash, contentHash, StringComparison.Ordinal))
+        if (!string.Equals(row.ContentHash, contentHash, StringComparison.Ordinal))
         {
-            return IngestCursorDecision.Skip;
+            return IngestCursorDecision.Read;
         }
 
         return IngestCursorDecision.Read;

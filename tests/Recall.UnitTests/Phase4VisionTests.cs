@@ -200,8 +200,8 @@ public sealed class Phase4VisionTests : IDisposable
     {
         var best = Collapse.EarliestStart(
         [
-            new MediaSearchHit("a", "v", 4, 6, 0.5),
-            new MediaSearchHit("b", "v", 2, 4, 0.5),
+            new MediaSearchHit("a", "v", 4, 6, 0.5, 0.5),
+            new MediaSearchHit("b", "v", 2, 4, 0.5, 0.5),
         ]);
         best.StartSeconds.Should().Be(2);
     }
@@ -214,13 +214,13 @@ public sealed class Phase4VisionTests : IDisposable
             OnSearch = request => request.CollectionName == MediaCollections.Video
                 ?
                 [
-                    new MediaSearchHit("a", "v", 0, 2, 0.4),
-                    new MediaSearchHit("b", "v", 2, 4, 0.9),
-                    new MediaSearchHit("c", "v", 4, 6, 0.2),
+                    new MediaSearchHit("a", "v", 0, 2, 0.4, 0.4),
+                    new MediaSearchHit("b", "v", 2, 4, 0.9, 0.9),
+                    new MediaSearchHit("c", "v", 4, 6, 0.2, 0.2),
                 ]
                 : [],
         };
-        var service = new PictureSearchService(new FakeVisionEmbeddingEncoder(), index, new FakeEncoderFileHash());
+        var service = new PictureSearchService(new FakeVisionEmbeddingEncoder(), index, new FakeEncoderFileHash(), new FakeIngestCursorStore());
         var hits = await service.FindAsync(
             new byte[] { 1 },
             [new ScopeFolderGrant("G", "G", GrantFileKinds.Video)],
@@ -233,8 +233,8 @@ public sealed class Phase4VisionTests : IDisposable
     {
         Collapse.EarliestStart(
         [
-            new MediaSearchHit("a", "v", 0, 2, 0.2),
-            new MediaSearchHit("b", "v", 2, 4, 0.9),
+            new MediaSearchHit("a", "v", 0, 2, 0.2, 0.2),
+            new MediaSearchHit("b", "v", 2, 4, 0.9, 0.9),
         ]).Score.Should().Be(0.9);
     }
 
@@ -321,10 +321,10 @@ public sealed class Phase4VisionTests : IDisposable
         var index = new FakeMediaVectorIndex
         {
             OnSearch = request => request.CollectionName == MediaCollections.Image
-                ? [new MediaSearchHit("id", "C:\\G\\photo.jpg", 0, 0, 0.8)]
+                ? [new MediaSearchHit("id", "C:\\G\\photo.jpg", 0, 0, 0.8, 0.8)]
                 : [],
         };
-        var service = new PictureSearchService(encoder, index, new FakeEncoderFileHash());
+        var service = new PictureSearchService(encoder, index, new FakeEncoderFileHash(), new FakeIngestCursorStore());
         var grants = new[] { new ScopeFolderGrant("C:\\G", "G", GrantFileKinds.Image) };
         var hits = await service.FindAsync(new byte[] { 1, 2 }, grants, TestContext.Current.CancellationToken);
         encoder.Calls.Should().Be(1);
@@ -361,11 +361,11 @@ public sealed class Phase4VisionTests : IDisposable
                 request.TopK.Should().Be(RecallIndexCaps.RawListCap);
                 return
                 [
-                    new MediaSearchHit("inside", "G/inside.jpg", 0, 0, 0.8),
+                    new MediaSearchHit("inside", "G/inside.jpg", 0, 0, 0.8, 0.8),
                 ];
             },
         };
-        var service = new PictureSearchService(encoder, index, new FakeEncoderFileHash { TextHash = "h" });
+        var service = new PictureSearchService(encoder, index, new FakeEncoderFileHash { TextHash = "h" }, new FakeIngestCursorStore());
         var grants = new[]
         {
             new ScopeFolderGrant("G", "G", GrantFileKinds.Image),
@@ -380,7 +380,7 @@ public sealed class Phase4VisionTests : IDisposable
     {
         var encoder = new FakeVisionEmbeddingEncoder();
         var index = new FakeMediaVectorIndex();
-        var service = new PictureSearchService(encoder, index, new FakeEncoderFileHash());
+        var service = new PictureSearchService(encoder, index, new FakeEncoderFileHash(), new FakeIngestCursorStore());
         (await service.FindAsync(new byte[] { 1 }, [], TestContext.Current.CancellationToken)).Should().BeEmpty();
         index.Requests.Should().BeEmpty();
         encoder.Calls.Should().Be(0);

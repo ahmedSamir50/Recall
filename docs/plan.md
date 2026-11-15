@@ -257,9 +257,21 @@ Rules for every task:
 
 ---
 
+## Repair Addendum — Last-run repairs — `done`
+
+This addendum lands after the Launch Addendum. It does not rewrite Phase 1–7 task sentences or move their statuses. It records ingest retry, GPU cooldown, search-screen repair, and hit-identity repair from one execution manifest.
+
+### Epic R — Last-run repairs — `done`
+
+- **R.1** — `done` — Phase A ingest. Unfinished rows retry on a fifteen-second clock that reads cursor rows only. Preferences sets the wait (default 5 minutes, range 1–60). A GPU reading above 80 °C pauses the current file without unloading the text encoder. The strip and `/activity` record last success, last stop, and reason keys. Done when `LastRunRepairTests` pass for cursor policy, leftover policy, GPU cooldown, retry clock, and retry preference.
+- **R.2** — `done` — Phase B search screen. Picture and audio picks start find immediately, time out at 45 seconds, group results on Home with `GroupCap` 20 per modality, and open View or Play in `ResultModal` instead of `MediaPreviewPage`. Done when `LastRunRepairTests` pass for UI source locks, `SearchGroups`, `MatchStrength`, and `ResultActionPolicy`.
+- **R.3** — `done` — Phase C hit identity. Text find returns media word hits in a separate capped bucket, highlights BM25 tokens, and picture find promotes the exact ingested jpeg to rank one when the index missed it. Done when `LastRunRepairTests` pass for `PictureExactFile.Promote`, `Bm25Highlight`, `TextFindSession.Build`, and related search tests.
+
+---
+
 ## Progress
 
-Counted 27 Oct 2026. This is the only progress table.
+Counted 15 Nov 2026. This is the only progress table.
 
 | | Status | Percent |
 |---|---|---|
@@ -383,11 +395,15 @@ Counted 27 Oct 2026. This is the only progress table.
 | P.3.3 | `done` | 100 |
 | **Epic P.4 — Trust** | `done` | 100 |
 | P.4.1 | `done` | 100 |
-| **All epics** | `partial` | 83 |
+| **Repair Addendum — Last-run repairs** | `done` | 100 |
+| R.1 — Phase A ingest | `done` | 100 |
+| R.2 — Phase B search screen | `done` | 100 |
+| R.3 — Phase C hit identity | `done` | 100 |
+| **All epics** | `partial` | 85 |
 
 ## Behavior matrix
 
-Find after the operation. One card per live path. At most 20 files (`RecallIndexCaps.FileCap`). A shared id stays visible while any path is live. A text query lists dense text hits first, then appends transcript-word hits from `items_audio` and `items_video`, then `Take(20)`, so a mixed grant can show only text cards when text already fills the cap. Deleting an audio or video file retires its `ingest_chunk` rows and sets `path_live` to 0 on the vector rows.
+Find after the operation. One card per live path. Home shows at most 20 cards per modality group (`RecallIndexCaps.GroupCap`). A shared id stays visible while any path is live. A text query lists dense text hits and, in separate capped buckets, BM25 word hits on picture and video rows plus transcript-word hits from `items_audio` and `items_video`, so a full text list no longer hides a matching image. Deleting an audio or video file retires its `ingest_chunk` rows and sets `path_live` to 0 on the vector rows.
 
 | | Create | Edit | Shrink | Delete | Rename | Age | Pin | Repair |
 |---|---|---|---|---|---|---|---|---|
@@ -396,7 +412,7 @@ Find after the operation. One card per live path. At most 20 files (`RecallIndex
 | Video | Frames at 768. One card, the highest RRF score. Seek is that frame’s start. | Same width rule as a picture. Dropped frame ids follow the shared-path delete rule. | Fewer frames follow edit. | Frames stay. The path is hidden. | Alias only. | All frames of the file move together. Each frame’s aliases move to its short id before the long row is deleted. The recall gate has no corpus in production, so frames stay long until one ships. | All frames stay long while pinned. Unpin of an old file moves them together when the gate passes. | One repair per frame id. |
 | Audio | Windows at 768. One card, the highest RRF score. Seek is that window’s start. | Same width rule. A short tail extends the last window. | Fewer windows follow edit. | Chunk rows retire through the alias path and `path_live` goes to 0. The path is hidden. | Alias only. | All windows move together. Each window’s aliases move to its short id before the long row is deleted. The recall gate has no corpus in production, so windows stay long until one ships. | Same as video. | One repair per window id. |
 
-A text query does not dense-search picture, video, or audio. Transcript words on `items_audio` and `items_video` append after the text hits, then the combined list is cut at `RecallIndexCaps.FileCap` (20). Text hits already in the list are not duplicated. A wordless picture is absent from that query. A picture query stays in picture and video. An audio query stays in audio. One card keeps the highest RRF score. A tie keeps the earlier ordinal or start. Two paths with the same bytes are two cards, in ordinal path order. A digits-only non-code span is in the BM25 list and not in HNSW. `Bm25OnlyRank.Merge` appends those hits after the ZVec BM25 ranks. A code file stays dense. A skipped dataset folder has no hit. Phase 4 is partial: vision, pictures, video frames, and the OCR file pins are in code; `ocr_page` and pass 3 use `OcrPassStub` only. Real ONNX OCR is Epic 6.3. Find reconciles at most 64 pending ids.
+A text query does not dense-search picture, video, or audio. BM25 words on picture and video rows and transcript words on `items_audio` and `items_video` return in separate buckets capped at `RecallIndexCaps.GroupCap` (20) each. Text hits already in the list are not duplicated. A wordless picture is absent from that query unless OCR words on the row match. A picture query stays in picture and video; `PictureExactFile.Promote` places a finished ingested image whose bytes match the query JPEG at rank one when the dense list omitted it. An audio query stays in audio. One card keeps the highest RRF score. A tie keeps the earlier ordinal or start. Two paths with the same bytes are two cards, in ordinal path order. A digits-only non-code span is in the BM25 list and not in HNSW. `Bm25OnlyRank.Merge` appends those hits after the ZVec BM25 ranks. A code file stays dense. A skipped dataset folder has no hit. Phase 4 is partial: vision, pictures, video frames, and the OCR file pins are in code; `ocr_page` and pass 3 use `OcrPassStub` only. Real ONNX OCR is Epic 6.3. Find reconciles at most 64 pending ids.
 
 # Version 1.5
 

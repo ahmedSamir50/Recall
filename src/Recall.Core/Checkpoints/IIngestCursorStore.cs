@@ -70,6 +70,16 @@ public interface IIngestCursorStore
 
     void MarkStopped(string path, string statusKey);
 
+    void FinishExisting(string path);
+
+    void AppendLog(IngestLogEntry entry);
+
+    IReadOnlyList<IngestLogEntry> ListLog();
+
+    IngestLastRun ReadLastRun();
+
+    void WriteLastRun(IngestLastRun run);
+
     void ReplaceDocumentPatches(string path, IReadOnlyList<ChunkWrite> patches);
 
     void ReplaceOcrPages(string path, IReadOnlyList<int> pageNumbers);

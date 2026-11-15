@@ -67,7 +67,11 @@ public static class AgeRrf
             .OrderByDescending(entry => entry.Score)
             .ThenBy(entry => entry.Hit.StartSeconds)
             .ThenBy(entry => entry.Hit.SourcePath, StringComparer.OrdinalIgnoreCase)
-            .Select(entry => entry.Hit with { Score = entry.Score })
+            .Select(entry => entry.Hit with
+            {
+                Score = entry.Score,
+                Similarity = entry.Hit.Similarity,
+            })
             .ToList();
     }
 

@@ -56,18 +56,30 @@ In order: flush the pending chunk batch, drop the document string, the token end
 
 The text encoder stays resident. Unloading it to make a working-set number look better costs more than the cooldown saves, and canon forbids it.
 
+## GPU cooldown
+
+A GPU reading above 80 °C pauses the file in progress. No reading means no thermal pause. The text encoder is not unloaded.
+
+## Unfinished rows and retry
+
+Unfinished rows retry after the preference (`Retry after`, default 5 minutes). If the wait ends and the gate is closed, the GPU is still hot, or the text model is not Ready, the clock waits the same number of minutes again and does not start. The retry tick reads unfinished cursor rows only; it does not scan the disk.
+
 ## Stops a file can carry
 
 | Key | Meaning |
 |---|---|
-| `Ingest_StoppedMemoryBudget` | the gate closed mid-file; the file stays `Reading` and resumes |
+| `Ingest_StoppedMemoryBudget` | the gate closed mid-file; the file is `Paused` and resumes |
+| `Ingest_StoppedGpuTemperature` | the GPU went over 80 °C |
+| `Ingest_StoppedSearch` | a search preempted ingest |
+| `Ingest_StoppedInterrupted` | the pass ended before the file finished |
 | `Ingest_SkippedTooLarge` | the file is above the read cap (32 MiB of text) or above the headroom |
 | `Ingest_DeviceTooSmall` | the device is below minimum; nothing was processed |
 
-A memory stop leaves the stored chunks live, so the next pass skips them instead of embedding again. A cap stop is not shown to the user: the file finishes and its first part is searchable, and the note would repeat on every attempt with nothing the person could do about it.
+A memory or GPU stop leaves the stored chunks live, so the next pass skips them instead of embedding again. A cap stop is not shown to the user: the file finishes and its first part is searchable, and the note would repeat on every attempt with nothing the person could do about it.
 
 ## Related
 
 - [File size cap](file-size-cap.md) for the per-document stop.
 - [Performance](../performance.md) for the measured probes.
 - [ADR 0016](../adr/0016-ingest-memory-ceiling.md) for the decision and its limits.
+- [ADR 0019](../adr/0019-retry-and-gpu-cooldown.md) for the retry clock and the 80 °C GPU pause.

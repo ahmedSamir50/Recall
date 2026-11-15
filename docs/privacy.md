@@ -12,4 +12,4 @@ Forbidden: cloud embedder, hosted vector database, accounts, telemetry SDK, cras
 
 U3: goal is zero telemetry; an opt-in reporter is unresolved; v1 does not add one.
 
-The macOS workflow does not upload a weight file and does not add a secret. Task 7.2.2 still does not close U3. Task 7.2.2 locks the absence of a crash package. The egress probe reads a local file and is not a second network path. The 60-minute device log is not in the tree.
+The macOS workflow does not upload a weight file and does not add a secret. Task 7.2.2 still does not close U3. Task 7.2.2 locks the absence of a crash package. The egress probe reads a local file and is not a second network path. The 60-minute device log is not in the tree. The activity screen lists local ingest reason keys and file names only; it does not open a socket and does not send paths off the device. The in-app View and Play modal streams media through the local `recall-file` WebView scheme only when the path is inside a current grant; it does not open a socket and does not send paths off the device.

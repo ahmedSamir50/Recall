@@ -2,11 +2,11 @@ Status: in-code
 
 ## In words
 
-Preferences remembers choices that are not themselves the index. The age cutoff is 2, 5, or 7 years and starts at 2. Storing that number runs `AgeMoveService.Sweep` but does not cut a vector while the recall gate has no corpus. The extra skip names the person adds are also a preference. Built-in skips stay even if this list is empty.
+Preferences remembers choices that are not themselves the index. Ingest retry minutes are 1 through 60, starting at 5. The age cutoff is 2, 5, or 7 years and starts at 2. Storing that number runs `AgeMoveService.Sweep` but does not cut a vector while the recall gate has no corpus. The extra skip names the person adds are also a preference. Built-in skips stay even if this list is empty.
 
 ## Owns
 
-Preferences owns the age cutoff of 2, 5, or 7 years. Type: `AgeCutoffPreferenceService`. Store key `recall.preferences.ageCutoff`. `AgeCutoffActions.Set` couples the store to `AgeMoveService`. Preferences also owns `UserSkipService`.
+Preferences owns the age cutoff of 2, 5, or 7 years. Type: `AgeCutoffPreferenceService`. Store key `recall.preferences.ageCutoff`. `AgeCutoffActions.Set` couples the store to `AgeMoveService`. Preferences also owns `UserSkipService`. Ingest retry minutes use `RetryDelayPreferenceService` and store key `recall.preferences.retryMinutes`.
 
 ## Does not own
 

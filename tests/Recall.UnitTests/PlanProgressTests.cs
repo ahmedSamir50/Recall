@@ -86,6 +86,20 @@ public sealed class PlanProgressTests
     }
 
     [Fact]
+    public void Plan_ExplodingDocument_StaysUnder64Mb()
+    {
+        var document = string.Join(". ", Enumerable.Range(0, 600).Select(i => "Sentence " + i + " " + new string('z', 2200))) + ".";
+        var before = GC.GetTotalAllocatedBytes(precise: true);
+
+        var plan = Plan(document);
+
+        var allocated = GC.GetTotalAllocatedBytes(precise: true) - before;
+        plan.Patches.Should().HaveCount(512);
+        plan.Truncated.Should().BeTrue();
+        allocated.Should().BeLessThan(64L * 1024 * 1024);
+    }
+
+    [Fact]
     public void Plan_EmptyTokenEnds_ReturnsOnePatch()
     {
         var plan = DocumentPatchPlanner.Plan("Notes", "Hello world.", null, 0, []);

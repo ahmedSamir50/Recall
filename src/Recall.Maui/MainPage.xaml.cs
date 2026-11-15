@@ -1,9 +1,12 @@
 ﻿using Recall.Core.Ports;
+using Recall.Maui.Platform.Files;
 
 namespace Recall.Maui;
 
 public partial class MainPage : ContentPage
 {
+    private bool schemeRegistered;
+
 	public MainPage()
 	{
 		InitializeComponent();
@@ -17,6 +20,12 @@ public partial class MainPage : ContentPage
 			return;
 		}
 
-		Handler.MauiContext?.Services.GetService<IGrantedFolderAccessService>()?.RestorePersistedAccess();
+        var services = Handler.MauiContext?.Services;
+		services?.GetService<IGrantedFolderAccessService>()?.RestorePersistedAccess();
+        if (!schemeRegistered && services is not null)
+        {
+            schemeRegistered = true;
+            GrantFileSchemeRegistration.Register(services, blazorWebView);
+        }
 	}
 }

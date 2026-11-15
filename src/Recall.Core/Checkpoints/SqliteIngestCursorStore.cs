@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Data.Sqlite;
 using Recall.Core.Indexing;
 using Recall.Core.Ingest;
@@ -181,10 +182,11 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
         EnsureReady(connection, transaction);
         using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = "SELECT path FROM ingest_file WHERE grant_path = @grant AND state IN (@reading, @missing)";
+        command.CommandText = "SELECT path FROM ingest_file WHERE grant_path = @grant AND state IN (@reading, @missing, @paused)";
         command.Parameters.AddWithValue("@grant", grantPath);
         command.Parameters.AddWithValue("@reading", (int)IngestCursorState.Reading);
         command.Parameters.AddWithValue("@missing", (int)IngestCursorState.Missing);
+        command.Parameters.AddWithValue("@paused", (int)IngestCursorState.Paused);
         var paths = new List<string>();
         using var reader = command.ExecuteReader();
         while (reader.Read())
@@ -908,11 +910,20 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
             EnsureReady(connection, transaction);
             using var command = connection.CreateCommand();
             command.Transaction = transaction;
-            command.CommandText = "UPDATE ingest_file SET state = @state, missing_status_key = @statusKey WHERE path = @path";
-            command.Parameters.AddWithValue("@state", (int)IngestCursorState.Reading);
+            command.CommandText = """
+                UPDATE ingest_file
+                SET state = @state, missing_status_key = @statusKey, auto_failure_count = auto_failure_count + 1
+                WHERE path = @path AND state <> @finished
+                """;
+            command.Parameters.AddWithValue("@state", (int)IngestCursorState.Paused);
             command.Parameters.AddWithValue("@statusKey", statusKey);
             command.Parameters.AddWithValue("@path", path);
+            command.Parameters.AddWithValue("@finished", (int)IngestCursorState.Finished);
             command.ExecuteNonQuery();
+            AppendLogInTransaction(
+                connection,
+                transaction,
+                new IngestLogEntry(DateTimeOffset.UtcNow, statusKey, Path.GetFileName(path)));
             transaction.Commit();
         }
         catch
@@ -920,6 +931,125 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
             transaction.Rollback();
             throw;
         }
+    }
+
+    public void FinishExisting(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            throw new ArgumentException("Path must not be blank.", nameof(path));
+        }
+
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        try
+        {
+            EnsureReady(connection, transaction);
+            var row = ReadFileRow(connection, transaction, path);
+            if (row is null)
+            {
+                throw new InvalidOperationException("The path has no ingest row.");
+            }
+
+            if (!PathHasLiveChunk(connection, transaction, path))
+            {
+                throw new InvalidOperationException("The path has no live chunk.");
+            }
+
+            UpsertFinishedFile(connection, transaction, path, row.ContentHash, row.GrantPath, row.EncoderHash);
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+    public void AppendLog(IngestLogEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        ArgumentException.ThrowIfNullOrWhiteSpace(entry.ReasonKey);
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureReady(connection, transaction);
+        AppendLogInTransaction(connection, transaction, entry);
+        transaction.Commit();
+    }
+
+    public IReadOnlyList<IngestLogEntry> ListLog()
+    {
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureReady(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT at_utc, reason_key, file_name FROM ingest_log ORDER BY id DESC LIMIT 200";
+        var list = new List<IngestLogEntry>();
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var at = DateTimeOffset.Parse(reader.GetString(0), CultureInfo.InvariantCulture);
+            list.Add(new IngestLogEntry(at, reader.GetString(1), reader.GetString(2)));
+        }
+
+        transaction.Commit();
+        return list;
+    }
+
+    public IngestLastRun ReadLastRun()
+    {
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureReady(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            SELECT last_completed_utc, last_stopped_path, last_stopped_reason_key, next_retry_utc
+            FROM ingest_last_run WHERE id = 1
+            """;
+        using var reader = command.ExecuteReader();
+        if (!reader.Read())
+        {
+            transaction.Commit();
+            return new IngestLastRun(null, string.Empty, string.Empty, null);
+        }
+
+        var lastCompleted = reader.IsDBNull(0)
+            ? (DateTimeOffset?)null
+            : DateTimeOffset.Parse(reader.GetString(0), CultureInfo.InvariantCulture);
+        var lastStoppedPath = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+        var lastStoppedReason = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
+        var nextRetry = reader.IsDBNull(3)
+            ? (DateTimeOffset?)null
+            : DateTimeOffset.Parse(reader.GetString(3), CultureInfo.InvariantCulture);
+        transaction.Commit();
+        return new IngestLastRun(lastCompleted, lastStoppedPath, lastStoppedReason, nextRetry);
+    }
+
+    public void WriteLastRun(IngestLastRun run)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        using var connection = Open();
+        using var transaction = connection.BeginTransaction();
+        EnsureReady(connection, transaction);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            INSERT INTO ingest_last_run(id, last_completed_utc, last_stopped_path, last_stopped_reason_key, next_retry_utc)
+            VALUES(1, @completed, @stoppedPath, @stoppedReason, @nextRetry)
+            ON CONFLICT(id) DO UPDATE SET
+                last_completed_utc = @completed,
+                last_stopped_path = @stoppedPath,
+                last_stopped_reason_key = @stoppedReason,
+                next_retry_utc = @nextRetry
+            """;
+        command.Parameters.AddWithValue("@completed", run.LastCompletedUtc?.UtcDateTime.ToString("O", CultureInfo.InvariantCulture) ?? (object)DBNull.Value);
+        command.Parameters.AddWithValue("@stoppedPath", run.LastStoppedPath);
+        command.Parameters.AddWithValue("@stoppedReason", run.LastStoppedReasonKey);
+        command.Parameters.AddWithValue("@nextRetry", run.NextRetryUtc?.UtcDateTime.ToString("O", CultureInfo.InvariantCulture) ?? (object)DBNull.Value);
+        command.ExecuteNonQuery();
+        transaction.Commit();
     }
 
     public void RetirePath(string path)
@@ -1370,6 +1500,35 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
         writeLock.Release();
     }
 
+    private static void AppendLogInTransaction(SqliteConnection connection, SqliteTransaction transaction, IngestLogEntry entry)
+    {
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "INSERT INTO ingest_log(at_utc, reason_key, file_name) VALUES(@at, @reason, @name)";
+        command.Parameters.AddWithValue("@at", entry.At.UtcDateTime.ToString("O", CultureInfo.InvariantCulture));
+        command.Parameters.AddWithValue("@reason", entry.ReasonKey);
+        command.Parameters.AddWithValue("@name", entry.FileName);
+        command.ExecuteNonQuery();
+        using var trim = connection.CreateCommand();
+        trim.Transaction = transaction;
+        trim.CommandText = """
+            DELETE FROM ingest_log WHERE id NOT IN (
+                SELECT id FROM ingest_log ORDER BY id DESC LIMIT 200
+            )
+            """;
+        trim.ExecuteNonQuery();
+    }
+
+    private static IngestFileRow? ReadFileRow(SqliteConnection connection, SqliteTransaction transaction, string path)
+    {
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT path, content_hash, state, grant_path, encoder_hash, missing_status_key FROM ingest_file WHERE path = @path";
+        command.Parameters.AddWithValue("@path", path);
+        using var reader = command.ExecuteReader();
+        return reader.Read() ? ReadFileRow(reader) : null;
+    }
+
     private static IngestFileRow ReadFileRow(SqliteDataReader reader)
     {
         var encoder = reader.FieldCount > 4 && !reader.IsDBNull(4) ? reader.GetString(4) : string.Empty;
@@ -1381,6 +1540,21 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
             reader.GetString(3),
             encoder,
             statusKey);
+    }
+
+    private static bool PathHasLiveChunk(SqliteConnection connection, SqliteTransaction transaction, string path)
+    {
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            SELECT 1 FROM ingest_chunk WHERE path = @path AND missing = 0 AND retired = 0
+            UNION ALL
+            SELECT 1 FROM ingest_chunk_path WHERE path = @path AND missing = 0 AND retired = 0
+            LIMIT 1
+            """;
+        command.Parameters.AddWithValue("@path", path);
+        using var reader = command.ExecuteReader();
+        return reader.Read();
     }
 
     private static IngestChunkRow ReadChunkRow(SqliteDataReader reader) =>
@@ -1607,6 +1781,28 @@ public sealed class SqliteIngestCursorStore : IIngestCursorStore
             alter.Transaction = transaction;
             alter.CommandText = "ALTER TABLE ingest_file ADD COLUMN missing_status_key TEXT NOT NULL DEFAULT ''";
             alter.ExecuteNonQuery();
+        }
+
+        if (!HasColumn(connection, transaction, "PRAGMA table_info(ingest_file)", "auto_failure_count"))
+        {
+            using var alter = connection.CreateCommand();
+            alter.Transaction = transaction;
+            alter.CommandText = "ALTER TABLE ingest_file ADD COLUMN auto_failure_count INTEGER NOT NULL DEFAULT 0";
+            alter.ExecuteNonQuery();
+        }
+
+        using (var ingestLog = connection.CreateCommand())
+        {
+            ingestLog.Transaction = transaction;
+            ingestLog.CommandText = "CREATE TABLE IF NOT EXISTS ingest_log(id INTEGER PRIMARY KEY AUTOINCREMENT, at_utc TEXT NOT NULL, reason_key TEXT NOT NULL, file_name TEXT NOT NULL)";
+            ingestLog.ExecuteNonQuery();
+        }
+
+        using (var lastRun = connection.CreateCommand())
+        {
+            lastRun.Transaction = transaction;
+            lastRun.CommandText = "CREATE TABLE IF NOT EXISTS ingest_last_run(id INTEGER PRIMARY KEY, last_completed_utc TEXT, last_stopped_path TEXT, last_stopped_reason_key TEXT, next_retry_utc TEXT)";
+            lastRun.ExecuteNonQuery();
         }
 
         EnsureChunkSpanColumns(connection, transaction);

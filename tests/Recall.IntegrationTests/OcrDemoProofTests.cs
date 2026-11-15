@@ -185,7 +185,7 @@ public sealed class OcrDemoProofTests
                 var terms = KeywordFold.Tokens(KeywordFold.Fold(q));
                 if (terms.Any(t => stored.Contains(t, StringComparer.OrdinalIgnoreCase)))
                 {
-                    return [new MediaSearchHit("probe", path, 0, 0, 1)];
+                    return [new MediaSearchHit("probe", path, 0, 0, 1, 1)];
                 }
 
                 return [];

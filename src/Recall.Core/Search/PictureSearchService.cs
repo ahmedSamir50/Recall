@@ -1,6 +1,9 @@
+using Recall.Core.Checkpoints;
 using Recall.Core.Indexing;
+using Recall.Core.Ingest;
 using Recall.Core.Ports;
 using Recall.Core.Scope;
+using Recall.Core.Text;
 using Recall.Core.Vectors;
 
 namespace Recall.Core.Search;
@@ -10,15 +13,18 @@ public sealed class PictureSearchService : IPictureSearchService
     private readonly IVisionEmbeddingEncoder encoder;
     private readonly IMediaVectorIndex index;
     private readonly IEncoderFileHash encoderHash;
+    private readonly IIngestCursorStore cursors;
 
     public PictureSearchService(
         IVisionEmbeddingEncoder encoder,
         IMediaVectorIndex index,
-        IEncoderFileHash encoderHash)
+        IEncoderFileHash encoderHash,
+        IIngestCursorStore cursors)
     {
         this.encoder = encoder;
         this.index = index;
         this.encoderHash = encoderHash;
+        this.cursors = cursors;
     }
 
     public Task<IReadOnlyList<MediaSearchHit>> FindAsync(
@@ -57,7 +63,33 @@ public sealed class PictureSearchService : IPictureSearchService
             lists.Add(CollapseCollection(hits));
         }
 
-        return Task.FromResult<IReadOnlyList<MediaSearchHit>>(AgeRrf.Fuse(lists).Take(RecallIndexCaps.FileCap).ToList());
+        var fused = AgeRrf.Fuse(lists);
+        var queryHash = ContentIdBuilder.HashBytes(jpeg.Span);
+        var finishedRows = ListFinishedImageRows(grants);
+        var promoted = PictureExactFile.Promote(fused, queryHash, finishedRows);
+        return Task.FromResult<IReadOnlyList<MediaSearchHit>>(promoted.Take(RecallIndexCaps.FileCap).ToList());
+    }
+
+    private IReadOnlyList<IngestFileRow> ListFinishedImageRows(IReadOnlyList<ScopeFolderGrant> grants)
+    {
+        var rows = new List<IngestFileRow>();
+        foreach (var grant in grants)
+        {
+            if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Image))
+            {
+                continue;
+            }
+
+            foreach (var row in cursors.ListFiles(grant.Path))
+            {
+                if (row.State == IngestCursorState.Finished && MediaFileKinds.IsImage(row.Path))
+                {
+                    rows.Add(row);
+                }
+            }
+        }
+
+        return rows;
     }
 
     private static IReadOnlyList<MediaSearchHit> CollapseCollection(IReadOnlyList<MediaSearchHit> hits) =>

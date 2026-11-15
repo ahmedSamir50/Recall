@@ -2,8 +2,9 @@
 @page "/"
 @inherits RecallComponentBase
 @using Microsoft.AspNetCore.Components.Forms
-@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Recall.Core.Search
 @using Recall.Core.Scope
+@using Recall.UI.Components.Find
 
 <div class="px-3 md:px-6 pt-4 md:pt-6 max-w-1500 mx-auto">
     <div class="g3 rounded-2xl p-2 flex flex-wrap sm:flex-nowrap items-center gap-2 mb-6">
@@ -32,50 +33,29 @@
                     </label>
                 </span>
             }
-            @if (!string.IsNullOrWhiteSpace(pickedFileName))
+            @if (pickedPicture is not null)
             {
-                <span class="text-13 ink2 flex items-center gap-1 min-w-0 max-w-full">
-                    <span class="truncate max-w-[12rem]">@pickedFileName</span>
-                    <button type="button" class="btn-icon shrink-0" aria-label="@T("Search_ClearFile")" @onclick="ClearPickedFileAsync">×</button>
+                <span class="flex items-center gap-2 shrink-0">
+                    <img class="h-10 w-10 rounded-lg object-cover border border-[var(--c3)]" alt="" src="@LensDataUri" />
+                    <button type="button" class="btn-icon shrink-0" aria-label="@T("Search_ClearFile")" @onclick="ClearPictureAsync">×</button>
                 </span>
             }
-            @if (pictureKey is not null)
+            @if (pickedAudioName is not null)
             {
-                <div class="ink2 text-13 basis-full">@T(pictureKey)</div>
-            }
-            @if (audioKey is not null)
-            {
-                <div class="ink2 text-13 basis-full">@T(audioKey)</div>
+                <span class="text-13 ink2 flex items-center gap-1 min-w-0 max-w-full">
+                    <span class="truncate max-w-[12rem]">@pickedAudioName</span>
+                    <button type="button" class="btn-icon shrink-0" aria-label="@T("Search_ClearFile")" @onclick="ClearAudioAsync">×</button>
+                </span>
             }
         </div>
     </div>
-    @if (ShowPictureControl && pictureHits.Count > 0)
+
+    @if (ShowStatusLine && StatusLineKey is not null)
     {
-        @foreach (var hit in pictureHits)
-        {
-            <div class="flex items-center gap-2 mt-2 max-w-640 mx-auto mb-2">
-                <span class="ltr flex-1 min-w-0 truncate"><bdi class="ltr">@hit.SourcePath</bdi></span>
-                <span class="ink2 text-13"><bdi class="ltr">@FormatSeconds(hit.StartSeconds)–@FormatSeconds(hit.EndSeconds)</bdi></span>
-                <button type="button" class="btn btn-g" @onclick="() => OpenHitAsync(hit)">@T("Home_OpenFile")</button>
-            </div>
-        }
+        <p class="ink2 text-15 text-center mb-4">@T(StatusLineKey)</p>
     }
-    @if (ShowAudioControl)
-    {
-        @if (AudioOff.Shown)
-        {
-            <p class="ink2 text-13 mt-2 max-w-640 mx-auto mb-2">@T("Search_AudioOff")</p>
-        }
-        @foreach (var hit in audioHits)
-        {
-            <div class="flex items-center gap-2 mt-2 max-w-640 mx-auto mb-2">
-                <span class="ltr flex-1 min-w-0 truncate"><bdi class="ltr">@hit.SourcePath</bdi></span>
-                <span class="ink2 text-13"><bdi class="ltr">@FormatSeconds(hit.StartSeconds)–@FormatSeconds(hit.EndSeconds)</bdi></span>
-                <button type="button" class="btn btn-g" @onclick="() => OpenHitAsync(hit)">@T("Home_OpenFile")</button>
-            </div>
-        }
-    }
-    @if (!TextFindSession.ShouldQuery(query) || !hasSearched)
+
+    @if (ShowEmptyPrompt)
     {
         <section class="g2 rounded-2xl p-8 md:p-12 text-center rise max-w-640 mx-auto">
             <RecallIcon Name="search" Css="w-10 h-10 mx-auto mb-4 cy" />
@@ -87,20 +67,19 @@
     {
         @if (faultKey is not null)
         {
-            <section class="g2 rounded-2xl p-8 md:p-12 text-center rise max-w-640 mx-auto">
+            <section class="g2 rounded-2xl p-8 md:p-12 text-center rise max-w-640 mx-auto mb-4">
                 <p class="ink2 text-15">@T(faultKey)</p>
             </section>
         }
-        else if (!view.HasHits)
+
+        @if (AudioOff.Shown && ShowAudioControl)
         {
-            <section class="g2 rounded-2xl p-8 md:p-12 text-center rise max-w-640 mx-auto">
-                <h1 class="f-head font-semibold text-22 mb-2">@T("Search_NoHitsTitle")</h1>
-                <p class="ink2 text-15">@T("Search_NoHitsLead")</p>
-            </section>
+            <p class="ink2 text-13 mb-4 max-w-1500">@T("Search_AudioOff")</p>
         }
-        else
+
+        @if (HasAnyResults)
         {
-            <section class="flex flex-col gap-2 max-w-640 mx-auto">
+            <section class="flex flex-col gap-6 max-w-1500 mx-auto">
                 @if (RemoteSkips.SkippedCount > 0)
                 {
                     <p class="ink2 text-13"><bdi class="ltr">@T("Search_SkipRemoteLine")</bdi></p>
@@ -109,62 +88,82 @@
                 {
                     <p class="ink2 text-13"><bdi class="ltr">@T("Search_SkipDatasetLine") @folder</bdi></p>
                 }
-                @foreach (var card in view.Immediate)
+
+                @foreach (var group in ResultGroups)
                 {
-                    <article class="g2 rounded-2xl p-4">
-                        <p class="lbl mb-1">@T(card.KindKey)</p>
-                        <h2 class="font-semibold text-16 mb-1">@card.FileName</h2>
-                        <p class="ink2 text-13 mb-1"><bdi class="ltr">@card.LocalTime</bdi></p>
-                        <p class="ink2 text-13 mb-2">@T(card.ReasonKey)</p>
-                        @if (!string.IsNullOrWhiteSpace(card.RawNote))
-                        {
-                            <p class="ink2 text-13 mb-2 max-h-[8rem] overflow-hidden">@card.RawNote</p>
-                        }
-                        @if (card.Unavailable)
-                        {
-                            <p class="font-medium text-14">@T("Home_UnavailTitle")</p>
-                            <p class="ink2 text-13">@T("Home_UnavailLead")</p>
-                        }
-                        else
-                        {
-                            <div class="flex flex-wrap gap-2">
-                                <button type="button" class="btn btn-g" @onclick="() => OpenAsync(card)">@T("Home_OpenFile")</button>
-                                @if (card.ShowPin)
-                                {
-                                    <button type="button" class="btn btn-g" @onclick="() => PinKeep(card)">@T("Pin_Keep")</button>
-                                }
-                            </div>
-                        }
-                    </article>
+                    <section>
+                        <h2 class="font-semibold text-16 mb-3">@T(group.GroupKey)</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            @foreach (var card in group.Cards)
+                            {
+                                var thumb = ThumbnailUrl(GrantUrls, card, Ui.Current.Grants);
+                                var textCard = IsTextGroupCard(card);
+                                var padClass = textCard ? "rounded-xl p-3" : "rounded-xl p-4";
+                                var titleClass = textCard ? "text-14" : "text-16";
+                                <article class="g2 @padClass relative"
+                                         @oncontextmenu="() => OpenMenu(card)"
+                                         @oncontextmenu:preventDefault="true"
+                                         @onpointerdown="() => OnCardPointerDown(card)"
+                                         @onpointerup="OnCardPointerUp"
+                                         @onpointercancel="OnCardPointerUp">
+                                    <button type="button" class="btn-icon absolute top-2 end-2 text-lg leading-none" aria-label="@T("Home_Inspector")" @onclick="() => OpenMenu(card)">⋯</button>
+                                    @if (thumb is not null)
+                                    {
+                                        <img class="w-full h-28 object-cover rounded-lg mb-2" alt="" src="@thumb" loading="lazy" />
+                                    }
+                                    <p class="lbl mb-1">@T(card.KindKey)</p>
+                                    <h3 class="font-semibold @titleClass mb-1 break-words">@card.FileName</h3>
+                                    @if (!string.IsNullOrEmpty(card.LocalTime))
+                                    {
+                                        <p class="ink2 text-13 mb-1"><span class="lbl">@T("Search_Modified")</span> <bdi class="ltr">@card.LocalTime</bdi></p>
+                                    }
+                                    @if (!string.IsNullOrEmpty(card.ReasonKey))
+                                    {
+                                        <p class="ink2 text-13 mb-1">@T(card.ReasonKey)</p>
+                                    }
+                                    @if (card.ShowMeaningHelp)
+                                    {
+                                        <p class="ink2 text-12 mb-1">@T("Search_Match_MeaningHelp")</p>
+                                    }
+                                    @if (card.MatchPercent is int pct)
+                                    {
+                                        <p class="ink2 text-13 mb-1"><span class="lbl">@T("Search_MatchStrength")</span> @pct%</p>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(card.RawNote))
+                                    {
+                                        <p class="ink2 text-13 mb-2 max-h-[8rem] overflow-hidden">@ExcerptMarkup(card)</p>
+                                    }
+                                    @if (card.Unavailable)
+                                    {
+                                        <p class="ink2 text-13 mb-1">@T("Home_UnavailLead")</p>
+                                        <p class="ink2 text-12 ltr truncate"><bdi class="ltr">@card.SourcePath</bdi></p>
+                                    }
+                                </article>
+                            }
+                        </div>
+                    </section>
                 }
-                <Virtualize Items="view.Deferred.ToList()" Context="card">
-                    <article class="g2 rounded-2xl p-4">
-                        <p class="lbl mb-1">@T(card.KindKey)</p>
-                        <h2 class="font-semibold text-16 mb-1">@card.FileName</h2>
-                        <p class="ink2 text-13 mb-1"><bdi class="ltr">@card.LocalTime</bdi></p>
-                        <p class="ink2 text-13 mb-2">@T(card.ReasonKey)</p>
-                        @if (!string.IsNullOrWhiteSpace(card.RawNote))
-                        {
-                            <p class="ink2 text-13 mb-2 max-h-[8rem] overflow-hidden">@card.RawNote</p>
-                        }
-                        @if (card.Unavailable)
-                        {
-                            <p class="font-medium text-14">@T("Home_UnavailTitle")</p>
-                            <p class="ink2 text-13">@T("Home_UnavailLead")</p>
-                        }
-                        else
-                        {
-                            <div class="flex flex-wrap gap-2">
-                                <button type="button" class="btn btn-g" @onclick="() => OpenAsync(card)">@T("Home_OpenFile")</button>
-                                @if (card.ShowPin)
-                                {
-                                    <button type="button" class="btn btn-g" @onclick="() => PinKeep(card)">@T("Pin_Keep")</button>
-                                }
-                            </div>
-                        }
-                    </article>
-                </Virtualize>
+            </section>
+        }
+        else if (!findWorking && faultKey is null && lensStatusKey is null && audioLensStatusKey is null)
+        {
+            <section class="g2 rounded-2xl p-8 md:p-12 text-center rise max-w-640 mx-auto">
+                <h1 class="f-head font-semibold text-22 mb-2">@T("Search_NoHitsTitle")</h1>
+                <p class="ink2 text-15">@T("Search_NoHitsLead")</p>
             </section>
         }
     }
 </div>
+
+@if (menuCard is not null)
+{
+    <ActionMenu
+        Card="menuCard"
+        OnOpen="OpenCardAsync"
+        OnReveal="RevealCardAsync"
+        OnViewPlay="ViewOrPlayAsync"
+        OnPin="PinKeep"
+        OnClose="CloseMenu" />
+}
+
+<ResultModal Visible="modalVisible" Card="modalCard" MediaUrl="@modalMediaUrl" OnClosed="CloseModalAsync" />

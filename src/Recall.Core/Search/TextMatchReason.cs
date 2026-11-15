@@ -5,4 +5,6 @@ public enum TextMatchReason
     DenseAndFullText = 0,
 
     FullText = 1,
+
+    WordsOnMedia = 2,
 }

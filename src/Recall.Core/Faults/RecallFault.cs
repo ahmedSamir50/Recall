@@ -20,4 +20,5 @@ public enum RecallFault
     AgeCutTextForbidden = 21,
     EgressProxyMissing = 22,
     EgressWatchIncomplete = 23,
+    RetryDelayNotAllowed = 24,
 }

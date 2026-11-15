@@ -247,8 +247,8 @@ public sealed class GrantedTextIngestService : IGrantedTextIngestService
     public GrantedTextIngestService(IScopeManagerService scope, IGrantedTextReader reader, TextIngestEngine engine)
     public async Task IngestGrantedTextAsync(CancellationToken cancellationToken = default)
             if (!grant.EnabledKinds.HasFlag(GrantFileKinds.Text) && !grant.EnabledKinds.HasFlag(GrantFileKinds.Code))
-        if (!ObserveGate())
-        if (!ObserveGate())
+        if (!ObserveGate(null))
+        if (!ObserveGate(document.Path))
         if (result.Stop == IngestStopReason.MemoryBudget)
         if (memory.Verdict == DeviceVerdict.BelowMinimum)
         if (!string.IsNullOrEmpty(row.MissingStatusKey))
@@ -261,7 +261,9 @@ if (grant is null)
 if (EncoderRepair.NeedsRepair(row?.EncoderHash, encoderHash))
 if (cursors.AnyOtherLivePath(chunk.ContentId, document.Path))
 if (index.TryDelete(chunk.ContentId))
-else if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
+if (decision == IngestCursorDecision.Skip)
+if (IngestCursorPolicy.Decide(row, contentHash, hasLiveChunks) == IngestCursorDecision.Skip)
+if (row is { State: IngestCursorState.Paused or IngestCursorState.Reading })
 if (cursors.AnyLivePath(retiredId))
 if (index.TryDelete(retiredId))
 if (!textOrCode && !media)
@@ -287,9 +289,15 @@ if (!MediaFileKinds.IsVideo(name))
 if (runAudio)
 if (!skippedModel && (runText || runImages || runVideos))
 if (result.ImageFastPathPages.Count > 0 && pageRenderer is not null)
-if (row.State != IngestCursorState.Reading)
+if (row.State is not (IngestCursorState.Reading or IngestCursorState.Paused))
 if (!IngestPathKind.TryGetKind(row.Path, out var pathKind) || pathKind != kind)
 if (HasCommittedPdfPages(row.Path))
+if (!ObserveGate(imagePath))
+if (!ObserveGate(mediaPath))
+if (!gate.IsOpen())
+if (GpuCooldownPolicy.Blocks(gpuTemperature.ReadCelsius()) && !string.IsNullOrEmpty(currentPath))
+if (state == IngestCursorState.Paused)
+if (!chunk.Missing && !chunk.Retired)
 if (!failedPaths.Contains(path, StringComparer.OrdinalIgnoreCase))
 if (!chunk.Missing && !chunk.Retired && chunk.PageEnd > 0)
 ```
@@ -662,6 +670,13 @@ if (hooks.OpenAudio is not null)
 catch (OperationCanceledException)
 if (audioOpen)
 if (!scheduler.TryDequeue(IngestModel.Ocr, out var job))
+if (text.Stop)
+if (media.Stop)
+if (ocr.Stop)
+if (!worked)
+if (BudgetSpent(pass))
+if (cancellationToken.IsCancellationRequested)
+if (!pass.MediaSwept)
 ```
 
 ```csharp
@@ -698,6 +713,7 @@ public const int MetricRingSize = 64;
 public void Record(IngestPassMetric metric)
 public IReadOnlyList<IngestPassMetric> Snapshot()
 public void Clear()
+if (count < MetricRingSize)
 ```
 
 The ring keeps the last 64 slices, oldest first. `IngestStatusService.Metrics` returns `Snapshot()`. The tests assert counts, never milliseconds.
@@ -1125,8 +1141,10 @@ public sealed class VisionFileIngest
 An image is embedded as one picture row after the image grant flag allows the file. Video frames are sampled every two seconds and stored after `FinishPath`. A missing sampler, a missing file, or a grant without the video flag writes no frame row.
 
 ```csharp
-if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
+if (IngestCursorPolicy.Decide(row, contentHash, hasLiveChunks) == IngestCursorDecision.Skip)
+if (row is { State: IngestCursorState.Paused or IngestCursorState.Reading })
 if (index.TryRead(existingId, out _))
+if (!chunk.Missing && !chunk.Retired)
 catch (Exception ex) when (ex is not OperationCanceledException)
 if (pageNumber < 1)
 if (image.IsEmpty)
@@ -1216,6 +1234,6 @@ namespace Recall.Core.Ingest;
 public static class IngestStopKeys
 ```
 
-`IngestStopKeys` is the single home of the three status keys a stopped file can carry. `MemoryBudget` marks a file that paused and can resume; it is a cursor marker, not a sentence. `FileTooLarge` describes a whole-file guard that refused to load bytes. `DeviceTooSmall` is the blocked state of a device whose floor is above half its capacity. The strings are resx names, so a sentence lives in `Strings.resx` and `Strings.ar.resx` and never in this class.
+`IngestStopKeys` is the single home of ingest stop status keys. `MemoryBudget`, `GpuTemperature`, `SearchCancel`, and `Interrupted` mark a file in `Paused` state that can resume. `RetryDeferred` is the retry clock waiting, not a file row. `FileTooLarge` describes a whole-file guard that refused to load bytes. `DeviceTooSmall` is the blocked state of a device whose floor is above half its capacity. The strings are resx names, so a sentence lives in `Strings.resx` and `Strings.ar.resx` and never in this class.
 
 

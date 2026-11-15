@@ -320,6 +320,7 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
                 ReadField(doc, SourcePathField),
                 ReadSeconds(doc, StartSecondsField),
                 ReadSeconds(doc, EndSecondsField),
+                doc.Score,
                 doc.Score));
         }
 
@@ -361,6 +362,7 @@ public sealed class ZVecMediaVectorIndex : IMediaVectorIndex, IDisposable
                 ReadField(doc, SourcePathField),
                 ReadSeconds(doc, StartSecondsField),
                 ReadSeconds(doc, EndSecondsField),
+                doc.Score,
                 doc.Score));
         }
 

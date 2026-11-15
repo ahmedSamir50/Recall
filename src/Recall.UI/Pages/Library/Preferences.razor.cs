@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Recall.Core.Age;
+using Recall.Core.Faults;
 using Recall.Core.Scope;
 using Recall.Core.Ports;
 using Recall.Core.Preferences;
@@ -24,7 +25,14 @@ public partial class Preferences
     [Inject]
     private UserSkipService SkipService { get; set; } = null!;
 
+    [Inject]
+    private RetryDelayPreferenceService RetryPreferences { get; set; } = null!;
+
     private AgeCutoffYears age;
+
+    private int retryMinutes;
+
+    private string? retryNotice;
 
     private UserSkipAdditions skips = UserSkipAdditions.Empty;
 
@@ -53,7 +61,21 @@ public partial class Preferences
     protected override void OnInitialized()
     {
         age = AgePreferences.Get();
+        retryMinutes = RetryPreferences.Get();
         skips = SkipService.Load();
+    }
+
+    private void SaveRetryMinutes()
+    {
+        retryNotice = null;
+        try
+        {
+            RetryPreferences.Set(retryMinutes);
+        }
+        catch (RecallFaultException ex) when (ex.Fault == RecallFault.RetryDelayNotAllowed)
+        {
+            retryNotice = "Preferences_RetryInvalid";
+        }
     }
 
     private void SetTheme(ThemePreference preference) => Ui.SetThemePreference(preference);
@@ -67,6 +89,14 @@ public partial class Preferences
     {
         Ui.SetLocale(locale);
         Ui.ApplyCulture();
+    }
+
+    private void OnRetryMinutesChanged(ChangeEventArgs args)
+    {
+        if (int.TryParse(args.Value?.ToString(), out var minutes))
+        {
+            retryMinutes = minutes;
+        }
     }
 
     private void SetAge(AgeCutoffYears years)

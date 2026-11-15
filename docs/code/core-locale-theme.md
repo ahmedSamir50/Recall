@@ -94,6 +94,7 @@ public interface IThemePreferenceStore
 public interface IUiLocaleStore
 public interface ISystemThemeProvider
 public interface IAgeCutoffPreferenceStore
+public interface IRetryDelayPreferenceStore
 public interface IUserSkipStore
 public enum RecallShellKind
 public interface IRecallShellKind

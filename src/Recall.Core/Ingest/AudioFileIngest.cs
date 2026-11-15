@@ -111,8 +111,14 @@ public sealed class AudioFileIngest : IAudioFileIngest
     {
         var contentHash = ContentIdBuilder.HashBytes(fileBytes);
         var row = cursors.GetFile(path);
-        if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
+        var hasLiveChunks = HasLiveChunks(path);
+        if (IngestCursorPolicy.Decide(row, contentHash, hasLiveChunks) == IngestCursorDecision.Skip)
         {
+            if (row is { State: IngestCursorState.Paused or IngestCursorState.Reading })
+            {
+                cursors.FinishExisting(path);
+            }
+
             return;
         }
 
@@ -253,5 +259,18 @@ public sealed class AudioFileIngest : IAudioFileIngest
 
         var length = (int)Math.Min(endSample, pcm.LongLength) - (int)startSample;
         return pcm.AsMemory((int)startSample, Math.Max(0, length));
+    }
+
+    private bool HasLiveChunks(string path)
+    {
+        foreach (var chunk in cursors.ListChunks(path))
+        {
+            if (!chunk.Missing && !chunk.Retired)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

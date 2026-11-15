@@ -29,6 +29,13 @@ public interface IAgeCutoffPreferenceStore
     void Set(AgeCutoffYears years);
 }
 
+public interface IRetryDelayPreferenceStore
+{
+    int Get();
+
+    void Set(int minutes);
+}
+
 public interface IUserSkipStore
 {
     UserSkipAdditions Load();

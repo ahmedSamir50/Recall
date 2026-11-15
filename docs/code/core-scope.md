@@ -301,13 +301,16 @@ public sealed record Bm25OnlyRow(string ContentId, string Path, string RawText);
 public sealed record ChunkWrite(string ContentId, int Ordinal, int PageStart = 0, int PageEnd = 0, int CharStart = 0, int CharEnd = 0);
 public sealed record IngestChunkRow(string ContentId, string Path, int Ordinal, bool Missing, bool Retired, int PageStart = 0, int PageEnd = 0, int CharStart = 0, int CharEnd = 0);
 public sealed record GrantScanRow(string GrantPath, IngestCursorState State);
+public sealed record IngestLogEntry(DateTimeOffset At, string ReasonKey, string FileName);
+public sealed record IngestLastRun(
 public static class IngestCursorPolicy
-public static IngestCursorDecision Decide(IngestFileRow? row, string contentHash)
+public static IngestCursorDecision Decide(IngestFileRow? row, string contentHash, bool hasLiveChunks)
     if (string.IsNullOrWhiteSpace(contentHash))
     if (row is null)
-    if (row.State == IngestCursorState.Reading)
-    if (row.State == IngestCursorState.Missing)
     if (row.State == IngestCursorState.Finished
+    if ((row.State is IngestCursorState.Paused or IngestCursorState.Reading)
+    if (row.State == IngestCursorState.Missing)
+    if (!string.Equals(row.ContentHash, contentHash, StringComparison.Ordinal))
 ``` 
 
 
@@ -365,6 +368,9 @@ public IReadOnlyList<int> ListOcrPages(string path)
         if (chunks.Count == 0)
         if (Volatile.Read(ref schemaReady) == 1)
         if (version >= CheckpointSql.SchemaVersion)
+if (row is null)
+if (!PathHasLiveChunk(connection, transaction, path))
+if (!HasColumn(connection, transaction, "PRAGMA table_info(ingest_file)", "auto_failure_count"))
 ``` 
 
 `ReplaceDocumentPatches` deletes the live `ingest_chunk` rows for one path and writes the given patch rows with their page and char spans. A blank path throws `ArgumentException` with message `Path must not be blank.`, and a null patch list throws `ArgumentNullException`. `ingest_chunk` gains `page_start`, `page_end`, `char_start`, and `char_end`, each `INTEGER NOT NULL DEFAULT 0`, added with `ALTER TABLE ingest_chunk ADD COLUMN IF NOT EXISTS`. A plain note stores 0 for both page columns. Shrink, alias, and delete keep using `ingest_chunk` only.

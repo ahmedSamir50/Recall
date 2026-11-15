@@ -1,0 +1,26 @@
+@page "/activity"
+@namespace Recall.UI.Pages
+@inherits RecallComponentBase
+@using Recall.Core.Checkpoints
+
+<div class="p-4 md:p-6 flex justify-center">
+    <div class="w-full max-w-640 min-w-0">
+        <h1 class="f-head font-semibold text-22 mb-6">@T("Nav_Activity")</h1>
+        @if (entries.Count == 0)
+        {
+            <p class="text-13 ink3">@T("Activity_Empty")</p>
+        }
+        else
+        {
+            <ul class="plain-list flex flex-col gap-2">
+                @foreach (var entry in entries)
+                {
+                    <li class="rounded-xl border bd p-3 text-13">
+                        <bdi class="ltr f-mono text-11 ink2 block mb-1">@FormatTime(entry.At)</bdi>
+                        <div class="break-all">@T(entry.ReasonKey) — <bdi class="ltr">@entry.FileName</bdi></div>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>

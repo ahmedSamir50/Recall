@@ -268,15 +268,15 @@ public sealed class Phase5AudioTests
     {
         var best = Collapse.EarliestStart(
         [
-            new("a", "talk.wav", 0, 11.2, 0.2),
-            new("b", "talk.wav", 5.6, 11.2, 0.9),
+            new MediaSearchHit("a", "talk.wav", 0, 11.2, 0.2, 0.2),
+            new MediaSearchHit("b", "talk.wav", 5.6, 11.2, 0.9, 0.9),
         ]);
         best.Score.Should().Be(0.9);
 
         var tie = Collapse.EarliestStart(
         [
-            new("a", "talk.wav", 4, 11.2, 0.5),
-            new("b", "talk.wav", 2, 11.2, 0.5),
+            new MediaSearchHit("a", "talk.wav", 4, 11.2, 0.5, 0.5),
+            new MediaSearchHit("b", "talk.wav", 2, 11.2, 0.5, 0.5),
         ]);
         tie.StartSeconds.Should().Be(2);
     }
@@ -670,8 +670,8 @@ public sealed class Phase5AudioTests
             OnSearch = request => request.CollectionName == MediaCollections.Audio
                 ?
                 [
-                    new MediaSearchHit("inside", @"C:\med\talk.wav", 0, 11.2, 3),
-                    new MediaSearchHit("outside", @"D:\elsewhere\song.wav", 1, 3, 9),
+                    new MediaSearchHit("inside", @"C:\med\talk.wav", 0, 11.2, 3, 3),
+                    new MediaSearchHit("outside", @"D:\elsewhere\song.wav", 1, 3, 9, 9),
                 ]
                 : [],
         };
@@ -712,8 +712,8 @@ public sealed class Phase5AudioTests
         {
             OnSearch = _ =>
             [
-                new MediaSearchHit("later", @"C:\med\talk.wav", 5.6, 11.2, 0.9),
-                new MediaSearchHit("earlier", @"C:\med\talk.wav", 0, 5.6, 0.4),
+                new MediaSearchHit("later", @"C:\med\talk.wav", 5.6, 11.2, 0.9, 0.9),
+                new MediaSearchHit("earlier", @"C:\med\talk.wav", 0, 5.6, 0.4, 0.4),
             ],
         };
         var service = new AudioSearchService(encoder, mediaIndex, new FakeEncoderFileHash { AudioHash = "audio-hash" });
@@ -732,8 +732,8 @@ public sealed class Phase5AudioTests
             OnSearch = request => request.CollectionName == MediaCollections.Audio
                 ?
                 [
-                    new MediaSearchHit("weak", @"C:\med\talk.wav", 8, 11.2, 3),
-                    new MediaSearchHit("strong", @"C:\med\song.wav", 2, 5.6, 9),
+                    new MediaSearchHit("weak", @"C:\med\talk.wav", 8, 11.2, 3, 3),
+                    new MediaSearchHit("strong", @"C:\med\song.wav", 2, 5.6, 9, 9),
                 ]
                 : [],
         };
@@ -746,7 +746,7 @@ public sealed class Phase5AudioTests
     [Fact]
     public void OpenHit_SeeksToWindowStart()
     {
-        var hit = new MediaSearchHit("aud1", @"C:\med\talk.wav", 4, 11.2, 2);
+        var hit = new MediaSearchHit("aud1", @"C:\med\talk.wav", 4, 11.2, 2, 2);
         MediaHitStart.Seconds(hit).Should().Be(4);
         MediaHitStart.Seeks(MediaHitStart.Seconds(hit)).Should().BeTrue();
     }
@@ -754,11 +754,11 @@ public sealed class Phase5AudioTests
     [Fact]
     public void OpenHit_UsesWinningRowStart()
     {
-        var start4 = new MediaSearchHit("at4", @"C:\med\talk.wav", 4, 11.2, 0.5);
-        var start2 = new MediaSearchHit("at2", @"C:\med\talk.wav", 2, 5.6, 0.5);
+        var start4 = new MediaSearchHit("at4", @"C:\med\talk.wav", 4, 11.2, 0.5, 0.5);
+        var start2 = new MediaSearchHit("at2", @"C:\med\talk.wav", 2, 5.6, 0.5, 0.5);
         Collapse.EarliestStart([start4, start2]).Should().Be(start2);
         Collapse.EarliestStart([start2, start4]).Should().Be(start2);
-        var strong = new MediaSearchHit("at4", @"C:\med\talk.wav", 4, 11.2, 0.9);
+        var strong = new MediaSearchHit("at4", @"C:\med\talk.wav", 4, 11.2, 0.9, 0.9);
         Collapse.EarliestStart([strong, start2]).Should().Be(strong);
         Collapse.EarliestStart([start2, strong]).Should().Be(strong);
     }
@@ -799,7 +799,7 @@ public sealed class Phase5AudioTests
         var mediaIndex = new FakeMediaVectorIndex();
         mediaIndex.OnSearchWords = (collection, query, filter, topK) =>
             collection == MediaCollections.Audio
-                ? [new MediaSearchHit("aud1", @"C:\med\talk.wav", 4, 5.6, 2)]
+                ? [new MediaSearchHit("aud1", @"C:\med\talk.wav", 4, 5.6, 2, 2)]
                 : [];
         var service = IngestTestKit.CreateSearchService(
             encoder,
@@ -812,7 +812,7 @@ public sealed class Phase5AudioTests
         hits[0].ContentId.Should().Be("aud1");
         hits[0].SourcePath.Should().Be(@"C:\med\talk.wav");
         hits[0].FileName.Should().Be("talk.wav");
-        hits[0].MatchReason.Should().Be(TextMatchReason.FullText);
+        hits[0].MatchReason.Should().Be(TextMatchReason.WordsOnMedia);
         hits[0].StartSeconds.Should().Be(4);
         hits[0].Score.Should().BeApproximately(1d / (HybridFusion.RrfRankConstant + 1), 1e-12);
         hits[0].Ordinal.Should().Be(0);

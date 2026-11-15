@@ -66,6 +66,19 @@
   <data name="Ingest_Running" xml:space="preserve"><value>Processing</value></data>
   <data name="Ingest_Done" xml:space="preserve"><value>Processing is up to date</value></data>
   <data name="Ingest_Stopped" xml:space="preserve"><value>Processing stopped. Retry</value></data>
+  <data name="Ingest_StoppedGpuTemperature" xml:space="preserve"><value>Processing paused because the GPU went over 80 °C. It resumes when the GPU is cooler.</value></data>
+  <data name="Ingest_StoppedSearch" xml:space="preserve"><value>Processing paused because a search started.</value></data>
+  <data name="Ingest_StoppedInterrupted" xml:space="preserve"><value>Processing paused before this file finished.</value></data>
+  <data name="Ingest_RetryDeferred" xml:space="preserve"><value>Retry waited because the device could not take the work.</value></data>
+  <data name="Ingest_ModelResident" xml:space="preserve"><value>The text model stays loaded. Embedding waits until the next retry.</value></data>
+  <data name="Ingest_LastSuccess" xml:space="preserve"><value>Last completed run.</value></data>
+  <data name="Ingest_LastFailure" xml:space="preserve"><value>Last stopped file.</value></data>
+  <data name="Preferences_RetryMinutes" xml:space="preserve"><value>Retry after</value></data>
+  <data name="Preferences_RetryHelp" xml:space="preserve"><value>Minutes to wait before Recall tries again. If the device is still busy, it waits that long again.</value></data>
+  <data name="Preferences_RetryInvalid" xml:space="preserve"><value>Enter a whole number from 1 to 60.</value></data>
+  <data name="Fault_RetryDelayNotAllowed" xml:space="preserve"><value>Enter a whole number from 1 to 60.</value></data>
+  <data name="Nav_Activity" xml:space="preserve"><value>Activity</value></data>
+  <data name="Activity_Empty" xml:space="preserve"><value>No faults yet.</value></data>
   <data name="Models_Helpers" xml:space="preserve"><value>Extra helper models</value></data>
   <data name="Search_ClearFile" xml:space="preserve"><value>Remove</value></data>
   <data name="Ingest_Heading" xml:space="preserve"><value>Processed files</value></data>
@@ -164,7 +177,7 @@
   <data name="Search_SkipRemoteLine" xml:space="preserve"><value>Skipped a cloud-only file.</value></data>
   <data name="Search_SkipDatasetLine" xml:space="preserve"><value>Skipped a generated folder.</value></data>
   <data name="Home_UnavailTitle" xml:space="preserve"><value>File unavailable</value></data>
-  <data name="Home_UnavailLead" xml:space="preserve"><value>Moved or on a disconnected drive. Kept as a placeholder.</value></data>
+  <data name="Home_UnavailLead" xml:space="preserve"><value>This file is not on this device at the path below. Recall kept the match.</value></data>
   <data name="Home_UnavailBtn" xml:space="preserve"><value>Locate</value></data>
   <data name="Home_AudioTitle" xml:space="preserve"><value>Audio search runs on desktop</value></data>
   <data name="Home_AudioLead" xml:space="preserve"><value>Some voice memos weren't searched on this device.</value></data>
@@ -249,4 +262,26 @@
   <data name="Ingest_StoppedMemoryBudget" xml:space="preserve"><value>Processing paused for this file to keep this device responsive. It resumes when there is room.</value></data>
   <data name="Ingest_SkippedTooLarge" xml:space="preserve"><value>This file is too large to process on this device.</value></data>
   <data name="Ingest_DeviceTooSmall" xml:space="preserve"><value>This device does not have enough memory for on-device search. Nothing was processed.</value></data>
+  <data name="Search_Working" xml:space="preserve"><value>Searching…</value></data>
+  <data name="Search_TimedOut" xml:space="preserve"><value>Search took too long and stopped.</value></data>
+  <data name="Search_Modified" xml:space="preserve"><value>File modified</value></data>
+  <data name="Search_Match_MeaningHelp" xml:space="preserve"><value>Meaning is a similar embedding. Words means those words are in the file.</value></data>
+  <data name="Search_Match_Words" xml:space="preserve"><value>Same words</value></data>
+  <data name="Search_Match_WordsOnMedia" xml:space="preserve"><value>Words read from this picture or video</value></data>
+  <data name="Search_MatchStrength" xml:space="preserve"><value>Match strength</value></data>
+  <data name="Search_Group_Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Search_Group_Image" xml:space="preserve"><value>Images</value></data>
+  <data name="Search_Group_Video" xml:space="preserve"><value>Videos</value></data>
+  <data name="Search_Group_Audio" xml:space="preserve"><value>Audio</value></data>
+  <data name="Search_Kind_Text" xml:space="preserve"><value>Text</value></data>
+  <data name="Search_Kind_Code" xml:space="preserve"><value>Code</value></data>
+  <data name="Search_Kind_Image" xml:space="preserve"><value>Image</value></data>
+  <data name="Search_Kind_Video" xml:space="preserve"><value>Video</value></data>
+  <data name="Search_Kind_Audio" xml:space="preserve"><value>Audio</value></data>
+  <data name="Search_Open" xml:space="preserve"><value>Open</value></data>
+  <data name="Search_OpenPath" xml:space="preserve"><value>Open file location</value></data>
+  <data name="Search_View" xml:space="preserve"><value>View</value></data>
+  <data name="Search_Play" xml:space="preserve"><value>Play</value></data>
+  <data name="Search_OpenPathUnsupported" xml:space="preserve"><value>This device cannot show the folder</value></data>
+  <data name="Search_Close" xml:space="preserve"><value>Close</value></data>
 </root>

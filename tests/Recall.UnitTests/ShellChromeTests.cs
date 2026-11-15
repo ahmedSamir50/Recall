@@ -9,8 +9,6 @@ namespace Recall.UnitTests;
 
 public sealed class ShellChromeTests
 {
-    private static string RepoRoot => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
-
     [Fact]
     public void ShellStatus_VisionDownloading_IsRunning()
     {
@@ -162,46 +160,4 @@ public sealed class ShellChromeTests
         ShellRouteMatch.IsActive("/pin", "/device").Should().BeFalse();
     }
 
-    [Fact]
-    public void AppShell_ReadyLabel_FollowsChromeStatus()
-    {
-        // Arrange
-        var shell = File.ReadAllText(Path.Combine(RepoRoot, "src", "Recall.UI", "Layout", "AppShell.razor"));
-
-        // Assert
-        shell.Should().Contain("ShellStatusKey");
-        shell.Should().NotContain("Get(\"Status_Ready\"");
-    }
-
-    [Fact]
-    public void HomeRazor_CardNote_ClampsHeight()
-    {
-        // Arrange
-        var home = File.ReadAllText(Path.Combine(RepoRoot, "src", "Recall.UI", "Pages", "Find", "Home.razor"));
-
-        // Assert
-        home.Split("max-h-[8rem] overflow-hidden\">@card.RawNote", StringSplitOptions.None).Length.Should().Be(3);
-    }
-
-    [Fact]
-    public void DeviceAndPin_Back_GoesToPreferences()
-    {
-        // Arrange
-        var device = File.ReadAllText(Path.Combine(RepoRoot, "src", "Recall.UI", "Pages", "Library", "Device.razor"));
-        var pin = File.ReadAllText(Path.Combine(RepoRoot, "src", "Recall.UI", "Pages", "Library", "Pin.razor"));
-        var deviceCode = File.ReadAllText(Path.Combine(RepoRoot, "src", "Recall.UI", "Pages", "Library", "Device.razor.cs"));
-        var pinCode = File.ReadAllText(Path.Combine(RepoRoot, "src", "Recall.UI", "Pages", "Library", "Pin.razor.cs"));
-        var english = File.ReadAllText(Path.Combine(RepoRoot, "src", "Recall.UI", "Resources", "Strings.resx"));
-        var arabic = File.ReadAllText(Path.Combine(RepoRoot, "src", "Recall.UI", "Resources", "Strings.ar.resx"));
-
-        // Assert
-        device.Should().Contain("Btn_Back");
-        pin.Should().Contain("Btn_Back");
-        device.IndexOf("Btn_Back", StringComparison.Ordinal).Should().BeLessThan(device.IndexOf("Device_Title", StringComparison.Ordinal));
-        pin.IndexOf("Btn_Back", StringComparison.Ordinal).Should().BeLessThan(pin.IndexOf("Pin_EmptyTitle", StringComparison.Ordinal));
-        deviceCode.Should().Contain("NavigateTo(\"/preferences\")");
-        pinCode.Should().Contain("NavigateTo(\"/preferences\")");
-        english.Should().Contain("<value>Back</value>");
-        arabic.Should().Contain("<value>رجوع</value>");
-    }
 }

@@ -16,7 +16,7 @@ internal static class IngestKindCountPolicy
     }
 
     public static bool IsSeen(IngestCursorState state) =>
-        state is IngestCursorState.Reading or IngestCursorState.Finished or IngestCursorState.Missing;
+        state is IngestCursorState.Reading or IngestCursorState.Finished or IngestCursorState.Missing or IngestCursorState.Paused;
 
     public static bool IsFinished(IngestCursorState state) => state == IngestCursorState.Finished;
 }

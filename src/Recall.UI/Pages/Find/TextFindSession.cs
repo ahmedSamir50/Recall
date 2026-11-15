@@ -1,3 +1,4 @@
+using Recall.Core.Ingest;
 using Recall.Core.Scope;
 using Recall.Core.Search;
 using System.Globalization;
@@ -6,8 +7,6 @@ namespace Recall.UI.Pages;
 
 public static class TextFindSession
 {
-    public const int ImmediateCardCount = 5;
-
     public const int CardExcerptChars = 480;
 
     public static bool ShouldQuery(string? text) => !string.IsNullOrWhiteSpace(text);
@@ -34,31 +33,64 @@ public static class TextFindSession
             return TextFindView.Empty;
         }
 
-        var cards = hits.Select(hit =>
-        {
-            var unavailable = hit.SourceMissing || !fileExists(hit.SourcePath);
-            var localTime = hit.ModifiedAt == DateTimeOffset.UnixEpoch
-                ? string.Empty
-                : hit.ModifiedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
-            var showPin = MediaFileKinds.IsImage(hit.SourcePath)
-                || MediaFileKinds.IsVideo(hit.SourcePath)
-                || MediaFileKinds.IsAudio(hit.SourcePath);
-            return new TextFindCard(
-                hit.SourcePath,
-                hit.FileName,
-                "Kind_Document",
-                localTime,
-                "Search_Match_MeaningAndWords",
-                unavailable,
-                Excerpt(hit.RawNote),
-                hit.StartSeconds,
-                showPin);
-        }).ToList();
-
-        var immediate = cards.Take(ImmediateCardCount).ToList();
-        var deferred = cards.Skip(ImmediateCardCount).ToList();
-        return new TextFindView(immediate, deferred, true);
+        var cards = hits.Select(hit => MapTextHit(hit, fileExists)).ToList();
+        return new TextFindView(cards, true);
     }
+
+    public static IReadOnlyList<TextFindCard> BuildMedia(IReadOnlyList<MediaSearchHit> hits, Func<string, bool> fileExists)
+    {
+        return hits.Select(hit => MapMediaHit(hit, fileExists)).ToList();
+    }
+
+    private static TextFindCard MapTextHit(TextSearchHit hit, Func<string, bool> fileExists)
+    {
+        var unavailable = hit.SourceMissing || !fileExists(hit.SourcePath);
+        var localTime = hit.ModifiedAt == DateTimeOffset.UnixEpoch
+            ? string.Empty
+            : hit.ModifiedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+        var reasonKey = ReasonKey(hit.MatchReason);
+        var showPin = MediaFileKinds.IsImage(hit.SourcePath)
+            || MediaFileKinds.IsVideo(hit.SourcePath)
+            || MediaFileKinds.IsAudio(hit.SourcePath);
+        return new TextFindCard(
+            hit.SourcePath,
+            hit.FileName,
+            TextFindCardKind.KindKeyFromPath(hit.SourcePath),
+            localTime,
+            reasonKey,
+            unavailable,
+            Excerpt(hit.RawNote),
+            hit.StartSeconds,
+            showPin,
+            MatchStrength.Percent(hit.Score),
+            hit.MatchReason == TextMatchReason.DenseAndFullText);
+    }
+
+    private static TextFindCard MapMediaHit(MediaSearchHit hit, Func<string, bool> fileExists)
+    {
+        var path = hit.SourcePath;
+        var unavailable = !fileExists(path);
+        return new TextFindCard(
+            path,
+            Path.GetFileName(path),
+            TextFindCardKind.KindKeyFromPath(path),
+            string.Empty,
+            string.Empty,
+            unavailable,
+            string.Empty,
+            hit.StartSeconds,
+            true,
+            MatchStrength.Percent(hit.Similarity),
+            false);
+    }
+
+    private static string ReasonKey(TextMatchReason reason) => reason switch
+    {
+        TextMatchReason.DenseAndFullText => "Search_Match_MeaningAndWords",
+        TextMatchReason.FullText => "Search_Match_Words",
+        TextMatchReason.WordsOnMedia => "Search_Match_WordsOnMedia",
+        _ => "Search_Match_Words",
+    };
 
     private static string Excerpt(string raw)
     {
@@ -69,11 +101,4 @@ public static class TextFindSession
 
         return string.Concat(raw.AsSpan(0, CardExcerptChars - 1), "\u2026");
     }
-}
-
-public sealed record TextFindCard(string SourcePath, string FileName, string KindKey, string LocalTime, string ReasonKey, bool Unavailable, string RawNote = "", double StartSeconds = 0, bool ShowPin = false);
-
-public sealed record TextFindView(IReadOnlyList<TextFindCard> Immediate, IReadOnlyList<TextFindCard> Deferred, bool HasHits)
-{
-    public static TextFindView Empty { get; } = new TextFindView([], [], false);
 }

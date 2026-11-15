@@ -71,8 +71,15 @@ public sealed class VisionFileIngest : IVisionFileIngest
         var bytes = await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false);
         var contentHash = ContentIdBuilder.HashBytes(bytes);
         var row = cursors.GetFile(path);
-        if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
+        var hasLiveChunks = HasLiveChunks(path);
+        if (IngestCursorPolicy.Decide(row, contentHash, hasLiveChunks) == IngestCursorDecision.Skip)
         {
+            if (row is { State: IngestCursorState.Paused or IngestCursorState.Reading })
+            {
+                cursors.FinishExisting(path);
+                return;
+            }
+
             var existingId = ContentIdBuilder.Build(Modality.Image, contentHash, StoredWidth.W768, 0);
             if (index.TryRead(existingId, out _))
             {
@@ -122,8 +129,14 @@ public sealed class VisionFileIngest : IVisionFileIngest
         var bytes = await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false);
         var contentHash = ContentIdBuilder.HashBytes(bytes);
         var row = cursors.GetFile(path);
-        if (IngestCursorPolicy.Decide(row, contentHash) == IngestCursorDecision.Skip)
+        var hasLiveChunks = HasLiveChunks(path);
+        if (IngestCursorPolicy.Decide(row, contentHash, hasLiveChunks) == IngestCursorDecision.Skip)
         {
+            if (row is { State: IngestCursorState.Paused or IngestCursorState.Reading })
+            {
+                cursors.FinishExisting(path);
+            }
+
             return;
         }
 
@@ -235,4 +248,17 @@ public sealed class VisionFileIngest : IVisionFileIngest
 
     private static string FormatSeconds(double seconds) =>
         seconds.ToString("0.######", CultureInfo.InvariantCulture);
+
+    private bool HasLiveChunks(string path)
+    {
+        foreach (var chunk in cursors.ListChunks(path))
+        {
+            if (!chunk.Missing && !chunk.Retired)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

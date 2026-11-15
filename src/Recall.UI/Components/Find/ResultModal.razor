@@ -1,0 +1,34 @@
+@namespace Recall.UI.Components.Find
+@inherits RecallComponentBase
+@using Recall.Core.Search
+@using Recall.Core.Scope
+
+@if (Visible)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:color-mix(in srgb,var(--c0) 55%,transparent)">
+        <div class="g2 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden rise" role="dialog" aria-modal="true" aria-label="@T("Search_View")">
+            <div class="flex items-center justify-end p-2 shrink-0">
+                <button type="button" class="btn btn-g" @onclick="OnClosed">@T("Search_Close")</button>
+            </div>
+            <div class="flex-1 min-h-0 overflow-auto p-3 flex items-center justify-center">
+                @if (PickedImage is not null)
+                {
+                    <img class="max-h-[75vh] max-w-full object-contain rounded-lg" alt="" src="@LensDataUri" />
+                }
+                else if (MediaUrl is not null && Card is not null && MediaFileKinds.IsVideo(Card.SourcePath))
+                {
+                    <video @key="MediaUrl" class="max-h-[75vh] max-w-full rounded-lg" controls autoplay src="@MediaUrl"></video>
+                }
+                else if (MediaUrl is not null && Card is not null && MediaFileKinds.IsAudio(Card.SourcePath))
+                {
+                    <audio @key="MediaUrl" class="w-full" controls autoplay src="@MediaUrl"></audio>
+                }
+                else if (MediaUrl is not null)
+                {
+                    <img class="max-h-[75vh] max-w-full object-contain rounded-lg" alt="" src="@MediaUrl" />
+                }
+            </div>
+        </div>
+    </div>
+}
+

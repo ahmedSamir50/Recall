@@ -21,22 +21,22 @@ public sealed class Phase3CursorTests
     [Fact]
     public void Decide_NullReadingMissingAndChangedHash_Read()
     {
-        IngestCursorPolicy.Decide(null, "h1").Should().Be(IngestCursorDecision.Read);
-        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Reading, "g", ""), "h1").Should().Be(IngestCursorDecision.Read);
-        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Missing, "g", ""), "h1").Should().Be(IngestCursorDecision.Read);
-        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Finished, "g", ""), "h2").Should().Be(IngestCursorDecision.Read);
+        IngestCursorPolicy.Decide(null, "h1", false).Should().Be(IngestCursorDecision.Read);
+        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Reading, "g", ""), "h1", false).Should().Be(IngestCursorDecision.Read);
+        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Missing, "g", ""), "h1", false).Should().Be(IngestCursorDecision.Read);
+        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Finished, "g", ""), "h2", false).Should().Be(IngestCursorDecision.Read);
     }
 
     [Fact]
     public void Decide_FinishedSameHash_Skip()
     {
-        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Finished, "g", ""), "h1").Should().Be(IngestCursorDecision.Skip);
+        IngestCursorPolicy.Decide(new IngestFileRow("a", "h1", IngestCursorState.Finished, "g", ""), "h1", false).Should().Be(IngestCursorDecision.Skip);
     }
 
     [Fact]
     public void Decide_BlankHash_Throws()
     {
-        Action act = () => IngestCursorPolicy.Decide(null, "   ");
+        Action act = () => IngestCursorPolicy.Decide(null, "   ", false);
         act.Should().Throw<ArgumentException>();
     }
 
@@ -139,7 +139,7 @@ public sealed class Phase3CursorTests
             store.MarkReading("a.txt", "h1", "g");
             store.FinishPath("a.txt", "h1", "g", "enc", [new ChunkWrite("id1", 0)]);
             var row = store.GetFile("a.txt");
-            IngestCursorPolicy.Decide(row, "h1").Should().Be(IngestCursorDecision.Skip);
+            IngestCursorPolicy.Decide(row, "h1", true).Should().Be(IngestCursorDecision.Skip);
         }
         finally
         {

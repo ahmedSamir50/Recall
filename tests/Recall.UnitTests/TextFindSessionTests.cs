@@ -62,7 +62,7 @@ public sealed class TextFindSessionTests
         var view = TextFindSession.Build(hits, _ => false);
         view.Immediate.Should().HaveCount(1);
         view.Immediate[0].Unavailable.Should().BeTrue();
-        view.Immediate[0].KindKey.Should().Be("Kind_Document");
+        view.Immediate[0].KindKey.Should().Be("Search_Kind_Text");
         view.Immediate[0].ReasonKey.Should().Be("Search_Match_MeaningAndWords");
     }
 

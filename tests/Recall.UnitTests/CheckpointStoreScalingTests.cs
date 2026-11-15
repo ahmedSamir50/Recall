@@ -69,7 +69,7 @@ public sealed class CheckpointStoreScalingTests
         store.MarkStopped("/g/a", IngestStopKeys.MemoryBudget);
 
         var row = store.GetFile("/g/a") ?? throw new InvalidOperationException("row");
-        row.State.Should().Be(IngestCursorState.Reading);
+        row.State.Should().Be(IngestCursorState.Paused);
         row.MissingStatusKey.Should().Be(IngestStopKeys.MemoryBudget);
         store.AnyLivePath("id0").Should().BeTrue();
     }

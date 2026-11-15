@@ -919,13 +919,13 @@ public sealed class Phase6AgePinSearchTests
     {
         var longList = new[]
         {
-            new MediaSearchHit("b-long", "b", 1, 2, 0.5),
-            new MediaSearchHit("a-long", "a", 4, 5, 0.4),
+            new MediaSearchHit("b-long", "b", 1, 2, 0.5, 0.5),
+            new MediaSearchHit("a-long", "a", 4, 5, 0.4, 0.4),
         };
         var oldList = new[]
         {
-            new MediaSearchHit("a-old", "a", 4, 5, 0.5),
-            new MediaSearchHit("b-old", "b", 1, 2, 0.4),
+            new MediaSearchHit("a-old", "a", 4, 5, 0.5, 0.5),
+            new MediaSearchHit("b-old", "b", 1, 2, 0.4, 0.4),
         };
         var fused = AgeRrf.Fuse([longList, oldList]);
         fused.Select(h => h.SourcePath).Should().Equal("b", "a");
@@ -952,8 +952,8 @@ public sealed class Phase6AgePinSearchTests
     {
         var list = new[]
         {
-            new MediaSearchHit("first", "dup", 0, 1, 0.9),
-            new MediaSearchHit("second", "dup", 2, 3, 0.1),
+            new MediaSearchHit("first", "dup", 0, 1, 0.9, 0.9),
+            new MediaSearchHit("second", "dup", 2, 3, 0.1, 0.1),
         };
         AgeRrf.Fuse([list]).Should().ContainSingle().Which.ContentId.Should().Be("first");
     }
@@ -992,7 +992,7 @@ public sealed class Phase6AgePinSearchTests
                 return [];
             },
         };
-        var service = new PictureSearchService(encoder, index, new FakeEncoderFileHash { VisionHash = "vis" });
+        var service = new PictureSearchService(encoder, index, new FakeEncoderFileHash { VisionHash = "vis" }, new FakeIngestCursorStore());
         var grants = new[] { new ScopeFolderGrant(@"C:\G", "G", GrantFileKinds.Image) };
         await service.FindAsync(new byte[] { 1, 2, 3 }, grants, TestContext.Current.CancellationToken);
         encoder.Calls.Should().Be(1);
@@ -1038,7 +1038,7 @@ public sealed class Phase6AgePinSearchTests
         {
             OnSearchWords = (collection, _, _, _) =>
                 collection == MediaCollections.Image
-                    ? [new MediaSearchHit("id", scanned, 0, 0, 0.8)]
+                    ? [new MediaSearchHit("id", scanned, 0, 0, 0.8, 0.8)]
                     : [],
         };
         var service = IngestTestKit.CreateSearchService(
@@ -1087,7 +1087,7 @@ public sealed class Phase6AgePinSearchTests
         {
             OnSearchWords = (collection, _, _, _) =>
                 collection == MediaCollections.Image
-                    ? [new MediaSearchHit("id", @"D:\G\pic.jpg", 0, 0, 0.5)]
+                    ? [new MediaSearchHit("id", @"D:\G\pic.jpg", 0, 0, 0.5, 0.5)]
                     : [],
         };
         var service = IngestTestKit.CreateSearchService(
@@ -1101,7 +1101,7 @@ public sealed class Phase6AgePinSearchTests
     }
 
     [Fact]
-    public async Task TextQuery_TwentyTextHits_SkipsMediaWords()
+    public async Task TextQuery_TwentyTextHits_StillRunsMediaWords()
     {
         var textIndex = new TwentyHitTextIndex();
         var media = new FakeMediaVectorIndex();
@@ -1113,7 +1113,7 @@ public sealed class Phase6AgePinSearchTests
         var grants = new[] { new ScopeFolderGrant(@"D:\G", "G", GrantFileKinds.Image | GrantFileKinds.Text) };
         var hits = await service.FindAsync("word", grants, TestContext.Current.CancellationToken);
         hits.Should().HaveCount(20);
-        media.WordsRequests.Should().BeEmpty();
+        media.WordsRequests.Should().NotBeEmpty();
     }
 
     [Fact]
@@ -1123,7 +1123,7 @@ public sealed class Phase6AgePinSearchTests
         var textIndex = new SingleHitTextIndex(shared);
         var media = new FakeMediaVectorIndex
         {
-            OnSearchWords = (_, _, _, _) => [new MediaSearchHit("mid", shared, 0, 0, 0.4)],
+            OnSearchWords = (_, _, _, _) => [new MediaSearchHit("mid", shared, 0, 0, 0.4, 0.4)],
         };
         var service = IngestTestKit.CreateSearchService(
             new FakeTextEmbeddingEncoder(),
@@ -1140,7 +1140,7 @@ public sealed class Phase6AgePinSearchTests
     {
         var encoder = new FakeVisionEmbeddingEncoder();
         var index = new FakeMediaVectorIndex();
-        var service = new PictureSearchService(encoder, index, new FakeEncoderFileHash { VisionHash = "vis" });
+        var service = new PictureSearchService(encoder, index, new FakeEncoderFileHash { VisionHash = "vis" }, new FakeIngestCursorStore());
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
         var act = async () => await service.FindAsync(

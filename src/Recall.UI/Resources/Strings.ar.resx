@@ -66,6 +66,19 @@
   <data name="Ingest_Running" xml:space="preserve"><value>تجري المعالجة</value></data>
   <data name="Ingest_Done" xml:space="preserve"><value>المعالجة محدثة</value></data>
   <data name="Ingest_Stopped" xml:space="preserve"><value>توقفت المعالجة. أعد المحاولة</value></data>
+  <data name="Ingest_StoppedGpuTemperature" xml:space="preserve"><value>توقفت المعالجة لأن حرارة معالج الرسوم تجاوزت 80 درجة. تستأنف عندما يبرد.</value></data>
+  <data name="Ingest_StoppedSearch" xml:space="preserve"><value>توقفت المعالجة لأن بحثاً بدأ.</value></data>
+  <data name="Ingest_StoppedInterrupted" xml:space="preserve"><value>توقفت المعالجة قبل أن يكتمل هذا الملف.</value></data>
+  <data name="Ingest_RetryDeferred" xml:space="preserve"><value>تأجلت إعادة المحاولة لأن الجهاز لم يستطع تنفيذ العمل.</value></data>
+  <data name="Ingest_ModelResident" xml:space="preserve"><value>يبقى نموذج النص محمّلاً. لا يبدأ التضمين قبل إعادة المحاولة التالية.</value></data>
+  <data name="Ingest_LastSuccess" xml:space="preserve"><value>آخر تشغيل اكتمل.</value></data>
+  <data name="Ingest_LastFailure" xml:space="preserve"><value>آخر ملف توقف.</value></data>
+  <data name="Preferences_RetryMinutes" xml:space="preserve"><value>إعادة المحاولة بعد</value></data>
+  <data name="Preferences_RetryHelp" xml:space="preserve"><value>الدقائق قبل أن يحاول ريكول مرة أخرى. إذا بقي الجهاز مشغولاً، ينتظر المدة نفسها مرة أخرى.</value></data>
+  <data name="Preferences_RetryInvalid" xml:space="preserve"><value>أدخل رقماً صحيحاً من 1 إلى 60.</value></data>
+  <data name="Fault_RetryDelayNotAllowed" xml:space="preserve"><value>أدخل رقماً صحيحاً من 1 إلى 60.</value></data>
+  <data name="Nav_Activity" xml:space="preserve"><value>النشاط</value></data>
+  <data name="Activity_Empty" xml:space="preserve"><value>لا أعطال بعد.</value></data>
   <data name="Models_Helpers" xml:space="preserve"><value>نماذج مساعدة إضافية</value></data>
   <data name="Search_ClearFile" xml:space="preserve"><value>إزالة</value></data>
   <data name="Ingest_Heading" xml:space="preserve"><value>الملفات المعالَجة</value></data>
@@ -164,7 +177,7 @@
   <data name="Search_SkipRemoteLine" xml:space="preserve"><value>تم تخطي ملف على السحابة فقط.</value></data>
   <data name="Search_SkipDatasetLine" xml:space="preserve"><value>تم تخطي مجلد مُولَّد.</value></data>
   <data name="Home_UnavailTitle" xml:space="preserve"><value>الملف غير متاح</value></data>
-  <data name="Home_UnavailLead" xml:space="preserve"><value>نُقل أو على قرص غير متصل. يبقى كعنصر نائب.</value></data>
+  <data name="Home_UnavailLead" xml:space="preserve"><value>هذا الملف غير موجود على هذا الجهاز في المسار أدناه. أبقى ريكول المطابقة.</value></data>
   <data name="Home_UnavailBtn" xml:space="preserve"><value>حدّد موقعه</value></data>
   <data name="Home_AudioTitle" xml:space="preserve"><value>البحث الصوتي على الكمبيوتر</value></data>
   <data name="Home_AudioLead" xml:space="preserve"><value>لم يُبحث في بعض الملاحظات الصوتية على هذا الجهاز.</value></data>
@@ -249,4 +262,26 @@
   <data name="Ingest_StoppedMemoryBudget" xml:space="preserve"><value>توقفت معالجة هذا الملف للحفاظ على استجابة الجهاز. تستأنف عندما تتوفر مساحة.</value></data>
   <data name="Ingest_SkippedTooLarge" xml:space="preserve"><value>هذا الملف أكبر من أن تتم معالجته على هذا الجهاز.</value></data>
   <data name="Ingest_DeviceTooSmall" xml:space="preserve"><value>ذاكرة هذا الجهاز لا تكفي للبحث على الجهاز نفسه. لم تتم معالجة أي ملف.</value></data>
+  <data name="Search_Working" xml:space="preserve"><value>جارٍ البحث…</value></data>
+  <data name="Search_TimedOut" xml:space="preserve"><value>استغرق البحث وقتاً أطول من الحد وتوقف.</value></data>
+  <data name="Search_Modified" xml:space="preserve"><value>تاريخ تعديل الملف</value></data>
+  <data name="Search_Match_MeaningHelp" xml:space="preserve"><value>المعنى يعني تشابهاً في التضمين. الكلمات تعني أن هذه الكلمات موجودة في الملف.</value></data>
+  <data name="Search_Match_Words" xml:space="preserve"><value>الكلمات نفسها</value></data>
+  <data name="Search_Match_WordsOnMedia" xml:space="preserve"><value>كلمات من الصورة أو الفيديو</value></data>
+  <data name="Search_MatchStrength" xml:space="preserve"><value>قوة التطابق</value></data>
+  <data name="Search_Group_Text" xml:space="preserve"><value>نص</value></data>
+  <data name="Search_Group_Image" xml:space="preserve"><value>صور</value></data>
+  <data name="Search_Group_Video" xml:space="preserve"><value>فيديو</value></data>
+  <data name="Search_Group_Audio" xml:space="preserve"><value>صوت</value></data>
+  <data name="Search_Kind_Text" xml:space="preserve"><value>نص</value></data>
+  <data name="Search_Kind_Code" xml:space="preserve"><value>كود</value></data>
+  <data name="Search_Kind_Image" xml:space="preserve"><value>صورة</value></data>
+  <data name="Search_Kind_Video" xml:space="preserve"><value>فيديو</value></data>
+  <data name="Search_Kind_Audio" xml:space="preserve"><value>صوت</value></data>
+  <data name="Search_Open" xml:space="preserve"><value>فتح</value></data>
+  <data name="Search_OpenPath" xml:space="preserve"><value>فتح موقع الملف</value></data>
+  <data name="Search_View" xml:space="preserve"><value>عرض</value></data>
+  <data name="Search_Play" xml:space="preserve"><value>تشغيل</value></data>
+  <data name="Search_OpenPathUnsupported" xml:space="preserve"><value>هذا الجهاز لا يفتح مجلد الملف</value></data>
+  <data name="Search_Close" xml:space="preserve"><value>إغلاق</value></data>
 </root>

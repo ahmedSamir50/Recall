@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Components;
+using Recall.Core.Checkpoints;
 using Recall.Core.Download;
 using Recall.Core.Ingest;
 using Recall.Core.Ports;
@@ -41,6 +42,8 @@ public partial class ResourceStrip
     private IReadOnlyList<string> unfinishedPaths = [];
 
     private IngestChromeStatus chromeStatus = IngestChromeStatus.Done;
+
+    private IngestLastRun lastRun = new(null, string.Empty, string.Empty, null);
 
     protected override void OnInitialized()
     {
@@ -84,7 +87,19 @@ public partial class ResourceStrip
             Downloads.GetAudioDownloadSnapshot().Phase,
             unfinishedPaths.Count > 0,
             IngestStatus.Verdict);
+        lastRun = IngestStatus.LastRun;
     }
+
+    private bool ShowModelResident =>
+        !Ingest.PassRunning
+        && lastRun.NextRetryUtc is { } next
+        && next > DateTimeOffset.UtcNow;
+
+    private static string FormatLastRun(DateTimeOffset? value) =>
+        value?.ToLocalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.CurrentCulture) ?? string.Empty;
+
+    private static string StoppedFileName(string path) =>
+        string.IsNullOrEmpty(path) ? string.Empty : Path.GetFileName(path);
 
     private static string CountText(IngestKindCount row) =>
         string.Create(CultureInfo.InvariantCulture, $"{row.Finished}/{row.Seen}");

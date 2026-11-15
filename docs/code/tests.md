@@ -453,6 +453,10 @@ if (this.chunks.ContainsKey(chunk.ContentId))
 if (!files.TryGetValue(previousPath, out var row))
 if (string.Equals(chunk.Path, previousPath, StringComparison.OrdinalIgnoreCase) && !chunk.Retired)
 if (files.TryGetValue(path, out var row))
+if (files.TryGetValue(path, out var row) && row.State != IngestCursorState.Finished)
+if (!files.TryGetValue(path, out var row))
+if (!chunkRows.Values.Any(chunk => string.Equals(chunk.Path, path, StringComparison.OrdinalIgnoreCase) && !chunk.Missing && !chunk.Retired))
+if (log.Count > 200)
 if (string.Equals(chunk.Path, path, StringComparison.OrdinalIgnoreCase))
 if (grants.TryGetValue(grantPath, out var state))
 ``` 
@@ -1274,3 +1278,34 @@ public sealed class IngestGuardTests
 ```
 
 `IngestGuardTests` covers the small guards that keep a path inside the budget: the op-log keeps ten thousand entries and drops the oldest, the frame cadence caps a video at six hundred frames, a below-minimum device is blocked and labelled, the reclaimer closes a loaded audio encoder and leaves an idle one alone, and an oversized video is marked `Ingest_SkippedTooLarge` before a single frame is embedded.
+
+## tests/Recall.UnitTests/LastRunRepairTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class LastRunRepairTests
+```
+
+Phase A repair tests for paused cursor state, GPU cooldown, retry clock, leftover policy, and retry preference bounds.
+
+## tests/Recall.UnitTests/SchedulerTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class SchedulerTests
+if (Persisted.Contains(path))
+if (Persisted.Count == 0)
+```
+
+OCR scheduler persistence and preemption branches.
+
+## tests/Recall.UnitTests/NoSkippedOcrProofsTests.cs
+
+```csharp
+namespace Recall.UnitTests;
+public sealed class NoSkippedOcrProofsTests
+if (count > 0)
+if (File.Exists(Path.Combine(directory.FullName, "Recall.slnx")))
+```
+
+Proof tests must not be skipped in CI.

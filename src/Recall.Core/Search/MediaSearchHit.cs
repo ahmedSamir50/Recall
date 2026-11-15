@@ -5,7 +5,8 @@ public sealed record MediaSearchHit(
     string SourcePath,
     double StartSeconds,
     double EndSeconds,
-    double Score);
+    double Score,
+    double Similarity);
 
 public sealed record MediaSearchRequest(
     string CollectionName,

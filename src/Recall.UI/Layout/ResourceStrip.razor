@@ -30,6 +30,25 @@
             </div>
         }
     </div>
+    @if (lastRun.LastCompletedUtc is not null)
+    {
+        <div class="text-11 ink2">
+            <span>@T("Ingest_LastSuccess")</span>
+            <bdi class="ltr f-mono"> @FormatLastRun(lastRun.LastCompletedUtc)</bdi>
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(lastRun.LastStoppedPath) && !string.IsNullOrEmpty(lastRun.LastStoppedReasonKey))
+    {
+        <div class="text-11 ink2 break-all">
+            <span>@T("Ingest_LastFailure")</span>
+            <bdi class="ltr"> @StoppedFileName(lastRun.LastStoppedPath)</bdi>
+            <span> — @T(lastRun.LastStoppedReasonKey)</span>
+        </div>
+    }
+    @if (ShowModelResident)
+    {
+        <div class="text-11 ink2">@T("Ingest_ModelResident")</div>
+    }
     @if (chromeStatus == IngestChromeStatus.Blocked)
     {
         <div>@T("Ingest_DeviceTooSmall")</div>

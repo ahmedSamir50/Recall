@@ -6,10 +6,12 @@ using Recall.Core.Checkpoints;
 using Recall.Core.Download;
 using Recall.Core.Ingest;
 using Recall.Core.Ports;
+using Recall.Core.Preferences;
 using Recall.Core.Runtime;
 using Recall.Core.Scope;
 using Recall.Core.Sync;
 using Recall.Core.Text;
+using Recall.Maui.Ingest;
 using Recall.Maui.Platform;
 using Recall.Maui.Platform.Files;
 using Recall.Core.Ocr;
@@ -48,6 +50,13 @@ public static class MauiServiceCollectionExtensions
         services.AddSingleton<IDeviceOsNameProvider, MauiDeviceOsNameProvider>();
         services.AddSingleton<IDeviceIdCandidateProvider, MauiDeviceIdCandidateProvider>();
         services.AddSingleton<IAgeCutoffPreferenceStore, MauiAgeCutoffPreferenceStore>();
+        services.Replace(ServiceDescriptor.Singleton<IRetryDelayPreferenceStore, MauiRetryDelayPreferenceStore>());
+#if WINDOWS
+        services.Replace(ServiceDescriptor.Singleton<IGpuTemperature, WindowsGpuTemperature>());
+#else
+        services.Replace(ServiceDescriptor.Singleton<IGpuTemperature, AbsentGpuTemperature>());
+#endif
+        services.AddSingleton<IngestRetryHostedService>();
         services.AddSingleton<IUserSkipStore, MauiUserSkipStore>();
         services.AddSingleton<IOnboardingCompletionStore, MauiOnboardingCompletionStore>();
         services.AddSingleton<IRecallShellKind, MauiRecallShellKind>();
@@ -75,6 +84,8 @@ public static class MauiServiceCollectionExtensions
         services.AddSingleton(new LocalOpLogWriter(Path.Combine(FileSystem.AppDataDirectory, LocalOpLogWriter.DirectoryName)));
         services.AddSingleton<IModelDownloadService, MauiModelDownloadService>();
         services.AddSingleton<ILocalFileOpener, MauiLocalFileOpener>();
+        services.AddSingleton<IGrantFileUrl, MauiGrantFileUrl>();
+        services.AddSingleton<IFolderReveal, MauiFolderReveal>();
         services.AddSingleton<IMediaPreview, MauiMediaPreview>();
         services.AddSingleton<ILocalContentProbe, MauiLocalContentProbe>();
         services.AddSingleton<IIdleDetectorService, MauiIdleDetector>();
@@ -127,7 +138,10 @@ public static class MauiServiceCollectionExtensions
             sp.GetService<IngestScheduler>(),
             sp.GetService<IVisionFileIngest>(),
             sp.GetService<IModelDownloadService>(),
-            sp.GetService<Recall.Core.Ingest.IPdfPageRenderer>())));
+            sp.GetService<Recall.Core.Ingest.IPdfPageRenderer>(),
+            sp.GetRequiredService<IGpuTemperature>(),
+            sp.GetRequiredService<IIngestPreemption>(),
+            sp.GetRequiredService<RetryDelayPreferenceService>())));
         var ocrModelRoot = FileSystem.AppDataDirectory;
         services.Replace(ServiceDescriptor.Singleton(sp => new IngestSchedulerService(
             sp.GetRequiredService<IngestScheduler>(),

@@ -23,6 +23,10 @@ public sealed class IngestStatusService
 
     public IReadOnlyList<IngestKindCount> List(GrantFileKinds enabled) => store.CountEnabled(enabled);
 
+    public IngestLastRun LastRun => store.ReadLastRun();
+
+    public IReadOnlyList<IngestLogEntry> ActivityLog => store.ListLog();
+
     public IReadOnlyList<string> ListUnfinished(IReadOnlyList<ScopeFolderGrant> grants)
     {
         var paths = new List<string>();

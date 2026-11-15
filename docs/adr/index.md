@@ -16,5 +16,6 @@
 - [ADR 0016: Ingest memory ceiling](0016-ingest-memory-ceiling.md)
 - [ADR 0017: OCR throughput and residency](0017-ocr-throughput.md)
 - [ADR 0018: OCR line merge and thread split](0018-ocr-merge-and-threads.md)
+- [ADR 0019: Retry clock and GPU cooldown](0019-retry-and-gpu-cooldown.md)
 
 An open item is not an ADR.

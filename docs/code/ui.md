@@ -414,8 +414,11 @@ No branch.
 namespace Recall.UI.Pages;
 public partial class Preferences
     private AgeCutoffPreferenceService AgePreferences { get; set; } = null!;
+    private RetryDelayPreferenceService RetryPreferences { get; set; } = null!;
     private AgeMoveService AgeMove { get; set; } = null!;
     private void SetAge(AgeCutoffYears years)
+    catch (RecallFaultException ex) when (ex.Fault == RecallFault.RetryDelayNotAllowed)
+    if (int.TryParse(args.Value?.ToString(), out var minutes))
         AgeCutoffActions.Set(AgePreferences, AgeMove, years, DateTimeOffset.UtcNow);
     public static bool IsThemeSelected(ThemePreference current, ThemePreference choice) => current == choice;
     public static string ThemeChoiceClass(ThemePreference current, ThemePreference choice) =>
@@ -634,6 +637,15 @@ else if (!view.HasHits)
             <button type="button" class="btn btn-g text-start" @onclick="GoModels">@T("Preferences_ModelsLink")</button>
                 <button type="button" class="btn btn-g er text-start w-full" @onclick="ResetAllDebugAsync">@T("Debug_ResetAll_Button")</button>
 ```
+
+## src/Recall.UI/Pages/Library/Activity.razor
+
+```razor
+@page "/activity"
+        @if (entries.Count == 0)
+```
+
+Local ingest fault list at `/activity`.
 
 ## src/Recall.UI/Pages/Onboarding/Folders.razor
 

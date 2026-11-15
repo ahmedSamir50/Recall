@@ -23,6 +23,7 @@ public partial class App : Application
 			return window;
 		}
 
+		var retry = services.GetService(typeof(Recall.Maui.Ingest.IngestRetryHostedService)) as Recall.Maui.Ingest.IngestRetryHostedService;
 		window.Created += OnWindowCreated;
 		window.Resumed += OnWindowResumed;
 		window.Destroying += OnWindowDestroying;
@@ -31,6 +32,7 @@ public partial class App : Application
 		void OnWindowCreated(object? sender, EventArgs args)
 		{
 			coordinator.OnCreated(shell.Kind);
+			retry?.Start();
 			var downloads = services.GetService(typeof(Recall.Core.Ports.IModelDownloadService)) as Recall.Core.Ports.IModelDownloadService;
 			if (downloads is null || !Recall.Core.Download.WindowIngestPolicy.ShouldStart(downloads.GetTextDownloadSnapshot().Phase))
 			{
@@ -56,6 +58,7 @@ public partial class App : Application
 
 		void OnWindowDestroying(object? sender, EventArgs args)
 		{
+			retry?.Stop();
 			coordinator.Stop();
 		}
 	}

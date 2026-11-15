@@ -195,10 +195,12 @@ public sealed class Phase3GrantTests
     [Fact]
     public void HomeRazor_PinKeep_OnFindCard()
     {
-        var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "Recall.UI", "Pages", "Find", "Home.razor"));
-        razor.Should().Contain("Pin_Keep");
-        razor.Should().Contain("card.ShowPin");
-        razor.Should().Contain("PinKeep(card)");
+        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "Recall.UI", "Pages", "Find", "Home.razor"));
+        var menu = File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "Recall.UI", "Components", "Find", "ActionMenu.razor"));
+        menu.Should().Contain("Pin_Keep");
+        menu.Should().Contain("Card.ShowPin");
+        home.Should().Contain("PinKeep");
+        home.Should().Contain("OnPin");
     }
 
     [Fact]

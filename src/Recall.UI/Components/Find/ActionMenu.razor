@@ -1,0 +1,26 @@
+@namespace Recall.UI.Components.Find
+@inherits RecallComponentBase
+@using Recall.Core.Search
+
+<div class="fixed inset-0 z-40" @onclick="OnClose">
+    <div class="absolute g2 rounded-xl p-2 shadow-lg min-w-[12rem]" style="top:30%;left:50%;transform:translate(-50%,-50%)" @onclick:stopPropagation="true" role="menu">
+        @if (!Card.Unavailable)
+        {
+            <button type="button" class="btn btn-g w-full justify-start mb-1" role="menuitem" @onclick="() => OnOpen.InvokeAsync(Card)">@T("Search_Open")</button>
+            <button type="button" class="btn btn-g w-full justify-start mb-1" role="menuitem" @onclick="() => OnReveal.InvokeAsync(Card)">@T("Search_OpenPath")</button>
+            @if (ResultActionPolicy.Decide(Card.SourcePath) is ResultActionKind.View)
+            {
+                <button type="button" class="btn btn-g w-full justify-start" role="menuitem" @onclick="() => OnViewPlay.InvokeAsync(Card)">@T("Search_View")</button>
+            }
+            else if (ResultActionPolicy.Decide(Card.SourcePath) is ResultActionKind.Play)
+            {
+                <button type="button" class="btn btn-g w-full justify-start" role="menuitem" @onclick="() => OnViewPlay.InvokeAsync(Card)">@T("Search_Play")</button>
+            }
+            @if (Card.ShowPin)
+            {
+                <button type="button" class="btn btn-g w-full justify-start" role="menuitem" @onclick="() => OnPin.InvokeAsync(Card)">@T("Pin_Keep")</button>
+            }
+        }
+    </div>
+</div>
+
